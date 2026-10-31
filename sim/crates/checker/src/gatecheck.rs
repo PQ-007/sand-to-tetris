@@ -32,6 +32,10 @@ fn format_bits(bits: &[Value], width: u32) -> String {
 }
 
 fn table_model(level: &Level) -> Option<Model> {
+    // A sequential level's table is a sequence of steps, not a function.
+    if level.sequential {
+        return None;
+    }
     let table = Table::parse(&level.truth_table, level).ok()?;
     if !table.is_exhaustive(level) {
         return None;
@@ -181,8 +185,14 @@ fn run_vector(
     for (port, want) in &row.outputs {
         let width = level.width(port);
         let bits = sim.output(port).unwrap_or_default();
-        let expected = format_value(*want, width);
         let actual = format_bits(&bits, width);
+        if row.skip.contains(port) {
+            result
+                .outputs
+                .push((port.clone(), "-".into(), actual.clone()));
+            continue;
+        }
+        let expected = format_value(*want, width);
         result
             .outputs
             .push((port.clone(), expected.clone(), actual.clone()));
@@ -239,6 +249,15 @@ fn run_vector(
     Ok((result, diags, outcome.depth))
 }
 
+/// "Step 3 (after steps 1–2)": a step's result depends on the ones before.
+fn step_label(i: usize) -> String {
+    match i {
+        0 => "Step 1".into(),
+        1 => "Step 2 (after step 1)".into(),
+        _ => format!("Step {} (after steps 1–{})", i + 1, i),
+    }
+}
+
 /// Random failures reported in detail (the rest are only counted).
 const MAX_RANDOM_DETAILS: usize = 5;
 
@@ -280,12 +299,27 @@ pub(crate) fn check_gates(
             ports: vec![],
         });
     };
+    // A sequential level runs every step on one circuit, so its memory
+    // carries over; a combinational row starts from scratch (all unknown),
+    // so it can't pass by luck from the state the previous row left behind.
+    let mut steps = if level.sequential {
+        match prepared.sim() {
+            Ok(s) => Some(s),
+            Err(e) => {
+                fail(&mut report, e);
+                return report;
+            }
+        }
+    } else {
+        None
+    };
     for (i, row) in table.rows.iter().enumerate() {
-        // Each table row starts from scratch (all unknown), so a row can't
-        // pass by luck from the state the previous row left behind.
-        let fresh = prepared.sim();
-        let result = fresh
-            .and_then(|mut sim| run_vector(level, &mut sim, &format!("Row {}", i + 1), i + 1, row));
+        let result = match steps.as_mut() {
+            Some(sim) => run_vector(level, sim, &step_label(i), i + 1, row),
+            None => prepared.sim().and_then(|mut sim| {
+                run_vector(level, &mut sim, &format!("Row {}", i + 1), i + 1, row)
+            }),
+        };
         match result {
             Ok((r, mut d, depth)) => {
                 report.rows.push(r);
@@ -329,7 +363,11 @@ pub(crate) fn check_gates(
                 .cloned()
                 .zip(model.eval_words(&words))
                 .collect();
-            let row = TableRow { inputs, outputs };
+            let row = TableRow {
+                inputs,
+                outputs,
+                skip: vec![],
+            };
             let row_no = table.rows.len() + k + 1;
             match run_vector(
                 level,

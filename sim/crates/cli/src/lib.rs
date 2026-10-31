@@ -232,7 +232,7 @@ fn check_all(root: &Path) -> Result<String, String> {
                 }
                 Some(_) => {}
             }
-        } else if !table.is_exhaustive(&e.level) {
+        } else if !e.level.sequential && !table.is_exhaustive(&e.level) {
             ok = false;
             lines.push(format!(
                 "✗ {}: the truth table doesn't list every input combination, and there's no model to test against",

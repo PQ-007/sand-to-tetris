@@ -24,6 +24,11 @@ pub struct Level {
     /// Side quests are not required to reach Tetris.
     #[serde(default)]
     pub optional: bool,
+    /// A circuit with memory: the table's rows are steps run in order on
+    /// one circuit, so state carries from step to step, and an expected
+    /// output may be `-` (don't care, e.g. before anything is stored).
+    #[serde(default)]
+    pub sequential: bool,
     /// Expected behaviour, as a table: `a b | out` then rows like `0 1 | 1`.
     pub truth_table: String,
     /// Native model (in `s2t-models`) that defines the right behaviour
@@ -59,6 +64,12 @@ impl Level {
         if level.layer == 0 {
             return Err(LevelParseError(format!(
                 "level `{}`: layer must be 1 or more",
+                level.id
+            )));
+        }
+        if level.sequential && level.layer == 1 {
+            return Err(LevelParseError(format!(
+                "level `{}`: sequential levels need layer 2 or more (the switch-level engine has no memory)",
                 level.id
             )));
         }

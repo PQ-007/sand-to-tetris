@@ -56,6 +56,7 @@ pub fn level(id: &str, layer: u8, inputs: &[&str], outputs: &[&str]) -> Level {
         outputs: outputs.iter().map(|s| s.to_string()).collect(),
         requires: vec![],
         optional: false,
+        sequential: false,
         truth_table: String::new(),
         widths: Default::default(),
         model: None,
