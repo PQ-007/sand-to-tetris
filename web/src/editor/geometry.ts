@@ -145,11 +145,11 @@ export function labelPoint(points: Point[]): Point {
 
 /** A free spot for a new part: scan the grid for room. */
 export function freeSpot(taken: Point[]): Point {
-  for (let y = 80; y <= CANVAS.height - 60; y += 80) {
-    for (let x = 200; x <= CANVAS.width - 200; x += 90) {
+  for (let y = 110; y <= CANVAS.height - 70; y += 110) {
+    for (let x = 220; x <= CANVAS.width - 200; x += 120) {
       if (
         taken.every(
-          ([tx, ty]) => Math.abs(tx - x) > 60 || Math.abs(ty - y) > 60,
+          ([tx, ty]) => Math.abs(tx - x) > 80 || Math.abs(ty - y) > 80,
         )
       )
         return [x, y];

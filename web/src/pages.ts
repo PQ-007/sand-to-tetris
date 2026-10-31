@@ -104,6 +104,16 @@ export function renderRoute(route: Route): {
         title: "Glossary · Sand to Tetris",
         anchor: route.term ? `term-${route.term}` : undefined,
       };
+    case "levels":
+      return {
+        html: `<div id="levels-root"></div>`,
+        title: "Levels · Sand to Tetris",
+      };
+    case "play":
+      return {
+        html: `<div id="play-root" class="play"></div>`,
+        title: `Level · Sand to Tetris`,
+      };
     case "not-found":
       return { html: notFound(), title: "Not found · Sand to Tetris" };
   }

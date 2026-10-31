@@ -4,6 +4,8 @@ export type Route =
   | { page: "home" }
   | { page: "chapter"; number: number; anchor?: string }
   | { page: "glossary"; term?: string }
+  | { page: "levels" }
+  | { page: "play"; level: string }
   | { page: "not-found"; hash: string };
 
 export function parseRoute(hash: string): Route {
@@ -23,9 +25,16 @@ export function parseRoute(hash: string): Route {
     const term = glossary[1];
     return { page: "glossary", ...(term ? { term } : {}) };
   }
+  if (/^\/levels\/?$/.test(path)) return { page: "levels" };
+  const play = /^\/play\/([\w-]+)\/?$/.exec(path);
+  if (play?.[1]) return { page: "play", level: play[1] };
   return { page: "not-found", hash };
 }
 
 export function chapterHref(number: number, anchor?: string): string {
   return `#/chapter/${number}${anchor ? `/s/${anchor}` : ""}`;
+}
+
+export function playHref(level: string): string {
+  return `#/play/${level}`;
 }

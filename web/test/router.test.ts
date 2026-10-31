@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chapterHref, parseRoute } from "../src/router";
+import { chapterHref, parseRoute, playHref } from "../src/router";
 
 describe("parseRoute", () => {
   it("parses home, chapters, sections and glossary terms", () => {
@@ -15,6 +15,14 @@ describe("parseRoute", () => {
     expect(parseRoute("#/glossary/mosfet")).toEqual({
       page: "glossary",
       term: "mosfet",
+    });
+  });
+
+  it("parses the level map and level pages", () => {
+    expect(parseRoute("#/levels")).toEqual({ page: "levels" });
+    expect(parseRoute(playHref("nand"))).toEqual({
+      page: "play",
+      level: "nand",
     });
   });
 

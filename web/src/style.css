@@ -425,3 +425,563 @@ s2t-core-status[data-state="ok"]::before {
 s2t-core-status[data-state="error"] {
   color: var(--error);
 }
+
+/* ---- Levels and the circuit editor ---------------------------------------- */
+
+:root {
+  --wire-1: #c2410c;
+  --wire-0: #475569;
+  --wire-z: #94a3b8;
+  --wire-x: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --wire-1: #fb923c;
+    --wire-0: #94a3b8;
+    --wire-z: #64748b;
+    --wire-x: #f87171;
+  }
+}
+
+body.wide {
+  max-width: 76rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.notice {
+  border-left: 4px solid var(--error);
+  background: var(--surface);
+  padding: 0.5rem 0.75rem;
+}
+
+.crumbs {
+  font-size: 0.9375rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.goal {
+  white-space: pre-line;
+  color: var(--muted);
+  margin-top: 0;
+}
+
+button {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+  font-weight: 600;
+  padding: 0.45rem 1.25rem;
+  margin: 0.75rem 0;
+}
+
+.level-cards {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.75rem;
+}
+
+.level-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.level-card h3 {
+  margin: 0;
+}
+
+.level-card p {
+  margin: 0.25rem 0;
+  font-size: 0.9375rem;
+}
+
+.level-card[data-status="locked"] {
+  opacity: 0.7;
+}
+
+.level-card[data-status="passed"] {
+  border-color: var(--ok);
+}
+
+.level-card[data-status="broken"] {
+  border-color: var(--error);
+}
+
+.level-status {
+  font-weight: 600;
+}
+
+.file-button {
+  display: inline-block;
+  margin-left: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  background: var(--surface);
+}
+
+.file-button input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+}
+
+.file-button:focus-within {
+  outline: 3px solid var(--focus);
+}
+
+.play-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .play-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.toolbar .spacer {
+  flex: 1;
+}
+
+.tool {
+  touch-action: none;
+}
+
+.tool.component {
+  border-color: var(--accent);
+}
+
+.ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 30;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.875rem;
+}
+
+.canvas-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+}
+
+svg.circuit {
+  display: block;
+  width: 100%;
+  min-width: 640px;
+  height: auto;
+  touch-action: none;
+  user-select: none;
+  font:
+    12px system-ui,
+    sans-serif;
+}
+
+svg.circuit text {
+  fill: var(--text);
+}
+
+.grid-dot {
+  fill: var(--border);
+}
+
+.canvas-bg {
+  stroke: none;
+}
+
+.sym {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2;
+}
+
+.part .channel {
+  stroke-width: 3;
+  stroke-dasharray: 4 3;
+}
+
+.part.on .channel {
+  stroke: var(--wire-1);
+  stroke-width: 4;
+  stroke-dasharray: none;
+}
+
+.part-hit {
+  fill: transparent;
+  stroke: transparent;
+  cursor: grab;
+}
+
+.part:focus {
+  outline: none;
+}
+
+.part:focus .part-hit,
+.part.selected .part-hit {
+  stroke: var(--focus);
+  stroke-width: 2;
+  stroke-dasharray: 5 3;
+}
+
+.part.flagged .part-hit,
+.part.shorted .part-hit {
+  stroke: var(--wire-x);
+  stroke-width: 2.5;
+}
+
+.flag-mark {
+  fill: var(--wire-x) !important;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.box {
+  fill: var(--bg);
+  stroke: var(--text);
+  stroke-width: 2;
+}
+
+.part-label {
+  font-weight: 600;
+}
+
+.part-state,
+.pin-label {
+  fill: var(--muted) !important;
+  font-size: 11px;
+}
+
+.pin {
+  stroke: var(--surface);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.pin-hit {
+  fill: transparent;
+  cursor: crosshair;
+}
+
+.pin-hit:hover + .pin,
+.pin.pending {
+  r: 7;
+  stroke: var(--focus);
+  stroke-width: 3;
+}
+
+.wire-line {
+  fill: none;
+  stroke-width: 2.5;
+}
+
+.wire-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 12;
+  cursor: pointer;
+}
+
+.wire.selected .wire-line {
+  stroke-width: 5;
+}
+
+.wire-tag {
+  fill: var(--surface);
+  stroke-width: 1.5;
+}
+
+.wire-value {
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.wire-draft {
+  fill: none;
+  stroke: var(--focus);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  pointer-events: none;
+}
+
+.v1 .wire-line,
+.v1 .wire-tag {
+  stroke: var(--wire-1);
+}
+.v0 .wire-line,
+.v0 .wire-tag {
+  stroke: var(--wire-0);
+}
+.vZ .wire-line,
+.vZ .wire-tag {
+  stroke: var(--wire-z);
+  stroke-dasharray: 3 4;
+}
+.vX .wire-line,
+.vX .wire-tag {
+  stroke: var(--wire-x);
+  stroke-dasharray: 8 4;
+}
+.pin.v1 {
+  fill: var(--wire-1);
+}
+.pin.v0 {
+  fill: var(--wire-0);
+}
+.pin.vZ {
+  fill: var(--wire-z);
+}
+.pin.vX {
+  fill: var(--wire-x);
+}
+
+.port-box {
+  fill: var(--bg);
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+
+.port.in .port-box {
+  cursor: pointer;
+}
+
+.port.v1 .port-box {
+  stroke: var(--wire-1);
+  stroke-width: 2.5;
+}
+
+.port.flagged .port-box {
+  stroke: var(--wire-x);
+  stroke-width: 3;
+}
+
+.port-label {
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.editor-status {
+  min-height: 1.5em;
+  margin: 0.375rem 0;
+  font-size: 0.9375rem;
+}
+
+.help {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.side h2 {
+  font-size: 1.125rem;
+  margin: 0 0 0.5rem;
+}
+
+.side h2 ~ h2 {
+  margin-top: 1.25rem;
+}
+
+.input-toggles {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.input-toggle[aria-pressed="true"] {
+  border-color: var(--wire-1);
+  font-weight: 700;
+}
+
+table.truth {
+  display: table;
+  font-variant-numeric: tabular-nums;
+}
+
+table.truth td,
+table.truth th {
+  text-align: center;
+  padding: 0.25rem 0.375rem;
+}
+
+table.truth tr[data-row] {
+  cursor: pointer;
+}
+
+table.truth tr.current {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+table.truth .ok {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+table.truth .bad {
+  color: var(--error);
+  font-weight: 600;
+}
+
+table.truth .mark {
+  white-space: nowrap;
+  font-size: 0.8125rem;
+}
+
+.passed {
+  border: 2px solid var(--ok);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.passed p {
+  margin: 0.25rem 0;
+}
+
+.failed {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.diagnostics,
+.problems {
+  padding-left: 1.1rem;
+  font-size: 0.9375rem;
+}
+
+.diagnostics {
+  list-style: none;
+  padding-left: 0;
+}
+
+.diagnostics li {
+  margin-bottom: 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--error);
+}
+
+button.diag {
+  display: block;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  text-decoration: underline dotted;
+}
+
+.hint {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+}
+
+.problems li.error {
+  color: var(--error);
+}
+
+.problems li.warning {
+  color: var(--muted);
+}
+
+.kbd-panel {
+  margin-top: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.kbd-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.kbd-list li {
+  margin: 0.25rem 0;
+}
+
+.connect {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  align-items: center;
+}
+
+.connect select {
+  font: inherit;
+  max-width: 12rem;
+}
+
+.inside {
+  margin-top: 1rem;
+  border: 2px solid var(--focus);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  background: var(--surface);
+}
+
+.inside-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.inside-head h2 {
+  margin: 0;
+  font-size: 1.0625rem;
+}
+
+svg.circuit.read-only .part-hit,
+svg.circuit.read-only .pin-hit {
+  cursor: default;
+}
