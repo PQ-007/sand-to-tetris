@@ -373,3 +373,94 @@
   term: "Flags"
   short: "Single-bit facts about an ALU result (is it zero? negative? was there a carry?) that the CPU uses to decide what to do next."
   see: [alu]
+
+# ---- Chapter 3: memory -------------------------------------------------------------
+
+- id: sequential-circuit
+  term: "Sequential circuit"
+  short: "A circuit whose outputs depend on what happened before, not just on its inputs right now: it has memory."
+  long: "The opposite of a combinational circuit. Sequential circuits are built with [[feedback]], and most are driven by a [[clock]]."
+  see: [feedback, latch, flip-flop]
+
+- id: feedback
+  term: "Feedback"
+  short: "Wiring a circuit's output back into its own input, so what it does next depends on what it is doing now."
+  long: "Feedback is what lets a [[latch]] remember. It can also make a circuit oscillate, flipping forever."
+  see: [latch]
+
+- id: latch
+  term: "Latch"
+  short: "The simplest memory: two gates feeding each other, which hold one bit after the signal that set it has gone."
+  long: "An SR latch has set and reset inputs. A D latch has one data input that it copies while its enable is 1 and holds while enable is 0."
+  see: [feedback, flip-flop]
+
+- id: flip-flop
+  term: "Flip-flop"
+  short: "A one-bit memory that changes only at the moment its clock rises from 0 to 1."
+  long: "Built from two [[latches|latch]] that are never open at the same time (master–slave). Because it ignores its input between clock edges, a whole computer of flip-flops moves in lockstep."
+  see: [latch, clock, clock-edge]
+
+- id: clock
+  term: "Clock"
+  short: "A signal that switches between 0 and 1 over and over, telling every flip-flop when to take its next value."
+  long: "Each 0-to-1 transition is a tick. A processor's clock speed (say, 3 GHz) is how many ticks it gets per second."
+  see: [clock-edge, flip-flop]
+
+- id: clock-edge
+  term: "Clock edge"
+  short: "The instant the clock changes. A rising edge is 0 to 1, the moment flip-flops store."
+  see: [clock, setup-time]
+
+- id: setup-time
+  term: "Setup time"
+  short: "How long a flip-flop's input must stay steady before the clock edge so the right value is stored."
+  long: "If the input changes too close to the edge, the flip-flop may store the old value, the new one, or briefly neither. The tests in this course keep inputs steady at every rising edge."
+  see: [clock-edge]
+
+- id: register
+  term: "Register"
+  short: "A small memory holding one number (here, 16 bits), loaded all at once on a clock edge when its load input is 1."
+  see: [flip-flop, ram]
+
+- id: address
+  term: "Address"
+  short: "A number saying which word of memory to read or write, like a house number on a street."
+  see: [ram]
+
+- id: ram
+  term: "RAM"
+  short: "Random-access memory: many registers, each with an address, where any word can be read or written as quickly as any other."
+  long: '"Random access" means you can jump straight to any address, unlike a tape that must be wound to the right place.'
+  see: [address, register, sram, dram]
+
+- id: program-counter
+  term: "Program counter"
+  short: "The register holding the address of the next instruction. It counts up by one, or jumps when told to."
+  see: [register]
+
+- id: waveform
+  term: "Waveform"
+  short: "A picture of signals over time: one row per signal, time running left to right. Also called a timing diagram."
+
+- id: magnetic-core-memory
+  term: "Magnetic-core memory"
+  short: "Memory made of tiny magnetic rings threaded on wires, each ring storing one bit in the direction it's magnetized."
+  long: "The main memory of most computers from the mid-1950s to the 1970s. Unlike transistor memory, it kept its contents with the power off."
+  see: [ram, dram]
+
+- id: sram
+  term: "SRAM"
+  short: "Static RAM: each bit is a latch, usually six transistors, which holds its value as long as there is power."
+  long: "Fast but large. Processors use it for their caches. The RAM you build in this course is static too, made of flip-flops."
+  see: [dram, latch]
+
+- id: dram
+  term: "DRAM"
+  short: "Dynamic RAM: each bit is a charge on a tiny capacitor, guarded by one transistor. It must be refreshed constantly because the charge leaks away."
+  long: "Much smaller per bit than [[SRAM|sram]], so it's used for a computer's main memory."
+  see: [sram, capacitor]
+
+- id: capacitor
+  term: "Capacitor"
+  short: "Two conductors separated by an insulator, which hold electric charge, like a tiny rechargeable bucket."
+  see: [dram]

@@ -9,4 +9,5 @@ export const KNOWN_TAGS = [
   "noise-chain",
   "switch-network",
   "ripple-adder",
+  "latch-demo",
 ] as const;

@@ -454,3 +454,70 @@
   checked: order-of-magnitude estimate, 2026-10-31
   uncertain: >-
     These are rough orders of magnitude for illustration, not measurements.
+
+# ---- Chapter 3: memory -------------------------------------------------------------
+
+- id: eccles-jordan
+  claim: >-
+    In June 1918 William Eccles and F. W. Jordan applied for a patent on a
+    circuit of two cross-coupled vacuum tubes that stays in either of two
+    states after the signal that set it is gone: the first flip-flop. It was
+    later used in the Colossus and ENIAC computers.
+  sources:
+    - title: "Re-creating the First Flip-Flop (IEEE Spectrum)"
+      url: https://spectrum.ieee.org/recreating-the-first-flipflop
+    - title: "Eccles & Jordan Invent the Flip-Flop Circuit (History of Information)"
+      url: https://www.historyofinformation.com/detail.php?id=3606
+  checked: web search and IEEE Spectrum article read, 2026-11-01
+
+- id: core-memory
+  claim: >-
+    Several people filed patents on magnetic-core memory: Frederick Viehe in
+    1947, An Wang in 1949, Jan Rajchman (RCA) in 1950 and Jay Forrester (MIT)
+    in 1951. MIT's Whirlwind computer, led by Forrester, first demonstrated
+    core memory in August 1953: a 32 × 32 plane of 1,024 cores replacing a
+    troublesome storage-tube memory. Core memory was the main form of
+    computer memory for roughly 20 years, about 1955 to 1975, and kept its
+    contents with the power off.
+  sources:
+    - title: "1953: Whirlwind computer debuts core memory (Computer History Museum)"
+      url: https://www.computerhistory.org/storageengine/whirlwind-computer-debuts-core-memory/
+    - title: "Magnetic-core memory (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Magnetic-core_memory
+  checked: >-
+    web search and the Computer History Museum page read (computerhistory.org
+    was reachable this time), 2026-11-01
+  uncertain: >-
+    Who invented core memory is disputed: Wang's 1949 design used cores as a
+    delay line, while Forrester's team wove them into a grid for random
+    access, and the patent fights lasted into the 1960s. Sources also differ
+    on the exact 1953 installation date.
+
+- id: dennard-dram
+  claim: >-
+    Robert Dennard at IBM conceived the one-transistor memory cell (one
+    transistor and one capacitor), the basis of today's DRAM; US patent
+    3,387,286 was granted in June 1968. IBM at first shipped computers with
+    six-transistor static memory (SRAM) instead, which it considered less
+    risky.
+  sources:
+    - title: "Thanks for the Memories (IEEE Spectrum)"
+      url: https://spectrum.ieee.org/semiconductors/memory/thanks-for-the-memories
+    - title: "Robert H. Dennard (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Robert_H._Dennard
+  checked: web search and IEEE Spectrum article read, 2026-11-01
+  uncertain: >-
+    Sources date the idea to 1966 or 1967: Dennard worked on it from late
+    1966 and recorded it in his IBM notebook in 1967.
+
+- id: intel-1103
+  claim: >-
+    Intel's 1103, introduced in October 1970, was the first commercially
+    available DRAM chip. It held 1,024 bits using three transistors per bit,
+    and replaced magnetic-core memory in many computers.
+  sources:
+    - title: "Intel 1103 (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Intel_1103
+    - title: "Thanks for the Memories (IEEE Spectrum)"
+      url: https://spectrum.ieee.org/semiconductors/memory/thanks-for-the-memories
+  checked: web search and both pages read, 2026-11-01

@@ -16,7 +16,8 @@ Learners build components in a drag-and-drop editor, one level per component. A 
 - M3 (Layer 1 in the browser): done. WASM API, drag-and-drop editor with live 0/1/Z/X, level map, unlocking, IndexedDB progress + export/import, look-inside, keyboard panel, Chapter 1. **The first vertical slice (M0-M3) is complete.**
 - M4 (Layer 2): done. Gate-level engine, buses (widths, split/join, repeat + shared), native models + random tests, match check + fast-model swap UI, 18 Layer 2 levels ending in the ALU, Layer 1 constants, Chapter 2 with a ripple-carry demo.
 - ISA decisions so far live in `docs/ISA.md` (16-bit words; hybrid ALU with flags Z N C; shifts deferred). Update it only after discussing with the user.
-- M5 (Layer 3, memory): in progress. Done: sequential levels in the core; SR latch → D latch → D flip-flop → Bit → Register → RAM8 → RAM64 → RAM512 → RAM4K and PC with references (+ Layer 2 DMUX4WAY, DMUX8WAY, MUX8WAY16); clocked fast models with a sequential match check; live memory in the editor; the waveform view. Next: Chapter 3 (memory), with cited history. Decisions are in `docs/PLAN.md` ("M5 decisions"). Keep this section up to date when a milestone lands.
+- M5 (Layer 3, memory): done. Sequential levels in the core; SR latch → D latch → D flip-flop → Bit → Register → RAM8 → RAM64 → RAM512 → RAM4K and PC with references (+ Layer 2 DMUX4WAY, DMUX8WAY, MUX8WAY16); clocked fast models with a sequential match check; live memory in the editor; the waveform view; Chapter 3 with a latch demo and cited history (Eccles–Jordan, core memory, Dennard's DRAM cell, Intel 1103).
+- Next: M6, the ISA, designed together with the user (Rule 5): propose options and trade-offs, don't decide alone. Decisions are in `docs/PLAN.md` ("M5 decisions"). Keep this section up to date when a milestone lands.
 
 ## Commands
 

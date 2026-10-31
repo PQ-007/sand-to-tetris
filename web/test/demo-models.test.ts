@@ -218,3 +218,35 @@ describe("ripple-carry adder", () => {
     );
   });
 });
+
+describe("NOR latch", () => {
+  it("set stores 1 after two gate delays, and holding keeps it", async () => {
+    const { settle, POWER_ON } = await import("../src/demos/latch");
+    const set = settle(1, 0, POWER_ON);
+    expect(set.settled).toBe(true);
+    expect(set.trace.length).toBe(2);
+    expect(set.trace.at(-1)).toEqual({ q: 1, qn: 0 });
+    const hold = settle(0, 0, { q: 1, qn: 0 });
+    expect(hold.trace).toEqual([]);
+    expect(hold.settled).toBe(true);
+  });
+
+  it("starts unknown, and holding an unknown keeps it unknown", async () => {
+    const { settle, POWER_ON } = await import("../src/demos/latch");
+    expect(POWER_ON).toEqual({ q: "X", qn: "X" });
+    expect(settle(0, 0, POWER_ON).trace).toEqual([]);
+    expect(settle(0, 1, POWER_ON).trace.at(-1)).toEqual({ q: 0, qn: 1 });
+  });
+
+  it("both inputs high is the forbidden state; releasing both at once oscillates", async () => {
+    const { settle } = await import("../src/demos/latch");
+    const both = settle(1, 1, { q: 1, qn: 0 });
+    expect(both.trace.at(-1)).toEqual({ q: 0, qn: 0 });
+    const release = settle(0, 0, { q: 0, qn: 0 });
+    expect(release.settled).toBe(false);
+    expect(release.trace.slice(0, 2)).toEqual([
+      { q: 1, qn: 1 },
+      { q: 0, qn: 0 },
+    ]);
+  });
+});
