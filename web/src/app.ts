@@ -1,5 +1,6 @@
 // App-wide state: the core, the levels and the learner's progress.
 import { levelFiles } from "virtual:s2t-content";
+import { activeFast, loadFast, saveFast, type FastSet } from "./fast";
 import { statuses, type LevelEntry, type Progress, type Status } from "./game";
 import { openStore, type ProgressStore } from "./progress";
 import { check, levelInfo, loadCore } from "./sim/core";
@@ -10,6 +11,8 @@ export interface App {
   progress: Progress;
   status: Record<string, Status>;
   store: ProgressStore;
+  /** Components chosen to run as fast models (with design fingerprints). */
+  fast: FastSet;
 }
 
 let app: Promise<App> | undefined;
@@ -27,6 +30,7 @@ export function getApp(): Promise<App> {
       levels,
       progress,
       store,
+      fast: loadFast(),
       status: statuses(levels, progress, check),
     };
   })();
@@ -64,4 +68,19 @@ export async function replaceProgress(
 
 export function levelEntry(a: App, id: string): LevelEntry | undefined {
   return a.levels.find((l) => l.info.level.id === id);
+}
+
+/** Components currently running as fast models (passed, design unchanged). */
+export function fastIds(a: App): string[] {
+  const designs: Record<string, Design> = {};
+  for (const [id, p] of Object.entries(a.progress)) {
+    if (a.status[id] === "passed") designs[id] = p.design;
+  }
+  return activeFast(a.fast, designs);
+}
+
+export function setFast(a: App, id: string, fingerprint: string | null): void {
+  if (fingerprint) a.fast[id] = fingerprint;
+  else delete a.fast[id];
+  saveFast(a.fast);
 }

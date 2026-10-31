@@ -107,3 +107,16 @@ export interface LibraryInput {
   /** Components running as fast models. */
   fast?: string[];
 }
+
+export interface MatchReport {
+  component: string;
+  ok: boolean;
+  exhaustive: boolean;
+  compared: number;
+  failed: number;
+  mismatches: {
+    inputs: [string, string][];
+    expected: [string, string][];
+    actual: [string, string][];
+  }[];
+}

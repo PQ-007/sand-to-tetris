@@ -99,12 +99,16 @@ export function playLibrary(
   progress: Progress,
   status: Record<string, Status>,
   level: string,
+  fast: string[] = [],
 ): LibraryInput {
   const working: Record<string, Design> = {};
   for (const [id, p] of Object.entries(progress)) {
     if (status[id] === "passed") working[id] = p.design;
   }
-  return libraryFor(levels, working, level);
+  return {
+    ...libraryFor(levels, working, level),
+    fast: fast.filter((f) => f !== level && working[f]),
+  };
 }
 
 export interface ToolboxItem {
@@ -139,6 +143,11 @@ export function toolbox(
           primitive: true,
         }))
       : [];
+  if (me.layer >= 2) {
+    // Buses arrive in Layer 2: wiring parts route bits, they add no logic.
+    items.push({ kind: "split", label: "Splitter", primitive: false });
+    items.push({ kind: "join", label: "Joiner", primitive: false });
+  }
   for (const l of orderLevels(levels)) {
     const c = l.info.level;
     if (c.id !== level && c.layer <= me.layer && status[c.id] === "passed") {

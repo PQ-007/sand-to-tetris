@@ -139,6 +139,8 @@ describe("what a level may use", () => {
     const levels = [...LEVELS, entry("mux", 2, ["nand"]), entry("alu", 3)];
     const st = { ...s, alu: "passed" as const };
     expect(toolbox(levels, st, "mux").map((t) => t.kind)).toEqual([
+      "split",
+      "join",
       "not",
       "nand",
     ]);
