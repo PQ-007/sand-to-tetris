@@ -5,3 +5,4 @@ import "./mosfet-demo";
 import "./wafer-flow";
 import "./noise-chain";
 import "./switch-network";
+import "./ripple-adder";
