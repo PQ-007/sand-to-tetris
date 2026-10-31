@@ -1,0 +1,9 @@
+[package]
+name = "s2t-netlist"
+description = "Netlist format, validation and layering rules for Sand to Tetris"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true

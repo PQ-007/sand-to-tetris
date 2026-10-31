@@ -1,0 +1,17 @@
+[package]
+name = "s2t-wasm"
+description = "Browser bridge: exposes the Sand to Tetris simulator core to JavaScript"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+# cdylib = the .wasm file for the browser; rlib = lets `cargo test` run natively.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+s2t-netlist.workspace = true
+wasm-bindgen.workspace = true
+
+[lints]
+workspace = true

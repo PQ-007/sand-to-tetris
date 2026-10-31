@@ -1,0 +1,24 @@
+[workspace]
+resolver = "2"
+members = ["sim/crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/pq-007/sand-to-tetris"
+
+[workspace.dependencies]
+s2t-netlist = { path = "sim/crates/netlist" }
+# Must match the wasm-bindgen-cli version used by scripts/build-wasm.mjs.
+wasm-bindgen = "=0.2.130"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+
+[profile.release]
+opt-level = 3
+lto = true

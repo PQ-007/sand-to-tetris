@@ -1,0 +1,5 @@
+# Pinned so CI, the browser build and every dev container use the same compiler.
+[toolchain]
+channel = "1.97.0"
+components = ["rustfmt", "clippy"]
+targets = ["wasm32-unknown-unknown"]
