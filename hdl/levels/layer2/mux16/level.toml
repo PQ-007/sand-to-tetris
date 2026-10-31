@@ -1,0 +1,21 @@
+id = "mux16"
+name = "MUX16"
+layer = 2
+goal = """
+Build a 16-bit multiplexer: choose between two 16-bit numbers with a single sel bit.
+Repeat your MUX 16 times, but all copies must share the same sel.
+"""
+inputs = ["a", "b", "sel"]
+outputs = ["out"]
+requires = ["mux"]
+widths = { a = 16, b = 16, out = 16 }
+model = "mux16"
+truth_table = """
+a b sel | out
+0x1234 0xabcd 0 | 0x1234
+0x1234 0xabcd 1 | 0xabcd
+0xffff 0x0000 1 | 0x0000
+"""
+
+[hints]
+wrong = "Repeat the MUX ×16 and mark sel as shared, so every copy reads the same select bit."

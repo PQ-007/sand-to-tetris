@@ -1,7 +1,14 @@
 // Loads the Rust simulator core (compiled to WASM by `npm run build:wasm`)
 // and wraps its JSON API with types.
 import init, * as wasm from "./pkg/s2t_wasm.js";
-import type { Design, LevelInfo, LibraryInput, Report, SimView } from "./types";
+import type {
+  Design,
+  LevelInfo,
+  LibraryInput,
+  MatchReport,
+  Report,
+  SimView,
+} from "./types";
 
 let ready: Promise<void> | undefined;
 
@@ -46,4 +53,13 @@ export function simulate(
       JSON.stringify(inputs),
     ),
   ) as SimView;
+}
+
+export function matchCheck(
+  library: LibraryInput,
+  component: string,
+): MatchReport {
+  return JSON.parse(
+    wasm.matchCheck(JSON.stringify(library), component),
+  ) as MatchReport;
 }

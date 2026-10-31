@@ -1,0 +1,23 @@
+id = "fulladder"
+name = "Full adder"
+layer = 2
+goal = """
+Add three bits: a, b, and a carry c coming in from the column to the right. This is one column of written addition.
+"""
+inputs = ["a", "b", "c"]
+outputs = ["sum", "carry"]
+requires = ["halfadder", "or"]
+truth_table = """
+a b c | sum carry
+0 0 0 | 0 0
+0 0 1 | 1 0
+0 1 0 | 1 0
+0 1 1 | 0 1
+1 0 0 | 1 0
+1 0 1 | 0 1
+1 1 0 | 0 1
+1 1 1 | 1 1
+"""
+
+[hints]
+wrong = "Add a and b with one half adder, then add c to that sum with a second. There's a carry out if either half adder carried."

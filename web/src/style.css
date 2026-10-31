@@ -620,8 +620,7 @@ button.primary {
 
 svg.circuit {
   display: block;
-  width: 100%;
-  min-width: 640px;
+  max-width: none;
   height: auto;
   touch-action: none;
   user-select: none;
@@ -996,4 +995,83 @@ svg.circuit.read-only .pin-hit {
   .narrow-note {
     display: block;
   }
+}
+
+/* ---- Buses, properties, fast models --------------------------------------- */
+
+.wire.bus .wire-line {
+  stroke-width: 5;
+}
+
+.wire.vbus .wire-line,
+.wire.vbus .wire-tag,
+.port.vbus .port-box {
+  stroke: var(--digital);
+}
+
+.pin.vbus {
+  fill: var(--digital);
+}
+
+.bus-bar {
+  fill: var(--text);
+}
+
+.bit-label {
+  fill: var(--muted) !important;
+  font-size: 9px;
+}
+
+.sim-stats {
+  margin: 0.375rem 0 0;
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+.props fieldset {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  margin: 0.5rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+
+.props input[type="number"] {
+  width: 4.5rem;
+  font: inherit;
+}
+
+.props .check {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.bus-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  font-size: 0.9375rem;
+}
+
+.bus-input input {
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  width: 8rem;
+}
+
+.runs-as {
+  padding-left: 1.1rem;
+  font-size: 0.9375rem;
+}
+
+.swap button[aria-pressed="true"] {
+  border-color: var(--digital);
+  font-weight: 600;
+}
+
+.swap-result {
+  font-size: 0.875rem;
 }

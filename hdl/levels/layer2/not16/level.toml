@@ -1,0 +1,22 @@
+id = "not16"
+name = "NOT16"
+layer = 2
+goal = """
+Build a 16-bit NOT: invert all 16 bits of a bus at once.
+A bus is a bundle of wires carrying a whole number. Use your NOT with Repeat ×16.
+"""
+inputs = ["a"]
+outputs = ["out"]
+requires = ["not"]
+widths = { a = 16, out = 16 }
+model = "not16"
+truth_table = """
+a | out
+0x0000 | 0xffff
+0xffff | 0x0000
+0x00ff | 0xff00
+0x1234 | 0xedcb
+"""
+
+[hints]
+wrong = "Use Repeat: one gate, repeated 16 times, works on all 16 bits at once."

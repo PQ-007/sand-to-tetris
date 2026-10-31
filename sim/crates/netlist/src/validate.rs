@@ -5,7 +5,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::design::{Design, Endpoint};
+use crate::design::{Design, Endpoint, Part};
 use crate::level::Level;
 
 /// The built-in parts of Layer 1. Every higher layer is built only from
@@ -130,6 +130,18 @@ pub enum Problem {
     OutputUnconnected {
         port: String,
     },
+    /// A part's options (width, repeat, shared pins) don't make sense.
+    BadPart {
+        part: String,
+        reason: String,
+    },
+    /// A wire joins two ends of different widths.
+    WidthMismatch {
+        from: String,
+        from_width: u32,
+        to: String,
+        to_width: u32,
+    },
     // ---- warnings ----
     InputUnused {
         port: String,
@@ -164,6 +176,7 @@ impl Problem {
             | Problem::NotUnlocked { part, .. }
             | Problem::SelfReference { part }
             | Problem::UnknownPin { part, .. }
+            | Problem::BadPart { part, .. }
             | Problem::PinUnconnected { part, .. } => vec![part.clone()],
             _ => vec![],
         }
@@ -177,6 +190,14 @@ impl Problem {
             | Problem::InputUnused { port } => vec![port.clone()],
             _ => vec![],
         }
+    }
+}
+
+fn bits(n: u32) -> &'static str {
+    if n == 1 {
+        "bit"
+    } else {
+        "bits"
     }
 }
 
@@ -256,6 +277,18 @@ impl std::fmt::Display for Problem {
             Problem::OutputUnconnected { port } => {
                 write!(f, "output `{port}` isn't connected to anything")
             }
+            Problem::BadPart { part, reason } => write!(f, "part `{part}`: {reason}"),
+            Problem::WidthMismatch {
+                from,
+                from_width,
+                to,
+                to_width,
+            } => write!(
+                f,
+                "a wire joins {from} ({from_width} {}) to {to} ({to_width} {}); both ends must have the same width",
+                bits(*from_width),
+                bits(*to_width)
+            ),
             Problem::InputUnused { port } => write!(f, "input `{port}` isn't used"),
             Problem::PinUnconnected { part, pin } => {
                 write!(f, "`{part}.{pin}` isn't connected")
@@ -264,12 +297,125 @@ impl std::fmt::Display for Problem {
     }
 }
 
-/// Pins of a part kind, if the kind is known.
+/// Parts that only route bits (no logic): a splitter fans a bus out into
+/// single bits named `0`..`N-1` (bit 0 is the least significant); a joiner
+/// gathers them back. Available from Layer 2, where buses appear.
+pub const WIRING: [&str; 2] = ["split", "join"];
+
+/// Which way a pin carries values (for drivers in the gate-level view).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Dir {
+    In,
+    Out,
+    /// Transistor channel ends and rails: no direction at switch level.
+    Both,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PinInfo {
+    pub name: String,
+    pub width: u32,
+    pub dir: Dir,
+}
+
+fn pin_info(name: impl Into<String>, width: u32, dir: Dir) -> PinInfo {
+    PinInfo {
+        name: name.into(),
+        width,
+        dir,
+    }
+}
+
+/// Pins of a part kind, if the kind is known (ignores part options).
 pub fn pins_of(kind: &str, library: &Library) -> Option<Vec<String>> {
     if let Some(p) = Primitive::from_kind(kind) {
         return Some(p.pins().iter().map(|s| s.to_string()).collect());
     }
     library.level(kind).map(|l| l.ports().cloned().collect())
+}
+
+/// Pins of a part, with widths and directions, taking its options into
+/// account. `Err` explains a bad option; `Ok(None)` means an unknown kind.
+pub fn part_pins(part: &Part, library: &Library) -> Result<Option<Vec<PinInfo>>, String> {
+    let wiring = WIRING.contains(&part.kind.as_str());
+    if part.width.is_some() && !wiring {
+        return Err("only splitters and joiners have a width".into());
+    }
+    if part.repeat.is_some() && (wiring || Primitive::from_kind(&part.kind).is_some()) {
+        return Err("only components can be repeated".into());
+    }
+    if !part.shared.is_empty() && part.repeat.is_none() {
+        return Err("shared pins only make sense on a repeated component".into());
+    }
+    if let Some(p) = Primitive::from_kind(&part.kind) {
+        let dir = |name: &str| {
+            if name == "gate" {
+                Dir::In
+            } else if name == "out" {
+                Dir::Out
+            } else {
+                Dir::Both
+            }
+        };
+        return Ok(Some(
+            p.pins().iter().map(|n| pin_info(*n, 1, dir(n))).collect(),
+        ));
+    }
+    if wiring {
+        let n = part.width.ok_or("a splitter or joiner needs a width")?;
+        if !(2..=64).contains(&n) {
+            return Err(format!("width {n} isn't allowed; use 2 to 64"));
+        }
+        let singles = (0..n).map(|i| i.to_string());
+        return Ok(Some(if part.kind == "split" {
+            std::iter::once(pin_info("in", n, Dir::In))
+                .chain(singles.map(|s| pin_info(s, 1, Dir::Out)))
+                .collect()
+        } else {
+            singles
+                .map(|s| pin_info(s, 1, Dir::In))
+                .chain(std::iter::once(pin_info("out", n, Dir::Out)))
+                .collect()
+        }));
+    }
+    let Some(level) = library.level(&part.kind) else {
+        return Ok(None);
+    };
+    let r = part.repeat.unwrap_or(1);
+    if !(1..=64).contains(&r) {
+        return Err(format!("repeat {r} isn't allowed; use 1 to 64"));
+    }
+    for s in &part.shared {
+        if !level.is_input(s) {
+            return Err(format!(
+                "`{s}` can't be shared: only inputs of `{}` can",
+                level.id
+            ));
+        }
+    }
+    let width = |p: &String| {
+        let w = level.width(p);
+        if part.shared.contains(p) {
+            w
+        } else {
+            w * r
+        }
+    };
+    let mut pins: Vec<PinInfo> = level
+        .inputs
+        .iter()
+        .map(|p| pin_info(p.clone(), width(p), Dir::In))
+        .collect();
+    pins.extend(
+        level
+            .outputs
+            .iter()
+            .map(|p| pin_info(p.clone(), width(p), Dir::Out)),
+    );
+    if pins.iter().any(|p| p.width > 64) {
+        return Err("repeating makes a pin wider than 64 bits".into());
+    }
+    Ok(Some(pins))
 }
 
 /// Checks a design against its level and the library. Returns every
@@ -286,7 +432,9 @@ pub fn validate(level: &Level, design: &Design, library: &Library) -> Vec<Proble
 
     // Parts: ids and kinds, including the layering rule.
     let mut kinds: BTreeMap<&str, &str> = BTreeMap::new();
+    let mut parts: BTreeMap<&str, &Part> = BTreeMap::new();
     for part in &design.parts {
+        parts.entry(&part.id).or_insert(part);
         if kinds.insert(&part.id, &part.kind).is_some() {
             problems.push(Problem::DuplicatePart {
                 part: part.id.clone(),
@@ -294,7 +442,20 @@ pub fn validate(level: &Level, design: &Design, library: &Library) -> Vec<Proble
             continue;
         }
         let (id, kind) = (part.id.clone(), part.kind.clone());
-        if Primitive::from_kind(&part.kind).is_some() {
+        if let Err(reason) = part_pins(part, library) {
+            problems.push(Problem::BadPart {
+                part: id.clone(),
+                reason,
+            });
+        }
+        if WIRING.contains(&part.kind.as_str()) {
+            if level.layer == Primitive::LAYER {
+                problems.push(Problem::BadPart {
+                    part: id,
+                    reason: "splitters and joiners arrive in Layer 2, with buses".into(),
+                });
+            }
+        } else if Primitive::from_kind(&part.kind).is_some() {
             if level.layer != Primitive::LAYER {
                 problems.push(Problem::PrimitiveNotAllowed {
                     part: id,
@@ -334,16 +495,22 @@ pub fn validate(level: &Level, design: &Design, library: &Library) -> Vec<Proble
                         });
                     }
                 }
-                Endpoint::Pin { part, pin } => match kinds.get(part.as_str()) {
+                Endpoint::Pin { part, pin } => match parts.get(part.as_str()) {
                     None => problems.push(Problem::UnknownPart { part: part.clone() }),
-                    Some(kind) => {
-                        if let Some(valid) = pins_of(kind, library) {
-                            if !valid.contains(pin) {
+                    Some(p) => {
+                        if let Ok(Some(valid)) = part_pins(p, library) {
+                            if !valid.iter().any(|v| &v.name == pin) {
+                                let mut names: Vec<String> =
+                                    valid.into_iter().map(|v| v.name).collect();
+                                if names.len() > 8 {
+                                    names.truncate(8);
+                                    names.push("…".into());
+                                }
                                 problems.push(Problem::UnknownPin {
                                     part: part.clone(),
-                                    kind: kind.to_string(),
+                                    kind: p.kind.clone(),
                                     pin: pin.clone(),
-                                    valid,
+                                    valid: names,
                                 });
                             }
                         }
@@ -352,6 +519,26 @@ pub fn validate(level: &Level, design: &Design, library: &Library) -> Vec<Proble
             }
             if wire.from != wire.to {
                 wired.insert(end.clone());
+            }
+        }
+        let width_of = |e: &Endpoint| -> Option<u32> {
+            match e {
+                Endpoint::Port { port } => ports.contains(port).then(|| level.width(port)),
+                Endpoint::Pin { part, pin } => parts
+                    .get(part.as_str())
+                    .and_then(|p| part_pins(p, library).ok().flatten())
+                    .and_then(|pins| pins.into_iter().find(|x| &x.name == pin))
+                    .map(|x| x.width),
+            }
+        };
+        if let (Some(a), Some(b)) = (width_of(&wire.from), width_of(&wire.to)) {
+            if a != b {
+                problems.push(Problem::WidthMismatch {
+                    from: wire.from.to_string(),
+                    from_width: a,
+                    to: wire.to.to_string(),
+                    to_width: b,
+                });
             }
         }
     }
@@ -368,16 +555,16 @@ pub fn validate(level: &Level, design: &Design, library: &Library) -> Vec<Proble
         }
     }
     for part in &design.parts {
-        if let Some(pins) = pins_of(&part.kind, library) {
+        if let Ok(Some(pins)) = part_pins(part, library) {
             for pin in pins {
                 let end = Endpoint::Pin {
                     part: part.id.clone(),
-                    pin: pin.clone(),
+                    pin: pin.name.clone(),
                 };
                 if !wired.contains(&end) {
                     problems.push(Problem::PinUnconnected {
                         part: part.id.clone(),
-                        pin,
+                        pin: pin.name,
                     });
                 }
             }
@@ -410,6 +597,7 @@ fn find_cycle(root: &str, design: &Design, library: &Library) -> Option<Vec<Stri
             if let Some(d) = library.design(kind) {
                 for p in &d.parts {
                     if Primitive::from_kind(&p.kind).is_none()
+                        && !WIRING.contains(&p.kind.as_str())
                         && visit(&p.kind, root, library, path, seen)
                     {
                         return true;
@@ -424,7 +612,10 @@ fn find_cycle(root: &str, design: &Design, library: &Library) -> Option<Vec<Stri
     let mut seen = BTreeSet::new();
     for part in &design.parts {
         // Direct self-reference is reported separately.
-        if Primitive::from_kind(&part.kind).is_some() || part.kind == root {
+        if Primitive::from_kind(&part.kind).is_some()
+            || WIRING.contains(&part.kind.as_str())
+            || part.kind == root
+        {
             continue;
         }
         let mut path = vec![root.to_string()];
@@ -577,6 +768,104 @@ mod tests {
                 .to_string(),
             "components depend on each other in a loop: x → y → x"
         );
+    }
+
+    fn bus_library() -> (Library, Level) {
+        let mut lib = library();
+        lib.unlock(not_design());
+        let mut not16 = level("not16", 2, &["a"], &["out"]);
+        not16.widths.insert("a".into(), 16);
+        not16.widths.insert("out".into(), 16);
+        lib.add_level(not16.clone());
+        (lib, not16)
+    }
+
+    #[test]
+    fn repeated_component_gets_wide_pins() {
+        let (lib, not16) = bus_library();
+        let mut d = design(
+            "not16",
+            &[],
+            &[(port("a"), pin("n", "a")), (pin("n", "out"), port("out"))],
+        );
+        d.parts.push(part_with("n", "not", None, Some(16), &[]));
+        assert_eq!(validate(&not16, &d, &lib), vec![]);
+        let pins = part_pins(&d.parts[0], &lib).unwrap().unwrap();
+        assert_eq!((pins[0].width, pins[0].dir), (16, Dir::In));
+    }
+
+    #[test]
+    fn width_mismatches_name_both_ends() {
+        let (lib, not16) = bus_library();
+        let d = design(
+            "not16",
+            &[("n", "not")],
+            &[(port("a"), pin("n", "a")), (pin("n", "out"), port("out"))],
+        );
+        let msgs: Vec<String> = validate(&not16, &d, &lib)
+            .iter()
+            .map(|p| p.to_string())
+            .collect();
+        assert_eq!(
+            msgs[0],
+            "a wire joins port `a` (16 bits) to `n.a` (1 bit); both ends must have the same width"
+        );
+    }
+
+    #[test]
+    fn splitters_and_joiners_route_bits() {
+        let (lib, not16) = bus_library();
+        let mut d = design(
+            "not16",
+            &[],
+            &[
+                (port("a"), pin("s", "in")),
+                (pin("s", "15"), pin("j", "0")),
+                (pin("j", "out"), port("out")),
+            ],
+        );
+        d.parts.push(part_with("s", "split", Some(16), None, &[]));
+        d.parts.push(part_with("j", "join", Some(16), None, &[]));
+        let errors: Vec<_> = validate(&not16, &d, &lib)
+            .into_iter()
+            .filter(Problem::is_error)
+            .collect();
+        assert_eq!(errors, vec![]);
+        // Splitter pins are named by bit; asking for bit 16 fails.
+        let bad = design("not16", &[], &[(pin("s", "16"), port("out"))]);
+        let mut bad = bad;
+        bad.parts.push(part_with("s", "split", Some(16), None, &[]));
+        assert!(validate(&not16, &bad, &lib)
+            .iter()
+            .any(|p| p.to_string().starts_with("a wire goes to `s.16`")));
+    }
+
+    #[test]
+    fn bad_part_options_are_explained() {
+        let (lib, not16) = bus_library();
+        let mut d = design("not16", &[], &[]);
+        d.parts.push(part_with("s", "split", None, None, &[]));
+        d.parts.push(part_with("t", "nmos", None, Some(2), &[]));
+        d.parts.push(part_with("u", "not", None, Some(4), &["out"]));
+        let msgs: Vec<String> = validate(&not16, &d, &lib)
+            .iter()
+            .filter(|p| matches!(p, Problem::BadPart { .. }))
+            .map(|p| p.to_string())
+            .collect();
+        assert_eq!(
+            msgs,
+            [
+                "part `s`: a splitter or joiner needs a width",
+                "part `t`: only components can be repeated",
+                "part `u`: `out` can't be shared: only inputs of `not` can",
+            ]
+        );
+        // And wiring parts don't exist in Layer 1.
+        let mut d1 = design("not", &[], &[]);
+        d1.parts.push(part_with("s", "split", Some(2), None, &[]));
+        assert!(validate(&not_level(), &d1, &lib)
+            .iter()
+            .any(|p| p.to_string().contains("arrive in Layer 2")));
     }
 
     #[test]

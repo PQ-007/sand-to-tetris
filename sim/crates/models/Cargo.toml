@@ -1,0 +1,12 @@
+[package]
+name = "s2t-models"
+description = "Native (fast) models of components, used for random testing and the abstraction swap"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+s2t-netlist.workspace = true
+
+[lints]
+workspace = true

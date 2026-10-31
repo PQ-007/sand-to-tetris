@@ -309,3 +309,58 @@
 - id: universal-gate
   term: "Universal gate"
   short: "A gate from which every other logic function can be built; NAND and NOR are both universal."
+
+- id: abstraction
+  term: "Abstraction"
+  short: "Hiding how something works inside so you can use it by what it does: once your NAND passes, you treat it as a NAND box, not four transistors."
+
+- id: gate-delay
+  term: "Gate delay"
+  short: "The short time a gate takes to update its output after an input changes; the simulator counts it in steps."
+
+- id: multiplexer
+  term: "Multiplexer (MUX)"
+  short: "A circuit that picks one of several inputs and passes it to the output, chosen by select bits."
+  see: [demultiplexer]
+
+- id: demultiplexer
+  term: "Demultiplexer (DMUX)"
+  short: "A circuit that sends one input to one of several outputs, chosen by select bits; the others stay 0."
+  see: [multiplexer]
+
+- id: bus
+  term: "Bus"
+  short: "A bundle of wires that together carry one number, one bit per wire; the editor draws it as one thick wire."
+
+- id: splitter-and-joiner
+  term: "Splitter and joiner"
+  short: "A splitter separates a bus into single-bit wires (bit 0 is the least significant); a joiner gathers single bits back into a bus."
+  see: [bus]
+
+- id: half-adder
+  term: "Half adder"
+  short: "A circuit that adds two bits, giving a sum bit and a carry bit."
+  see: [full-adder]
+
+- id: full-adder
+  term: "Full adder"
+  short: "A circuit that adds three bits (two digits and a carry in), giving a sum bit and a carry out: one column of addition."
+  see: [half-adder, carry]
+
+- id: carry
+  term: "Carry"
+  short: "The extra 1 passed to the next column when a column's sum is too big for one digit."
+
+- id: ripple-carry-adder
+  term: "Ripple-carry adder"
+  short: "An adder made of full adders in a chain, each column's carry feeding the next; simple, but the carry may have to pass through every column."
+  see: [carry, gate-delay]
+
+- id: twos-complement
+  term: "Two's complement"
+  short: "The usual way computers store negative numbers: −x is stored as NOT x + 1, so the same adder handles positive and negative numbers."
+
+- id: fast-model
+  term: "Fast model"
+  short: "A built-in, quick version of a component you designed, used instead of your gates once a match check shows the two behave the same."
+  see: [abstraction]

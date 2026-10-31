@@ -1,0 +1,231 @@
+{
+  "format": 1,
+  "component": "or8way",
+  "parts": [
+    {
+      "id": "s",
+      "kind": "split",
+      "pos": [
+        200,
+        230
+      ],
+      "width": 8
+    },
+    {
+      "id": "o0",
+      "kind": "or",
+      "pos": [
+        320,
+        70
+      ]
+    },
+    {
+      "id": "o1",
+      "kind": "or",
+      "pos": [
+        320,
+        170
+      ]
+    },
+    {
+      "id": "o2",
+      "kind": "or",
+      "pos": [
+        320,
+        270
+      ]
+    },
+    {
+      "id": "o3",
+      "kind": "or",
+      "pos": [
+        320,
+        370
+      ]
+    },
+    {
+      "id": "p0",
+      "kind": "or",
+      "pos": [
+        450,
+        140
+      ]
+    },
+    {
+      "id": "p1",
+      "kind": "or",
+      "pos": [
+        450,
+        320
+      ]
+    },
+    {
+      "id": "q",
+      "kind": "or",
+      "pos": [
+        580,
+        230
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "in"
+      },
+      "to": {
+        "part": "s",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "0"
+      },
+      "to": {
+        "part": "o0",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "1"
+      },
+      "to": {
+        "part": "o0",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "2"
+      },
+      "to": {
+        "part": "o1",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "3"
+      },
+      "to": {
+        "part": "o1",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "4"
+      },
+      "to": {
+        "part": "o2",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "5"
+      },
+      "to": {
+        "part": "o2",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "6"
+      },
+      "to": {
+        "part": "o3",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "7"
+      },
+      "to": {
+        "part": "o3",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "o0",
+        "pin": "out"
+      },
+      "to": {
+        "part": "p0",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "o1",
+        "pin": "out"
+      },
+      "to": {
+        "part": "p0",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "o2",
+        "pin": "out"
+      },
+      "to": {
+        "part": "p1",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "o3",
+        "pin": "out"
+      },
+      "to": {
+        "part": "p1",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "p0",
+        "pin": "out"
+      },
+      "to": {
+        "part": "q",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "p1",
+        "pin": "out"
+      },
+      "to": {
+        "part": "q",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "q",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    }
+  ]
+}

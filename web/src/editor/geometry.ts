@@ -20,6 +20,70 @@ export interface Shape {
   pins: PinSpot[];
 }
 
+/** Ports (and bus widths) of each component kind. */
+export type ComponentPorts = Record<
+  string,
+  {
+    inputs: string[];
+    outputs: string[];
+    name: string;
+    widths?: Record<string, number>;
+  }
+>;
+
+/** The fields of a part that affect its shape and pin widths. */
+export interface PartLike {
+  id?: string;
+  kind: string;
+  width?: number;
+  repeat?: number;
+  shared?: string[];
+}
+
+/** Splitter and joiner pin spacing (one pin per bit). */
+const BIT_GAP = 14;
+
+/**
+ * The shape of a part, taking its options into account: splitters and
+ * joiners get one pin per bit; repeated components keep their normal shape
+ * (their pins just carry more bits).
+ */
+export function shapeOfPart(part: PartLike, ports: ComponentPorts): Shape {
+  if (part.kind === "split" || part.kind === "join") {
+    const n = Math.max(2, part.width ?? 2);
+    const height = n * BIT_GAP + 16;
+    const top = -height / 2 + 8 + BIT_GAP / 2;
+    const bits = Array.from({ length: n }, (_, i) => ({
+      pin: String(i),
+      at: [part.kind === "split" ? 14 : -14, top + i * BIT_GAP] as Point,
+      side: (part.kind === "split" ? "right" : "left") as "left" | "right",
+    }));
+    const bus = {
+      pin: part.kind === "split" ? "in" : "out",
+      at: [part.kind === "split" ? -14 : 14, 0] as Point,
+      side: (part.kind === "split" ? "left" : "right") as "left" | "right",
+    };
+    return {
+      width: 28,
+      height,
+      pins: part.kind === "split" ? [bus, ...bits] : [...bits, bus],
+    };
+  }
+  return shapeOf(part.kind, ports[part.kind]);
+}
+
+/** Bits carried by one pin of a part. */
+export function pinWidth(
+  part: PartLike,
+  pin: string,
+  ports: ComponentPorts,
+): number {
+  if (part.kind === "split") return pin === "in" ? (part.width ?? 1) : 1;
+  if (part.kind === "join") return pin === "out" ? (part.width ?? 1) : 1;
+  const base = ports[part.kind]?.widths?.[pin] ?? 1;
+  return part.shared?.includes(pin) ? base : base * (part.repeat ?? 1);
+}
+
 /**
  * Transistor symbols put the gate on the left. NMOS: drain on top, source
  * at the bottom (sources usually go toward GND). PMOS: source on top
@@ -95,28 +159,59 @@ export function pinPoint(
 }
 
 /** Inputs down the left edge, outputs down the right edge. */
+export interface Size {
+  width: number;
+  height: number;
+}
+
+/** The largest a canvas may grow to. */
+export const MAX_CANVAS: Size = { width: 2400, height: 1600 };
+
+/**
+ * Canvas size for a set of parts: at least the default, and big enough
+ * to leave room around the furthest part (so dragging toward an edge
+ * makes the canvas grow).
+ */
+export function canvasSize(parts: { pos?: Point; shape: Shape }[]): Size {
+  let right = 0;
+  let bottom = 0;
+  for (const { pos, shape } of parts) {
+    if (!pos) continue;
+    right = Math.max(right, pos[0] + shape.width / 2);
+    bottom = Math.max(bottom, pos[1] + shape.height / 2);
+  }
+  const fit = (v: number, min: number, max: number) =>
+    Math.min(max, Math.max(min, Math.ceil(v / 40) * 40));
+  return {
+    width: fit(right + 200, CANVAS.width, MAX_CANVAS.width),
+    height: fit(bottom + 80, CANVAS.height, MAX_CANVAS.height),
+  };
+}
+
 export function portPoint(
   name: string,
   inputs: string[],
   outputs: string[],
+  size: Size = CANVAS,
 ): Point | undefined {
   const place = (list: string[], x: number): Point | undefined => {
     const i = list.indexOf(name);
     if (i < 0) return undefined;
-    const gap = CANVAS.height / (list.length + 1);
+    const gap = size.height / (list.length + 1);
     return [x, Math.round((gap * (i + 1)) / GRID) * GRID];
   };
-  return place(inputs, 60) ?? place(outputs, CANVAS.width - 60);
+  return place(inputs, 60) ?? place(outputs, size.width - 60);
 }
 
 export function snap(p: Point): Point {
   return [Math.round(p[0] / GRID) * GRID, Math.round(p[1] / GRID) * GRID];
 }
 
+/** Keeps a part inside the largest canvas (and clear of the ports). */
 export function clampToCanvas(p: Point): Point {
   return [
-    Math.min(CANVAS.width - 130, Math.max(130, p[0])),
-    Math.min(CANVAS.height - 40, Math.max(40, p[1])),
+    Math.min(MAX_CANVAS.width - 130, Math.max(130, p[0])),
+    Math.min(MAX_CANVAS.height - 40, Math.max(40, p[1])),
   ];
 }
 

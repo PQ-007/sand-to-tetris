@@ -184,3 +184,37 @@ describe("switch networks", () => {
     ]);
   });
 });
+
+describe("ripple-carry adder", () => {
+  it("settles instantly when no column has to wait", async () => {
+    const { settleSteps } = await import("../src/demos/ripple");
+    expect(settleSteps(0, 0, 8)).toBe(0);
+    expect(settleSteps(0b1100, 0b1100, 8)).toBe(0);
+  });
+
+  it("waits one step per column the carry passes through", async () => {
+    const { settleSteps } = await import("../src/demos/ripple");
+    // 255 + 1: bit 0 makes a carry, which then ripples up 7 more columns.
+    expect(settleSteps(255, 1, 8)).toBe(7);
+    // 255 + 0: no carry ever happens, but every column must wait to learn that.
+    expect(settleSteps(255, 0, 8)).toBe(8);
+    expect(settleSteps(3, 0, 8)).toBe(2);
+  });
+
+  it("ends with the right sum, and unknown bits on the way", async () => {
+    const { rippleAt } = await import("../src/demos/ripple");
+    const start = rippleAt(255, 1, 8, 0);
+    expect(start.sums[0]).toBe(0);
+    expect(start.sums[3]).toBeNull();
+    const end = rippleAt(255, 1, 8, 7);
+    expect(end.done).toBe(true);
+    expect(end.sums.reduce<number>((n, s, i) => n + (s ?? 0) * 2 ** i, 0)).toBe(
+      0,
+    );
+    expect(end.carries[8]).toBe(1); // carry out of the top column
+    const mid = rippleAt(100, 27, 8, 10);
+    expect(mid.sums.reduce<number>((n, s, i) => n + (s ?? 0) * 2 ** i, 0)).toBe(
+      127,
+    );
+  });
+});

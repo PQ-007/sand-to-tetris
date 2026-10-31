@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "component": "one",
+  "parts": [
+    {
+      "id": "v",
+      "kind": "vdd",
+      "pos": [
+        360,
+        220
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "part": "v",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    }
+  ]
+}

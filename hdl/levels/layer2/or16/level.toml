@@ -1,0 +1,20 @@
+id = "or16"
+name = "OR16"
+layer = 2
+goal = """
+Build a 16-bit OR: OR each bit of a with the same bit of b.
+"""
+inputs = ["a", "b"]
+outputs = ["out"]
+requires = ["or"]
+widths = { a = 16, b = 16, out = 16 }
+model = "or16"
+truth_table = """
+a b | out
+0x0000 0x0000 | 0x0000
+0x00ff 0x0ff0 | 0x0fff
+0x1234 0xf0f0 | 0xf2f4
+"""
+
+[hints]
+wrong = "Use Repeat: one gate, repeated 16 times, works on all 16 bits at once."

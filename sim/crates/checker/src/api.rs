@@ -1,16 +1,20 @@
 //! JSON-in, JSON-out functions for the browser. `s2t-wasm` wraps them 1:1,
 //! so all logic stays here where it is tested natively.
 //!
-//! A *library* is `{"levels": [<level.toml text>...], "unlocked": [<design>...]}`:
-//! every level definition, plus the designs the learner has passed.
+//! A *library* is
+//! `{"levels": [<level.toml text>...], "unlocked": [<design>...], "fast": [<id>...]}`:
+//! every level definition, the designs the learner has passed, and which
+//! components currently run as fast models.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 
-use s2t_netlist::{flatten_preview, Design, Endpoint, FlattenError, Level, Library};
-use s2t_switch::{Conduct, Sim, Value};
+use s2t_gate::bits_to_number;
+use s2t_netlist::{flatten_preview, Design, Endpoint, FlattenError, Level, Library, Value};
+use s2t_switch::{Conduct, Sim};
 
+use crate::gatecheck::prepare;
 use crate::{ReportProblem, Table};
 
 #[derive(Deserialize)]
@@ -19,9 +23,11 @@ struct LibraryInput {
     levels: Vec<String>,
     #[serde(default)]
     unlocked: Vec<Design>,
+    #[serde(default)]
+    fast: BTreeSet<String>,
 }
 
-fn load_library(json: &str) -> Result<Library, String> {
+fn load_library(json: &str) -> Result<(Library, BTreeSet<String>), String> {
     let input: LibraryInput =
         serde_json::from_str(json).map_err(|e| format!("couldn't read library: {e}"))?;
     let mut lib = Library::new();
@@ -31,7 +37,7 @@ fn load_library(json: &str) -> Result<Library, String> {
     for d in input.unlocked {
         lib.unlock(d);
     }
-    Ok(lib)
+    Ok((lib, input.fast))
 }
 
 fn find_level(lib: &Library, id: &str) -> Result<Level, String> {
@@ -48,8 +54,8 @@ fn parse_design(json: &str) -> Result<Design, String> {
 
 #[derive(Debug, Serialize)]
 pub struct InfoRow {
-    pub inputs: Vec<(String, u8)>,
-    pub outputs: Vec<(String, u8)>,
+    pub inputs: Vec<(String, u64)>,
+    pub outputs: Vec<(String, u64)>,
 }
 
 #[derive(Debug, Serialize)]
@@ -62,13 +68,12 @@ pub struct LevelInfo {
 pub fn level_info(toml: &str) -> Result<LevelInfo, String> {
     let level = Level::from_toml(toml).map_err(|e| e.to_string())?;
     let table = Table::parse(&level.truth_table, &level).map_err(|e| e.to_string())?;
-    let bits = |v: &[(String, bool)]| v.iter().map(|(k, b)| (k.clone(), u8::from(*b))).collect();
     let table = table
         .rows
-        .iter()
+        .into_iter()
         .map(|r| InfoRow {
-            inputs: bits(&r.inputs),
-            outputs: bits(&r.outputs),
+            inputs: r.inputs,
+            outputs: r.outputs,
         })
         .collect();
     Ok(LevelInfo { level, table })
@@ -76,12 +81,12 @@ pub fn level_info(toml: &str) -> Result<LevelInfo, String> {
 
 // ---- check -----------------------------------------------------------------------
 
-/// Runs a level's tests. See [`crate::check`].
+/// Runs a level's tests. See [`crate::check_with`].
 pub fn check(library: &str, level: &str, design: &str) -> Result<crate::Report, String> {
-    let lib = load_library(library)?;
+    let (lib, fast) = load_library(library)?;
     let level = find_level(&lib, level)?;
     let design = parse_design(design)?;
-    crate::check(&level, &design, &lib).map_err(|e| e.to_string())
+    crate::check_with(&level, &design, &lib, &fast).map_err(|e| e.to_string())
 }
 
 // ---- live simulation -----------------------------------------------------------
@@ -89,7 +94,10 @@ pub fn check(library: &str, level: &str, design: &str) -> Result<crate::Report, 
 #[derive(Debug, Serialize)]
 pub struct EndpointValue {
     pub endpoint: Endpoint,
+    /// `0`, `1`, `Z`, `X` for single bits; a number (decimal) for a fully
+    /// known bus, otherwise its bits, most significant first.
     pub value: String,
+    pub width: u32,
 }
 
 #[derive(Debug, Serialize)]
@@ -106,30 +114,54 @@ pub struct SimView {
     pub problems: Vec<ReportProblem>,
     /// Value at every port and top-level part pin.
     pub values: Vec<EndpointValue>,
-    /// Top-level transistors only.
+    /// Top-level transistors only (Layer 1).
     pub transistors: Vec<TransistorState>,
-    /// Each short's top-level part ids.
+    /// Each short's top-level part ids (Layer 1).
     pub shorts: Vec<Vec<String>>,
     pub outputs: Vec<(String, String)>,
     pub settled: bool,
+    /// Gate delays until the outputs settled (Layer 2 and up).
+    pub depth: usize,
+}
+
+fn bus_text(bits: &[Value]) -> String {
+    if bits.len() == 1 {
+        return bits[0].to_string();
+    }
+    match bits_to_number(bits) {
+        Some(n) => n.to_string(),
+        None => bits.iter().rev().map(|b| b.to_string()).collect(),
+    }
+}
+
+fn read_inputs(level: &Level, json: &str) -> Result<BTreeMap<String, u64>, String> {
+    let inputs: BTreeMap<String, u64> =
+        serde_json::from_str(json).map_err(|e| format!("couldn't read inputs: {e}"))?;
+    for (name, v) in &inputs {
+        let w = level.width(name);
+        if w < 64 && v >> w != 0 {
+            return Err(if w == 1 {
+                "input values must be 0 or 1".to_string()
+            } else {
+                format!("{v} doesn't fit in input `{name}` ({w} bits)")
+            });
+        }
+    }
+    Ok(inputs)
 }
 
 /// Simulates a design (finished or not) with the given inputs,
 /// `{"a": 1, "b": 0}`. Missing inputs are left floating.
 pub fn simulate(library: &str, level: &str, design: &str, inputs: &str) -> Result<SimView, String> {
-    let lib = load_library(library)?;
+    let (lib, fast) = load_library(library)?;
     let level = find_level(&lib, level)?;
     let design = parse_design(design)?;
-    let inputs: BTreeMap<String, u8> =
-        serde_json::from_str(inputs).map_err(|e| format!("couldn't read inputs: {e}"))?;
-    if inputs.values().any(|v| *v > 1) {
-        return Err("input values must be 0 or 1".into());
-    }
+    let inputs = read_inputs(&level, inputs)?;
     let problems: Vec<ReportProblem> = s2t_netlist::validate(&level, &design, &lib)
         .iter()
         .map(ReportProblem::from)
         .collect();
-    let mut view = SimView {
+    let view = SimView {
         blocked: true,
         problems,
         values: vec![],
@@ -137,15 +169,73 @@ pub fn simulate(library: &str, level: &str, design: &str, inputs: &str) -> Resul
         shorts: vec![],
         outputs: vec![],
         settled: false,
+        depth: 0,
     };
-    let circuit = match flatten_preview(&level, &design, &lib) {
+    if level.layer > 1 {
+        simulate_gates(&level, &design, &lib, &fast, &inputs, view)
+    } else {
+        simulate_switches(&level, &design, &lib, &inputs, view)
+    }
+}
+
+fn simulate_gates(
+    level: &Level,
+    design: &Design,
+    lib: &Library,
+    fast: &BTreeSet<String>,
+    inputs: &BTreeMap<String, u64>,
+    mut view: SimView,
+) -> Result<SimView, String> {
+    let prepared = match prepare(level, design, lib, fast, true) {
+        Ok(p) => p,
+        Err(problems) => {
+            for p in problems {
+                if !view.problems.contains(&p) {
+                    view.problems.push(p);
+                }
+            }
+            return Ok(view);
+        }
+    };
+    let mut sim = prepared.sim()?;
+    for (name, v) in inputs {
+        sim.set_input(name, *v)?;
+    }
+    let outcome = sim.settle();
+    let read = |nets: &[usize]| -> Vec<Value> { nets.iter().map(|n| sim.value(*n)).collect() };
+    view.blocked = false;
+    view.settled = outcome.settled;
+    view.depth = outcome.depth;
+    view.values = prepared
+        .circuit
+        .endpoints
+        .iter()
+        .map(|(e, nets)| EndpointValue {
+            endpoint: e.clone(),
+            value: bus_text(&read(nets)),
+            width: nets.len() as u32,
+        })
+        .collect();
+    view.outputs = prepared
+        .circuit
+        .outputs
+        .iter()
+        .map(|(n, nets)| (n.clone(), bus_text(&read(nets))))
+        .collect();
+    Ok(view)
+}
+
+fn simulate_switches(
+    level: &Level,
+    design: &Design,
+    lib: &Library,
+    inputs: &BTreeMap<String, u64>,
+    mut view: SimView,
+) -> Result<SimView, String> {
+    let circuit = match flatten_preview(level, design, lib) {
         Ok(c) => c,
-        Err(FlattenError::Invalid {
-            component,
-            problems,
-        }) if component == level.id => {
+        Err(FlattenError::Invalid { component, .. }) if component == level.id => {
             // Already listed in `view.problems`.
-            let _ = problems;
             return Ok(view);
         }
         Err(e) => {
@@ -159,7 +249,7 @@ pub fn simulate(library: &str, level: &str, design: &str, inputs: &str) -> Resul
         }
     };
     let mut sim = Sim::new(&circuit);
-    for (name, bit) in &inputs {
+    for (name, bit) in inputs {
         sim.set_input(name, Value::from_bit(*bit == 1))
             .map_err(|e| e.to_string())?;
     }
@@ -172,6 +262,7 @@ pub fn simulate(library: &str, level: &str, design: &str, inputs: &str) -> Resul
         .map(|(e, net)| EndpointValue {
             endpoint: e.clone(),
             value: sim.value(*net).to_string(),
+            width: 1,
         })
         .collect();
     view.transistors = circuit
@@ -210,4 +301,17 @@ pub fn simulate(library: &str, level: &str, design: &str, inputs: &str) -> Resul
         .map(|(n, net)| (n.clone(), sim.value(*net).to_string()))
         .collect();
     Ok(view)
+}
+
+// ---- abstraction swap ------------------------------------------------------------
+
+/// Checks the learner's unlocked design of `component` against its fast
+/// model; the swap is allowed only if this passes.
+pub fn match_check(library: &str, component: &str) -> Result<crate::MatchReport, String> {
+    let (lib, _) = load_library(library)?;
+    let level = find_level(&lib, component)?;
+    let design = lib.design(component).cloned().ok_or_else(|| {
+        format!("`{component}` isn't unlocked yet, so there's no design to compare")
+    })?;
+    crate::matching::match_check(&level, &design, &lib)
 }

@@ -8,4 +8,5 @@ export const KNOWN_TAGS = [
   "wafer-flow",
   "noise-chain",
   "switch-network",
+  "ripple-adder",
 ] as const;

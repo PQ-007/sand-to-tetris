@@ -1,0 +1,56 @@
+{
+  "format": 1,
+  "component": "mux16",
+  "parts": [
+    {
+      "id": "m",
+      "kind": "mux",
+      "pos": [
+        380,
+        230
+      ],
+      "repeat": 16,
+      "shared": [
+        "sel"
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "m",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "m",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "sel"
+      },
+      "to": {
+        "part": "m",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "m",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    }
+  ]
+}

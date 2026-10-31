@@ -74,12 +74,11 @@ describe("spoiler guard", () => {
     const levels = loadLevels(
       new URL("../../hdl/levels", import.meta.url).pathname,
     );
-    expect(levels.map((l) => l.id).sort()).toEqual([
-      "and",
-      "nand",
-      "nor",
-      "not",
-    ]);
+    const ids = levels.map((l) => l.id);
+    for (const id of ["not", "nand", "nor", "zero", "one", "and", "add16"]) {
+      expect(ids).toContain(id);
+    }
+    expect(new Set(ids).size).toBe(ids.length);
     for (const l of levels) {
       expect(l.toml).toContain(`id = "${l.id}"`);
       expect(l.toml).not.toContain('"wires"');

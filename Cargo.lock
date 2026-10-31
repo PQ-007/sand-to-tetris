@@ -76,6 +76,8 @@ checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 name = "s2t-checker"
 version = "0.1.0"
 dependencies = [
+ "s2t-gate",
+ "s2t-models",
  "s2t-netlist",
  "s2t-switch",
  "serde",
@@ -87,8 +89,23 @@ name = "s2t-cli"
 version = "0.1.0"
 dependencies = [
  "s2t-checker",
+ "s2t-models",
  "s2t-netlist",
  "serde_json",
+]
+
+[[package]]
+name = "s2t-gate"
+version = "0.1.0"
+dependencies = [
+ "s2t-netlist",
+]
+
+[[package]]
+name = "s2t-models"
+version = "0.1.0"
+dependencies = [
+ "s2t-netlist",
 ]
 
 [[package]]

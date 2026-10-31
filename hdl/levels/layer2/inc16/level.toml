@@ -1,0 +1,21 @@
+id = "inc16"
+name = "INC16"
+layer = 2
+goal = """
+Add 1 to a 16-bit number. Use your ADD16 with the number 1 as its second input: build the 16-bit 1 from constants with a joiner.
+"""
+inputs = ["a"]
+outputs = ["out"]
+requires = ["add16", "one"]
+widths = { a = 16, out = 16 }
+model = "inc16"
+truth_table = """
+a | out
+0 | 1
+41 | 42
+0x00ff | 0x0100
+0xffff | 0
+"""
+
+[hints]
+wrong = "The number 1 in binary is bit 0 = 1 and every other bit 0."

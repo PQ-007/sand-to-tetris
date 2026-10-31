@@ -57,6 +57,9 @@ function fakeCheck(broken: Set<string>) {
       rows: [],
       diagnostics: [],
       transistors: 0,
+      cells: 0,
+      depth: 0,
+      random: null,
     };
   };
 }
@@ -136,6 +139,8 @@ describe("what a level may use", () => {
     const levels = [...LEVELS, entry("mux", 2, ["nand"]), entry("alu", 3)];
     const st = { ...s, alu: "passed" as const };
     expect(toolbox(levels, st, "mux").map((t) => t.kind)).toEqual([
+      "split",
+      "join",
       "not",
       "nand",
     ]);

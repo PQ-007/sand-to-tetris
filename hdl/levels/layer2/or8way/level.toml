@@ -1,0 +1,23 @@
+id = "or8way"
+name = "OR8WAY"
+layer = 2
+goal = """
+Build an 8-way OR: the output is 1 if any of the 8 input bits is 1.
+Split the bus into single bits, then combine them with ORs.
+"""
+inputs = ["in"]
+outputs = ["out"]
+requires = ["or"]
+widths = { in = 8 }
+model = "or8way"
+truth_table = """
+in | out
+0 | 0
+1 | 1
+0x80 | 1
+0x10 | 1
+0xff | 1
+"""
+
+[hints]
+wrong = "Use a splitter to get the 8 bits, then OR them together: in pairs (a tree) is fastest."

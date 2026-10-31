@@ -50,7 +50,13 @@ describe("simulator core (WASM)", () => {
     for (const l of levels) {
       const info = JSON.parse(wasm.levelInfo(l.toml)) as LevelInfo;
       expect(info.level.id).toBe(l.id);
-      expect(info.table.length).toBe(2 ** info.level.inputs.length);
+      const bits = info.level.inputs.reduce(
+        (n, p) => n + (info.level.widths?.[p] ?? 1),
+        0,
+      );
+      // Small levels list every input; wide ones have a model for the rest.
+      if (info.level.model) expect(info.table.length).toBeGreaterThan(0);
+      else expect(info.table.length).toBe(2 ** bits);
     }
   });
 
@@ -67,6 +73,7 @@ describe("simulator core (WASM)", () => {
     expect(view.values).toContainEqual({
       endpoint: { part: "n1", pin: "drain" },
       value: "1",
+      width: 1,
     });
   });
 

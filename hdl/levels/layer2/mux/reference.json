@@ -1,0 +1,115 @@
+{
+  "format": 1,
+  "component": "mux",
+  "parts": [
+    {
+      "id": "ns",
+      "kind": "not",
+      "pos": [
+        230,
+        330
+      ]
+    },
+    {
+      "id": "x",
+      "kind": "and",
+      "pos": [
+        360,
+        140
+      ]
+    },
+    {
+      "id": "y",
+      "kind": "and",
+      "pos": [
+        360,
+        300
+      ]
+    },
+    {
+      "id": "o",
+      "kind": "or",
+      "pos": [
+        520,
+        220
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "sel"
+      },
+      "to": {
+        "part": "ns",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "x",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "ns",
+        "pin": "out"
+      },
+      "to": {
+        "part": "x",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "y",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "sel"
+      },
+      "to": {
+        "part": "y",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "x",
+        "pin": "out"
+      },
+      "to": {
+        "part": "o",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "y",
+        "pin": "out"
+      },
+      "to": {
+        "part": "o",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "o",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    }
+  ]
+}

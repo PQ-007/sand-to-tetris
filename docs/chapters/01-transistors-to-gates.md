@@ -80,7 +80,11 @@ Notice that a single CMOS stage always *inverts*: a 1 on an input can only turn 
 
 NAND has a remarkable property: it is a **[[universal gate]]**. You can build every other logic function from NANDs alone. For example, NOT is a NAND with both inputs tied together, and AND is a NAND followed by a NOT. NOR is universal too. From Chapter 2 on, you'll build everything (multiplexers, adders, a whole ALU) out of the gates from this chapter, and never touch a single transistor again.
 
-**Side quest:** build AND from your NAND and NOT, with no transistors at all. Once you've passed it, double-click a NAND part to look inside it and watch your own transistors at work. **[Build AND →](#/play/and)**
+## Two constants
+
+From Chapter 2 on, you can't place bare VDD and GND rails any more: you build only with components. Some circuits still need a fixed 0 or 1 (an adder's first column has no carry coming in, for example). So you'll make two tiny components now: **Constant 0** and **Constant 1**. Each is just one supply rail wired to the output, but once built they become parts like any other.
+
+**[Build Constant 0 →](#/play/zero)** · **[Build Constant 1 →](#/play/one)**
 
 ## How checking works
 
@@ -94,7 +98,7 @@ If you later change a gate you've already passed, everything built on it is re-c
 
 ## What you built, and what you learned
 
-**What you built:** a NOT gate (2 transistors), a NAND gate (4) and a NOR gate (4), each tested against its truth table, and optionally an AND built from your own NAND and NOT.
+**What you built:** a NOT gate (2 transistors), a NAND gate (4) and a NOR gate (4), each tested against its truth table, plus the constants 0 and 1.
 
 **What you learned:**
 
@@ -104,6 +108,6 @@ If you later change a gate you've already passed, everything built on it is re-c
 - A single CMOS stage inverts, so NOT, NAND and NOR are the natural gates.
 - NAND (and NOR) are universal: every other logic function can be built from them.
 
-**Next:** in Chapter 2 you'll stop thinking about transistors and build with gates: multiplexers, decoders, adders, and a 16-bit ALU.
+**Next:** in Chapter 2 you'll stop thinking about transistors and build with gates: AND, OR, XOR, multiplexers, adders, and 16-bit buses. Once you've built AND from your NAND and NOT, double-click a NAND part to look inside it and watch your own transistors at work.
 
 </aside>

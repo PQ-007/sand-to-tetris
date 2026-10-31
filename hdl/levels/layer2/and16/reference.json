@@ -1,0 +1,44 @@
+{
+  "format": 1,
+  "component": "and16",
+  "parts": [
+    {
+      "id": "g",
+      "kind": "and",
+      "pos": [
+        380,
+        230
+      ],
+      "repeat": 16
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "g",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "g",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "g",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    }
+  ]
+}

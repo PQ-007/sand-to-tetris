@@ -1,11 +1,9 @@
 id = "and"
 name = "AND"
-layer = 1
-optional = true
+layer = 2
 goal = """
-Side quest. Build AND: the output is 1 only when both inputs are 1.
-You don't need transistors: use the NAND and NOT you already built.
-(Why not a direct "AND" made of transistors? A single CMOS stage always inverts, so AND is NAND followed by NOT.)
+Build AND: the output is 1 only when both inputs are 1.
+From here on you build with the gates you made, not transistors. AND is NAND followed by NOT.
 """
 inputs = ["a", "b"]
 outputs = ["out"]

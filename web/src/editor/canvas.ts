@@ -9,7 +9,7 @@
 // Every wire shows its value as text (0, 1, Z, X), not just colour, and
 // every transistor says "on" or "off".
 import { svg } from "../components/kit";
-import type { Design, Endpoint, SimView, Value } from "../sim/types";
+import type { Design, Endpoint, Part, SimView, Value } from "../sim/types";
 import {
   CANVAS,
   clampToCanvas,
@@ -18,7 +18,10 @@ import {
   pinPoint,
   portPoint,
   route,
-  shapeOf,
+  canvasSize,
+  shapeOfPart,
+  type ComponentPorts,
+  type Size,
   snap,
   type Point,
   type Shape,
@@ -37,10 +40,9 @@ export interface CanvasProps {
   inputs: string[];
   outputs: string[];
   /** Port lists of component kinds, for drawing them as boxes. */
-  componentPorts: Record<
-    string,
-    { inputs: string[]; outputs: string[]; name: string }
-  >;
+  componentPorts: ComponentPorts;
+  /** Bits per port of the component being built. */
+  portWidths?: Record<string, number>;
   view: SimView | null;
   inputValues: Record<string, number>;
   highlightParts: Set<string>;
@@ -54,6 +56,8 @@ export interface CanvasEvents {
   toggleInput(name: string): void;
   openPart(id: string): void;
   message(text: string): void;
+  /** The selected part changed (null: nothing selected). */
+  select?(partId: string | null): void;
 }
 
 type Selection =
@@ -87,6 +91,7 @@ export class CircuitCanvas {
   private pending: Endpoint | null = null;
   private pointer: Point = [0, 0];
   private focusPart: string | null = null;
+  private size: Size = CANVAS;
   /** For double-click detection: the canvas re-renders between clicks, so
    * the browser's own dblclick event doesn't reliably fire. */
   private lastPress: { id: string; time: number } | null = null;
@@ -112,14 +117,19 @@ export class CircuitCanvas {
       active instanceof SVGElement ? active.dataset.part : undefined;
     this.el.replaceChildren();
     this.el.classList.toggle("read-only", Boolean(props.readOnly));
+    // Grow with the circuit: real pixels, scrolled by the wrapper, so text
+    // never shrinks on big designs.
+    this.size = canvasSize(
+      props.design.parts.map((p) => ({ pos: p.pos, shape: this.shape(p) })),
+    );
+    this.el.setAttribute(
+      "viewBox",
+      `0 0 ${this.size.width} ${this.size.height}`,
+    );
+    this.el.style.width = `${this.size.width}px`;
     this.drawGrid();
     this.drawWires();
-    for (const part of props.design.parts)
-      this.drawPart(
-        part.id,
-        part.kind,
-        part.pos ?? [CANVAS.width / 2, CANVAS.height / 2],
-      );
+    for (const part of props.design.parts) this.drawPart(part);
     this.drawPorts();
     this.drawPendingWire();
     // Keep keyboard focus on the part being moved.
@@ -141,21 +151,33 @@ export class CircuitCanvas {
 
   // ---- geometry ---------------------------------------------------------------
 
-  private shape(kind: string): Shape {
-    return shapeOf(kind, this.props.componentPorts[kind]);
+  private shape(part: Part): Shape {
+    return shapeOfPart(part, this.props.componentPorts);
   }
 
   private point(e: Endpoint): Point | undefined {
     if ("port" in e)
-      return portPoint(e.port, this.props.inputs, this.props.outputs);
+      return portPoint(
+        e.port,
+        this.props.inputs,
+        this.props.outputs,
+        this.size,
+      );
     const part = this.props.design.parts.find((p) => p.id === e.part);
     if (!part?.pos) return undefined;
-    return pinPoint(part.pos, this.shape(part.kind), e.pin);
+    return pinPoint(part.pos, this.shape(part), e.pin);
   }
 
   private value(e: Endpoint): Value | undefined {
     return this.props.view?.values.find((v) => sameEndpoint(v.endpoint, e))
       ?.value;
+  }
+
+  private width(e: Endpoint): number {
+    return (
+      this.props.view?.values.find((v) => sameEndpoint(v.endpoint, e))?.width ??
+      1
+    );
   }
 
   // ---- drawing ----------------------------------------------------------------
@@ -171,8 +193,8 @@ export class CircuitCanvas {
     svg(
       "rect",
       {
-        width: CANVAS.width,
-        height: CANVAS.height,
+        width: this.size.width,
+        height: this.size.height,
         fill: "url(#grid)",
         class: "canvas-bg",
       },
@@ -187,23 +209,28 @@ export class CircuitCanvas {
       const b = this.point(w.to);
       if (!a || !b) return;
       const v = this.value(w.from) ?? "X";
+      const bus = this.width(w.from) > 1;
       const pts = route(a, b);
       const selected =
         this.selection?.kind === "wire" && this.selection.index === i;
       const wg = svg(
         "g",
-        { class: `wire v${v}${selected ? " selected" : ""}`, "data-wire": i },
+        {
+          class: `wire ${valueClass(v)}${bus ? " bus" : ""}${selected ? " selected" : ""}`,
+          "data-wire": i,
+        },
         g,
       );
       svg("path", { d: pathData(pts), class: "wire-hit" }, wg);
       svg("path", { d: pathData(pts), class: "wire-line" }, wg);
       const [lx, ly] = labelPoint(pts);
+      const tagWidth = Math.max(16, v.length * 7 + 8);
       svg(
         "rect",
         {
-          x: lx - 8,
+          x: lx - tagWidth / 2,
           y: ly - 9,
-          width: 16,
+          width: tagWidth,
           height: 16,
           rx: 4,
           class: "wire-tag",
@@ -219,8 +246,10 @@ export class CircuitCanvas {
     });
   }
 
-  private drawPart(id: string, kind: string, pos: Point): void {
-    const shape = this.shape(kind);
+  private drawPart(part: Part): void {
+    const { id, kind } = part;
+    const pos = part.pos ?? [CANVAS.width / 2, CANVAS.height / 2];
+    const shape = this.shape(part);
     const state = this.props.view?.transistors.find(
       (t) => t.part === id,
     )?.state;
@@ -229,7 +258,9 @@ export class CircuitCanvas {
     const flagged = this.props.highlightParts.has(id);
     const shorted =
       this.props.view?.shorts.some((s) => s.includes(id)) ?? false;
-    const name = NAMES[kind] ?? this.props.componentPorts[kind]?.name ?? kind;
+    const base = NAMES[kind] ?? this.props.componentPorts[kind]?.name ?? kind;
+    const name =
+      part.repeat && part.repeat > 1 ? `${base} ×${part.repeat}` : base;
     const g = svg(
       "g",
       {
@@ -282,6 +313,48 @@ export class CircuitCanvas {
         line("M0,-15 V0 M-16,0 H16 M-10,5 H10 M-4,10 H4");
         svg("text", { x: 22, y: 6, class: "part-label" }, g, "GND");
         break;
+      case "split":
+      case "join": {
+        svg(
+          "rect",
+          {
+            x: -4,
+            y: -shape.height / 2,
+            width: 8,
+            height: shape.height,
+            rx: 3,
+            class: "bus-bar",
+          },
+          g,
+        );
+        svg(
+          "text",
+          {
+            x: 0,
+            y: -shape.height / 2 - 6,
+            "text-anchor": "middle",
+            class: "part-label",
+          },
+          g,
+          `${kind === "split" ? "Split" : "Join"} ${part.width ?? ""}`,
+        );
+        for (const pin of shape.pins) {
+          if (pin.pin === "in" || pin.pin === "out") continue;
+          const right = pin.side === "right";
+          svg(
+            "text",
+            {
+              x: pin.at[0] + (right ? 8 : -8),
+              y: pin.at[1] + 3,
+              "text-anchor": right ? "start" : "end",
+              class: "bit-label",
+            },
+            g,
+            pin.pin,
+          );
+        }
+        break;
+      }
       default: {
         svg(
           "rect",
@@ -317,7 +390,7 @@ export class CircuitCanvas {
               class: "pin-label",
             },
             g,
-            pin.pin,
+            part.shared?.includes(pin.pin) ? `${pin.pin} (shared)` : pin.pin,
           );
         }
       }
@@ -333,6 +406,7 @@ export class CircuitCanvas {
         g,
         "!",
       );
+    const small = kind === "split" || kind === "join";
     for (const pin of shape.pins) {
       const end: Endpoint = { part: id, pin: pin.pin };
       const pending = this.pending && sameEndpoint(this.pending, end);
@@ -342,7 +416,7 @@ export class CircuitCanvas {
         {
           cx: pin.at[0],
           cy: pin.at[1],
-          r: 10,
+          r: small ? 6.5 : 10,
           class: "pin-hit",
           "data-pin": pin.pin,
           "data-owner": id,
@@ -354,8 +428,8 @@ export class CircuitCanvas {
         {
           cx: pin.at[0],
           cy: pin.at[1],
-          r: 4.5,
-          class: `pin v${v ?? "X"}${pending ? " pending" : ""}`,
+          r: small ? 3.5 : 4.5,
+          class: `pin ${valueClass(v ?? "X")}${pending ? " pending" : ""}`,
           "data-pin": pin.pin,
           "data-owner": id,
         },
@@ -367,36 +441,46 @@ export class CircuitCanvas {
   private drawPorts(): void {
     const { inputs, outputs, inputValues, view } = this.props;
     for (const name of [...inputs, ...outputs]) {
-      const at = portPoint(name, inputs, outputs);
+      const at = portPoint(name, inputs, outputs, this.size);
       if (!at) continue;
       const isIn = inputs.includes(name);
       const value = isIn
         ? String(inputValues[name] ?? 0)
         : (view?.outputs.find(([n]) => n === name)?.[1] ?? "–");
       const flagged = this.props.highlightPorts.has(name);
+      const bus = (this.props.portWidths?.[name] ?? 1) > 1;
       const g = svg(
         "g",
         {
-          class: `port ${isIn ? "in" : "out"} v${value}${flagged ? " flagged" : ""}`,
+          class: `port ${isIn ? "in" : "out"} ${valueClass(value)}${bus ? " bus" : ""}${flagged ? " flagged" : ""}`,
           transform: `translate(${at[0]},${at[1]})`,
           "data-port": name,
         },
         this.el,
       );
-      const x = isIn ? -58 : 8;
+      const label = `${name} = ${value}`;
+      const boxW = Math.max(50, label.length * 7.5 + 12);
+      const x = isIn ? -boxW - 8 : 8;
       svg(
         "rect",
-        { x, y: -15, width: 50, height: 30, rx: 6, class: "port-box" },
+        { x, y: -15, width: boxW, height: 30, rx: 6, class: "port-box" },
         g,
       );
       svg(
         "text",
-        { x: x + 25, y: 5, "text-anchor": "middle", class: "port-label" },
+        { x: x + boxW / 2, y: 5, "text-anchor": "middle", class: "port-label" },
         g,
-        `${name} = ${value}`,
+        label,
       );
       if (isIn)
-        svg("title", {}, g, `Input ${name}: click to flip between 0 and 1`);
+        svg(
+          "title",
+          {},
+          g,
+          bus
+            ? `Input ${name}: click to type a number`
+            : `Input ${name}: click to flip between 0 and 1`,
+        );
       const pending =
         this.pending && "port" in this.pending && this.pending.port === name;
       svg(
@@ -410,7 +494,7 @@ export class CircuitCanvas {
           cx: 0,
           cy: 0,
           r: 5,
-          class: `pin v${value}${pending ? " pending" : ""}`,
+          class: `pin ${valueClass(value)}${pending ? " pending" : ""}`,
           "data-port-pin": name,
         },
         g,
@@ -493,6 +577,7 @@ export class CircuitCanvas {
       const part = this.props.design.parts.find((p) => p.id === id);
       if (!part?.pos) return;
       this.selection = { kind: "part", id };
+      this.events.select?.(id);
       this.el.setPointerCapture(e.pointerId);
       this.mode = {
         kind: "drag",
@@ -507,6 +592,7 @@ export class CircuitCanvas {
       return;
     }
     const wireEl = target?.closest<SVGGElement>("[data-wire]");
+    this.events.select?.(null);
     this.selection = wireEl
       ? { kind: "wire", index: Number(wireEl.dataset.wire) }
       : null;
@@ -651,9 +737,18 @@ export class CircuitCanvas {
     for (const p of [...this.props.inputs, ...this.props.outputs])
       out.push({ port: p });
     for (const part of this.props.design.parts) {
-      for (const pin of this.shape(part.kind).pins)
+      for (const pin of this.shape(part).pins)
         out.push({ part: part.id, pin: pin.pin });
     }
     return out.sort((a, b) => endpointKey(a).localeCompare(endpointKey(b)));
   }
+}
+
+/** CSS class for a value: v0, v1, vZ, vX for bits; buses are vbus unless
+ * some bit is unknown (vX) or floating (vZ). */
+export function valueClass(v: string): string {
+  if (v === "0" || v === "1" || v === "Z" || v === "X") return `v${v}`;
+  if (v.includes("X")) return "vX";
+  if (v.includes("Z")) return "vZ";
+  return "vbus";
 }

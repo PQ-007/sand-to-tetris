@@ -47,7 +47,42 @@ export function addPart(
 ): { design: Design; id: string } {
   const id = nextId(design, kind);
   const part: Part = { id, kind, pos };
+  // Buses in this course are 16 bits wide, so wiring parts start there.
+  if (kind === "split" || kind === "join") part.width = 16;
   return { design: { ...design, parts: [...design.parts, part] }, id };
+}
+
+/**
+ * Changes a part's options. A splitter or joiner that gets narrower loses
+ * its wires to bits that no longer exist; `repeat: 1` clears the repeat.
+ */
+export function updatePart(
+  design: Design,
+  id: string,
+  patch: { width?: number; repeat?: number; shared?: string[] },
+): Design {
+  const parts = design.parts.map((p) => {
+    if (p.id !== id) return p;
+    const next: Part = { ...p, ...patch };
+    if (next.repeat !== undefined && next.repeat <= 1) {
+      delete next.repeat;
+      delete next.shared;
+    }
+    if (next.shared && next.shared.length === 0) delete next.shared;
+    return next;
+  });
+  const width = parts.find((p) => p.id === id)?.width;
+  const gone = (e: Endpoint) =>
+    "part" in e &&
+    e.part === id &&
+    width !== undefined &&
+    /^\d+$/.test(e.pin) &&
+    Number(e.pin) >= width;
+  return {
+    ...design,
+    parts,
+    wires: design.wires.filter((w) => !gone(w.from) && !gone(w.to)),
+  };
 }
 
 export function movePart(

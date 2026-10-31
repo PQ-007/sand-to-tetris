@@ -1,0 +1,19 @@
+id = "dmux"
+name = "Demultiplexer"
+layer = 2
+goal = """
+Build a demultiplexer (DMUX): the opposite of a MUX. It sends its input to output a when sel is 0, or to output b when sel is 1. The other output is 0.
+"""
+inputs = ["in", "sel"]
+outputs = ["a", "b"]
+requires = ["and"]
+truth_table = """
+in sel | a b
+0 0 | 0 0
+1 0 | 1 0
+0 1 | 0 0
+1 1 | 0 1
+"""
+
+[hints]
+wrong = "Output a should be 'in AND NOT sel'; output b 'in AND sel'."

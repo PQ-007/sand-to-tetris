@@ -20,7 +20,28 @@ fn every_reference_solution_passes_its_level() {
     let out = run(&args(&["check-all", &levels()]));
     assert!(out.is_ok(), "{}", out.unwrap_or_else(|e| e));
     let text = out.unwrap_or_default();
-    for id in ["not", "nand", "nor", "and"] {
+    for id in [
+        "not",
+        "nand",
+        "nor",
+        "zero",
+        "one",
+        "and",
+        "or",
+        "xor",
+        "mux",
+        "dmux",
+        "not16",
+        "and16",
+        "or16",
+        "mux16",
+        "or8way",
+        "mux4way16",
+        "halfadder",
+        "fulladder",
+        "add16",
+        "inc16",
+    ] {
         assert!(text.contains(&format!("✓ {id} ")), "{text}");
     }
 }
@@ -33,14 +54,32 @@ fn check_one_level_reports_rows_and_transistors() {
 }
 
 #[test]
-fn and_is_built_from_unlocked_components() {
-    let dir = format!("{}/layer1/and", levels());
+fn layer_2_reports_gates_and_depth() {
+    let dir = format!("{}/layer2/and", levels());
     let out = run(&args(&["check", &dir])).unwrap_or_else(|e| e);
-    // NAND (4) + NOT (2), flattened.
+    // NAND then NOT: 2 gates, 2 gate delays.
     assert_eq!(
         out,
-        "✓ and (Layer 1, optional): all 4 rows pass, 6 transistors"
+        "✓ and (Layer 2): all 4 rows pass, 2 gates, 2 gate delays deep"
     );
+}
+
+#[test]
+fn ripple_carry_is_deep() {
+    // ADD16 from full adders: the carry ripples through every column.
+    let dir = format!("{}/layer2/add16", levels());
+    let out = run(&args(&["check", &dir])).unwrap_or_else(|e| e);
+    assert!(
+        out.starts_with("✓ add16 (Layer 2): all 5 rows + 2000 random tests pass"),
+        "{out}"
+    );
+    let depth: usize = out
+        .rsplit(", ")
+        .next()
+        .and_then(|t| t.split(' ').next())
+        .and_then(|n| n.parse().ok())
+        .unwrap_or(0);
+    assert!(depth > 30, "{out}");
 }
 
 #[test]

@@ -1,6 +1,6 @@
 // A level page: goal, toolbox, canvas, inputs, live truth table, Check,
 // and a keyboard/screen-reader panel listing every part and connection.
-import { getApp, levelEntry, saveDesign, type App } from "./app";
+import { fastIds, getApp, levelEntry, saveDesign, type App } from "./app";
 import { CircuitCanvas, type CanvasProps } from "./editor/canvas";
 import { clampToCanvas, freeSpot, snap, type Point } from "./editor/geometry";
 import {
@@ -12,6 +12,7 @@ import {
   History,
   removePart,
   removeWire,
+  updatePart,
 } from "./editor/model";
 import { orderLevels, playLibrary, toolbox, type ToolboxItem } from "./game";
 import { playHref } from "./router";
@@ -51,9 +52,32 @@ function componentPorts(a: App): CanvasProps["componentPorts"] {
       inputs: l.info.level.inputs,
       outputs: l.info.level.outputs,
       name: l.info.level.name,
+      widths: l.info.level.widths,
     };
   }
   return out;
+}
+
+/** `5 (0101)` for small buses, `0x1235` for wide ones (as the checker). */
+export function formatValue(v: number, width: number): string {
+  if (width === 1) return String(v);
+  if (width <= 8) return `${v} (${v.toString(2).padStart(width, "0")})`;
+  return `0x${v.toString(16).padStart(Math.ceil(width / 4), "0")}`;
+}
+
+/** Parses `13`, `0xd` or `0b1101` (underscores allowed). */
+export function parseNumber(text: string): number | undefined {
+  const t = text.trim().replace(/_/g, "").toLowerCase();
+  const n = t.startsWith("0x")
+    ? parseInt(t.slice(2), 16)
+    : t.startsWith("0b")
+      ? parseInt(t.slice(2), 2)
+      : /^\d+$/.test(t)
+        ? Number(t)
+        : NaN;
+  return Number.isFinite(n) && /^(0x[0-9a-f]+|0b[01]+|\d+)$/.test(t)
+    ? n
+    : undefined;
 }
 
 /** Inputs to a component part, read from the parent's simulated pins. */
@@ -70,7 +94,7 @@ function partInputs(
         x.endpoint.part === partId &&
         x.endpoint.pin === name,
     )?.value;
-    if (v === "0" || v === "1") out[name] = Number(v);
+    if (v !== undefined && /^\d+$/.test(v)) out[name] = Number(v);
   }
   return out;
 }
@@ -127,6 +151,10 @@ class PlayPage {
   private fromSelect = el("select", { "aria-label": "Connect from" });
   private toSelect = el("select", { "aria-label": "Connect to" });
   private inside = el("div", { class: "inside", hidden: "" });
+  private stats = el("p", { class: "sim-stats", "aria-live": "polite" });
+  private propsBox = el("div", { class: "props" });
+  private runsAs = el("ul", { class: "runs-as" });
+  private selected: string | null = null;
 
   constructor(
     private root: HTMLElement,
@@ -140,12 +168,22 @@ class PlayPage {
     const saved = app.progress[level.id]?.design;
     this.history = new History(saved ?? emptyDesign(level.id));
     for (const i of level.inputs) this.inputs[i] = 0;
-    this.library = playLibrary(app.levels, app.progress, app.status, level.id);
+    this.library = playLibrary(
+      app.levels,
+      app.progress,
+      app.status,
+      level.id,
+      fastIds(app),
+    );
     this.tools = toolbox(app.levels, app.status, level.id);
     this.ports = componentPorts(app);
     this.canvas = new CircuitCanvas({
       change: (d, commit) => this.onChange(d, commit),
       toggleInput: (name) => this.toggle(name),
+      select: (id) => {
+        this.selected = id;
+        this.renderProps();
+      },
       openPart: (id) =>
         this.openInside([
           { id, design: this.design, inputs: this.inputs, view: this.view },
@@ -222,7 +260,9 @@ class PlayPage {
         "The editor works best on a larger screen. On a phone, scroll the canvas sideways, or use the parts and connections panel below.",
       ),
       wrap,
+      this.stats,
       this.statusLine,
+      this.propsBox,
       this.inside,
     );
     bench.append(
@@ -238,6 +278,15 @@ class PlayPage {
       "aria-label": "Inputs and tests",
     });
     side.append(el("h2", {}, "Inputs"), this.inputBox);
+    if (l.inputs.some((p) => this.width(p) > 1)) {
+      side.append(
+        el(
+          "p",
+          { class: "help", id: "bus-help" },
+          "Type a number for each bus input: decimal, 0x… hex or 0b… binary. Press Enter to apply.",
+        ),
+      );
+    }
     const table = el("table", { class: "truth" });
     const head = el("thead");
     head.innerHTML = `<tr>${l.inputs.map((i) => `<th scope="col">${esc(i)}</th>`).join("")}${l.outputs.map((o) => `<th scope="col">${esc(o)} (want)</th><th scope="col">${esc(o)} (yours)</th>`).join("")}<th scope="col"><span class="visually-hidden">Result</span></th></tr>`;
@@ -260,6 +309,17 @@ class PlayPage {
       this.result,
       this.problemList,
     );
+    if (l.layer >= 2) {
+      side.append(
+        el("h2", {}, "How parts run"),
+        el(
+          "p",
+          { class: "help" },
+          "Change which parts run as fast models on the level map.",
+        ),
+        this.runsAs,
+      );
+    }
 
     grid.append(bench, side);
     this.root.append(grid);
@@ -403,7 +463,124 @@ class PlayPage {
     window.addEventListener("pointerup", up, { once: true });
   }
 
+  /** Live stats for gate-level circuits. */
+  private renderStats(): void {
+    const v = this.view;
+    if (this.level.layer < 2 || !v || v.blocked) {
+      this.stats.textContent = "";
+      return;
+    }
+    this.stats.textContent = v.settled
+      ? `Settled after ${v.depth} gate delay${v.depth === 1 ? "" : "s"}.`
+      : "Still changing: this circuit oscillates and never settles.";
+  }
+
+  /** Which component kinds this design uses, and how each one runs. */
+  private renderRunsAs(): void {
+    if (this.level.layer < 2) return;
+    const fast = new Set(this.library.fast ?? []);
+    const kinds = [...new Set(this.design.parts.map((p) => p.kind))].filter(
+      (k) => this.ports[k],
+    );
+    this.runsAs.replaceChildren(
+      ...kinds.map((k) => {
+        const lv = levelEntry(this.app, k)?.info.level;
+        const how =
+          lv?.layer === 1
+            ? "its truth table (your transistors passed every row)"
+            : fast.has(k)
+              ? "fast model (matched your design)"
+              : "your design";
+        return el("li", {}, `${lv?.name ?? k}: ${how}`);
+      }),
+    );
+    if (!kinds.length) this.runsAs.append(el("li", {}, "No components yet."));
+  }
+
+  /** Options for the selected part: bus width, or repeat and shared pins. */
+  private renderProps(): void {
+    const part = this.design.parts.find((p) => p.id === this.selected);
+    this.propsBox.replaceChildren();
+    if (!part || this.level.layer < 2) return;
+    const wiring = part.kind === "split" || part.kind === "join";
+    const comp = this.ports[part.kind];
+    if (!wiring && !comp) return;
+    const box = el("fieldset");
+    box.append(el("legend", {}, `Options for ${part.id}`));
+    if (wiring) {
+      const label = el("label", {}, "Bus width ");
+      const select = el("select");
+      for (const w of [2, 4, 8, 16]) {
+        const o = el("option", { value: String(w) }, `${w} bits`);
+        if (w === (part.width ?? 16)) o.selected = true;
+        select.append(o);
+      }
+      select.addEventListener("change", () =>
+        this.onChange(
+          updatePart(this.design, part.id, { width: Number(select.value) }),
+          true,
+        ),
+      );
+      label.append(select);
+      box.append(label);
+    } else if (comp) {
+      const label = el("label", {}, "Repeat × ");
+      const input = el("input", {
+        type: "number",
+        min: "1",
+        max: "64",
+        value: String(part.repeat ?? 1),
+      });
+      input.addEventListener("change", () => {
+        const n = Math.max(
+          1,
+          Math.min(64, Math.round(Number(input.value)) || 1),
+        );
+        this.onChange(updatePart(this.design, part.id, { repeat: n }), true);
+      });
+      label.append(input);
+      box.append(label);
+      if ((part.repeat ?? 1) > 1) {
+        box.append(
+          el(
+            "p",
+            { class: "help" },
+            "Each copy gets its own slice of every bus pin, except shared inputs, which all copies read.",
+          ),
+        );
+        for (const pin of comp.inputs) {
+          const lab = el("label", { class: "check" });
+          const cb = el("input", { type: "checkbox" });
+          cb.checked = part.shared?.includes(pin) ?? false;
+          cb.addEventListener("change", () => {
+            const shared = new Set(part.shared ?? []);
+            if (cb.checked) shared.add(pin);
+            else shared.delete(pin);
+            this.onChange(
+              updatePart(this.design, part.id, { shared: [...shared] }),
+              true,
+            );
+          });
+          lab.append(cb, ` share ${pin}`);
+          box.append(lab);
+        }
+      }
+    }
+    this.propsBox.append(box);
+  }
+
+  private width(port: string): number {
+    return this.level.widths?.[port] ?? 1;
+  }
+
   private toggle(name: string): void {
+    if (this.width(name) > 1) {
+      // Buses take a typed number instead of a flip.
+      this.inputBox
+        .querySelector<HTMLInputElement>(`input[data-port="${name}"]`)
+        ?.focus();
+      return;
+    }
     this.inputs[name] = this.inputs[name] ? 0 : 1;
     this.refresh(false);
   }
@@ -444,13 +621,17 @@ class PlayPage {
       inputs: this.level.inputs,
       outputs: this.level.outputs,
       componentPorts: this.ports,
+      portWidths: this.level.widths,
       view: this.view,
       inputValues: this.inputs,
       highlightParts: this.highlightParts,
       highlightPorts: this.highlightPorts,
     });
     this.renderInputs();
+    this.renderStats();
     if (full) {
+      this.renderProps();
+      this.renderRunsAs();
       this.renderTable();
       this.renderLists();
     } else {
@@ -460,9 +641,44 @@ class PlayPage {
   }
 
   private renderInputs(): void {
+    // Don't rebuild while someone is typing a number.
+    if (
+      this.inputBox.contains(document.activeElement) &&
+      document.activeElement instanceof HTMLInputElement
+    )
+      return;
     this.inputBox.replaceChildren(
       ...this.level.inputs.map((name) => {
         const v = this.inputs[name] ?? 0;
+        const w = this.width(name);
+        if (w > 1) {
+          const label = el(
+            "label",
+            { class: "bus-input" },
+            `${name} (${w} bits) `,
+          );
+          const input = el("input", {
+            type: "text",
+            inputmode: "numeric",
+            "data-port": name,
+            value: formatValue(v, w),
+            "aria-describedby": "bus-help",
+          });
+          input.addEventListener("change", () => {
+            const n = parseNumber(input.value);
+            if (n === undefined || n >= 2 ** w || n < 0) {
+              this.say(
+                `"${input.value}" isn't a number from 0 to ${2 ** w - 1}. You can type decimal, 0x… hex or 0b… binary.`,
+              );
+              input.value = formatValue(v, w);
+              return;
+            }
+            this.inputs[name] = n;
+            this.refresh(false);
+          });
+          label.append(input);
+          return label;
+        }
         const b = el(
           "button",
           {
@@ -485,13 +701,18 @@ class PlayPage {
         const view = this.simulateWith(inputs);
         const tr = el("tr", { tabindex: "0", "data-row": String(i) });
         let ok = Boolean(view && !view.blocked);
-        let cells = row.inputs.map(([, v]) => `<td>${v}</td>`).join("");
+        let cells = row.inputs
+          .map(([n, v]) => `<td>${formatValue(v, this.width(n))}</td>`)
+          .join("");
         for (const [name, want] of row.outputs) {
           const got = view?.blocked
             ? "–"
             : (view?.outputs.find(([n]) => n === name)?.[1] ?? "–");
           if (got !== String(want)) ok = false;
-          cells += `<td>${want}</td><td class="got">${got}</td>`;
+          const shown = /^\d+$/.test(got)
+            ? formatValue(Number(got), this.width(name))
+            : got;
+          cells += `<td>${formatValue(want, this.width(name))}</td><td class="got">${shown}</td>`;
         }
         cells += `<td class="mark">${ok ? '<span class="ok">✓ match</span>' : '<span class="bad">✗ differs</span>'}</td>`;
         tr.innerHTML = cells;
@@ -603,7 +824,14 @@ class PlayPage {
       void saveDesign(this.app, this.level.id, this.design, true);
       const next = this.root.dataset.next;
       const box = el("div", { class: "passed" });
-      box.innerHTML = `<p><strong>✓ Passed!</strong> All ${report.rows.length} rows match, using ${report.transistors} transistors.
+      const tested = report.random
+        ? `All ${report.rows.length} rows and ${report.random.run.toLocaleString("en-US")} random tests match`
+        : `All ${report.rows.length} rows match`;
+      const stats =
+        this.level.layer === 1
+          ? `using ${report.transistors} transistors`
+          : `using ${report.cells} gates, ${report.depth} gate delay${report.depth === 1 ? "" : "s"} deep`;
+      box.innerHTML = `<p><strong>✓ Passed!</strong> ${tested}, ${stats}.
         ${esc(this.level.name)} is now in your toolbox.</p>
         <p>${next ? `<a href="${playHref(next)}">Next level →</a> · ` : ""}<a href="#/levels">Level map</a></p>`;
       this.result.append(box);
@@ -613,8 +841,12 @@ class PlayPage {
       return;
     }
     const failed = report.rows.filter((r) => !r.passed).length;
+    const randomNote =
+      report.random && report.random.failed > 0
+        ? ` ${report.random.failed.toLocaleString("en-US")} of ${report.random.run.toLocaleString("en-US")} random tests fail too.`
+        : "";
     const head = report.rows.length
-      ? `✗ ${failed} of ${report.rows.length} rows don't match yet.`
+      ? `✗ ${failed} of ${report.rows.length} rows don't match yet.${randomNote}`
       : "✗ The design has errors (see below).";
     this.result.append(el("p", { class: "failed" }, head));
     const list = el("ul", { class: "diagnostics" });
@@ -667,6 +899,7 @@ class PlayPage {
       this.app.progress,
       this.app.status,
       comp.id,
+      fastIds(this.app),
     );
     let view: SimView | null = null;
     try {

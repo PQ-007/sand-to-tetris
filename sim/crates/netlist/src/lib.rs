@@ -4,13 +4,17 @@
 pub mod builder;
 pub mod design;
 pub mod flatten;
+pub mod gates;
 pub mod level;
 pub mod validate;
+pub mod value;
 
 pub use design::{Design, Endpoint, Part, Wire};
 pub use flatten::{flatten, flatten_preview, Circuit, FlattenError, Mos, NetId, Rail, Transistor};
+pub use gates::{flatten_gates, Cell, GateCircuit, GateError};
 pub use level::Level;
-pub use validate::{validate, Library, Primitive, Problem};
+pub use validate::{part_pins, validate, Dir, Library, PinInfo, Primitive, Problem, WIRING};
+pub use value::Value;
 
 /// Version of the JSON design format. Bump when saved designs would no
 /// longer load, and add a migration so learners never lose work.

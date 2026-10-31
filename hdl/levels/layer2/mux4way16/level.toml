@@ -1,0 +1,22 @@
+id = "mux4way16"
+name = "4-way MUX16"
+layer = 2
+goal = """
+Choose one of four 16-bit inputs with a 2-bit sel: 0 picks a, 1 picks b, 2 picks c, 3 picks d.
+Split sel into its two bits. One bit chooses within pairs, the other between pairs.
+"""
+inputs = ["a", "b", "c", "d", "sel"]
+outputs = ["out"]
+requires = ["mux16"]
+widths = { a = 16, b = 16, c = 16, d = 16, sel = 2, out = 16 }
+model = "mux4way16"
+truth_table = """
+a b c d sel | out
+1 2 3 4 0 | 1
+1 2 3 4 1 | 2
+1 2 3 4 2 | 3
+1 2 3 4 3 | 4
+"""
+
+[hints]
+wrong = "sel bit 0 picks a/b and c/d; sel bit 1 picks between those two results."

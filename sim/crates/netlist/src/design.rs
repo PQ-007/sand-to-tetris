@@ -30,6 +30,15 @@ pub struct Part {
     pub kind: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pos: Option<[f64; 2]>,
+    /// Bus width of a `split` or `join` part.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub width: Option<u32>,
+    /// Repeat a component N times side by side (one copy per bit slice).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub repeat: Option<u32>,
+    /// With `repeat`: pins every copy shares instead of getting its own slice.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub shared: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
