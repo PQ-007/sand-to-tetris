@@ -39,11 +39,16 @@ export function check(
   ) as Report;
 }
 
+/**
+ * Simulates a design. Pass the previous view's `state` to continue from
+ * it, so latches and flip-flops remember; omit it to start from power-on.
+ */
 export function simulate(
   library: LibraryInput,
   level: string,
   design: Design,
   inputs: Record<string, number>,
+  state: Record<string, string> = {},
 ): SimView {
   return JSON.parse(
     wasm.simulate(
@@ -51,6 +56,7 @@ export function simulate(
       level,
       JSON.stringify(design),
       JSON.stringify(inputs),
+      JSON.stringify(state),
     ),
   ) as SimView;
 }

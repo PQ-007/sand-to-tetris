@@ -22,28 +22,28 @@
   "wires": [
     {
       "from": {
-        "port": "r"
-      },
-      "to": {
-        "part": "top",
-        "pin": "a"
-      }
-    },
-    {
-      "from": {
-        "part": "bottom",
-        "pin": "out"
-      },
-      "to": {
-        "part": "top",
-        "pin": "b"
-      }
-    },
-    {
-      "from": {
         "port": "s"
       },
       "to": {
+        "part": "top",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "bottom",
+        "pin": "out"
+      },
+      "to": {
+        "part": "top",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "r"
+      },
+      "to": {
         "part": "bottom",
         "pin": "b"
       }
@@ -60,7 +60,7 @@
     },
     {
       "from": {
-        "part": "top",
+        "part": "bottom",
         "pin": "out"
       },
       "to": {

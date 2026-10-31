@@ -1775,6 +1775,27 @@ table.truth .bad {
   font-weight: 600;
 }
 
+table.truth .step {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+table.truth .any {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.memory-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.memory-controls button {
+  font-size: 0.875rem;
+}
+
 table.truth .mark {
   white-space: nowrap;
   font-size: 0.8125rem;

@@ -38,10 +38,19 @@ pub fn check(library: &str, level: &str, design: &str) -> Result<String, JsError
     js(to_json(api::check(library, level, design)))
 }
 
-/// Live simulation of a (possibly unfinished) design → `SimView` JSON.
+/// Live simulation of a (possibly unfinished) design → `SimView` JSON,
+/// continuing from `state` (the previous view's `state`, or `{}`).
 #[wasm_bindgen]
-pub fn simulate(library: &str, level: &str, design: &str, inputs: &str) -> Result<String, JsError> {
-    js(to_json(api::simulate(library, level, design, inputs)))
+pub fn simulate(
+    library: &str,
+    level: &str,
+    design: &str,
+    inputs: &str,
+    state: &str,
+) -> Result<String, JsError> {
+    js(to_json(api::simulate_from(
+        library, level, design, inputs, state,
+    )))
 }
 
 /// Compares the learner's design of a component with its fast model →

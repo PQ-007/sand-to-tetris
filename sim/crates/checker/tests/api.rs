@@ -2,7 +2,7 @@
 
 #![allow(clippy::unwrap_used)] // test helpers
 
-use s2t_checker::api::{check, level_info, simulate};
+use s2t_checker::api::{check, level_info, simulate, simulate_from};
 
 fn read(rel: &str) -> String {
     std::fs::read_to_string(format!(
@@ -16,6 +16,8 @@ fn read(rel: &str) -> String {
 fn dir(id: &str) -> String {
     let layer = if ["not", "nand", "nor", "zero", "one"].contains(&id) {
         1
+    } else if ["srlatch", "dlatch", "dff", "bit", "register"].contains(&id) {
+        3
     } else {
         2
     };
@@ -165,4 +167,72 @@ fn simulate_layer_2_reports_bus_values_and_depth() {
     assert!(simulate(&lib, "not16", d, r#"{"a": 70000}"#)
         .unwrap_err()
         .contains("doesn't fit in input `a` (16 bits)"));
+}
+
+fn latch_library() -> String {
+    let levels: Vec<String> = ["nor", "srlatch"]
+        .iter()
+        .map(|id| read(&format!("{}/level.toml", dir(id))))
+        .collect();
+    let nor: serde_json::Value = serde_json::from_str(&read("layer1/nor/reference.json")).unwrap();
+    serde_json::json!({ "levels": levels, "unlocked": [nor] }).to_string()
+}
+
+fn q(view: &s2t_checker::api::SimView) -> String {
+    view.outputs
+        .iter()
+        .find(|(n, _)| n == "q")
+        .map(|(_, v)| v.clone())
+        .unwrap_or_default()
+}
+
+#[test]
+fn live_simulation_remembers_between_calls() {
+    let lib = latch_library();
+    let latch = read("layer3/srlatch/reference.json");
+    // Set: q becomes 1, and the state lists every gate output it stored.
+    let set = simulate_from(&lib, "srlatch", &latch, r#"{"s":1,"r":0}"#, "{}").unwrap();
+    assert_eq!(q(&set), "1");
+    // q comes from the bottom NOR; the top one holds its opposite.
+    assert_eq!(set.state.get("bottom.out").map(String::as_str), Some("1"));
+    assert_eq!(set.state.get("top.out").map(String::as_str), Some("0"));
+    // Hold, passing the state back: still 1.
+    let state = serde_json::to_string(&set.state).unwrap();
+    let hold = simulate_from(&lib, "srlatch", &latch, r#"{"s":0,"r":0}"#, &state).unwrap();
+    assert_eq!(q(&hold), "1");
+    // Without the state it's a fresh circuit: unknown.
+    let fresh = simulate(&lib, "srlatch", &latch, r#"{"s":0,"r":0}"#).unwrap();
+    assert_eq!(q(&fresh), "X");
+    assert!(fresh.state.is_empty());
+}
+
+#[test]
+fn state_survives_an_unrelated_edit() {
+    let lib = latch_library();
+    let latch = read("layer3/srlatch/reference.json");
+    let set = simulate_from(&lib, "srlatch", &latch, r#"{"s":1,"r":0}"#, "{}").unwrap();
+    let state = serde_json::to_string(&set.state).unwrap();
+    // Add a spare, unwired NOR: the latch's gates keep their paths.
+    let mut edited: serde_json::Value = serde_json::from_str(&latch).unwrap();
+    edited["parts"]
+        .as_array_mut()
+        .unwrap()
+        .push(serde_json::json!({"id": "spare", "kind": "nor"}));
+    let hold = simulate_from(
+        &lib,
+        "srlatch",
+        &edited.to_string(),
+        r#"{"s":0,"r":0}"#,
+        &state,
+    )
+    .unwrap();
+    assert_eq!(q(&hold), "1");
+}
+
+#[test]
+fn bad_state_is_an_error_not_a_crash() {
+    let lib = latch_library();
+    let latch = read("layer3/srlatch/reference.json");
+    let err = simulate_from(&lib, "srlatch", &latch, r#"{"s":0,"r":0}"#, "[1,2]").unwrap_err();
+    assert!(err.contains("state"), "{err}");
 }

@@ -118,6 +118,14 @@ sand-to-tetris/
 | **M3** ✓ | Layer 1 in the browser: WASM bridge, editor, toolbox, level map, live truth table, look-inside, keyboard mode, Chapter 1 | You can build a CMOS NAND by dragging, pass Check and unlock it |
 | M4 ✓ | Layer 2: gate-level engine, buses, splitters, Repeat ×N, fast-model swap; mux, decoder, adders, 16-bit ALU | |
 | M5 | Layer 3: latches → flip-flops → registers → RAM → PC, plus a waveform view | |
+
+### M5 decisions (2026-11-01)
+- **Everything is built from gates; no memory primitive.** SR latch (two cross-coupled NORs) → D latch → master–slave D flip-flop (two D latches, opposite enables) → Bit (flip-flop + MUX: keep or load) → Register (Bit ×16) → RAM8 → RAM64 → RAM512 → RAM4K → PC.
+- **Sequential levels** (`sequential = true`): the table's rows are steps run in order on one circuit, so state carries over; `-` means "any value" (e.g. before anything is stored). Rising-edge steps change only `clk`, so d is steady at the edge (setup time).
+- **Power-on is unknown (X)**, as in real hardware; tests store before they read.
+- **RAM stops at 4K words for now**; the full memory size comes with the memory map, designed together in M6.
+- **Live memory in the editor:** `simulate` takes the previous state and returns the new one, keyed by gate path (not net number), so stored bits survive unrelated edits. Clicking a test step replays the test up to it; "Tick clk" pulses the clock; "Reset memory" returns to power-on.
+- Order of work: core (sequential checking) ✓ → latch…register levels ✓ → stateful editor ✓ → RAM, PC, Layer 2 helpers, stateful fast models and sequential match check → waveform view → Chapter 3.
 | M6 | **ISA designed together with the user** → written spec in `docs/ISA.md` (word size and ALU already agreed) | |
 | M7 | CPU, Computer, CPU test programs, fast CPU model | |
 | M8 | Assembler | |

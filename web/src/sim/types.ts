@@ -37,6 +37,8 @@ export interface Level {
   outputs: string[];
   requires: string[];
   optional: boolean;
+  /** Rows are steps run in order on one circuit (it has memory). */
+  sequential: boolean;
   /** Bits per port, for multi-bit ports only. */
   widths?: Record<string, number>;
   model?: string;
@@ -47,7 +49,12 @@ export interface Level {
 
 export interface LevelInfo {
   level: Level;
-  table: { inputs: [string, number][]; outputs: [string, number][] }[];
+  table: {
+    inputs: [string, number][];
+    outputs: [string, number][];
+    /** Outputs written `-`: any value is fine (sequential levels). */
+    skip: string[];
+  }[];
 }
 
 export interface Problem {
@@ -71,6 +78,9 @@ export interface SimView {
   settled: boolean;
   /** Gate delays until settled (Layer 2 and up). */
   depth: number;
+  /** What every gate holds now, by gate path; pass it to the next
+   * simulate call so memory carries over. */
+  state: Record<string, string>;
 }
 
 export interface Diagnostic {

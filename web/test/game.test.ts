@@ -24,6 +24,7 @@ function entry(
     outputs: ["out"],
     requires,
     optional,
+    sequential: false,
     truth_table: "",
     hints: {},
   };

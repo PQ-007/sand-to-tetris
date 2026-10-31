@@ -41,6 +41,7 @@ import type {
   Design,
   Diagnostic,
   Endpoint,
+  LevelInfo,
   Level,
   LibraryInput,
   Report,
@@ -182,6 +183,13 @@ class PlayPage {
   private redoBtn = el("button", { type: "button" }, "Redo");
   private inputBox = el("div", { class: "input-toggles" });
   private tableBody = el("tbody");
+  /** What the live circuit holds (sequential levels): fed back into every
+   * simulation so latches and flip-flops remember. */
+  private memory: Record<string, string> = {};
+  /** For sequential levels: the state after each test step, and the step
+   * the canvas is showing (null once the learner changes something). */
+  private stepStates: Record<string, string>[] = [];
+  private currentStep: number | null = null;
   private result = el("div", { class: "check-result", "aria-live": "polite" });
   private problemList = el("ul", { class: "problems" });
   private inside = el("div", { class: "inside", hidden: "" });
@@ -194,10 +202,7 @@ class PlayPage {
     private root: HTMLElement,
     private app: App,
     private level: Level,
-    private table: {
-      inputs: [string, number][];
-      outputs: [string, number][];
-    }[],
+    private table: LevelInfo["table"],
   ) {
     const saved = app.progress[level.id]?.design;
     this.history = new History(saved ?? emptyDesign(level.id));
@@ -327,6 +332,7 @@ class PlayPage {
     }
     const inputs = el("section", { class: "side-section" });
     inputs.append(el("h2", {}, "Inputs"), this.inputBox);
+    if (l.sequential) inputs.append(this.memoryControls());
     side.append(inputs);
     if (l.inputs.some((p) => this.width(p) > 1)) {
       inputs.append(
@@ -339,7 +345,7 @@ class PlayPage {
     }
     const table = el("table", { class: "truth" });
     const head = el("thead");
-    head.innerHTML = `<tr>${l.inputs.map((i) => `<th scope="col">${esc(i)}</th>`).join("")}${l.outputs.map((o) => `<th scope="col">${esc(o)} (want)</th><th scope="col">${esc(o)} (yours)</th>`).join("")}<th scope="col"><span class="visually-hidden">Result</span></th></tr>`;
+    head.innerHTML = `<tr>${l.sequential ? '<th scope="col">Step</th>' : ""}${l.inputs.map((i) => `<th scope="col">${esc(i)}</th>`).join("")}${l.outputs.map((o) => `<th scope="col">${esc(o)} (want)</th><th scope="col">${esc(o)} (yours)</th>`).join("")}<th scope="col"><span class="visually-hidden">Result</span></th></tr>`;
     table.append(head, this.tableBody);
     const checkBtn = el(
       "button",
@@ -359,11 +365,13 @@ class PlayPage {
     const tableWrap = el("div", { class: "table-wrap" });
     tableWrap.append(table);
     tests.append(
-      el("h2", {}, "Truth table"),
+      el("h2", {}, l.sequential ? "Test steps" : "Truth table"),
       el(
         "p",
         { class: "help" },
-        "Updates live as you wire. Click a row to set those inputs.",
+        l.sequential
+          ? "Steps run top to bottom, and the circuit remembers between them. “any” means any value is fine. Click a step to replay the test up to it."
+          : "Updates live as you wire. Click a row to set those inputs.",
       ),
       tableWrap,
       this.problemList,
@@ -397,6 +405,47 @@ class PlayPage {
       () => document.removeEventListener("keydown", this.onKeys),
       { once: true },
     );
+  }
+
+  /** Tick (pulse clk) and power-cycle buttons for circuits with memory. */
+  private memoryControls(): HTMLElement {
+    const box = el("div", { class: "memory-controls" });
+    if (this.level.inputs.includes("clk")) {
+      const tick = el(
+        "button",
+        { type: "button", title: "Raise clk to 1, then back to 0" },
+        "Tick clk ⎍",
+      );
+      tick.addEventListener("click", () => {
+        this.currentStep = null;
+        this.inputs.clk = 1;
+        this.refresh(false);
+        this.inputs.clk = 0;
+        this.refresh(false);
+        this.say(
+          "Tick: clk rose to 1 (the moment flip-flops store) and fell back to 0.",
+        );
+      });
+      box.append(tick);
+    }
+    const reset = el(
+      "button",
+      {
+        type: "button",
+        title: "Forget everything stored, like switching off and on",
+      },
+      "Reset memory",
+    );
+    reset.addEventListener("click", () => {
+      this.memory = {};
+      this.currentStep = null;
+      this.refresh(false);
+      this.say(
+        "Memory cleared: every stored bit is unknown (X) again, as at power-on.",
+      );
+    });
+    box.append(reset);
+    return box;
   }
 
   private zoomControls(): HTMLElement {
@@ -842,6 +891,7 @@ class PlayPage {
       return;
     }
     this.inputs[name] = this.inputs[name] ? 0 : 1;
+    this.currentStep = null;
     this.refresh(false);
   }
 
@@ -868,9 +918,12 @@ class PlayPage {
 
   // ---- simulation and checking ------------------------------------------------
 
-  private simulateWith(inputs: Record<string, number>): SimView | null {
+  private simulateWith(
+    inputs: Record<string, number>,
+    state: Record<string, string> = {},
+  ): SimView | null {
     try {
-      return simulate(this.library, this.level.id, this.design, inputs);
+      return simulate(this.library, this.level.id, this.design, inputs, state);
     } catch (e) {
       this.say(`Simulation error: ${String(e)}`);
       return null;
@@ -879,7 +932,12 @@ class PlayPage {
 
   /** Re-simulates; `full` also refreshes the truth table and lists. */
   private refresh(full: boolean): void {
-    this.view = this.simulateWith(this.inputs);
+    // Combinational levels always start fresh, exactly like the checker.
+    this.view = this.simulateWith(
+      this.inputs,
+      this.level.sequential ? this.memory : {},
+    );
+    if (this.level.sequential && this.view) this.memory = this.view.state;
     this.undoBtn.disabled = !this.history.canUndo();
     this.redoBtn.disabled = !this.history.canRedo();
     this.canvas.render({
@@ -942,6 +1000,7 @@ class PlayPage {
               return;
             }
             this.inputs[name] = n;
+            this.currentStep = null;
             this.refresh(false);
           });
           label.append(input);
@@ -963,30 +1022,55 @@ class PlayPage {
   }
 
   private renderTable(): void {
+    // A sequential level's steps run in order, each from the state the
+    // previous one left; combinational rows each start fresh.
+    let state: Record<string, string> = {};
+    this.stepStates = [];
     this.tableBody.replaceChildren(
       ...this.table.map((row, i) => {
         const inputs = Object.fromEntries(row.inputs);
-        const view = this.simulateWith(inputs);
+        const view = this.simulateWith(
+          inputs,
+          this.level.sequential ? state : {},
+        );
+        if (this.level.sequential) {
+          state = view?.state ?? {};
+          this.stepStates.push(state);
+        }
         const tr = el("tr", { tabindex: "0", "data-row": String(i) });
         let ok = Boolean(view && !view.blocked);
-        let cells = row.inputs
+        let cells = this.level.sequential
+          ? `<td class="step">${i + 1}</td>`
+          : "";
+        cells += row.inputs
           .map(([n, v]) => `<td>${formatValue(v, this.width(n))}</td>`)
           .join("");
         for (const [name, want] of row.outputs) {
           const got = view?.blocked
             ? "–"
             : (view?.outputs.find(([n]) => n === name)?.[1] ?? "–");
-          if (got !== String(want)) ok = false;
+          const any = row.skip.includes(name);
+          if (!any && got !== String(want)) ok = false;
           const shown = /^\d+$/.test(got)
             ? formatValue(Number(got), this.width(name))
             : got;
-          cells += `<td>${formatValue(want, this.width(name))}</td><td class="got">${shown}</td>`;
+          cells += `<td>${any ? '<span class="any">any</span>' : formatValue(want, this.width(name))}</td><td class="got">${shown}</td>`;
         }
         cells += `<td class="mark">${ok ? '<span class="ok">✓ match</span>' : '<span class="bad">✗ differs</span>'}</td>`;
         tr.innerHTML = cells;
         tr.classList.toggle("row-ok", ok);
         const pick = () => {
           this.setInputs(row.inputs);
+          if (this.level.sequential) {
+            // Replay the test up to this step: the canvas shows that moment.
+            this.memory = this.stepStates[i] ?? {};
+            this.currentStep = i;
+            this.say(
+              i === 0
+                ? "Showing step 1, from power-on."
+                : `Showing step ${i + 1}, after replaying steps 1–${i}.`,
+            );
+          }
           this.refresh(false);
         };
         tr.addEventListener("click", pick);
@@ -1004,7 +1088,11 @@ class PlayPage {
 
   private markCurrentRow(): void {
     this.table.forEach((row, i) => {
-      const current = row.inputs.every(([k, v]) => (this.inputs[k] ?? 0) === v);
+      // Steps repeat the same inputs, so a sequential level marks the step
+      // that was replayed, not every row with matching inputs.
+      const current = this.level.sequential
+        ? this.currentStep === i
+        : row.inputs.every(([k, v]) => (this.inputs[k] ?? 0) === v);
       const tr = this.tableBody.querySelector(`[data-row="${i}"]`);
       tr?.classList.toggle("current", current);
       if (current) tr?.setAttribute("aria-current", "true");
@@ -1050,7 +1138,7 @@ class PlayPage {
       const box = el("div", { class: "passed" });
       const tested = report.random
         ? `All ${report.rows.length} rows and ${report.random.run.toLocaleString("en-US")} random tests match`
-        : `All ${report.rows.length} rows match`;
+        : `All ${report.rows.length} ${this.level.sequential ? "steps" : "rows"} match`;
       const stats =
         this.level.layer === 1
           ? `using ${report.transistors} transistors`
@@ -1070,7 +1158,7 @@ class PlayPage {
         ? ` ${report.random.failed.toLocaleString("en-US")} of ${report.random.run.toLocaleString("en-US")} random tests fail too.`
         : "";
     const head = report.rows.length
-      ? `✗ ${failed} of ${report.rows.length} rows don't match yet.${randomNote}`
+      ? `✗ ${failed} of ${report.rows.length} ${this.level.sequential ? "steps" : "rows"} don't match yet.${randomNote}`
       : "✗ The design has errors (see below).";
     this.result.append(el("p", { class: "failed" }, head));
     const list = el("ul", { class: "diagnostics" });

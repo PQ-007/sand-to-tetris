@@ -56,6 +56,8 @@ fn parse_design(json: &str) -> Result<Design, String> {
 pub struct InfoRow {
     pub inputs: Vec<(String, u64)>,
     pub outputs: Vec<(String, u64)>,
+    /// Outputs written `-` (any value is fine) in a sequential level.
+    pub skip: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -74,6 +76,7 @@ pub fn level_info(toml: &str) -> Result<LevelInfo, String> {
         .map(|r| InfoRow {
             inputs: r.inputs,
             outputs: r.outputs,
+            skip: r.skip,
         })
         .collect();
     Ok(LevelInfo { level, table })
@@ -122,6 +125,11 @@ pub struct SimView {
     pub settled: bool,
     /// Gate delays until the outputs settled (Layer 2 and up).
     pub depth: usize,
+    /// What every gate output holds after this run (known bits only), keyed
+    /// by the gate's path, e.g. `ff/master/latch/top.out`. Pass it to the
+    /// next [`simulate_from`] so latches and flip-flops remember. Keyed by
+    /// path rather than net number, it survives unrelated edits.
+    pub state: BTreeMap<String, String>,
 }
 
 fn bus_text(bits: &[Value]) -> String {
@@ -151,8 +159,23 @@ fn read_inputs(level: &Level, json: &str) -> Result<BTreeMap<String, u64>, Strin
 }
 
 /// Simulates a design (finished or not) with the given inputs,
-/// `{"a": 1, "b": 0}`. Missing inputs are left floating.
+/// `{"a": 1, "b": 0}`, from power-on (every stored bit unknown). Missing
+/// inputs are left floating.
 pub fn simulate(library: &str, level: &str, design: &str, inputs: &str) -> Result<SimView, String> {
+    simulate_from(library, level, design, inputs, "{}")
+}
+
+/// Like [`simulate`], continuing from `state` (a previous run's
+/// [`SimView::state`] as JSON), so the circuit remembers what it stored.
+pub fn simulate_from(
+    library: &str,
+    level: &str,
+    design: &str,
+    inputs: &str,
+    state: &str,
+) -> Result<SimView, String> {
+    let state: BTreeMap<String, String> =
+        serde_json::from_str(state).map_err(|e| format!("couldn't read the circuit state: {e}"))?;
     let (lib, fast) = load_library(library)?;
     let level = find_level(&lib, level)?;
     let design = parse_design(design)?;
@@ -170,9 +193,10 @@ pub fn simulate(library: &str, level: &str, design: &str, inputs: &str) -> Resul
         outputs: vec![],
         settled: false,
         depth: 0,
+        state: BTreeMap::new(),
     };
     if level.layer > 1 {
-        simulate_gates(&level, &design, &lib, &fast, &inputs, view)
+        simulate_gates(&level, &design, &lib, &fast, &inputs, &state, view)
     } else {
         simulate_switches(&level, &design, &lib, &inputs, view)
     }
@@ -184,6 +208,7 @@ fn simulate_gates(
     lib: &Library,
     fast: &BTreeSet<String>,
     inputs: &BTreeMap<String, u64>,
+    state: &BTreeMap<String, String>,
     mut view: SimView,
 ) -> Result<SimView, String> {
     let prepared = match prepare(level, design, lib, fast, true) {
@@ -198,10 +223,38 @@ fn simulate_gates(
         }
     };
     let mut sim = prepared.sim()?;
+    // Restore what each gate held, then apply the new inputs.
+    for cell in &prepared.circuit.cells {
+        for (port, nets) in &cell.outputs {
+            for (i, net) in nets.iter().enumerate() {
+                match state
+                    .get(&state_key(cell, port, i, nets.len()))
+                    .map(String::as_str)
+                {
+                    Some("0") => sim.force(*net, Value::Zero),
+                    Some("1") => sim.force(*net, Value::One),
+                    _ => {}
+                }
+            }
+        }
+    }
     for (name, v) in inputs {
         sim.set_input(name, *v)?;
     }
     let outcome = sim.settle();
+    for cell in &prepared.circuit.cells {
+        for (port, nets) in &cell.outputs {
+            for (i, net) in nets.iter().enumerate() {
+                let bit = match sim.value(*net) {
+                    Value::Zero => "0",
+                    Value::One => "1",
+                    _ => continue,
+                };
+                view.state
+                    .insert(state_key(cell, port, i, nets.len()), bit.into());
+            }
+        }
+    }
     let read = |nets: &[usize]| -> Vec<Value> { nets.iter().map(|n| sim.value(*n)).collect() };
     view.blocked = false;
     view.settled = outcome.settled;
@@ -223,6 +276,16 @@ fn simulate_gates(
         .map(|(n, nets)| (n.clone(), bus_text(&read(nets))))
         .collect();
     Ok(view)
+}
+
+/// `ff/master/latch/top.out`, with `[i]` for a bit of a wide output.
+fn state_key(cell: &s2t_netlist::Cell, port: &str, bit: usize, width: usize) -> String {
+    let path = cell.path.join("/");
+    if width > 1 {
+        format!("{path}.{port}[{bit}]")
+    } else {
+        format!("{path}.{port}")
+    }
 }
 
 fn simulate_switches(
