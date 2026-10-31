@@ -1,6 +1,6 @@
 // Reads docs/ and renders everything the site needs. Used by the Vite
 // plugin (build + dev) and by tests that check the real content.
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { KNOWN_TAGS } from "../src/components/known-tags";
 import { ContentError, parseGlossary, parseSources } from "./data";
@@ -15,9 +15,34 @@ export interface GlossaryItem {
   see: string[];
 }
 
+export interface LevelFile {
+  id: string;
+  layer: number;
+  /** The raw level.toml; parsed in the browser by the WASM core. */
+  toml: string;
+}
+
 export interface SiteContent {
   chapters: RenderedChapter[];
   glossary: GlossaryItem[];
+}
+
+/**
+ * Reads hdl/levels/layerN/<id>/level.toml. Only level definitions are read:
+ * reference solutions in the same folders must never reach the website.
+ */
+export function loadLevels(levelsDir: string): LevelFile[] {
+  const out: LevelFile[] = [];
+  for (const layer of readdirSync(levelsDir).sort()) {
+    const m = /^layer(\d+)$/.exec(layer);
+    if (!m) continue;
+    for (const id of readdirSync(join(levelsDir, layer)).sort()) {
+      const file = join(levelsDir, layer, id, "level.toml");
+      if (!existsSync(file)) continue;
+      out.push({ id, layer: Number(m[1]), toml: readFileSync(file, "utf8") });
+    }
+  }
+  return out;
 }
 
 export interface LoadResult {

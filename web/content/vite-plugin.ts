@@ -2,13 +2,14 @@
 // link, unknown citation, unregistered component) fails the build.
 import { resolve } from "node:path";
 import type { Plugin } from "vite";
-import { loadContent } from "./load";
+import { loadContent, loadLevels } from "./load";
 
 const ID = "virtual:s2t-content";
 const RESOLVED = "\0" + ID;
 
-export function contentPlugin(docsDir: string): Plugin {
+export function contentPlugin(docsDir: string, levelsDir: string): Plugin {
   const dir = resolve(docsDir);
+  const levels = resolve(levelsDir);
   return {
     name: "s2t-content",
     resolveId(id) {
@@ -20,15 +21,23 @@ export function contentPlugin(docsDir: string): Plugin {
       for (const f of files) this.addWatchFile(f);
       if (errors.length)
         this.error(`Content errors:\n  ${errors.join("\n  ")}`);
+      // Level definitions only (level.toml); never reference solutions.
+      const levelFiles = loadLevels(levels);
       return (
         `export const chapters = ${JSON.stringify(content.chapters)};\n` +
-        `export const glossary = ${JSON.stringify(content.glossary)};\n`
+        `export const glossary = ${JSON.stringify(content.glossary)};\n` +
+        `export const levelFiles = ${JSON.stringify(levelFiles)};\n`
       );
     },
     configureServer(server) {
-      server.watcher.add(dir);
+      server.watcher.add([dir, levels]);
       server.watcher.on("change", (file) => {
-        if (!resolve(file).startsWith(dir)) return;
+        const f = resolve(file);
+        if (
+          !f.startsWith(dir) &&
+          !(f.startsWith(levels) && f.endsWith("level.toml"))
+        )
+          return;
         const mod = server.moduleGraph.getModuleById(RESOLVED);
         if (mod) server.moduleGraph.invalidateModule(mod);
         server.ws.send({ type: "full-reload" });

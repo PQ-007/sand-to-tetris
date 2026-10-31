@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { KNOWN_TAGS } from "../src/components/known-tags";
-import { loadContent } from "../content/load";
+import { loadContent, loadLevels } from "../content/load";
 
 const docs = new URL("../../docs", import.meta.url).pathname;
 
@@ -48,7 +48,7 @@ describe("component registry", () => {
 });
 
 describe("spoiler guard", () => {
-  it("nothing in the website imports from hdl/ (reference solutions stay out of the bundle)", () => {
+  it("website code never reads reference solutions (only level.toml files)", () => {
     const roots = ["../src/", "../content/"].map(
       (r) => new URL(r, import.meta.url).pathname,
     );
@@ -60,7 +60,7 @@ describe("spoiler guard", () => {
           if (entry.name !== "pkg") walk(path + "/");
         } else if (
           /\.(ts|js)$/.test(entry.name) &&
-          /["'`][^"'`]*\bhdl\//.test(readFileSync(path, "utf8"))
+          /reference\.json/.test(readFileSync(path, "utf8"))
         ) {
           offenders.push(path);
         }
@@ -68,5 +68,21 @@ describe("spoiler guard", () => {
     };
     roots.forEach(walk);
     expect(offenders).toEqual([]);
+  });
+
+  it("the site gets every level definition, and nothing else from hdl/", () => {
+    const levels = loadLevels(
+      new URL("../../hdl/levels", import.meta.url).pathname,
+    );
+    expect(levels.map((l) => l.id).sort()).toEqual([
+      "and",
+      "nand",
+      "nor",
+      "not",
+    ]);
+    for (const l of levels) {
+      expect(l.toml).toContain(`id = "${l.id}"`);
+      expect(l.toml).not.toContain('"wires"');
+    }
   });
 });
