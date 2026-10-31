@@ -20,6 +20,8 @@ import {
   type Point,
 } from "./editor/geometry";
 import { openMenu } from "./editor/menu";
+import { drawWaveform } from "./editor/waveform-view";
+import type { Signal } from "./editor/waveform";
 import {
   addPart,
   addWire,
@@ -190,6 +192,19 @@ class PlayPage {
   /** For sequential levels: the test step the canvas is showing (null
    * once the learner changes something). */
   private currentStep: number | null = null;
+  /** The test run shown in the waveform: each step's outputs, and which
+   * steps fail. */
+  private testRun: { outputs: [string, string][][]; failed: Set<number> } = {
+    outputs: [],
+    failed: new Set(),
+  };
+  /** Live history for the waveform: inputs and outputs after each change. */
+  private liveLog: {
+    inputs: Record<string, number>;
+    outputs: [string, string][];
+  }[] = [];
+  private wave = el("div", { class: "wave-panel" });
+  private waveTab: "test" | "live" = "test";
   private result = el("div", { class: "check-result", "aria-live": "polite" });
   private problemList = el("ul", { class: "problems" });
   private inside = el("div", { class: "inside", hidden: "" });
@@ -309,6 +324,7 @@ class PlayPage {
       toolbar,
       frame,
       footer,
+      ...(l.sequential ? [this.wavePanel()] : []),
       this.propsBox,
     );
 
@@ -420,15 +436,25 @@ class PlayPage {
       tick.addEventListener("click", () => {
         this.currentStep = null;
         // Both edges in one run: the circuit is built once.
+        // 0 → 1 → 0 from wherever clk is, so a tick always has a rising
+        // edge.
         const run = this.runSteps(
           [
+            { ...this.inputs, clk: 0 },
             { ...this.inputs, clk: 1 },
             { ...this.inputs, clk: 0 },
           ],
           this.memory,
         );
+        if (run) {
+          // Record each half of the tick, not just where it ends.
+          this.inputs.clk = 0;
+          this.record({ ...run.view, outputs: run.outputs[0] ?? [] });
+          this.inputs.clk = 1;
+          this.record({ ...run.view, outputs: run.outputs[1] ?? [] });
+          this.memory = run.view.state;
+        }
         this.inputs.clk = 0;
-        if (run) this.memory = run.view.state;
         this.refresh(false, run?.view);
         this.say(
           "Tick: clk rose to 1 (the moment flip-flops store) and fell back to 0.",
@@ -983,6 +1009,9 @@ class PlayPage {
       view ??
       this.simulateWith(this.inputs, this.level.sequential ? this.memory : {});
     if (this.level.sequential && this.view) this.memory = this.view.state;
+    // Live history is what the learner did; a replayed test step isn't.
+    if (this.currentStep === null) this.record(this.view);
+    else this.renderWave();
     this.undoBtn.disabled = !this.history.canUndo();
     this.redoBtn.disabled = !this.history.canRedo();
     this.canvas.render({
@@ -1071,6 +1100,7 @@ class PlayPage {
     // run from power-on; combinational rows each start fresh.
     const steps = this.table.map((row) => Object.fromEntries(row.inputs));
     const run = this.level.sequential ? this.runSteps(steps, {}) : null;
+    const failed = new Set<number>();
     this.tableBody.replaceChildren(
       ...this.table.map((row, i) => {
         const inputs = steps[i] ?? {};
@@ -1099,22 +1129,13 @@ class PlayPage {
         cells += `<td class="mark">${ok ? '<span class="ok">✓ match</span>' : '<span class="bad">✗ differs</span>'}</td>`;
         tr.innerHTML = cells;
         tr.classList.toggle("row-ok", ok);
+        if (!ok) failed.add(i);
         const pick = () => {
-          this.setInputs(row.inputs);
-          let replayed: SimView | undefined;
-          if (this.level.sequential) {
-            // Replay the test up to this step: the canvas shows that moment.
-            const run = this.runSteps(steps.slice(0, i + 1), {});
-            this.memory = run?.view.state ?? {};
-            replayed = run?.view;
-            this.currentStep = i;
-            this.say(
-              i === 0
-                ? "Showing step 1, from power-on."
-                : `Showing step ${i + 1}, after replaying steps 1–${i}.`,
-            );
+          if (this.level.sequential) this.replayStep(i);
+          else {
+            this.setInputs(row.inputs);
+            this.refresh(false);
           }
-          this.refresh(false, replayed);
         };
         tr.addEventListener("click", pick);
         tr.addEventListener("keydown", (e) => {
@@ -1126,7 +1147,138 @@ class PlayPage {
         return tr;
       }),
     );
+    this.testRun = { outputs: run?.outputs ?? [], failed };
     this.markCurrentRow();
+    this.renderWave();
+  }
+
+  /** Replays the test up to step `i`: the canvas shows that moment. */
+  private replayStep(i: number): void {
+    const row = this.table[i];
+    if (!row) return;
+    const steps = this.table
+      .slice(0, i + 1)
+      .map((r) => Object.fromEntries(r.inputs));
+    this.setInputs(row.inputs);
+    const run = this.runSteps(steps, {});
+    this.memory = run?.view.state ?? {};
+    this.currentStep = i;
+    this.say(
+      i === 0
+        ? "Showing step 1, from power-on."
+        : `Showing step ${i + 1}, after replaying steps 1–${i}.`,
+    );
+    this.refresh(false, run?.view);
+  }
+
+  // ---- waveform ---------------------------------------------------------------
+
+  private wavePanel(): HTMLElement {
+    const box = el("section", { class: "wave-box", "aria-label": "Waveform" });
+    const head = el("div", { class: "wave-head" });
+    const toggle = el(
+      "button",
+      { type: "button", "aria-expanded": "true", class: "wave-toggle" },
+      "Waveform",
+    );
+    const tabs = el("div", { class: "wave-tabs", role: "group" });
+    const tab = (id: "test" | "live", label: string) => {
+      const b = el(
+        "button",
+        { type: "button", "aria-pressed": String(this.waveTab === id) },
+        label,
+      );
+      b.addEventListener("click", () => {
+        this.waveTab = id;
+        tabs
+          .querySelectorAll("button")
+          .forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+        this.renderWave();
+      });
+      return b;
+    };
+    tabs.append(tab("test", "Test steps"), tab("live", "Live"));
+    const clear = el(
+      "button",
+      { type: "button", class: "wave-clear" },
+      "Clear",
+    );
+    clear.addEventListener("click", () => {
+      this.liveLog = [];
+      this.renderWave();
+    });
+    toggle.addEventListener("click", () => {
+      const open = this.wave.hidden;
+      this.wave.hidden = !open;
+      tabs.hidden = !open;
+      clear.hidden = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+    });
+    head.append(toggle, tabs, clear);
+    box.append(head, this.wave);
+    return box;
+  }
+
+  /** Remembers a live moment for the waveform (sequential levels). */
+  private record(view: SimView | null): void {
+    if (!this.level.sequential || !view || view.blocked) return;
+    const sample = { inputs: { ...this.inputs }, outputs: view.outputs };
+    const last = this.liveLog[this.liveLog.length - 1];
+    if (last && JSON.stringify(last) === JSON.stringify(sample)) return;
+    this.liveLog.push(sample);
+    if (this.liveLog.length > 40) this.liveLog.shift();
+    this.renderWave();
+  }
+
+  private renderWave(): void {
+    if (!this.level.sequential || this.wave.hidden) return;
+    const l = this.level;
+    const live = this.waveTab === "live";
+    const count = live ? this.liveLog.length : this.table.length;
+    const input = (name: string): Signal => ({
+      name,
+      width: this.width(name),
+      values: live
+        ? this.liveLog.map((h) => String(h.inputs[name] ?? 0))
+        : this.table.map((r) =>
+            String(r.inputs.find(([n]) => n === name)?.[1] ?? ""),
+          ),
+    });
+    const output = (name: string): Signal => ({
+      name,
+      width: this.width(name),
+      output: true,
+      values: (live
+        ? this.liveLog.map((h) => h.outputs)
+        : this.testRun.outputs
+      ).map((outs) => outs.find(([n]) => n === name)?.[1] ?? ""),
+    });
+    const signals = [...l.inputs.map(input), ...l.outputs.map(output)];
+    if (!count) {
+      this.wave.replaceChildren(
+        el(
+          "p",
+          { class: "help" },
+          live
+            ? "Flip inputs or tick the clock: each change appears here."
+            : "Nothing to show yet.",
+        ),
+      );
+      return;
+    }
+    this.wave.replaceChildren(
+      drawWaveform(
+        signals,
+        count,
+        live
+          ? { first: 1 }
+          : {
+              failed: this.testRun.failed,
+              current: this.currentStep,
+              pick: (i) => this.replayStep(i),
+            },
+      ),
+    );
   }
 
   private markCurrentRow(): void {

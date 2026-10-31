@@ -126,7 +126,7 @@ sand-to-tetris/
 - **RAM stops at 4K words for now**; the full memory size comes with the memory map, designed together in M6.
 - **Live memory in the editor:** `simulate` takes the previous state and returns the new one, keyed by gate path (not net number), so stored bits survive unrelated edits. Clicking a test step replays the test up to it; "Tick clk" pulses the clock; "Reset memory" returns to power-on.
 - **Big memories run as fast models.** Fully flattened, RAM64 is ~32,000 gates and RAM4K ~2 million. The editor says so when a circuit passes 5,000 gates and names the parts that could swap; `check-all` and the background status re-check run lower memory components as their models (each already matched that model).
-- Order of work: core (sequential checking) ✓ → latch…register levels ✓ → stateful editor ✓ → RAM, PC, Layer 2 helpers, stateful fast models and sequential match check ✓ → waveform view → Chapter 3.
+- Order of work: core (sequential checking) ✓ → latch…register levels ✓ → stateful editor ✓ → RAM, PC, Layer 2 helpers, stateful fast models and sequential match check ✓ → waveform view ✓ (Test steps: click a column to replay; Live: the learner's own clicks and ticks) → Chapter 3.
 | M6 | **ISA designed together with the user** → written spec in `docs/ISA.md` (word size and ALU already agreed) | |
 | M7 | CPU, Computer, CPU test programs, fast CPU model | |
 | M8 | Assembler | |
