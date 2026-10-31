@@ -10,159 +10,11 @@ use s2t_switch::{Sim, Value};
 
 pub mod api;
 
-// ---- truth tables ------------------------------------------------------------
+mod gatecheck;
+mod table;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TableRow {
-    /// Input values in the level's port order.
-    pub inputs: Vec<(String, bool)>,
-    /// Expected output values in the level's port order.
-    pub outputs: Vec<(String, bool)>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Table {
-    pub rows: Vec<TableRow>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TableError {
-    pub line: usize,
-    pub message: String,
-}
-
-impl std::fmt::Display for TableError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "truth table line {}: {}", self.line, self.message)
-    }
-}
-
-impl std::error::Error for TableError {}
-
-fn names(items: &[String]) -> String {
-    items
-        .iter()
-        .map(|s| format!("`{s}`"))
-        .collect::<Vec<_>>()
-        .join(", ")
-}
-
-/// Maps header columns to the level's port order, or explains the mismatch.
-fn columns(
-    header: &[String],
-    ports: &[String],
-    what: &str,
-    line: usize,
-) -> Result<Vec<usize>, TableError> {
-    let same = header.len() == ports.len()
-        && header.iter().collect::<BTreeSet<_>>() == ports.iter().collect::<BTreeSet<_>>();
-    if !same {
-        return Err(TableError {
-            line,
-            message: format!(
-                "columns {} don't match the level's {what} {}",
-                names(header),
-                names(ports)
-            ),
-        });
-    }
-    // For each port (in level order), which column holds it.
-    Ok(ports
-        .iter()
-        .map(|p| header.iter().position(|h| h == p).unwrap_or(0))
-        .collect())
-}
-
-impl Table {
-    /// Parses `a b | out` followed by rows like `0 1 | 1`. Blank lines and
-    /// lines starting with `#` are ignored. Column order may differ from the
-    /// level's port order.
-    pub fn parse(text: &str, level: &Level) -> Result<Table, TableError> {
-        let mut lines = text
-            .lines()
-            .enumerate()
-            .map(|(i, l)| (i + 1, l.trim()))
-            .filter(|(_, l)| !l.is_empty() && !l.starts_with('#'));
-        let (hline, header) = lines.next().ok_or(TableError {
-            line: 1,
-            message: "the table is empty".into(),
-        })?;
-        let split = |line: usize, s: &str| -> Result<(Vec<String>, Vec<String>), TableError> {
-            let mut halves = s.split('|');
-            match (halves.next(), halves.next(), halves.next()) {
-                (Some(l), Some(r), None) => Ok((
-                    l.split_whitespace().map(String::from).collect(),
-                    r.split_whitespace().map(String::from).collect(),
-                )),
-                _ => Err(TableError {
-                    line,
-                    message: format!(
-                        "expected {} inputs, `|`, then {} output{}",
-                        level.inputs.len(),
-                        level.outputs.len(),
-                        if level.outputs.len() == 1 { "" } else { "s" }
-                    ),
-                }),
-            }
-        };
-        let (hin, hout) = split(hline, header)?;
-        let in_cols = columns(&hin, &level.inputs, "inputs", hline)?;
-        let out_cols = columns(&hout, &level.outputs, "outputs", hline)?;
-
-        let mut rows = Vec::new();
-        for (line, text) in lines {
-            let (vin, vout) = split(line, text)?;
-            if vin.len() != hin.len() || vout.len() != hout.len() {
-                return Err(TableError {
-                    line,
-                    message: format!(
-                        "expected {} inputs, `|`, then {} output{}",
-                        hin.len(),
-                        hout.len(),
-                        if hout.len() == 1 { "" } else { "s" }
-                    ),
-                });
-            }
-            let bit = |s: &String| match s.as_str() {
-                "0" => Ok(false),
-                "1" => Ok(true),
-                other => Err(TableError {
-                    line,
-                    message: format!("`{other}` isn't 0 or 1"),
-                }),
-            };
-            let pick = |ports: &[String], cols: &[usize], vals: &[String]| {
-                ports
-                    .iter()
-                    .zip(cols)
-                    .map(|(p, &c)| Ok((p.clone(), bit(&vals[c])?)))
-                    .collect::<Result<Vec<_>, TableError>>()
-            };
-            rows.push(TableRow {
-                inputs: pick(&level.inputs, &in_cols, &vin)?,
-                outputs: pick(&level.outputs, &out_cols, &vout)?,
-            });
-        }
-        Ok(Table { rows })
-    }
-
-    /// True if every combination of inputs appears.
-    pub fn is_exhaustive(&self) -> bool {
-        let Some(first) = self.rows.first() else {
-            return false;
-        };
-        let n = first.inputs.len();
-        if n >= 20 {
-            return false;
-        }
-        let seen: BTreeSet<Vec<bool>> = self
-            .rows
-            .iter()
-            .map(|r| r.inputs.iter().map(|(_, b)| *b).collect())
-            .collect();
-        seen.len() == 1 << n
-    }
-}
+pub use gatecheck::{format_value, leaf_model};
+pub use table::{parse_number, Table, TableError, TableRow};
 
 // ---- reports -------------------------------------------------------------------
 
@@ -180,7 +32,7 @@ pub enum Kind {
 }
 
 impl Kind {
-    fn hint_key(self) -> &'static str {
+    pub(crate) fn hint_key(self) -> &'static str {
         match self {
             Kind::Wrong => "wrong",
             Kind::Floating => "floating",
@@ -243,8 +95,20 @@ pub struct Report {
     pub problems: Vec<ReportProblem>,
     pub rows: Vec<RowResult>,
     pub diagnostics: Vec<Diagnostic>,
-    /// Transistors after flattening every component part.
+    /// Transistors after flattening every component part (Layer 1).
     pub transistors: usize,
+    /// Leaf cells after flattening (Layer 2 and up).
+    pub cells: usize,
+    /// Longest chain of gate delays seen while testing (Layer 2 and up).
+    pub depth: usize,
+    /// Random tests against the level's model, if it has one.
+    pub random: Option<RandomSummary>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct RandomSummary {
+    pub run: usize,
+    pub failed: usize,
 }
 
 fn describe(inputs: &[(String, String)], sep: &str) -> String {
@@ -267,7 +131,22 @@ fn top_parts<'a>(paths: impl Iterator<Item = &'a Vec<String>>) -> Vec<String> {
 /// in the level definition itself (a bad table), never for learner mistakes:
 /// those are reported inside the `Report`.
 pub fn check(level: &Level, design: &Design, library: &Library) -> Result<Report, TableError> {
+    check_with(level, design, library, &BTreeSet::new())
+}
+
+/// Like [`check`], with some components running as fast models (only
+/// matters from Layer 2 up). Layer 1 levels run on the switch-level engine;
+/// higher layers on the gate-level engine.
+pub fn check_with(
+    level: &Level,
+    design: &Design,
+    library: &Library,
+    fast: &BTreeSet<String>,
+) -> Result<Report, TableError> {
     let table = Table::parse(&level.truth_table, level)?;
+    if level.layer > 1 {
+        return Ok(gatecheck::check_gates(level, design, library, fast, &table));
+    }
     let problems = s2t_netlist::validate(level, design, library);
     let mut report = Report {
         component: level.id.clone(),
@@ -276,6 +155,9 @@ pub fn check(level: &Level, design: &Design, library: &Library) -> Result<Report
         rows: vec![],
         diagnostics: vec![],
         transistors: 0,
+        cells: 0,
+        depth: 0,
+        random: None,
     };
     if problems.iter().any(Problem::is_error) {
         return Ok(report);
@@ -310,13 +192,13 @@ fn run_row(level: &Level, circuit: &Circuit, n: usize, row: &TableRow, report: &
     let mut sim = Sim::new(circuit);
     for (name, bit) in &row.inputs {
         // Ports come from the level and the circuit was built from it.
-        let _ = sim.set_input(name, Value::from_bit(*bit));
+        let _ = sim.set_input(name, Value::from_bit(*bit == 1));
     }
     let outcome = sim.settle();
     let inputs: Vec<(String, String)> = row
         .inputs
         .iter()
-        .map(|(k, b)| (k.clone(), u8::from(*b).to_string()))
+        .map(|(k, b)| (k.clone(), b.to_string()))
         .collect();
     let mut result = RowResult {
         inputs: inputs.clone(),
@@ -324,7 +206,7 @@ fn run_row(level: &Level, circuit: &Circuit, n: usize, row: &TableRow, report: &
         passed: true,
     };
     for (port, bit) in &row.outputs {
-        let expected = Value::from_bit(*bit);
+        let expected = Value::from_bit(*bit == 1);
         let actual = sim.output(port).unwrap_or(Value::X);
         result
             .outputs

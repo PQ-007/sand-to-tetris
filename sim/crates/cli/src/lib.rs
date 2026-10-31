@@ -192,10 +192,32 @@ fn check_all(root: &Path) -> Result<String, String> {
     for e in &entries {
         let table = Table::parse(&e.level.truth_table, &e.level)
             .map_err(|err| format!("{}: {err}", e.dir.display()))?;
-        if !table.is_exhaustive() {
+        if let Some(m) = &e.level.model {
+            let widths =
+                |ports: &[String]| ports.iter().map(|p| e.level.width(p)).collect::<Vec<_>>();
+            match s2t_models::model(m) {
+                None => {
+                    ok = false;
+                    lines.push(format!("✗ {}: model `{m}` doesn't exist", title(&e.level)));
+                    continue;
+                }
+                Some(nm)
+                    if nm.inputs != widths(&e.level.inputs)
+                        || nm.outputs != widths(&e.level.outputs) =>
+                {
+                    ok = false;
+                    lines.push(format!(
+                        "✗ {}: model `{m}` has different port widths",
+                        title(&e.level)
+                    ));
+                    continue;
+                }
+                Some(_) => {}
+            }
+        } else if !table.is_exhaustive(&e.level) {
             ok = false;
             lines.push(format!(
-                "✗ {}: the truth table doesn't list every input combination",
+                "✗ {}: the truth table doesn't list every input combination, and there's no model to test against",
                 title(&e.level)
             ));
             continue;

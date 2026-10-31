@@ -8,6 +8,8 @@ license.workspace = true
 [dependencies]
 s2t-netlist.workspace = true
 s2t-switch.workspace = true
+s2t-gate.workspace = true
+s2t-models.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 

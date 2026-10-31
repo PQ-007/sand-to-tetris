@@ -57,6 +57,9 @@ function fakeCheck(broken: Set<string>) {
       rows: [],
       diagnostics: [],
       transistors: 0,
+      cells: 0,
+      depth: 0,
+      random: null,
     };
   };
 }

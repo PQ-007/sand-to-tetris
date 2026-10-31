@@ -67,6 +67,7 @@ describe("simulator core (WASM)", () => {
     expect(view.values).toContainEqual({
       endpoint: { part: "n1", pin: "drain" },
       value: "1",
+      width: 1,
     });
   });
 

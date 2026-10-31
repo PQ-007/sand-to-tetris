@@ -206,7 +206,7 @@ fn native_models_plug_in() {
         ],
     );
     let c = flatten_gates(&lvl, &d, &l, &|_| true, false).unwrap();
-    let mut sim = GateSim::new(&c, |_| Some(Model::Native(and2))).unwrap();
+    let mut sim = GateSim::new(&c, |_| Some(Model::native(and2))).unwrap();
     sim.set_input("a", 1).unwrap();
     sim.set_input("b", 1).unwrap();
     sim.settle();

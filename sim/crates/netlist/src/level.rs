@@ -26,6 +26,13 @@ pub struct Level {
     pub optional: bool,
     /// Expected behaviour, as a table: `a b | out` then rows like `0 1 | 1`.
     pub truth_table: String,
+    /// Native model (in `s2t-models`) that defines the right behaviour
+    /// beyond the truth table's rows; random inputs are checked against it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    /// How many random inputs to check against `model` (default 2000).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub random_tests: Option<u32>,
     /// Width in bits of each multi-bit port (`{ a = 16 }`); others are 1.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub widths: BTreeMap<String, u32>,

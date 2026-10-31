@@ -57,6 +57,8 @@ pub fn level(id: &str, layer: u8, inputs: &[&str], outputs: &[&str]) -> Level {
         optional: false,
         truth_table: String::new(),
         widths: Default::default(),
+        model: None,
+        random_tests: None,
         hints: Default::default(),
     }
 }

@@ -198,13 +198,13 @@ fn table_parsing_errors_name_the_line() {
 fn tables_know_whether_they_cover_every_input_combination() {
     let lvl = nand_level();
     let full = Table::parse(&lvl.truth_table, &lvl).unwrap();
-    assert!(full.is_exhaustive());
+    assert!(full.is_exhaustive(&lvl));
     let partial = Table::parse("a b | out\n0 0 | 1\n", &lvl).unwrap();
-    assert!(!partial.is_exhaustive());
+    assert!(!partial.is_exhaustive(&lvl));
     // Column order may differ from the level's port order.
     let swapped = Table::parse("b a | out\n0 1 | 1\n", &lvl).unwrap();
     assert_eq!(
         swapped.rows[0].inputs,
-        [("a".to_string(), true), ("b".to_string(), false)]
+        [("a".to_string(), 1), ("b".to_string(), 0)]
     );
 }

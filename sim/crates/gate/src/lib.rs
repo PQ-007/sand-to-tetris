@@ -11,6 +11,7 @@
 //! oscillate forever.
 
 use std::collections::BTreeSet;
+use std::sync::Arc;
 
 use s2t_netlist::{Cell, GateCircuit, NetId, Value};
 
@@ -79,16 +80,32 @@ impl TruthTable {
     }
 }
 
+/// A native evaluation function over flattened input bits.
+pub type NativeFn = Arc<dyn Fn(&[Value]) -> Vec<Value> + Send + Sync>;
+
 /// How a cell computes its outputs.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Model {
     Table(TruthTable),
     /// A native function over the flattened input bits (same order as a
     /// table). It must handle X/Z inputs itself.
-    Native(fn(&[Value]) -> Vec<Value>),
+    Native(NativeFn),
+}
+
+impl std::fmt::Debug for Model {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Model::Table(t) => write!(f, "Table({} in, {} out)", t.inputs, t.outputs),
+            Model::Native(_) => write!(f, "Native"),
+        }
+    }
 }
 
 impl Model {
+    pub fn native(f: impl Fn(&[Value]) -> Vec<Value> + Send + Sync + 'static) -> Model {
+        Model::Native(Arc::new(f))
+    }
+
     pub fn eval(&self, ins: &[Value]) -> Vec<Value> {
         match self {
             Model::Table(t) => t.eval(ins),

@@ -6,6 +6,12 @@ export interface Part {
   id: string;
   kind: string;
   pos?: [number, number];
+  /** Bus width of a split/join part. */
+  width?: number;
+  /** Repeat a component this many times, one copy per bit slice. */
+  repeat?: number;
+  /** With repeat: input pins every copy shares. */
+  shared?: string[];
 }
 
 export interface Wire {
@@ -29,6 +35,10 @@ export interface Level {
   outputs: string[];
   requires: string[];
   optional: boolean;
+  /** Bits per port, for multi-bit ports only. */
+  widths?: Record<string, number>;
+  model?: string;
+  random_tests?: number;
   truth_table: string;
   hints: Record<string, string>;
 }
@@ -45,16 +55,20 @@ export interface Problem {
   ports: string[];
 }
 
-export type Value = "0" | "1" | "Z" | "X";
+/** A single bit (0, 1, Z, X), a bus as a decimal number, or a bus's bits
+ * (most significant first) when some are unknown. */
+export type Value = string;
 
 export interface SimView {
   blocked: boolean;
   problems: Problem[];
-  values: { endpoint: Endpoint; value: Value }[];
+  values: { endpoint: Endpoint; value: Value; width: number }[];
   transistors: { part: string; state: "on" | "off" | "maybe" }[];
   shorts: string[][];
   outputs: [string, Value][];
   settled: boolean;
+  /** Gate delays until settled (Layer 2 and up). */
+  depth: number;
 }
 
 export interface Diagnostic {
@@ -81,10 +95,15 @@ export interface Report {
   }[];
   diagnostics: Diagnostic[];
   transistors: number;
+  cells: number;
+  depth: number;
+  random: { run: number; failed: number } | null;
 }
 
 /** Every level definition plus the learner's passed designs. */
 export interface LibraryInput {
   levels: string[];
   unlocked: Design[];
+  /** Components running as fast models. */
+  fast?: string[];
 }
