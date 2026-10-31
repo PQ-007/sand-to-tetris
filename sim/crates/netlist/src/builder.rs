@@ -41,6 +41,7 @@ pub fn design(component: &str, parts: &[(&str, &str)], wires: &[(Endpoint, Endpo
                 points: vec![],
             })
             .collect(),
+        port_pos: Default::default(),
     }
 }
 

@@ -3,8 +3,10 @@
 //! A design is a list of parts plus wires. Each wire joins two endpoints:
 //! one of the component's own ports (`{"port": "a"}`) or a pin of a part
 //! (`{"part": "p1", "pin": "gate"}`). Everything wired together, directly
-//! or through other wires, is one *net*. Layout fields (`pos`, `points`)
-//! are for the editor; the simulator ignores them.
+//! or through other wires, is one *net*. Layout fields (`pos`, `points`,
+//! `port_pos`) are for the editor; the simulator ignores them.
+
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
@@ -20,6 +22,10 @@ pub struct Design {
     pub parts: Vec<Part>,
     #[serde(default)]
     pub wires: Vec<Wire>,
+    /// Where the editor draws ports the learner has moved, by port name.
+    /// Ports not listed get a default spot.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub port_pos: BTreeMap<String, [f64; 2]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -120,6 +126,21 @@ mod tests {
         );
         // Round-trips.
         assert_eq!(Design::from_json(&d.to_json()).unwrap(), d);
+    }
+
+    #[test]
+    fn keeps_moved_port_positions_and_omits_them_when_unset() {
+        let d = Design::from_json(
+            r#"{"format":1,"component":"not","port_pos":{"a":[100,240],"out":[400,240]}}"#,
+        )
+        .unwrap();
+        assert_eq!(d.port_pos.get("a"), Some(&[100.0, 240.0]));
+        assert_eq!(Design::from_json(&d.to_json()).unwrap(), d);
+        // Designs saved before ports could move have no `port_pos` and
+        // still don't after a round trip.
+        let old = Design::from_json(r#"{"format":1,"component":"not"}"#).unwrap();
+        assert!(old.port_pos.is_empty());
+        assert!(!old.to_json().contains("port_pos"));
     }
 
     #[test]
