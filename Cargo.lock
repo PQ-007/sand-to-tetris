@@ -92,6 +92,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "s2t-gate"
+version = "0.1.0"
+dependencies = [
+ "s2t-netlist",
+]
+
+[[package]]
 name = "s2t-netlist"
 version = "0.1.0"
 dependencies = [

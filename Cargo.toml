@@ -11,6 +11,7 @@ repository = "https://github.com/pq-007/sand-to-tetris"
 [workspace.dependencies]
 s2t-netlist = { path = "sim/crates/netlist" }
 s2t-switch = { path = "sim/crates/switch" }
+s2t-gate = { path = "sim/crates/gate" }
 s2t-checker = { path = "sim/crates/checker" }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"

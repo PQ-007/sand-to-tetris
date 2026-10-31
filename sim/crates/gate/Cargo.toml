@@ -1,0 +1,12 @@
+[package]
+name = "s2t-gate"
+description = "Gate-level simulator: leaf components as cells, event-driven with unit delay"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+s2t-netlist.workspace = true
+
+[lints]
+workspace = true
