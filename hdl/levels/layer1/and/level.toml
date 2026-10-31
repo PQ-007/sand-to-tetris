@@ -1,0 +1,23 @@
+id = "and"
+name = "AND"
+layer = 1
+optional = true
+goal = """
+Side quest. Build AND: the output is 1 only when both inputs are 1.
+You don't need transistors: use the NAND and NOT you already built.
+(Why not a direct "AND" made of transistors? A single CMOS stage always inverts, so AND is NAND followed by NOT.)
+"""
+inputs = ["a", "b"]
+outputs = ["out"]
+truth_table = """
+a b | out
+0 0 | 0
+0 1 | 0
+1 0 | 0
+1 1 | 1
+"""
+
+[hints]
+wrong = "AND is the opposite of NAND. What do you get if you feed a NAND's output into a NOT?"
+floating = "Is the NOT's output connected to out, and the NAND's output to the NOT's input?"
+unknown = "Are both NAND inputs connected?"

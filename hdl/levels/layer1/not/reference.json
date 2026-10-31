@@ -1,0 +1,96 @@
+{
+  "format": 1,
+  "component": "not",
+  "parts": [
+    {
+      "id": "v",
+      "kind": "vdd",
+      "pos": [
+        200,
+        20
+      ]
+    },
+    {
+      "id": "p1",
+      "kind": "pmos",
+      "pos": [
+        200,
+        80
+      ]
+    },
+    {
+      "id": "n1",
+      "kind": "nmos",
+      "pos": [
+        200,
+        180
+      ]
+    },
+    {
+      "id": "g",
+      "kind": "gnd",
+      "pos": [
+        200,
+        260
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "p1",
+        "pin": "gate"
+      }
+    },
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "n1",
+        "pin": "gate"
+      }
+    },
+    {
+      "from": {
+        "part": "v",
+        "pin": "out"
+      },
+      "to": {
+        "part": "p1",
+        "pin": "source"
+      }
+    },
+    {
+      "from": {
+        "part": "p1",
+        "pin": "drain"
+      },
+      "to": {
+        "port": "out"
+      }
+    },
+    {
+      "from": {
+        "part": "n1",
+        "pin": "drain"
+      },
+      "to": {
+        "port": "out"
+      }
+    },
+    {
+      "from": {
+        "part": "n1",
+        "pin": "source"
+      },
+      "to": {
+        "part": "g",
+        "pin": "out"
+      }
+    }
+  ]
+}

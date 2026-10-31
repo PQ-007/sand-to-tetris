@@ -1,0 +1,61 @@
+{
+  "format": 1,
+  "component": "and",
+  "parts": [
+    {
+      "id": "x",
+      "kind": "nand",
+      "pos": [
+        140,
+        100
+      ]
+    },
+    {
+      "id": "i",
+      "kind": "not",
+      "pos": [
+        300,
+        100
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "x",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "x",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "x",
+        "pin": "out"
+      },
+      "to": {
+        "part": "i",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "i",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    }
+  ]
+}

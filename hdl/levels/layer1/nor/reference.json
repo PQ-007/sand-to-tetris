@@ -1,0 +1,159 @@
+{
+  "format": 1,
+  "component": "nor",
+  "parts": [
+    {
+      "id": "v",
+      "kind": "vdd",
+      "pos": [
+        220,
+        20
+      ]
+    },
+    {
+      "id": "pa",
+      "kind": "pmos",
+      "pos": [
+        220,
+        80
+      ]
+    },
+    {
+      "id": "pb",
+      "kind": "pmos",
+      "pos": [
+        220,
+        150
+      ]
+    },
+    {
+      "id": "na",
+      "kind": "nmos",
+      "pos": [
+        160,
+        240
+      ]
+    },
+    {
+      "id": "nb",
+      "kind": "nmos",
+      "pos": [
+        280,
+        240
+      ]
+    },
+    {
+      "id": "g",
+      "kind": "gnd",
+      "pos": [
+        220,
+        320
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "pa",
+        "pin": "gate"
+      }
+    },
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "na",
+        "pin": "gate"
+      }
+    },
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "pb",
+        "pin": "gate"
+      }
+    },
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "nb",
+        "pin": "gate"
+      }
+    },
+    {
+      "from": {
+        "part": "v",
+        "pin": "out"
+      },
+      "to": {
+        "part": "pa",
+        "pin": "source"
+      }
+    },
+    {
+      "from": {
+        "part": "pa",
+        "pin": "drain"
+      },
+      "to": {
+        "part": "pb",
+        "pin": "source"
+      }
+    },
+    {
+      "from": {
+        "part": "pb",
+        "pin": "drain"
+      },
+      "to": {
+        "port": "out"
+      }
+    },
+    {
+      "from": {
+        "part": "na",
+        "pin": "drain"
+      },
+      "to": {
+        "port": "out"
+      }
+    },
+    {
+      "from": {
+        "part": "nb",
+        "pin": "drain"
+      },
+      "to": {
+        "port": "out"
+      }
+    },
+    {
+      "from": {
+        "part": "na",
+        "pin": "source"
+      },
+      "to": {
+        "part": "g",
+        "pin": "out"
+      }
+    },
+    {
+      "from": {
+        "part": "nb",
+        "pin": "source"
+      },
+      "to": {
+        "part": "g",
+        "pin": "out"
+      }
+    }
+  ]
+}

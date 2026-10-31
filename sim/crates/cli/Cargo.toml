@@ -5,12 +5,18 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[lib]
+name = "s2t_cli"
+path = "src/lib.rs"
+
 [[bin]]
 name = "s2t"
 path = "src/main.rs"
 
 [dependencies]
 s2t-netlist.workspace = true
+s2t-checker.workspace = true
+serde_json.workspace = true
 
 [lints]
 workspace = true

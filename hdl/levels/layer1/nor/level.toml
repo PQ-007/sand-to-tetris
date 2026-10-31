@@ -1,0 +1,22 @@
+id = "nor"
+name = "NOR"
+layer = 1
+goal = """
+Build NOR ("not or"): the output is 1 only when both inputs are 0.
+Hint: it's the mirror image of NAND.
+"""
+inputs = ["a", "b"]
+outputs = ["out"]
+truth_table = """
+a b | out
+0 0 | 1
+0 1 | 0
+1 0 | 0
+1 1 | 0
+"""
+
+[hints]
+floating = "Every input combination must connect out to VDD or to GND. The output should be pulled up to VDD only when both inputs are 0: which arrangement of two PMOS transistors conducts only when both are on?"
+short = "The pull-up and pull-down networks must never be on at the same time. For NOR the NMOS pull-down is in parallel (either input pulls out to 0), so the PMOS pull-up must be in series."
+wrong = "NOR swaps NAND's arrangement: two PMOS in series to VDD, two NMOS in parallel to GND."
+unknown = "Is every transistor's gate connected to an input?"

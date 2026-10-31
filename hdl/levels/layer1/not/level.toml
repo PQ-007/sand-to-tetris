@@ -1,0 +1,20 @@
+id = "not"
+name = "NOT"
+layer = 1
+goal = """
+Build an inverter: the output is 1 when the input is 0, and 0 when the input is 1.
+Use one PMOS to connect the output to VDD and one NMOS to connect it to GND.
+"""
+inputs = ["a"]
+outputs = ["out"]
+truth_table = """
+a | out
+0 | 1
+1 | 0
+"""
+
+[hints]
+floating = "For each input value, one transistor must connect out to a supply: the PMOS (on when a = 0) to VDD, the NMOS (on when a = 1) to GND."
+short = "If both transistors can be on at once, VDD and GND get connected. A PMOS is on when its gate is 0, an NMOS when its gate is 1: put the PMOS on the VDD side and the NMOS on the GND side."
+wrong = "Check which supply each transistor connects to. The PMOS belongs between VDD and out, the NMOS between out and GND."
+unknown = "Is every transistor's gate connected to the input a?"

@@ -4,3 +4,5 @@ web/src/sim/pkg
 package-lock.json
 # Prose is hand-formatted; prettier would rewrap tables and lists.
 *.md
+# Design files are machine-written (by the editor and tools).
+hdl/**/*.json

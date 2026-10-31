@@ -46,3 +46,27 @@ describe("component registry", () => {
     expect([...defined].sort()).toEqual([...KNOWN_TAGS].sort());
   });
 });
+
+describe("spoiler guard", () => {
+  it("nothing in the website imports from hdl/ (reference solutions stay out of the bundle)", () => {
+    const roots = ["../src/", "../content/"].map(
+      (r) => new URL(r, import.meta.url).pathname,
+    );
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = dir + entry.name;
+        if (entry.isDirectory()) {
+          if (entry.name !== "pkg") walk(path + "/");
+        } else if (
+          /\.(ts|js)$/.test(entry.name) &&
+          /["'`][^"'`]*\bhdl\//.test(readFileSync(path, "utf8"))
+        ) {
+          offenders.push(path);
+        }
+      }
+    };
+    roots.forEach(walk);
+    expect(offenders).toEqual([]);
+  });
+});
