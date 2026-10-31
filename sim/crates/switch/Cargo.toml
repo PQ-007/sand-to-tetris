@@ -1,0 +1,12 @@
+[package]
+name = "s2t-switch"
+description = "Switch-level simulator: transistors as switches, values 0/1/Z/X"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+s2t-netlist.workspace = true
+
+[lints]
+workspace = true
