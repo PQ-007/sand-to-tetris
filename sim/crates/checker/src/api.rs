@@ -302,3 +302,16 @@ fn simulate_switches(
         .collect();
     Ok(view)
 }
+
+// ---- abstraction swap ------------------------------------------------------------
+
+/// Checks the learner's unlocked design of `component` against its fast
+/// model; the swap is allowed only if this passes.
+pub fn match_check(library: &str, component: &str) -> Result<crate::MatchReport, String> {
+    let (lib, _) = load_library(library)?;
+    let level = find_level(&lib, component)?;
+    let design = lib.design(component).cloned().ok_or_else(|| {
+        format!("`{component}` isn't unlocked yet, so there's no design to compare")
+    })?;
+    crate::matching::match_check(&level, &design, &lib)
+}

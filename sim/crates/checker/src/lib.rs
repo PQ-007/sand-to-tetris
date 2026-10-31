@@ -11,9 +11,11 @@ use s2t_switch::{Sim, Value};
 pub mod api;
 
 mod gatecheck;
+mod matching;
 mod table;
 
 pub use gatecheck::{format_value, leaf_model};
+pub use matching::{MatchReport, Mismatch};
 pub use table::{parse_number, Table, TableError, TableRow};
 
 // ---- reports -------------------------------------------------------------------

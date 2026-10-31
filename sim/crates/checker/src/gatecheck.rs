@@ -127,10 +127,10 @@ pub(crate) fn prepare(
 
 /// A small deterministic random generator (xorshift64*), seeded per level
 /// so failures are reproducible.
-struct Rng(u64);
+pub(crate) struct Rng(u64);
 
 impl Rng {
-    fn new(seed: &str) -> Rng {
+    pub(crate) fn new(seed: &str) -> Rng {
         let mut h = 0xcbf2_9ce4_8422_2325u64;
         for b in seed.bytes() {
             h = (h ^ u64::from(b)).wrapping_mul(0x0100_0000_01b3);
@@ -138,7 +138,7 @@ impl Rng {
         Rng(h | 1)
     }
 
-    fn next(&mut self) -> u64 {
+    pub(crate) fn next(&mut self) -> u64 {
         self.0 ^= self.0 >> 12;
         self.0 ^= self.0 << 25;
         self.0 ^= self.0 >> 27;

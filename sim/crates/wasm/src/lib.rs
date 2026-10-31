@@ -44,6 +44,13 @@ pub fn simulate(library: &str, level: &str, design: &str, inputs: &str) -> Resul
     js(to_json(api::simulate(library, level, design, inputs)))
 }
 
+/// Compares the learner's design of a component with its fast model →
+/// `MatchReport` JSON. The swap is allowed only if `ok`.
+#[wasm_bindgen(js_name = matchCheck)]
+pub fn match_check(library: &str, component: &str) -> Result<String, JsError> {
+    js(to_json(api::match_check(library, component)))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
