@@ -53,6 +53,22 @@ pub fn simulate(
     )))
 }
 
+/// Runs a sequence of input steps on one circuit, continuing from `state`
+/// → `StepsView` JSON (the view after the last step, and each step's
+/// outputs).
+#[wasm_bindgen(js_name = simulateSteps)]
+pub fn simulate_steps(
+    library: &str,
+    level: &str,
+    design: &str,
+    steps: &str,
+    state: &str,
+) -> Result<String, JsError> {
+    js(to_json(api::simulate_steps(
+        library, level, design, steps, state,
+    )))
+}
+
 /// Compares the learner's design of a component with its fast model →
 /// `MatchReport` JSON. The swap is allowed only if `ok`.
 #[wasm_bindgen(js_name = matchCheck)]

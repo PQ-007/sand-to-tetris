@@ -1,0 +1,210 @@
+{
+  "format": 1,
+  "component": "dmux8way",
+  "parts": [
+    {
+      "id": "s",
+      "kind": "split",
+      "pos": [
+        150,
+        330
+      ],
+      "width": 3
+    },
+    {
+      "id": "low",
+      "kind": "join",
+      "pos": [
+        300,
+        400
+      ],
+      "width": 2
+    },
+    {
+      "id": "top",
+      "kind": "dmux",
+      "pos": [
+        300,
+        220
+      ]
+    },
+    {
+      "id": "first",
+      "kind": "dmux4way",
+      "pos": [
+        480,
+        150
+      ]
+    },
+    {
+      "id": "second",
+      "kind": "dmux4way",
+      "pos": [
+        480,
+        330
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "sel"
+      },
+      "to": {
+        "part": "s",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "0"
+      },
+      "to": {
+        "part": "low",
+        "pin": "0"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "1"
+      },
+      "to": {
+        "part": "low",
+        "pin": "1"
+      }
+    },
+    {
+      "from": {
+        "port": "in"
+      },
+      "to": {
+        "part": "top",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "2"
+      },
+      "to": {
+        "part": "top",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "top",
+        "pin": "a"
+      },
+      "to": {
+        "part": "first",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "top",
+        "pin": "b"
+      },
+      "to": {
+        "part": "second",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "low",
+        "pin": "out"
+      },
+      "to": {
+        "part": "first",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "low",
+        "pin": "out"
+      },
+      "to": {
+        "part": "second",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "first",
+        "pin": "a"
+      },
+      "to": {
+        "port": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "first",
+        "pin": "b"
+      },
+      "to": {
+        "port": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "first",
+        "pin": "c"
+      },
+      "to": {
+        "port": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "first",
+        "pin": "d"
+      },
+      "to": {
+        "port": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "second",
+        "pin": "a"
+      },
+      "to": {
+        "port": "e"
+      }
+    },
+    {
+      "from": {
+        "part": "second",
+        "pin": "b"
+      },
+      "to": {
+        "port": "f"
+      }
+    },
+    {
+      "from": {
+        "part": "second",
+        "pin": "c"
+      },
+      "to": {
+        "port": "g"
+      }
+    },
+    {
+      "from": {
+        "part": "second",
+        "pin": "d"
+      },
+      "to": {
+        "port": "h"
+      }
+    }
+  ]
+}

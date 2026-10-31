@@ -1,0 +1,210 @@
+{
+  "format": 1,
+  "component": "mux8way16",
+  "parts": [
+    {
+      "id": "s",
+      "kind": "split",
+      "pos": [
+        150,
+        420
+      ],
+      "width": 3
+    },
+    {
+      "id": "low",
+      "kind": "join",
+      "pos": [
+        280,
+        470
+      ],
+      "width": 2
+    },
+    {
+      "id": "left",
+      "kind": "mux4way16",
+      "pos": [
+        420,
+        160
+      ]
+    },
+    {
+      "id": "right",
+      "kind": "mux4way16",
+      "pos": [
+        420,
+        340
+      ]
+    },
+    {
+      "id": "pick",
+      "kind": "mux16",
+      "pos": [
+        600,
+        250
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "sel"
+      },
+      "to": {
+        "part": "s",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "0"
+      },
+      "to": {
+        "part": "low",
+        "pin": "0"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "1"
+      },
+      "to": {
+        "part": "low",
+        "pin": "1"
+      }
+    },
+    {
+      "from": {
+        "part": "low",
+        "pin": "out"
+      },
+      "to": {
+        "part": "left",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "low",
+        "pin": "out"
+      },
+      "to": {
+        "part": "right",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "left",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "left",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "c"
+      },
+      "to": {
+        "part": "left",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "left",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "port": "e"
+      },
+      "to": {
+        "part": "right",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "f"
+      },
+      "to": {
+        "part": "right",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "g"
+      },
+      "to": {
+        "part": "right",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "port": "h"
+      },
+      "to": {
+        "part": "right",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "left",
+        "pin": "out"
+      },
+      "to": {
+        "part": "pick",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "right",
+        "pin": "out"
+      },
+      "to": {
+        "part": "pick",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "2"
+      },
+      "to": {
+        "part": "pick",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "pick",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    }
+  ]
+}

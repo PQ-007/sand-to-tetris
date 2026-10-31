@@ -1,0 +1,35 @@
+id = "ram4k"
+name = "RAM4K"
+layer = 3
+goal = """
+4,096 words of memory from eight RAM512s. The address is 12 bits: the top 3 bits choose which RAM512, the bottom 9 bits are the address inside it.
+Split addr, join the low bits back into one 9-bit address for every RAM512, and use the top 3 bits with a DMUX8WAY (for load) and a MUX8WAY16 (for q), just as in RAM8.
+"""
+sequential = true
+inputs = ["d", "addr", "load", "clk"]
+outputs = ["q"]
+requires = ["ram512", "dmux8way", "mux8way16"]
+widths = { d = 16, addr = 12, q = 16 }
+model = "ram4k"
+random_tests = 200
+truth_table = """
+d addr load clk | q
+100 0 1 0 | -
+100 0 1 1 | 100
+200 9 1 0 | -
+200 9 1 1 | 200
+300 4095 1 0 | -
+300 4095 1 1 | 300
+0 0 0 0 | 100
+0 9 0 0 | 200
+0 1 0 0 | -
+400 1 1 0 | -
+400 1 1 1 | 400
+0 9 0 0 | 200
+0 4095 0 0 | 300
+0 4095 0 1 | 300
+"""
+
+[hints]
+wrong = "The top 3 bits of addr pick the RAM512; the bottom 9 go to every RAM512 as its own address. Check which split bits feed which joiner."
+unknown = "A word reads as unknown until something is stored in it. Writing to one RAM512 must not disturb the others."

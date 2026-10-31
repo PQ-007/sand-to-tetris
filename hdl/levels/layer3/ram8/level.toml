@@ -1,0 +1,37 @@
+id = "ram8"
+name = "RAM8"
+layer = 3
+goal = """
+Memory with addresses: eight 16-bit registers. q always shows the register at addr. On a rising clk edge with load=1, d is stored in the register at addr, and only there.
+Send load to one register with a DMUX8WAY (sel = addr), and read the chosen register with a MUX8WAY16 (sel = addr). Every register gets the same d and clk.
+"""
+sequential = true
+inputs = ["d", "addr", "load", "clk"]
+outputs = ["q"]
+requires = ["register", "dmux8way", "mux8way16"]
+widths = { d = 16, addr = 3, q = 16 }
+model = "ram8"
+random_tests = 300
+truth_table = """
+# Reading an address that was never written gives an unknown value: `-`.
+d addr load clk | q
+11 0 1 0 | -
+11 0 1 1 | 11
+22 5 1 0 | -
+22 5 1 1 | 22
+0 0 0 0 | 11
+0 0 0 1 | 11
+33 7 0 0 | -
+33 7 0 1 | -
+0 5 0 0 | 22
+44 5 1 0 | 22
+44 5 1 1 | 44
+0 0 0 0 | 11
+0x8000 7 1 0 | -
+0x8000 7 1 1 | 0x8000
+0 5 0 0 | 44
+"""
+
+[hints]
+wrong = "Only the register at addr may load: route load through the demultiplexer, not straight to every register. And read through the multiplexer with the same addr."
+unknown = "A register reads as unknown until something is stored in it. If q stays unknown at an address you wrote, check that clk and d reach every register."

@@ -36,12 +36,13 @@ import {
 } from "./editor/model";
 import { orderLevels, playLibrary, toolbox, type ToolboxItem } from "./game";
 import { playHref } from "./router";
-import { check, simulate } from "./sim/core";
+import { check, simulate, simulateSteps } from "./sim/core";
 import type {
   Design,
   Diagnostic,
   Endpoint,
   LevelInfo,
+  StepsView,
   Level,
   LibraryInput,
   Report,
@@ -186,14 +187,14 @@ class PlayPage {
   /** What the live circuit holds (sequential levels): fed back into every
    * simulation so latches and flip-flops remember. */
   private memory: Record<string, string> = {};
-  /** For sequential levels: the state after each test step, and the step
-   * the canvas is showing (null once the learner changes something). */
-  private stepStates: Record<string, string>[] = [];
+  /** For sequential levels: the test step the canvas is showing (null
+   * once the learner changes something). */
   private currentStep: number | null = null;
   private result = el("div", { class: "check-result", "aria-live": "polite" });
   private problemList = el("ul", { class: "problems" });
   private inside = el("div", { class: "inside", hidden: "" });
   private stats = el("p", { class: "sim-stats", "aria-live": "polite" });
+  private slowNote = el("p", { class: "slow-note" });
   private propsBox = el("div", { class: "props" });
   private runsAs = el("ul", { class: "runs-as" });
   private selected: string | null = null;
@@ -298,7 +299,7 @@ class PlayPage {
     this.canvas.fillContainer(wrap);
     frame.append(wrap, this.emptyHint, this.statusLine, this.zoomControls());
     const footer = el("div", { class: "bench-footer" });
-    footer.append(this.stats);
+    footer.append(this.stats, this.slowNote);
     bench.append(
       el(
         "p",
@@ -418,10 +419,17 @@ class PlayPage {
       );
       tick.addEventListener("click", () => {
         this.currentStep = null;
-        this.inputs.clk = 1;
-        this.refresh(false);
+        // Both edges in one run: the circuit is built once.
+        const run = this.runSteps(
+          [
+            { ...this.inputs, clk: 1 },
+            { ...this.inputs, clk: 0 },
+          ],
+          this.memory,
+        );
         this.inputs.clk = 0;
-        this.refresh(false);
+        if (run) this.memory = run.view.state;
+        this.refresh(false, run?.view);
         this.say(
           "Tick: clk rose to 1 (the moment flip-flops store) and fell back to 0.",
         );
@@ -782,6 +790,24 @@ class PlayPage {
             : ""
         }.`
       : "Still changing: this circuit oscillates and never settles.";
+    this.renderSlowNote(v.cells);
+  }
+
+  /** Big circuits are slow: point at the parts that could run fast. */
+  private renderSlowNote(cells: number): void {
+    const fast = new Set(this.library.fast ?? []);
+    const swappable = [...new Set(this.design.parts.map((p) => p.kind))]
+      .filter((k) => !fast.has(k) && this.app.status[k] === "passed")
+      .map((k) => levelEntry(this.app, k)?.info.level)
+      .filter((l) => l?.model)
+      .map((l) => l?.name ?? "");
+    this.slowNote.replaceChildren();
+    if (cells < 5000 || !swappable.length) return;
+    this.slowNote.append(
+      `This circuit simulates ${cells.toLocaleString("en-US")} gates, so each change takes a moment. Switch ${swappable.join(", ")} to ${swappable.length > 1 ? "their fast models" : "its fast model"} on the `,
+      el("a", { href: "#/levels" }, "level map"),
+      " to make it instant.",
+    );
   }
 
   /** Which component kinds this design uses, and how each one runs. */
@@ -819,7 +845,7 @@ class PlayPage {
     if (wiring) {
       const label = el("label", {}, "Bus width ");
       const select = el("select");
-      for (const w of [2, 4, 8, 16]) {
+      for (let w = 2; w <= 16; w++) {
         const o = el("option", { value: String(w) }, `${w} bits`);
         if (w === (part.width ?? 16)) o.selected = true;
         select.append(o);
@@ -930,13 +956,32 @@ class PlayPage {
     }
   }
 
-  /** Re-simulates; `full` also refreshes the truth table and lists. */
-  private refresh(full: boolean): void {
+  /** Runs input steps in order on one circuit (sequential levels). */
+  private runSteps(
+    steps: Record<string, number>[],
+    state: Record<string, string>,
+  ): StepsView | null {
+    try {
+      return simulateSteps(
+        this.library,
+        this.level.id,
+        this.design,
+        steps,
+        state,
+      );
+    } catch (e) {
+      this.say(`Simulation error: ${String(e)}`);
+      return null;
+    }
+  }
+
+  /** Re-simulates (or draws `view`, already simulated); `full` also
+   * refreshes the truth table and lists. */
+  private refresh(full: boolean, view?: SimView): void {
     // Combinational levels always start fresh, exactly like the checker.
-    this.view = this.simulateWith(
-      this.inputs,
-      this.level.sequential ? this.memory : {},
-    );
+    this.view =
+      view ??
+      this.simulateWith(this.inputs, this.level.sequential ? this.memory : {});
     if (this.level.sequential && this.view) this.memory = this.view.state;
     this.undoBtn.disabled = !this.history.canUndo();
     this.redoBtn.disabled = !this.history.canRedo();
@@ -1022,21 +1067,16 @@ class PlayPage {
   }
 
   private renderTable(): void {
-    // A sequential level's steps run in order, each from the state the
-    // previous one left; combinational rows each start fresh.
-    let state: Record<string, string> = {};
-    this.stepStates = [];
+    // A sequential level's steps run in order on one circuit, in a single
+    // run from power-on; combinational rows each start fresh.
+    const steps = this.table.map((row) => Object.fromEntries(row.inputs));
+    const run = this.level.sequential ? this.runSteps(steps, {}) : null;
     this.tableBody.replaceChildren(
       ...this.table.map((row, i) => {
-        const inputs = Object.fromEntries(row.inputs);
-        const view = this.simulateWith(
-          inputs,
-          this.level.sequential ? state : {},
-        );
-        if (this.level.sequential) {
-          state = view?.state ?? {};
-          this.stepStates.push(state);
-        }
+        const inputs = steps[i] ?? {};
+        const view: Pick<SimView, "blocked" | "outputs"> | null = run
+          ? { blocked: run.view.blocked, outputs: run.outputs[i] ?? [] }
+          : this.simulateWith(inputs);
         const tr = el("tr", { tabindex: "0", "data-row": String(i) });
         let ok = Boolean(view && !view.blocked);
         let cells = this.level.sequential
@@ -1061,9 +1101,12 @@ class PlayPage {
         tr.classList.toggle("row-ok", ok);
         const pick = () => {
           this.setInputs(row.inputs);
+          let replayed: SimView | undefined;
           if (this.level.sequential) {
             // Replay the test up to this step: the canvas shows that moment.
-            this.memory = this.stepStates[i] ?? {};
+            const run = this.runSteps(steps.slice(0, i + 1), {});
+            this.memory = run?.view.state ?? {};
+            replayed = run?.view;
             this.currentStep = i;
             this.say(
               i === 0
@@ -1071,7 +1114,7 @@ class PlayPage {
                 : `Showing step ${i + 1}, after replaying steps 1–${i}.`,
             );
           }
-          this.refresh(false);
+          this.refresh(false, replayed);
         };
         tr.addEventListener("click", pick);
         tr.addEventListener("keydown", (e) => {

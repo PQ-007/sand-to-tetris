@@ -129,7 +129,7 @@ pub(crate) fn random_steps(
                 } else if p == "addr" {
                     pool[(rng.next() % 8) as usize] & m
                 } else if p == "reset" {
-                    u64::from(rng.next() % 8 == 0)
+                    u64::from(rng.next().is_multiple_of(8))
                 } else {
                     rng.next() & m
                 };

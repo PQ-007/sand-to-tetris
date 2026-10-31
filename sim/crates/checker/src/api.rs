@@ -10,7 +10,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 
-use s2t_gate::bits_to_number;
+use s2t_gate::{bits_to_number, GateSim};
 use s2t_netlist::{flatten_preview, Design, Endpoint, FlattenError, Level, Library, Value};
 use s2t_switch::{Conduct, Sim};
 
@@ -94,7 +94,7 @@ pub fn check(library: &str, level: &str, design: &str) -> Result<crate::Report, 
 
 // ---- live simulation -----------------------------------------------------------
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct EndpointValue {
     pub endpoint: Endpoint,
     /// `0`, `1`, `Z`, `X` for single bits; a number (decimal) for a fully
@@ -103,14 +103,14 @@ pub struct EndpointValue {
     pub width: u32,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct TransistorState {
     pub part: String,
     /// `"on"`, `"off"` or `"maybe"`.
     pub state: &'static str,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct SimView {
     /// True if the design can't be simulated yet (see `problems`).
     pub blocked: bool,
@@ -125,6 +125,8 @@ pub struct SimView {
     pub settled: bool,
     /// Gate delays until the outputs settled (Layer 2 and up).
     pub depth: usize,
+    /// Leaf cells simulated (Layer 2 and up): how big the circuit runs.
+    pub cells: usize,
     /// What every gate output holds after this run (known bits only), keyed
     /// by the gate's path, e.g. `ff/master/latch/top.out`. Pass it to the
     /// next [`simulate_from`] so latches and flip-flops remember. Keyed by
@@ -174,12 +176,42 @@ pub fn simulate_from(
     inputs: &str,
     state: &str,
 ) -> Result<SimView, String> {
+    let steps = format!("[{inputs}]");
+    simulate_steps(library, level, design, &steps, state).map(|run| run.view)
+}
+
+#[derive(Debug, Serialize)]
+pub struct StepsView {
+    /// The circuit after the last step (with its `state`), ready to draw.
+    pub view: SimView,
+    /// Output values after each step, in step order.
+    pub outputs: Vec<Vec<(String, String)>>,
+}
+
+/// Runs a sequence of input steps (`[{"a":1}, {"a":0}]`) on one circuit,
+/// continuing from `state`: one flatten for the whole sequence, so a test
+/// sequence or a clock tick on a big memory stays quick.
+pub fn simulate_steps(
+    library: &str,
+    level: &str,
+    design: &str,
+    steps: &str,
+    state: &str,
+) -> Result<StepsView, String> {
     let state: BTreeMap<String, String> =
         serde_json::from_str(state).map_err(|e| format!("couldn't read the circuit state: {e}"))?;
     let (lib, fast) = load_library(library)?;
     let level = find_level(&lib, level)?;
     let design = parse_design(design)?;
-    let inputs = read_inputs(&level, inputs)?;
+    let raw: Vec<serde_json::Value> =
+        serde_json::from_str(steps).map_err(|e| format!("couldn't read the steps: {e}"))?;
+    if raw.is_empty() {
+        return Err("there are no steps to run".into());
+    }
+    let steps = raw
+        .iter()
+        .map(|s| read_inputs(&level, &s.to_string()))
+        .collect::<Result<Vec<_>, _>>()?;
     let problems: Vec<ReportProblem> = s2t_netlist::validate(&level, &design, &lib)
         .iter()
         .map(ReportProblem::from)
@@ -193,12 +225,24 @@ pub fn simulate_from(
         outputs: vec![],
         settled: false,
         depth: 0,
+        cells: 0,
         state: BTreeMap::new(),
     };
     if level.layer > 1 {
-        simulate_gates(&level, &design, &lib, &fast, &inputs, &state, view)
+        simulate_gates(&level, &design, &lib, &fast, &steps, &state, view)
     } else {
-        simulate_switches(&level, &design, &lib, &inputs, view)
+        // Switch-level circuits have no memory: each step stands alone.
+        let mut outputs = Vec::new();
+        let mut last = None;
+        for inputs in &steps {
+            let v = simulate_switches(&level, &design, &lib, inputs, view.clone())?;
+            outputs.push(v.outputs.clone());
+            last = Some(v);
+        }
+        Ok(StepsView {
+            view: last.unwrap_or(view),
+            outputs,
+        })
     }
 }
 
@@ -207,10 +251,10 @@ fn simulate_gates(
     design: &Design,
     lib: &Library,
     fast: &BTreeSet<String>,
-    inputs: &BTreeMap<String, u64>,
+    steps: &[BTreeMap<String, u64>],
     state: &BTreeMap<String, String>,
     mut view: SimView,
-) -> Result<SimView, String> {
+) -> Result<StepsView, String> {
     let prepared = match prepare(level, design, lib, fast, true) {
         Ok(p) => p,
         Err(problems) => {
@@ -219,7 +263,10 @@ fn simulate_gates(
                     view.problems.push(p);
                 }
             }
-            return Ok(view);
+            return Ok(StepsView {
+                view,
+                outputs: vec![],
+            });
         }
     };
     let mut sim = prepared.sim()?;
@@ -242,10 +289,38 @@ fn simulate_gates(
             }
         }
     }
-    for (name, v) in inputs {
-        sim.set_input(name, *v)?;
+    let output_values = |sim: &GateSim| -> Vec<(String, String)> {
+        prepared
+            .circuit
+            .outputs
+            .iter()
+            .map(|(n, nets)| {
+                let bits: Vec<Value> = nets.iter().map(|x| sim.value(*x)).collect();
+                (n.clone(), bus_text(&bits))
+            })
+            .collect()
+    };
+    let mut outputs = Vec::with_capacity(steps.len());
+    let mut outcome: Option<s2t_gate::Outcome> = None;
+    for inputs in steps {
+        for (name, v) in inputs {
+            sim.set_input(name, *v)?;
+        }
+        let o = sim.settle();
+        // Depth and settling describe the whole run: the slowest step.
+        outcome = Some(match outcome {
+            Some(prev) => s2t_gate::Outcome {
+                settled: o.settled && prev.settled,
+                depth: o.depth.max(prev.depth),
+            },
+            None => o,
+        });
+        outputs.push(output_values(&sim));
     }
-    let outcome = sim.settle();
+    let outcome = outcome.unwrap_or(s2t_gate::Outcome {
+        settled: true,
+        depth: 0,
+    });
     for (i, cell) in prepared.circuit.cells.iter().enumerate() {
         if let Some(mem) = sim.memory(i) {
             view.state.insert(memory_key(cell), mem);
@@ -264,6 +339,7 @@ fn simulate_gates(
     }
     let read = |nets: &[usize]| -> Vec<Value> { nets.iter().map(|n| sim.value(*n)).collect() };
     view.blocked = false;
+    view.cells = prepared.circuit.cells.len();
     view.settled = outcome.settled;
     view.depth = outcome.depth;
     view.values = prepared
@@ -276,13 +352,8 @@ fn simulate_gates(
             width: nets.len() as u32,
         })
         .collect();
-    view.outputs = prepared
-        .circuit
-        .outputs
-        .iter()
-        .map(|(n, nets)| (n.clone(), bus_text(&read(nets))))
-        .collect();
-    Ok(view)
+    view.outputs = output_values(&sim);
+    Ok(StepsView { view, outputs })
 }
 
 /// `ram/r3#mem`: where a fast memory part's contents are kept in the state.

@@ -1,0 +1,24 @@
+id = "mux8way16"
+name = "8-way MUX16"
+layer = 2
+goal = """
+Choose one of eight 16-bit inputs, a to h, with a 3-bit sel. RAM8 will use this to read the register at an address.
+Two 4-way MUX16s each pick one from their half using sel's bottom two bits; a MUX16 then picks between them with sel's top bit.
+"""
+inputs = ["a", "b", "c", "d", "e", "f", "g", "h", "sel"]
+outputs = ["out"]
+requires = ["mux4way16", "mux16"]
+widths = { a = 16, b = 16, c = 16, d = 16, e = 16, f = 16, g = 16, h = 16, sel = 3, out = 16 }
+model = "mux8way16"
+random_tests = 1000
+truth_table = """
+a b c d e f g h sel | out
+1 2 3 4 5 6 7 8 0 | 1
+1 2 3 4 5 6 7 8 3 | 4
+1 2 3 4 5 6 7 8 4 | 5
+1 2 3 4 5 6 7 8 7 | 8
+0x1111 0x2222 0x3333 0x4444 0x5555 0x6666 0x7777 0xffff 6 | 0x7777
+"""
+
+[hints]
+wrong = "sel's top bit (bit 2) chooses between the a–d half and the e–h half."

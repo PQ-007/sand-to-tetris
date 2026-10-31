@@ -289,3 +289,22 @@ fn a_fast_memory_part_remembers_in_live_simulation() {
     .unwrap();
     assert_eq!(q(&hold), "42");
 }
+
+#[test]
+fn a_sequence_of_steps_runs_in_one_call() {
+    use s2t_checker::api::simulate_steps;
+    let lib = latch_library();
+    let latch = read("layer3/srlatch/reference.json");
+    let steps = r#"[{"s":0,"r":0},{"s":1,"r":0},{"s":0,"r":0},{"s":0,"r":1}]"#;
+    let run = simulate_steps(&lib, "srlatch", &latch, steps, "{}").unwrap();
+    let q_of = |outs: &Vec<(String, String)>| outs[0].1.clone();
+    let qs: Vec<String> = run.outputs.iter().map(q_of).collect();
+    assert_eq!(qs, ["X", "1", "1", "0"]);
+    // The view is the circuit after the last step, ready to draw.
+    assert_eq!(q(&run.view), "0");
+    // Continuing from its state: still 0 on hold.
+    let state = serde_json::to_string(&run.view.state).unwrap();
+    let more = simulate_steps(&lib, "srlatch", &latch, r#"[{"s":0,"r":0}]"#, &state).unwrap();
+    assert_eq!(q(&more.view), "0");
+    assert!(simulate_steps(&lib, "srlatch", &latch, "[]", "{}").is_err());
+}

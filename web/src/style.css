@@ -1424,6 +1424,18 @@ svg.circuit:focus-visible {
   display: none;
 }
 
+.slow-note {
+  margin: 0.25rem 0 0;
+  padding: 0.375rem 0.75rem;
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.slow-note:empty {
+  display: none;
+}
+
 .side {
   display: flex;
   flex-direction: column;

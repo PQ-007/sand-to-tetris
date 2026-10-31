@@ -119,6 +119,12 @@ static MODELS: &[NativeModel] = &[
         f: |x| vec![arg(x, arg(x, 4) as usize)],
     },
     NativeModel {
+        id: "mux8way16",
+        inputs: &[16, 16, 16, 16, 16, 16, 16, 16, 3],
+        outputs: &[16],
+        f: |x| vec![arg(x, arg(x, 8) as usize)],
+    },
+    NativeModel {
         id: "or8way",
         inputs: &[8],
         outputs: &[1],
@@ -203,6 +209,11 @@ pub fn widths(id: &str) -> Option<(&'static [u32], &'static [u32])> {
 
 // ---- models with memory ------------------------------------------------------------
 
+/// Updates memory words on a rising clock edge, from the input words.
+pub type TickWords = fn(&[Option<u64>], &mut [Option<u64>]);
+/// Output words from the input words and memory.
+pub type ReadWords = fn(&[Option<u64>], &[Option<u64>]) -> Vec<Option<u64>>;
+
 /// A model with memory: `words` memory words, changed by `tick` when input
 /// port `clk` rises from 0 to 1, and read (as outputs) by `read`. Both get
 /// each input port as a word, `None` if any of its bits is unknown; a word
@@ -216,8 +227,8 @@ pub struct ClockedModel {
     /// Index of the clock among the input ports.
     pub clk: usize,
     pub words: usize,
-    pub tick: fn(&[Option<u64>], &mut [Option<u64>]),
-    pub read: fn(&[Option<u64>], &[Option<u64>]) -> Vec<Option<u64>>,
+    pub tick: TickWords,
+    pub read: ReadWords,
 }
 
 impl ClockedModel {

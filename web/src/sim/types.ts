@@ -78,9 +78,18 @@ export interface SimView {
   settled: boolean;
   /** Gate delays until settled (Layer 2 and up). */
   depth: number;
+  /** Gates simulated (Layer 2 and up). */
+  cells: number;
   /** What every gate holds now, by gate path; pass it to the next
    * simulate call so memory carries over. */
   state: Record<string, string>;
+}
+
+export interface StepsView {
+  /** The circuit after the last step (with its state). */
+  view: SimView;
+  /** Output values after each step. */
+  outputs: [string, Value][][];
 }
 
 export interface Diagnostic {

@@ -172,9 +172,10 @@ function swap(root: HTMLElement, a: App, id: string): void {
       out.textContent = `Can't swap: ${String(e)}`;
       return;
     }
+    const memory = levelEntry(a, id)?.info.level.sequential;
     const scope = report.exhaustive
       ? `all ${report.compared.toLocaleString("en-US")} possible inputs`
-      : `${report.compared.toLocaleString("en-US")} random inputs`;
+      : `${report.compared.toLocaleString("en-US")} random ${memory ? "clock cycles" : "inputs"}`;
     if (!report.ok) {
       const m = report.mismatches[0];
       const show = (xs: [string, string][]) =>

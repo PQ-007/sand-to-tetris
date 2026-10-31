@@ -1,0 +1,25 @@
+id = "dmux4way"
+name = "4-way demultiplexer"
+layer = 2
+goal = """
+Send the input to one of four outputs: sel = 0 → a, 1 → b, 2 → c, 3 → d. The other outputs are 0.
+Split sel into its two bits. The high bit (bit 1) picks the pair (a/b or c/d), the low bit (bit 0) picks within the pair. Three demultiplexers are enough.
+"""
+inputs = ["in", "sel"]
+outputs = ["a", "b", "c", "d"]
+requires = ["dmux"]
+widths = { sel = 2 }
+truth_table = """
+in sel | a b c d
+0 0 | 0 0 0 0
+0 1 | 0 0 0 0
+0 2 | 0 0 0 0
+0 3 | 0 0 0 0
+1 0 | 1 0 0 0
+1 1 | 0 1 0 0
+1 2 | 0 0 1 0
+1 3 | 0 0 0 1
+"""
+
+[hints]
+wrong = "sel's bit 1 should choose between the a/b pair and the c/d pair; bit 0 chooses inside the pair."

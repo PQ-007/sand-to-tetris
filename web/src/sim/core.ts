@@ -8,6 +8,7 @@ import type {
   MatchReport,
   Report,
   SimView,
+  StepsView,
 } from "./types";
 
 let ready: Promise<void> | undefined;
@@ -37,6 +38,28 @@ export function check(
   return JSON.parse(
     wasm.check(JSON.stringify(library), level, JSON.stringify(design)),
   ) as Report;
+}
+
+/**
+ * Runs input steps in order on one circuit (built once), continuing from
+ * `state`: the view after the last step, and each step's outputs.
+ */
+export function simulateSteps(
+  library: LibraryInput,
+  level: string,
+  design: Design,
+  steps: Record<string, number>[],
+  state: Record<string, string> = {},
+): StepsView {
+  return JSON.parse(
+    wasm.simulateSteps(
+      JSON.stringify(library),
+      level,
+      JSON.stringify(design),
+      JSON.stringify(steps),
+      JSON.stringify(state),
+    ),
+  ) as StepsView;
 }
 
 /**

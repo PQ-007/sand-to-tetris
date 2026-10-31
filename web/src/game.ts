@@ -62,6 +62,12 @@ export function libraryFor(
  * if it still passes using the *current* designs of the levels it uses;
  * otherwise it is "broken" and stops counting as unlocked, so anything
  * built on it shows as broken too.
+ *
+ * Passed memory components (registers, RAM: sequential with a model) run
+ * as their fast models here, as in `s2t check-all`: each one's own check
+ * already compared it with that model, and fully flattened a RAM is tens
+ * of thousands of gates. This is bookkeeping only; what runs in the editor
+ * stays the learner's choice (see fast.ts).
  */
 export function statuses(
   levels: LevelEntry[],
@@ -75,7 +81,15 @@ export function statuses(
     const id = l.info.level.id;
     const p = progress[id];
     if (p?.passed) {
-      const report = check(libraryFor(levels, working, id), id, p.design);
+      const fast = Object.keys(working).filter((k) => {
+        const l = levels.find((e) => e.info.level.id === k)?.info.level;
+        return Boolean(l?.sequential && l.model);
+      });
+      const report = check(
+        { ...libraryFor(levels, working, id), fast },
+        id,
+        p.design,
+      );
       if (report.passed) {
         working[id] = p.design;
         out[id] = "passed";
@@ -91,6 +105,19 @@ export function statuses(
     out[id] = open ? "open" : "locked";
   }
   return out;
+}
+
+/**
+ * Whether saving a design can change any level's status: only if the level
+ * was passed (others may be built on it) or has just been passed. Editing
+ * a level you haven't passed can't affect anything else.
+ */
+export function needsRecheck(
+  progress: Progress,
+  id: string,
+  passed: boolean | undefined,
+): boolean {
+  return passed !== undefined || Boolean(progress[id]?.passed);
 }
 
 /** The library a level is played with: every passed (not broken) design. */
