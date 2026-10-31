@@ -385,12 +385,11 @@ fn simulate_switches(
             return Ok(view);
         }
         Err(e) => {
-            view.problems.push(ReportProblem {
-                severity: "error",
-                message: format!("a component inside this design is broken: {e}"),
-                parts: vec![],
-                ports: vec![],
-            });
+            view.problems.push(ReportProblem::engine(
+                "inner-broken",
+                format!("a component inside this design is broken: {e}"),
+                vec![],
+            ));
             return Ok(view);
         }
     };

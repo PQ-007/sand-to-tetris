@@ -193,6 +193,99 @@ impl Problem {
     }
 }
 
+impl Problem {
+    /// A stable code naming the kind of problem, so the website can show
+    /// the message in the learner's language (with [`Problem::args`]).
+    pub fn code(&self) -> &'static str {
+        match self {
+            Problem::ComponentMismatch { .. } => "component-mismatch",
+            Problem::DuplicatePart { .. } => "duplicate-part",
+            Problem::UnknownKind { .. } => "unknown-kind",
+            Problem::PrimitiveNotAllowed { .. } => "primitive-not-allowed",
+            Problem::LayerViolation { .. } => "layer-violation",
+            Problem::NotUnlocked { .. } => "not-unlocked",
+            Problem::SelfReference { .. } => "self-reference",
+            Problem::DependencyCycle { .. } => "dependency-cycle",
+            Problem::UnknownPort { .. } => "unknown-port",
+            Problem::UnknownPart { .. } => "unknown-part",
+            Problem::UnknownPin { .. } => "unknown-pin",
+            Problem::OutputUnconnected { .. } => "output-unconnected",
+            Problem::BadPart { .. } => "bad-part",
+            Problem::WidthMismatch { .. } => "width-mismatch",
+            Problem::InputUnused { .. } => "input-unused",
+            Problem::PinUnconnected { .. } => "pin-unconnected",
+        }
+    }
+
+    /// The values a message about this problem mentions, by name (lists are
+    /// already joined the way the English message joins them).
+    pub fn args(&self) -> std::collections::BTreeMap<String, String> {
+        let pairs: Vec<(&str, String)> = match self {
+            Problem::ComponentMismatch { design, level } => {
+                vec![("design", design.clone()), ("level", level.clone())]
+            }
+            Problem::DuplicatePart { part }
+            | Problem::SelfReference { part }
+            | Problem::UnknownPart { part } => vec![("part", part.clone())],
+            Problem::UnknownKind { part, kind } | Problem::NotUnlocked { part, kind } => {
+                vec![("part", part.clone()), ("kind", kind.clone())]
+            }
+            Problem::PrimitiveNotAllowed { part, kind, layer } => vec![
+                ("part", part.clone()),
+                ("kind", kind.clone()),
+                ("layer", layer.to_string()),
+            ],
+            Problem::LayerViolation {
+                part,
+                kind,
+                kind_layer,
+                layer,
+            } => vec![
+                ("part", part.clone()),
+                ("kind", kind.clone()),
+                ("kind_layer", kind_layer.to_string()),
+                ("layer", layer.to_string()),
+            ],
+            Problem::DependencyCycle { path } => vec![("path", path.join(" → "))],
+            Problem::UnknownPort { port, valid } => {
+                vec![("port", port.clone()), ("valid", list(valid))]
+            }
+            Problem::UnknownPin {
+                part,
+                kind,
+                pin,
+                valid,
+            } => vec![
+                ("part", part.clone()),
+                ("kind", kind.clone()),
+                ("pin", pin.clone()),
+                ("valid", list(valid)),
+            ],
+            Problem::OutputUnconnected { port } | Problem::InputUnused { port } => {
+                vec![("port", port.clone())]
+            }
+            Problem::BadPart { part, reason } => {
+                vec![("part", part.clone()), ("reason", reason.clone())]
+            }
+            Problem::WidthMismatch {
+                from,
+                from_width,
+                to,
+                to_width,
+            } => vec![
+                ("from", from.clone()),
+                ("from_width", from_width.to_string()),
+                ("to", to.clone()),
+                ("to_width", to_width.to_string()),
+            ],
+            Problem::PinUnconnected { part, pin } => {
+                vec![("part", part.clone()), ("pin", pin.clone())]
+            }
+        };
+        pairs.into_iter().map(|(k, v)| (k.to_string(), v)).collect()
+    }
+}
+
 fn bits(n: u32) -> &'static str {
     if n == 1 {
         "bit"
@@ -678,6 +771,30 @@ mod tests {
         );
         assert!(problems[0].is_error() && !problems[1].is_error());
         assert_eq!(problems[0].ports(), ["out"]);
+    }
+
+    #[test]
+    fn problems_have_codes_and_values_for_translated_messages() {
+        let p = Problem::OutputUnconnected { port: "out".into() };
+        assert_eq!(p.code(), "output-unconnected");
+        assert_eq!(p.args(), [("port".to_string(), "out".to_string())].into());
+        let w = Problem::WidthMismatch {
+            from: "port `a`".into(),
+            from_width: 16,
+            to: "`n.a`".into(),
+            to_width: 1,
+        };
+        assert_eq!(w.code(), "width-mismatch");
+        assert_eq!(w.args().get("from_width").map(String::as_str), Some("16"));
+        let c = Problem::DependencyCycle {
+            path: vec!["a".into(), "b".into(), "a".into()],
+        };
+        assert_eq!(c.args().get("path").map(String::as_str), Some("a → b → a"));
+        let u = Problem::UnknownPort {
+            port: "x".into(),
+            valid: vec!["a".into(), "b".into()],
+        };
+        assert_eq!(u.args().get("valid").map(String::as_str), Some("`a`, `b`"));
     }
 
     #[test]

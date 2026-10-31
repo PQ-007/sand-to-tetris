@@ -195,18 +195,17 @@ pub(crate) fn prepare(
                 GateError::MultipleDrivers { parts, .. } => parts.clone(),
                 _ => vec![],
             };
-            let message = match &e {
-                GateError::Invalid { .. } | GateError::Missing { .. } => {
-                    format!("a component inside this design is broken: {e}")
-                }
-                _ => e.to_string(),
+            let inner = matches!(&e, GateError::Invalid { .. } | GateError::Missing { .. });
+            let message = if inner {
+                format!("a component inside this design is broken: {e}")
+            } else {
+                e.to_string()
             };
-            Err(vec![ReportProblem {
-                severity: "error",
+            Err(vec![ReportProblem::engine(
+                if inner { "inner-broken" } else { "engine" },
                 message,
                 parts,
-                ports: vec![],
-            }])
+            )])
         }
     }
 }
@@ -383,12 +382,9 @@ pub(crate) fn check_gates(
     };
     report.cells = prepared.circuit.cells.len();
     let fail = |report: &mut Report, e: String| {
-        report.problems.push(ReportProblem {
-            severity: "error",
-            message: e,
-            parts: vec![],
-            ports: vec![],
-        });
+        report
+            .problems
+            .push(ReportProblem::engine("engine", e, vec![]));
     };
     // A sequential level runs every step on one circuit, so its memory
     // carries over; a combinational row starts from scratch (all unknown),
