@@ -279,3 +279,33 @@
 - id: transfer-curve
   term: "Transfer curve"
   short: "A graph of a circuit's output voltage against its input voltage; a steep S-shape is what makes digital logic restore signals."
+
+- id: series-and-parallel
+  term: "Series and parallel"
+  short: "Switches in series sit one after another, so all must be closed for current to flow (AND); in parallel they sit side by side, so any one is enough (OR)."
+
+- id: truth-table
+  term: "Truth table"
+  short: "A table listing every combination of a circuit's inputs and the output it should give for each."
+
+- id: pull-up-network
+  term: "Pull-up network"
+  short: "The PMOS transistors in a CMOS gate that connect the output to VDD (making it 1) for the right inputs."
+  see: [pull-down-network, cmos]
+
+- id: pull-down-network
+  term: "Pull-down network"
+  short: "The NMOS transistors in a CMOS gate that connect the output to GND (making it 0) for the right inputs."
+  see: [pull-up-network, cmos]
+
+- id: floating
+  term: "Floating"
+  short: "A wire that nothing connects to VDD or GND, so its value is undefined; the simulator shows it as Z."
+
+- id: short-circuit
+  term: "Short circuit"
+  short: "A path straight from VDD to GND through switches that are on; it wastes power, heats the chip, and the output is unpredictable (X)."
+
+- id: universal-gate
+  term: "Universal gate"
+  short: "A gate from which every other logic function can be built; NAND and NOR are both universal."

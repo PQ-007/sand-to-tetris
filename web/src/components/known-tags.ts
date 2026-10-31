@@ -7,4 +7,5 @@ export const KNOWN_TAGS = [
   "mosfet-demo",
   "wafer-flow",
   "noise-chain",
+  "switch-network",
 ] as const;

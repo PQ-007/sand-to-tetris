@@ -160,3 +160,27 @@ describe("noise chain", () => {
     expect(m.nmLow).toBeCloseTo(m.nmHigh, 6);
   });
 });
+
+describe("switch networks", () => {
+  it("series is AND, parallel is OR", async () => {
+    const { lampOn } = await import("../src/demos/network");
+    const rows = [
+      [false, false],
+      [false, true],
+      [true, false],
+      [true, true],
+    ] as const;
+    expect(rows.map(([a, b]) => lampOn("series", a, b))).toEqual([
+      false,
+      false,
+      false,
+      true,
+    ]);
+    expect(rows.map(([a, b]) => lampOn("parallel", a, b))).toEqual([
+      false,
+      true,
+      true,
+      true,
+    ]);
+  });
+});
