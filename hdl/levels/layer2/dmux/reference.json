@@ -1,0 +1,96 @@
+{
+  "format": 1,
+  "component": "dmux",
+  "parts": [
+    {
+      "id": "ns",
+      "kind": "not",
+      "pos": [
+        240,
+        300
+      ]
+    },
+    {
+      "id": "x",
+      "kind": "and",
+      "pos": [
+        420,
+        150
+      ]
+    },
+    {
+      "id": "y",
+      "kind": "and",
+      "pos": [
+        420,
+        310
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "sel"
+      },
+      "to": {
+        "part": "ns",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "in"
+      },
+      "to": {
+        "part": "x",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "ns",
+        "pin": "out"
+      },
+      "to": {
+        "part": "x",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "in"
+      },
+      "to": {
+        "part": "y",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "sel"
+      },
+      "to": {
+        "part": "y",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "x",
+        "pin": "out"
+      },
+      "to": {
+        "port": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "y",
+        "pin": "out"
+      },
+      "to": {
+        "port": "b"
+      }
+    }
+  ]
+}

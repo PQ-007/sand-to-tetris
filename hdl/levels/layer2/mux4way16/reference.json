@@ -1,0 +1,145 @@
+{
+  "format": 1,
+  "component": "mux4way16",
+  "parts": [
+    {
+      "id": "s",
+      "kind": "split",
+      "pos": [
+        200,
+        400
+      ],
+      "width": 2
+    },
+    {
+      "id": "m1",
+      "kind": "mux16",
+      "pos": [
+        340,
+        120
+      ]
+    },
+    {
+      "id": "m2",
+      "kind": "mux16",
+      "pos": [
+        340,
+        300
+      ]
+    },
+    {
+      "id": "m3",
+      "kind": "mux16",
+      "pos": [
+        520,
+        210
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "sel"
+      },
+      "to": {
+        "part": "s",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "m1",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "m1",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "0"
+      },
+      "to": {
+        "part": "m1",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "port": "c"
+      },
+      "to": {
+        "part": "m2",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "m2",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "0"
+      },
+      "to": {
+        "part": "m2",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "m1",
+        "pin": "out"
+      },
+      "to": {
+        "part": "m3",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "m2",
+        "pin": "out"
+      },
+      "to": {
+        "part": "m3",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "1"
+      },
+      "to": {
+        "part": "m3",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "m3",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    }
+  ]
+}

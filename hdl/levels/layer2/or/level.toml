@@ -1,0 +1,20 @@
+id = "or"
+name = "OR"
+layer = 2
+goal = """
+Build OR: the output is 1 when either input is 1 (or both).
+Hint: OR is 0 only when both inputs are 0. Think about what NAND does with inverted inputs.
+"""
+inputs = ["a", "b"]
+outputs = ["out"]
+requires = ["nand", "not"]
+truth_table = """
+a b | out
+0 0 | 0
+0 1 | 1
+1 0 | 1
+1 1 | 1
+"""
+
+[hints]
+wrong = "A NAND outputs 1 unless both inputs are 1. If you invert a and b first, when are both inverted inputs 1?"

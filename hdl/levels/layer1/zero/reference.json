@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "component": "zero",
+  "parts": [
+    {
+      "id": "g",
+      "kind": "gnd",
+      "pos": [
+        360,
+        220
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "part": "g",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "format": 1,
+  "component": "fulladder",
+  "parts": [
+    {
+      "id": "h1",
+      "kind": "halfadder",
+      "pos": [
+        300,
+        160
+      ]
+    },
+    {
+      "id": "h2",
+      "kind": "halfadder",
+      "pos": [
+        450,
+        260
+      ]
+    },
+    {
+      "id": "o",
+      "kind": "or",
+      "pos": [
+        600,
+        330
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "h1",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "h1",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "h1",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "h2",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "c"
+      },
+      "to": {
+        "part": "h2",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "h2",
+        "pin": "sum"
+      },
+      "to": {
+        "port": "sum"
+      }
+    },
+    {
+      "from": {
+        "part": "h1",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "o",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "h2",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "o",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "o",
+        "pin": "out"
+      },
+      "to": {
+        "port": "carry"
+      }
+    }
+  ]
+}

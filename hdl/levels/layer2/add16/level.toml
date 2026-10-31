@@ -1,0 +1,23 @@
+id = "add16"
+name = "ADD16"
+layer = 2
+goal = """
+Add two 16-bit numbers. Chain 16 full adders: each column's carry goes into the next column, like adding by hand.
+The first column has no carry coming in: use your Constant 0. A carry out of the last column is dropped, so 0xffff + 1 = 0.
+"""
+inputs = ["a", "b"]
+outputs = ["out"]
+requires = ["fulladder", "zero"]
+widths = { a = 16, b = 16, out = 16 }
+model = "add16"
+truth_table = """
+a b | out
+0 0 | 0
+1 1 | 2
+1234 4321 | 5555
+0xffff 1 | 0
+0x8000 0x8000 | 0
+"""
+
+[hints]
+wrong = "Bit i of a and bit i of b go into full adder i; its carry feeds full adder i+1's c. Did any carry skip a column?"

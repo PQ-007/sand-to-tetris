@@ -1,0 +1,79 @@
+{
+  "format": 1,
+  "component": "or",
+  "parts": [
+    {
+      "id": "na",
+      "kind": "not",
+      "pos": [
+        260,
+        160
+      ]
+    },
+    {
+      "id": "nb",
+      "kind": "not",
+      "pos": [
+        260,
+        300
+      ]
+    },
+    {
+      "id": "x",
+      "kind": "nand",
+      "pos": [
+        430,
+        230
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "na",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "nb",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "na",
+        "pin": "out"
+      },
+      "to": {
+        "part": "x",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "nb",
+        "pin": "out"
+      },
+      "to": {
+        "part": "x",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "x",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    }
+  ]
+}

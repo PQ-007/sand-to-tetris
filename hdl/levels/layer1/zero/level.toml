@@ -1,0 +1,18 @@
+id = "zero"
+name = "Constant 0"
+layer = 1
+goal = """
+A component whose output is always 0.
+Later layers can't use bare supply rails, so you'll build the constants once here, and use them as parts from then on.
+"""
+inputs = []
+outputs = ["out"]
+requires = ["not"]
+truth_table = """
+| out
+| 0
+"""
+
+[hints]
+wrong = "Which supply rail is always 0?"
+floating = "Connect out to a supply rail."

@@ -1,0 +1,97 @@
+{
+  "format": 1,
+  "component": "xor",
+  "parts": [
+    {
+      "id": "o",
+      "kind": "or",
+      "pos": [
+        280,
+        150
+      ]
+    },
+    {
+      "id": "n",
+      "kind": "nand",
+      "pos": [
+        280,
+        300
+      ]
+    },
+    {
+      "id": "x",
+      "kind": "and",
+      "pos": [
+        450,
+        230
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "o",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "o",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "n",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "n",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "o",
+        "pin": "out"
+      },
+      "to": {
+        "part": "x",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "n",
+        "pin": "out"
+      },
+      "to": {
+        "part": "x",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "x",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    }
+  ]
+}

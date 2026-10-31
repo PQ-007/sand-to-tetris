@@ -119,6 +119,12 @@ static MODELS: &[NativeModel] = &[
         f: |x| vec![arg(x, arg(x, 4) as usize)],
     },
     NativeModel {
+        id: "or8way",
+        inputs: &[8],
+        outputs: &[1],
+        f: |x| vec![u64::from(arg(x, 0) != 0)],
+    },
+    NativeModel {
         id: "add16",
         inputs: &[16, 16],
         outputs: &[16],

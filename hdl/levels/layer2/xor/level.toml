@@ -1,0 +1,20 @@
+id = "xor"
+name = "XOR"
+layer = 2
+goal = """
+Build XOR ("exclusive or"): the output is 1 when the inputs are different.
+It's the gate that adds two bits (ignoring the carry).
+"""
+inputs = ["a", "b"]
+outputs = ["out"]
+requires = ["and", "or"]
+truth_table = """
+a b | out
+0 0 | 0
+0 1 | 1
+1 0 | 1
+1 1 | 0
+"""
+
+[hints]
+wrong = "XOR is 'a OR b, but NOT both'. Which gate tells you 'not both'?"

@@ -120,17 +120,35 @@ fn title(level: &Level) -> String {
 fn render(level: &Level, report: &Report) -> Result<String, String> {
     let rows = report.rows.len();
     if report.passed {
+        if level.layer == 1 {
+            return Ok(format!(
+                "✓ {}: all {rows} rows pass, {} transistors",
+                title(level),
+                report.transistors
+            ));
+        }
+        let random = report
+            .random
+            .as_ref()
+            .map(|r| format!(" + {} random tests", r.run))
+            .unwrap_or_default();
         return Ok(format!(
-            "✓ {}: all {rows} rows pass, {} transistors",
+            "✓ {}: all {rows} rows{random} pass, {} gates, {} gate delay{} deep",
             title(level),
-            report.transistors
+            report.cells,
+            report.depth,
+            if report.depth == 1 { "" } else { "s" }
         ));
     }
     let mut out = if report.rows.is_empty() {
         format!("✗ {}: the design has errors", title(level))
     } else {
         let failed = report.rows.iter().filter(|r| !r.passed).count();
-        format!("✗ {}: {failed} of {rows} rows fail", title(level))
+        let random = match &report.random {
+            Some(r) if r.failed > 0 => format!(", {} of {} random tests fail", r.failed, r.run),
+            _ => String::new(),
+        };
+        format!("✗ {}: {failed} of {rows} rows fail{random}", title(level))
     };
     for p in &report.problems {
         out.push_str(&format!("\n  {}: {}", p.severity, p.message));

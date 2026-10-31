@@ -12,14 +12,24 @@ fn read(rel: &str) -> String {
     .unwrap()
 }
 
+/// Where a level lives: `layer1/not`, `layer2/and`, ...
+fn dir(id: &str) -> String {
+    let layer = if ["not", "nand", "nor", "zero", "one"].contains(&id) {
+        1
+    } else {
+        2
+    };
+    format!("layer{layer}/{id}")
+}
+
 fn library(unlocked: &[&str]) -> String {
     let levels: Vec<String> = ["not", "nand", "nor", "and"]
         .iter()
-        .map(|id| read(&format!("layer1/{id}/level.toml")))
+        .map(|id| read(&format!("{}/level.toml", dir(id))))
         .collect();
     let designs: Vec<serde_json::Value> = unlocked
         .iter()
-        .map(|id| serde_json::from_str(&read(&format!("layer1/{id}/reference.json"))).unwrap())
+        .map(|id| serde_json::from_str(&read(&format!("{}/reference.json", dir(id)))).unwrap())
         .collect();
     serde_json::json!({ "levels": levels, "unlocked": designs }).to_string()
 }
@@ -105,11 +115,11 @@ fn check_runs_the_level() {
     let report = check(
         &library(&["nand", "not"]),
         "and",
-        &read("layer1/and/reference.json"),
+        &read("layer2/and/reference.json"),
     )
     .unwrap();
     assert!(report.passed);
-    assert_eq!(report.transistors, 6);
+    assert_eq!((report.cells, report.depth), (2, 2));
 }
 
 #[test]

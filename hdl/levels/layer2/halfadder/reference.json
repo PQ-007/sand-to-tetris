@@ -1,21 +1,21 @@
 {
   "format": 1,
-  "component": "and",
+  "component": "halfadder",
   "parts": [
     {
       "id": "x",
-      "kind": "nand",
+      "kind": "xor",
       "pos": [
-        140,
-        100
+        380,
+        150
       ]
     },
     {
-      "id": "i",
-      "kind": "not",
+      "id": "y",
+      "kind": "and",
       "pos": [
-        300,
-        100
+        380,
+        310
       ]
     }
   ],
@@ -40,21 +40,38 @@
     },
     {
       "from": {
-        "part": "x",
-        "pin": "out"
+        "port": "a"
       },
       "to": {
-        "part": "i",
+        "part": "y",
         "pin": "a"
       }
     },
     {
       "from": {
-        "part": "i",
+        "port": "b"
+      },
+      "to": {
+        "part": "y",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "x",
         "pin": "out"
       },
       "to": {
-        "port": "out"
+        "port": "sum"
+      }
+    },
+    {
+      "from": {
+        "part": "y",
+        "pin": "out"
+      },
+      "to": {
+        "port": "carry"
       }
     }
   ]

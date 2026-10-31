@@ -1,0 +1,838 @@
+{
+  "format": 1,
+  "component": "add16",
+  "parts": [
+    {
+      "id": "sa",
+      "kind": "split",
+      "pos": [
+        160,
+        140
+      ],
+      "width": 16
+    },
+    {
+      "id": "sb",
+      "kind": "split",
+      "pos": [
+        160,
+        320
+      ],
+      "width": 16
+    },
+    {
+      "id": "j",
+      "kind": "join",
+      "pos": [
+        640,
+        230
+      ],
+      "width": 16
+    },
+    {
+      "id": "z",
+      "kind": "zero",
+      "pos": [
+        260,
+        420
+      ]
+    },
+    {
+      "id": "f0",
+      "kind": "fulladder",
+      "pos": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "f1",
+      "kind": "fulladder",
+      "pos": [
+        380,
+        60
+      ]
+    },
+    {
+      "id": "f2",
+      "kind": "fulladder",
+      "pos": [
+        460,
+        60
+      ]
+    },
+    {
+      "id": "f3",
+      "kind": "fulladder",
+      "pos": [
+        540,
+        60
+      ]
+    },
+    {
+      "id": "f4",
+      "kind": "fulladder",
+      "pos": [
+        300,
+        150
+      ]
+    },
+    {
+      "id": "f5",
+      "kind": "fulladder",
+      "pos": [
+        380,
+        150
+      ]
+    },
+    {
+      "id": "f6",
+      "kind": "fulladder",
+      "pos": [
+        460,
+        150
+      ]
+    },
+    {
+      "id": "f7",
+      "kind": "fulladder",
+      "pos": [
+        540,
+        150
+      ]
+    },
+    {
+      "id": "f8",
+      "kind": "fulladder",
+      "pos": [
+        300,
+        240
+      ]
+    },
+    {
+      "id": "f9",
+      "kind": "fulladder",
+      "pos": [
+        380,
+        240
+      ]
+    },
+    {
+      "id": "f10",
+      "kind": "fulladder",
+      "pos": [
+        460,
+        240
+      ]
+    },
+    {
+      "id": "f11",
+      "kind": "fulladder",
+      "pos": [
+        540,
+        240
+      ]
+    },
+    {
+      "id": "f12",
+      "kind": "fulladder",
+      "pos": [
+        300,
+        330
+      ]
+    },
+    {
+      "id": "f13",
+      "kind": "fulladder",
+      "pos": [
+        380,
+        330
+      ]
+    },
+    {
+      "id": "f14",
+      "kind": "fulladder",
+      "pos": [
+        460,
+        330
+      ]
+    },
+    {
+      "id": "f15",
+      "kind": "fulladder",
+      "pos": [
+        540,
+        330
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "sa",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "sb",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "j",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "0"
+      },
+      "to": {
+        "part": "f0",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "0"
+      },
+      "to": {
+        "part": "f0",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "z",
+        "pin": "out"
+      },
+      "to": {
+        "part": "f0",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f0",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "0"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "1"
+      },
+      "to": {
+        "part": "f1",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "1"
+      },
+      "to": {
+        "part": "f1",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f0",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f1",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f1",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "1"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "2"
+      },
+      "to": {
+        "part": "f2",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "2"
+      },
+      "to": {
+        "part": "f2",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f1",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f2",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f2",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "2"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "3"
+      },
+      "to": {
+        "part": "f3",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "3"
+      },
+      "to": {
+        "part": "f3",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f2",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f3",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f3",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "3"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "4"
+      },
+      "to": {
+        "part": "f4",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "4"
+      },
+      "to": {
+        "part": "f4",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f3",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f4",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f4",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "4"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "5"
+      },
+      "to": {
+        "part": "f5",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "5"
+      },
+      "to": {
+        "part": "f5",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f4",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f5",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f5",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "5"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "6"
+      },
+      "to": {
+        "part": "f6",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "6"
+      },
+      "to": {
+        "part": "f6",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f5",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f6",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f6",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "6"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "7"
+      },
+      "to": {
+        "part": "f7",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "7"
+      },
+      "to": {
+        "part": "f7",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f6",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f7",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f7",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "7"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "8"
+      },
+      "to": {
+        "part": "f8",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "8"
+      },
+      "to": {
+        "part": "f8",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f7",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f8",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f8",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "8"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "9"
+      },
+      "to": {
+        "part": "f9",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "9"
+      },
+      "to": {
+        "part": "f9",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f8",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f9",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f9",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "9"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "10"
+      },
+      "to": {
+        "part": "f10",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "10"
+      },
+      "to": {
+        "part": "f10",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f9",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f10",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f10",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "10"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "11"
+      },
+      "to": {
+        "part": "f11",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "11"
+      },
+      "to": {
+        "part": "f11",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f10",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f11",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f11",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "11"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "12"
+      },
+      "to": {
+        "part": "f12",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "12"
+      },
+      "to": {
+        "part": "f12",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f11",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f12",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f12",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "12"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "13"
+      },
+      "to": {
+        "part": "f13",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "13"
+      },
+      "to": {
+        "part": "f13",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f12",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f13",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f13",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "13"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "14"
+      },
+      "to": {
+        "part": "f14",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "14"
+      },
+      "to": {
+        "part": "f14",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f13",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f14",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f14",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "14"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "15"
+      },
+      "to": {
+        "part": "f15",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "sb",
+        "pin": "15"
+      },
+      "to": {
+        "part": "f15",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "f14",
+        "pin": "carry"
+      },
+      "to": {
+        "part": "f15",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "f15",
+        "pin": "sum"
+      },
+      "to": {
+        "part": "j",
+        "pin": "15"
+      }
+    }
+  ]
+}

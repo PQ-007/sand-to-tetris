@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "component": "not16",
+  "parts": [
+    {
+      "id": "n",
+      "kind": "not",
+      "pos": [
+        380,
+        230
+      ],
+      "repeat": 16
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "n",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "n",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    }
+  ]
+}

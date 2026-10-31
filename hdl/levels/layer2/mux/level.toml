@@ -1,0 +1,24 @@
+id = "mux"
+name = "Multiplexer"
+layer = 2
+goal = """
+Build a multiplexer (MUX): a switch for data. When sel is 0 the output copies a; when sel is 1 it copies b.
+Multiplexers let a computer choose between values, for example which register to read.
+"""
+inputs = ["a", "b", "sel"]
+outputs = ["out"]
+requires = ["and", "or"]
+truth_table = """
+a b sel | out
+0 0 0 | 0
+0 1 0 | 0
+1 0 0 | 1
+1 1 0 | 1
+0 0 1 | 0
+0 1 1 | 1
+1 0 1 | 0
+1 1 1 | 1
+"""
+
+[hints]
+wrong = "Pass a through only when sel is 0 (AND it with NOT sel), pass b only when sel is 1, then OR the two."

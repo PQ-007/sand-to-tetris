@@ -1,0 +1,19 @@
+id = "halfadder"
+name = "Half adder"
+layer = 2
+goal = """
+Add two bits. The result can be 0, 1 or 2, so it needs two output bits: sum (the ones digit) and carry (the twos digit).
+"""
+inputs = ["a", "b"]
+outputs = ["sum", "carry"]
+requires = ["xor", "and"]
+truth_table = """
+a b | sum carry
+0 0 | 0 0
+0 1 | 1 0
+1 0 | 1 0
+1 1 | 0 1
+"""
+
+[hints]
+wrong = "Compare the sum column with XOR's truth table, and the carry column with AND's."

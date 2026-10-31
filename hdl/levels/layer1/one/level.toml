@@ -1,0 +1,17 @@
+id = "one"
+name = "Constant 1"
+layer = 1
+goal = """
+A component whose output is always 1.
+"""
+inputs = []
+outputs = ["out"]
+requires = ["not"]
+truth_table = """
+| out
+| 1
+"""
+
+[hints]
+wrong = "Which supply rail is always 1?"
+floating = "Connect out to a supply rail."
