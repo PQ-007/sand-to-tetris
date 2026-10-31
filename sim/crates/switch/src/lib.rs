@@ -92,10 +92,12 @@ impl std::fmt::Display for UnknownInput {
 
 impl std::error::Error for UnknownInput {}
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Conduct {
+/// Whether a transistor is conducting, given its gate value.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Conduct {
     Off,
     On,
+    /// The gate is X or Z.
     Maybe,
 }
 
@@ -193,6 +195,14 @@ impl<'a> Sim<'a> {
             .iter()
             .find(|(n, _)| n == name)
             .map(|(_, net)| self.value(*net))
+    }
+
+    /// Whether transistor `i` (index into `circuit.transistors`) conducts.
+    pub fn conduction(&self, i: usize) -> Conduct {
+        match self.circuit.transistors.get(i) {
+            Some(t) => self.conduct(t.kind, self.value(t.gate)),
+            None => Conduct::Maybe,
+        }
     }
 
     /// Current value of every net (for the editor's live overlay).

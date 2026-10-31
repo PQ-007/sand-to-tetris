@@ -1,0 +1,131 @@
+//! The JSON API the browser uses (wrapped 1:1 by s2t-wasm).
+
+#![allow(clippy::unwrap_used)] // test helpers
+
+use s2t_checker::api::{check, level_info, simulate};
+
+fn read(rel: &str) -> String {
+    std::fs::read_to_string(format!(
+        "{}/../../../hdl/levels/{rel}",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .unwrap()
+}
+
+fn library(unlocked: &[&str]) -> String {
+    let levels: Vec<String> = ["not", "nand", "nor", "and"]
+        .iter()
+        .map(|id| read(&format!("layer1/{id}/level.toml")))
+        .collect();
+    let designs: Vec<serde_json::Value> = unlocked
+        .iter()
+        .map(|id| serde_json::from_str(&read(&format!("layer1/{id}/reference.json"))).unwrap())
+        .collect();
+    serde_json::json!({ "levels": levels, "unlocked": designs }).to_string()
+}
+
+#[test]
+fn level_info_includes_the_parsed_table() {
+    let info = level_info(&read("layer1/nand/level.toml")).unwrap();
+    assert_eq!(info.level.id, "nand");
+    assert_eq!(info.level.requires, ["not"]);
+    assert_eq!(info.table.len(), 4);
+    assert_eq!(info.table[3].inputs, [("a".into(), 1), ("b".into(), 1)]);
+    assert_eq!(info.table[3].outputs, [("out".into(), 0)]);
+    let err = level_info("id = 3").unwrap_err();
+    assert!(err.starts_with("couldn't read level"), "{err}");
+}
+
+#[test]
+fn simulate_labels_every_visible_pin_and_transistor() {
+    let view = simulate(
+        &library(&[]),
+        "not",
+        &read("layer1/not/reference.json"),
+        r#"{"a": 1}"#,
+    )
+    .unwrap();
+    assert!(!view.blocked);
+    let value = |name: &str| {
+        view.values
+            .iter()
+            .find(|v| v.endpoint.to_string() == name)
+            .map(|v| v.value.clone())
+            .unwrap()
+    };
+    assert_eq!(value("port `out`"), "0");
+    assert_eq!(value("`p1.drain`"), "0");
+    assert_eq!(value("`p1.gate`"), "1");
+    assert_eq!(value("`v.out`"), "1");
+    let state = |id: &str| {
+        view.transistors
+            .iter()
+            .find(|t| t.part == id)
+            .unwrap()
+            .state
+    };
+    assert_eq!(state("n1"), "on");
+    assert_eq!(state("p1"), "off");
+    assert_eq!(view.outputs, [("out".to_string(), "0".to_string())]);
+}
+
+#[test]
+fn simulate_shows_unfinished_designs_and_shorts() {
+    // Two NMOS (one where the PMOS should be): a = 1 shorts VDD to GND.
+    let design =
+        read("layer1/not/reference.json").replace(r#""kind": "pmos""#, r#""kind": "nmos""#);
+    let view = simulate(&library(&[]), "not", &design, r#"{"a": 1}"#).unwrap();
+    assert_eq!(view.shorts, [vec!["g", "n1", "p1", "v"]]);
+    // Nothing wired to the output yet: still simulates.
+    let unfinished =
+        r#"{"format":1,"component":"not","parts":[{"id":"v","kind":"vdd"}],"wires":[]}"#;
+    let view = simulate(&library(&[]), "not", unfinished, r#"{"a": 0}"#).unwrap();
+    assert!(!view.blocked);
+    assert_eq!(view.outputs, [("out".to_string(), "Z".to_string())]);
+    assert_eq!(
+        view.problems[0].message,
+        "output `out` isn't connected to anything"
+    );
+}
+
+#[test]
+fn simulate_is_blocked_by_unusable_parts() {
+    let locked = r#"{"format":1,"component":"and","parts":[{"id":"x","kind":"nand"}],"wires":[]}"#;
+    let view = simulate(&library(&[]), "and", locked, "{}").unwrap();
+    assert!(view.blocked);
+    assert!(
+        view.problems[0].message.contains("haven't unlocked"),
+        "{:?}",
+        view.problems
+    );
+}
+
+#[test]
+fn check_runs_the_level() {
+    let report = check(
+        &library(&["nand", "not"]),
+        "and",
+        &read("layer1/and/reference.json"),
+    )
+    .unwrap();
+    assert!(report.passed);
+    assert_eq!(report.transistors, 6);
+}
+
+#[test]
+fn bad_input_gives_a_readable_error() {
+    assert!(check(&library(&[]), "zzz", "{}")
+        .unwrap_err()
+        .contains("no level `zzz`"));
+    assert!(check("not json", "not", "{}")
+        .unwrap_err()
+        .starts_with("couldn't read library"));
+    assert!(simulate(
+        &library(&[]),
+        "not",
+        &read("layer1/not/reference.json"),
+        r#"{"a": 7}"#
+    )
+    .unwrap_err()
+    .contains("input values must be 0 or 1"));
+}

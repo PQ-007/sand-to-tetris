@@ -111,7 +111,10 @@ dependencies = [
 name = "s2t-wasm"
 version = "0.1.0"
 dependencies = [
+ "s2t-checker",
  "s2t-netlist",
+ "serde",
+ "serde_json",
  "wasm-bindgen",
 ]
 

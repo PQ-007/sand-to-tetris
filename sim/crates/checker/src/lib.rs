@@ -8,6 +8,8 @@ use serde::Serialize;
 use s2t_netlist::{flatten, Circuit, Design, FlattenError, Level, Library, Problem};
 use s2t_switch::{Sim, Value};
 
+pub mod api;
+
 // ---- truth tables ------------------------------------------------------------
 
 #[derive(Debug, Clone, PartialEq, Eq)]

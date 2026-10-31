@@ -7,6 +7,7 @@ Hint: it's the mirror image of NAND.
 """
 inputs = ["a", "b"]
 outputs = ["out"]
+requires = ["not"]
 truth_table = """
 a b | out
 0 0 | 1

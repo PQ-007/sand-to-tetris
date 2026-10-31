@@ -8,7 +8,7 @@ pub mod level;
 pub mod validate;
 
 pub use design::{Design, Endpoint, Part, Wire};
-pub use flatten::{flatten, Circuit, FlattenError, Mos, NetId, Rail, Transistor};
+pub use flatten::{flatten, flatten_preview, Circuit, FlattenError, Mos, NetId, Rail, Transistor};
 pub use level::Level;
 pub use validate::{validate, Library, Primitive, Problem};
 

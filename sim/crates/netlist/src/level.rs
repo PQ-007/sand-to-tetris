@@ -6,9 +6,9 @@
 
 use std::collections::BTreeMap;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Level {
     pub id: String,
@@ -18,6 +18,9 @@ pub struct Level {
     pub goal: String,
     pub inputs: Vec<String>,
     pub outputs: Vec<String>,
+    /// Levels that must be passed before this one opens.
+    #[serde(default)]
+    pub requires: Vec<String>,
     /// Side quests are not required to reach Tetris.
     #[serde(default)]
     pub optional: bool,

@@ -43,6 +43,8 @@ pub struct Circuit {
     pub rails: Vec<Rail>,
     pub inputs: Vec<(String, NetId)>,
     pub outputs: Vec<(String, NetId)>,
+    /// Net of every port and every top-level part pin, sorted.
+    pub endpoints: Vec<(Endpoint, NetId)>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -198,9 +200,29 @@ fn component<'a>(
 /// Validates `design` and flattens it, with every component part replaced
 /// by its unlocked design from `library`.
 pub fn flatten(level: &Level, design: &Design, library: &Library) -> Result<Circuit, FlattenError> {
+    flatten_with(level, design, library, Problem::is_error)
+}
+
+/// Like [`flatten`], but for the editor's live view of a design that is
+/// still being built: only problems that make simulation impossible stop
+/// it (see [`Problem::blocks_preview`]); an unconnected output does not.
+pub fn flatten_preview(
+    level: &Level,
+    design: &Design,
+    library: &Library,
+) -> Result<Circuit, FlattenError> {
+    flatten_with(level, design, library, Problem::blocks_preview)
+}
+
+fn flatten_with(
+    level: &Level,
+    design: &Design,
+    library: &Library,
+    blocks: fn(&Problem) -> bool,
+) -> Result<Circuit, FlattenError> {
     let errors: Vec<Problem> = validate(level, design, library)
         .into_iter()
-        .filter(Problem::is_error)
+        .filter(blocks)
         .collect();
     if !errors.is_empty() {
         return Err(FlattenError::Invalid {
@@ -253,6 +275,28 @@ pub fn flatten(level: &Level, design: &Design, library: &Library) -> Result<Circ
             path,
         })
         .collect();
+    // Every endpoint visible in the top design (its ports and its parts'
+    // pins), so the editor can label each wire with its value.
+    let mut visible: Vec<(Endpoint, usize)> = b
+        .keys
+        .iter()
+        .filter_map(|((path, name), &node)| match path.as_slice() {
+            [] => Some((Endpoint::Port { port: name.clone() }, node)),
+            [part] if design.parts.iter().any(|p| &p.id == part) => Some((
+                Endpoint::Pin {
+                    part: part.clone(),
+                    pin: name.clone(),
+                },
+                node,
+            )),
+            _ => None,
+        })
+        .collect();
+    visible.sort();
+    let endpoints = visible
+        .into_iter()
+        .map(|(e, node)| (e, net(&mut b, node)))
+        .collect();
     // Count every node so unconnected pins still get their own net.
     for node in 0..b.parent.len() {
         net(&mut b, node);
@@ -264,6 +308,7 @@ pub fn flatten(level: &Level, design: &Design, library: &Library) -> Result<Circ
         rails,
         inputs,
         outputs,
+        endpoints,
     })
 }
 
@@ -326,6 +371,54 @@ mod tests {
             err.to_string(),
             "the `not` design has problems:\n  - output `out` isn't connected to anything"
         );
+    }
+
+    #[test]
+    fn lists_the_net_of_every_visible_endpoint() {
+        let c = flatten(&not_level(), &not_design(), &library()).unwrap();
+        let net_of = |e: Endpoint| c.endpoints.iter().find(|(x, _)| *x == e).map(|(_, n)| *n);
+        let out = c.outputs[0].1;
+        assert_eq!(net_of(port("out")), Some(out));
+        assert_eq!(net_of(pin("p1", "drain")), Some(out));
+        assert_eq!(net_of(pin("n1", "drain")), Some(out));
+        assert_eq!(net_of(pin("p1", "gate")), Some(c.inputs[0].1));
+        // 2 ports + 3 + 3 transistor pins + 2 rail pins
+        assert_eq!(c.endpoints.len(), 10);
+    }
+
+    #[test]
+    fn nested_internals_are_not_visible_endpoints() {
+        let mut lib = library();
+        lib.unlock(not_design());
+        let buf = level("buf", 1, &["a"], &["out"]);
+        let d = design(
+            "buf",
+            &[("i1", "not")],
+            &[(port("a"), pin("i1", "a")), (pin("i1", "out"), port("out"))],
+        );
+        let c = flatten(&buf, &d, &lib).unwrap();
+        let shown: Vec<String> = c.endpoints.iter().map(|(e, _)| e.to_string()).collect();
+        assert_eq!(shown, ["port `a`", "port `out`", "`i1.a`", "`i1.out`"]);
+    }
+
+    #[test]
+    fn preview_simulates_unfinished_designs_but_strict_does_not() {
+        let lib = library();
+        // Only the pull-up so far; output not yet wired.
+        let d = design(
+            "not",
+            &[("p1", "pmos"), ("v", "vdd")],
+            &[
+                (port("a"), pin("p1", "gate")),
+                (pin("v", "out"), pin("p1", "source")),
+            ],
+        );
+        assert!(flatten(&not_level(), &d, &lib).is_err());
+        let c = flatten_preview(&not_level(), &d, &lib).unwrap();
+        assert_eq!(c.transistors.len(), 1);
+        // Unknown parts still block the preview.
+        let bad = design("not", &[("q", "flux")], &[]);
+        assert!(flatten_preview(&not_level(), &bad, &lib).is_err());
     }
 
     #[test]

@@ -148,6 +148,12 @@ impl Problem {
         )
     }
 
+    /// Errors that make even a live preview impossible. An unconnected
+    /// output is normal while building, so it doesn't block the preview.
+    pub fn blocks_preview(&self) -> bool {
+        self.is_error() && !matches!(self, Problem::OutputUnconnected { .. })
+    }
+
     /// Part ids the editor should highlight.
     pub fn parts(&self) -> Vec<String> {
         match self {

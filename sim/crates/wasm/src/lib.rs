@@ -1,9 +1,11 @@
-//! The JavaScript-facing API of the simulator core.
-//!
-//! Keep this surface small (load, set inputs, step, read, check). Logic
-//! belongs in the other crates so it is tested natively and shared with CI.
+//! The JavaScript-facing API of the simulator core: thin wrappers over
+//! `s2t_checker::api`, exchanging JSON strings. Errors become JS exceptions
+//! carrying the same plain-language message.
 
+use serde::Serialize;
 use wasm_bindgen::prelude::*;
+
+use s2t_checker::api;
 
 /// Identifies the loaded core, e.g. `"0.1.0 (format 1)"`. The site shows
 /// it so a stale WASM build is easy to spot.
@@ -16,6 +18,32 @@ pub fn core_version() -> String {
     )
 }
 
+fn to_json<T: Serialize>(result: Result<T, String>) -> Result<String, String> {
+    result.and_then(|v| serde_json::to_string(&v).map_err(|e| e.to_string()))
+}
+
+fn js(result: Result<String, String>) -> Result<String, JsError> {
+    result.map_err(|e| JsError::new(&e))
+}
+
+/// Parses a level definition (TOML) → `LevelInfo` JSON.
+#[wasm_bindgen(js_name = levelInfo)]
+pub fn level_info(toml: &str) -> Result<String, JsError> {
+    js(to_json(api::level_info(toml)))
+}
+
+/// Runs a level's tests → `Report` JSON.
+#[wasm_bindgen]
+pub fn check(library: &str, level: &str, design: &str) -> Result<String, JsError> {
+    js(to_json(api::check(library, level, design)))
+}
+
+/// Live simulation of a (possibly unfinished) design → `SimView` JSON.
+#[wasm_bindgen]
+pub fn simulate(library: &str, level: &str, design: &str, inputs: &str) -> Result<String, JsError> {
+    js(to_json(api::simulate(library, level, design, inputs)))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -23,5 +51,14 @@ mod tests {
     #[test]
     fn core_version_names_crate_and_format() {
         assert_eq!(core_version(), "0.1.0 (format 1)");
+    }
+
+    #[test]
+    fn json_wrappers_pass_errors_through() {
+        let lib = r#"{"levels":[]}"#;
+        assert_eq!(
+            to_json(api::check(lib, "x", "{}")),
+            Err("no level `x` in the library".to_string())
+        );
     }
 }

@@ -9,6 +9,7 @@ You don't need transistors: use the NAND and NOT you already built.
 """
 inputs = ["a", "b"]
 outputs = ["out"]
+requires = ["nand", "not"]
 truth_table = """
 a b | out
 0 0 | 0

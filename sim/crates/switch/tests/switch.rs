@@ -85,6 +85,20 @@ fn nand_truth_table() {
 }
 
 #[test]
+fn reports_which_transistors_conduct() {
+    let c = circuit(&not_design(), &["a"]);
+    let mut sim = Sim::new(&c);
+    sim.set_input("a", One).unwrap();
+    sim.settle();
+    let state = |id: &str| {
+        let i = c.transistors.iter().position(|t| t.path == [id]).unwrap();
+        sim.conduction(i)
+    };
+    assert_eq!(state("n1"), s2t_switch::Conduct::On);
+    assert_eq!(state("p1"), s2t_switch::Conduct::Off);
+}
+
+#[test]
 fn nand_with_known_zero_input_ignores_unknown_other_input() {
     // With a = 0, pa connects out to VDD and na cuts the path to GND,
     // whatever b is. The engine must not be over-pessimistic here.

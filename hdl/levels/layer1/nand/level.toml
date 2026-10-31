@@ -7,6 +7,7 @@ NAND is special: every other logic gate can be built from NANDs alone.
 """
 inputs = ["a", "b"]
 outputs = ["out"]
+requires = ["not"]
 truth_table = """
 a b | out
 0 0 | 1
