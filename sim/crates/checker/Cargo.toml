@@ -1,0 +1,15 @@
+[package]
+name = "s2t-checker"
+description = "Runs a level's tests against a design and explains failures"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+s2t-netlist.workspace = true
+s2t-switch.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true
