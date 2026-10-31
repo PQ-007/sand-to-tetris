@@ -41,6 +41,9 @@ fn every_reference_solution_passes_its_level() {
         "fulladder",
         "add16",
         "inc16",
+        "xor16",
+        "addc16",
+        "alu",
     ] {
         assert!(text.contains(&format!("✓ {id} ")), "{text}");
     }

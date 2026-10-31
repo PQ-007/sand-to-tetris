@@ -1,0 +1,24 @@
+id = "addc16"
+name = "ADD16 with carry"
+layer = 2
+goal = """
+Add two 16-bit numbers plus a carry in (cin), and also output the carry out of the top column (cout).
+It's ADD16 with both ends of the carry chain brought out as pins. The ALU needs them: cin = 1 turns a + NOT b into subtraction, and cout tells you about the result.
+"""
+inputs = ["a", "b", "cin"]
+outputs = ["out", "cout"]
+requires = ["fulladder"]
+widths = { a = 16, b = 16, out = 16 }
+model = "addc16"
+truth_table = """
+a b cin | out cout
+0 0 0 | 0 0
+2 3 0 | 5 0
+2 3 1 | 6 0
+0xffff 1 0 | 0 1
+0xffff 0 1 | 0 1
+0x8000 0x8000 0 | 0 1
+"""
+
+[hints]
+wrong = "Feed cin into the first full adder's c, and take the last full adder's carry as cout."

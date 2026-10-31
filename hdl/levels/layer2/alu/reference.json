@@ -1,0 +1,601 @@
+{
+  "format": 1,
+  "component": "alu",
+  "parts": [
+    {
+      "id": "inv",
+      "kind": "xor",
+      "pos": [
+        220,
+        380
+      ],
+      "repeat": 16,
+      "shared": [
+        "b"
+      ]
+    },
+    {
+      "id": "add",
+      "kind": "addc16",
+      "pos": [
+        420,
+        90
+      ]
+    },
+    {
+      "id": "and",
+      "kind": "and16",
+      "pos": [
+        420,
+        210
+      ]
+    },
+    {
+      "id": "or",
+      "kind": "or16",
+      "pos": [
+        420,
+        320
+      ]
+    },
+    {
+      "id": "xor",
+      "kind": "xor16",
+      "pos": [
+        420,
+        430
+      ]
+    },
+    {
+      "id": "m",
+      "kind": "mux4way16",
+      "pos": [
+        620,
+        260
+      ]
+    },
+    {
+      "id": "s",
+      "kind": "split",
+      "pos": [
+        800,
+        420
+      ],
+      "width": 16
+    },
+    {
+      "id": "lo",
+      "kind": "join",
+      "pos": [
+        900,
+        330
+      ],
+      "width": 8
+    },
+    {
+      "id": "hi",
+      "kind": "join",
+      "pos": [
+        900,
+        560
+      ],
+      "width": 8
+    },
+    {
+      "id": "o1",
+      "kind": "or8way",
+      "pos": [
+        1010,
+        330
+      ]
+    },
+    {
+      "id": "o2",
+      "kind": "or8way",
+      "pos": [
+        1010,
+        560
+      ]
+    },
+    {
+      "id": "any",
+      "kind": "or",
+      "pos": [
+        1120,
+        440
+      ]
+    },
+    {
+      "id": "nz",
+      "kind": "not",
+      "pos": [
+        1220,
+        440
+      ]
+    },
+    {
+      "id": "fs",
+      "kind": "split",
+      "pos": [
+        620,
+        560
+      ],
+      "width": 2
+    },
+    {
+      "id": "isadd",
+      "kind": "nor",
+      "pos": [
+        720,
+        600
+      ]
+    },
+    {
+      "id": "cc",
+      "kind": "and",
+      "pos": [
+        820,
+        160
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "b"
+      },
+      "to": {
+        "part": "inv",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "invb"
+      },
+      "to": {
+        "part": "inv",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "add",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "inv",
+        "pin": "out"
+      },
+      "to": {
+        "part": "add",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "and",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "inv",
+        "pin": "out"
+      },
+      "to": {
+        "part": "and",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "or",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "inv",
+        "pin": "out"
+      },
+      "to": {
+        "part": "or",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "a"
+      },
+      "to": {
+        "part": "xor",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "inv",
+        "pin": "out"
+      },
+      "to": {
+        "part": "xor",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "cin"
+      },
+      "to": {
+        "part": "add",
+        "pin": "cin"
+      }
+    },
+    {
+      "from": {
+        "part": "add",
+        "pin": "out"
+      },
+      "to": {
+        "part": "m",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "and",
+        "pin": "out"
+      },
+      "to": {
+        "part": "m",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "or",
+        "pin": "out"
+      },
+      "to": {
+        "part": "m",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "xor",
+        "pin": "out"
+      },
+      "to": {
+        "part": "m",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "port": "f"
+      },
+      "to": {
+        "part": "m",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "m",
+        "pin": "out"
+      },
+      "to": {
+        "port": "out"
+      }
+    },
+    {
+      "from": {
+        "part": "m",
+        "pin": "out"
+      },
+      "to": {
+        "part": "s",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "15"
+      },
+      "to": {
+        "port": "n"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "0"
+      },
+      "to": {
+        "part": "lo",
+        "pin": "0"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "8"
+      },
+      "to": {
+        "part": "hi",
+        "pin": "0"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "1"
+      },
+      "to": {
+        "part": "lo",
+        "pin": "1"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "9"
+      },
+      "to": {
+        "part": "hi",
+        "pin": "1"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "2"
+      },
+      "to": {
+        "part": "lo",
+        "pin": "2"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "10"
+      },
+      "to": {
+        "part": "hi",
+        "pin": "2"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "3"
+      },
+      "to": {
+        "part": "lo",
+        "pin": "3"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "11"
+      },
+      "to": {
+        "part": "hi",
+        "pin": "3"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "4"
+      },
+      "to": {
+        "part": "lo",
+        "pin": "4"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "12"
+      },
+      "to": {
+        "part": "hi",
+        "pin": "4"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "5"
+      },
+      "to": {
+        "part": "lo",
+        "pin": "5"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "13"
+      },
+      "to": {
+        "part": "hi",
+        "pin": "5"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "6"
+      },
+      "to": {
+        "part": "lo",
+        "pin": "6"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "14"
+      },
+      "to": {
+        "part": "hi",
+        "pin": "6"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "7"
+      },
+      "to": {
+        "part": "lo",
+        "pin": "7"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "15"
+      },
+      "to": {
+        "part": "hi",
+        "pin": "7"
+      }
+    },
+    {
+      "from": {
+        "part": "lo",
+        "pin": "out"
+      },
+      "to": {
+        "part": "o1",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "hi",
+        "pin": "out"
+      },
+      "to": {
+        "part": "o2",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "o1",
+        "pin": "out"
+      },
+      "to": {
+        "part": "any",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "o2",
+        "pin": "out"
+      },
+      "to": {
+        "part": "any",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "any",
+        "pin": "out"
+      },
+      "to": {
+        "part": "nz",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "nz",
+        "pin": "out"
+      },
+      "to": {
+        "port": "z"
+      }
+    },
+    {
+      "from": {
+        "port": "f"
+      },
+      "to": {
+        "part": "fs",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "fs",
+        "pin": "0"
+      },
+      "to": {
+        "part": "isadd",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "fs",
+        "pin": "1"
+      },
+      "to": {
+        "part": "isadd",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "add",
+        "pin": "cout"
+      },
+      "to": {
+        "part": "cc",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "isadd",
+        "pin": "out"
+      },
+      "to": {
+        "part": "cc",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "cc",
+        "pin": "out"
+      },
+      "to": {
+        "port": "c"
+      }
+    }
+  ]
+}

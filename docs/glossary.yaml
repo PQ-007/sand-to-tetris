@@ -364,3 +364,12 @@
   term: "Fast model"
   short: "A built-in, quick version of a component you designed, used instead of your gates once a match check shows the two behave the same."
   see: [abstraction]
+
+- id: alu
+  term: "ALU (arithmetic logic unit)"
+  short: "The part of a CPU that calculates: it adds, subtracts and combines bits, choosing the operation from a few control inputs."
+
+- id: flags
+  term: "Flags"
+  short: "Single-bit facts about an ALU result (is it zero? negative? was there a carry?) that the CPU uses to decide what to do next."
+  see: [alu]
