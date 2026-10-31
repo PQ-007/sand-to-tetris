@@ -1,0 +1,281 @@
+# Glossary. Chapters link terms with [[term]] or [[shown text|id]].
+# `short` is one plain-language sentence (shown in hover cards);
+# `long` adds precision. Both may link other terms.
+
+- id: computer
+  term: "Computer"
+  short: "A machine that takes in information, stores it, transforms it by following a list of instructions, and gives back results."
+  long: "The computers in this course are [[general-purpose|general-purpose]] and [[programmable|program]], and they keep their program in [[memory]] like any other data (the [[stored-program|stored-program]] idea)."
+  see: [program, stored-program]
+
+- id: input
+  term: "Input"
+  short: "Information going into a computer, such as key presses, sensor readings or a file."
+  see: [output]
+
+- id: output
+  term: "Output"
+  short: "Results coming out of a computer, such as pixels on a screen, sound, or a number."
+  see: [input]
+
+- id: memory
+  term: "Memory"
+  short: "The part of a computer that holds information so it can be used later."
+  long: "Memory is built from many cells that each hold one [[bit]]. You will build memory from [[logic gates|logic-gate]] in Chapter 3."
+
+- id: processor
+  term: "Processor"
+  short: "The part of a computer that carries out instructions one after another, doing arithmetic, comparisons and decisions."
+  long: "Also called the CPU (central processing unit). A processor on a single chip is a [[microprocessor]]."
+  see: [microprocessor]
+
+- id: program
+  term: "Program"
+  short: "A list of instructions that tells a computer what to do, step by step."
+  see: [algorithm, stored-program]
+
+- id: algorithm
+  term: "Algorithm"
+  short: "A precise, step-by-step method for solving a problem, written so that following it needs no cleverness."
+
+- id: general-purpose
+  term: "General-purpose"
+  short: "Able to do many different jobs, depending on the program it is given, rather than one fixed job."
+
+- id: stored-program
+  term: "Stored-program computer"
+  short: "A computer that keeps its program in the same memory as its data, so a new program can be loaded as easily as new data."
+  see: [program, memory]
+
+- id: punched-card
+  term: "Punched card"
+  short: "A stiff card where the presence or absence of holes in set positions records information."
+
+- id: logarithm
+  term: "Logarithm"
+  short: "The power you must raise a base number to in order to get a value; logarithms turn multiplication into addition."
+  long: "Because log(a × b) = log(a) + log(b), adding two lengths on a [[slide rule]] multiplies the numbers they stand for."
+
+- id: slide-rule
+  term: "Slide rule"
+  short: "A ruler with logarithmic scales that slide against each other; lining them up multiplies or divides numbers."
+  see: [logarithm]
+
+- id: analog
+  term: "Analog"
+  short: "Representing a quantity by something that can vary smoothly, like a voltage, a shaft angle or a length."
+  see: [digital]
+
+- id: digital
+  term: "Digital"
+  short: "Representing information with a small set of distinct values, usually just two, so small errors can be corrected."
+  see: [analog, bit]
+
+- id: bit
+  term: "Bit"
+  short: "The smallest piece of information, a single choice between two values, written 0 and 1."
+  long: 'Short for "binary digit". In a circuit a bit is usually a low voltage (0) or a high voltage (1).'
+  see: [binary, logic-level]
+
+- id: binary
+  term: "Binary"
+  short: "Counting with only two digits, 0 and 1; each place is worth twice the one to its right."
+
+- id: boolean-algebra
+  term: "Boolean algebra"
+  short: "Algebra where every value is true or false (1 or 0), combined with AND, OR and NOT."
+  see: [logic-gate]
+
+- id: logic-gate
+  term: "Logic gate"
+  short: "A small circuit that computes a simple function of bits, such as AND, OR or NOT."
+  long: "You will build your first gates from [[transistors|transistor]] in Chapter 1."
+  see: [boolean-algebra]
+
+- id: turing-machine
+  term: "Turing machine"
+  short: "An imaginary machine that reads and writes symbols on a tape by following simple rules; it can carry out any step-by-step procedure."
+
+- id: switch
+  term: "Switch"
+  short: "A device that either lets something flow (closed, on) or blocks it (open, off)."
+  long: "Every digital computer is built from switches that control other switches. They have been gears, [[relays|relay]], [[vacuum tubes|vacuum-tube]] and [[transistors|transistor]]."
+
+- id: relay
+  term: "Relay"
+  short: "A switch flipped by an electromagnet: current in a coil pulls a metal contact open or closed."
+
+- id: vacuum-tube
+  term: "Vacuum tube"
+  short: "A sealed glass tube in which a voltage on a wire grid controls a flow of electrons through a vacuum; an electronic switch with no moving parts."
+
+- id: transistor
+  term: "Transistor"
+  short: "A tiny electronic switch made of a semiconductor: a voltage or current on one terminal controls the flow between two others."
+  see: [mosfet]
+
+- id: semiconductor
+  term: "Semiconductor"
+  short: "A material, like silicon or germanium, whose ability to conduct electricity sits between a metal and an insulator and can be controlled."
+  see: [doping, band-gap]
+
+- id: germanium
+  term: "Germanium"
+  short: "A semiconductor element used in the first transistors; easier to purify early on, but leaky when warm and without a stable oxide."
+  see: [silicon]
+
+- id: silicon
+  term: "Silicon"
+  short: "The semiconductor element used in almost all chips today; abundant in sand and rock, and it grows a tough insulating oxide."
+  see: [germanium, silicon-dioxide]
+
+- id: silicon-dioxide
+  term: "Silicon dioxide"
+  short: "Silicon combined with oxygen (SiO₂), the main mineral in quartz sand; on a chip, a thin layer of it is an excellent insulator."
+
+- id: band-gap
+  term: "Band gap"
+  short: "The energy an electron needs to break free and conduct; a bigger gap means fewer electrons freed by heat alone."
+  long: "Measured in electronvolts (eV). Silicon's gap (about 1.1 eV) is larger than germanium's (about 0.66 eV), so silicon leaks far less current when warm."
+
+- id: leakage-current
+  term: "Leakage current"
+  short: "Unwanted current that flows through a switch that is supposed to be off."
+
+- id: integrated-circuit
+  term: "Integrated circuit"
+  short: "A complete circuit, many transistors and their wiring, made together on one piece of semiconductor; a chip."
+
+- id: microprocessor
+  term: "Microprocessor"
+  short: "A whole processor built as a single integrated circuit."
+  see: [processor, integrated-circuit]
+
+- id: moores-law
+  term: "Moore's law"
+  short: "Gordon Moore's observation that the number of transistors that fit on a chip doubled at a steady rate, about every two years since 1975."
+
+- id: wafer
+  term: "Wafer"
+  short: "A thin, polished disc sliced from a single crystal of silicon, on which many chips are built at once."
+
+- id: polysilicon
+  term: "Polysilicon"
+  short: "Very pure silicon made of many small crystals stuck together, the raw material for growing a single crystal."
+
+- id: single-crystal
+  term: "Single crystal"
+  short: "A solid in which the atoms are lined up in one unbroken, regular pattern all the way through."
+
+- id: czochralski-process
+  term: "Czochralski process"
+  short: "Growing a single crystal by dipping a small seed crystal into molten material and slowly pulling it up while turning."
+
+- id: doping
+  term: "Doping"
+  short: "Adding a tiny, controlled amount of another element to a semiconductor to give it extra free electrons or extra holes."
+  see: [n-type, p-type]
+
+- id: dopant
+  term: "Dopant"
+  short: "An element added on purpose during doping, such as phosphorus (n-type) or boron (p-type) in silicon."
+
+- id: electron
+  term: "Electron"
+  short: "A tiny particle with negative charge; moving electrons are what carry current in a wire."
+
+- id: hole
+  term: "Hole"
+  short: "A missing electron in a crystal's bonds; it moves like a positive charge as neighbouring electrons hop into it."
+
+- id: n-type
+  term: "n-type"
+  short: "Silicon doped to have extra free electrons (negative carriers), for example with phosphorus."
+
+- id: p-type
+  term: "p-type"
+  short: "Silicon doped to have extra holes (positive carriers), for example with boron."
+
+- id: p-n-junction
+  term: "p-n junction"
+  short: "The boundary where p-type and n-type silicon meet; it lets current through easily in one direction only."
+  see: [depletion-region, diode]
+
+- id: depletion-region
+  term: "Depletion region"
+  short: "A thin zone at a p-n junction where electrons and holes have cancelled out, leaving no free carriers to conduct."
+
+- id: diode
+  term: "Diode"
+  short: "A device that lets current flow in one direction but not the other; a p-n junction is one."
+
+- id: forward-bias
+  term: "Forward bias"
+  short: "Voltage applied across a p-n junction in the direction that shrinks the depletion region and lets current flow."
+
+- id: reverse-bias
+  term: "Reverse bias"
+  short: "Voltage applied across a p-n junction in the direction that widens the depletion region and blocks current."
+
+- id: mosfet
+  term: "MOSFET"
+  short: "Metal-oxide-semiconductor field-effect transistor, the transistor in almost every chip, where gate voltage creates or removes a channel."
+  see: [nmos, pmos, gate-terminal]
+
+- id: gate-terminal
+  term: "Gate (of a transistor)"
+  short: "The control terminal of a MOSFET; its voltage decides whether the switch is on or off."
+  long: "Not to be confused with a [[logic gate|logic-gate]], which is a whole circuit built from several transistors."
+
+- id: source-and-drain
+  term: "Source and drain"
+  short: "The two terminals of a MOSFET that the switch connects or disconnects; current flows between them when the channel exists."
+
+- id: channel
+  term: "Channel"
+  short: "A thin conducting layer that forms under a MOSFET's gate when the gate voltage is past the threshold."
+
+- id: threshold-voltage
+  term: "Threshold voltage"
+  short: "The gate voltage at which a MOSFET's channel forms and the transistor switches on."
+
+- id: nmos
+  term: "NMOS"
+  short: "An n-channel MOSFET; it turns on when its gate is high."
+  see: [pmos, cmos]
+
+- id: pmos
+  term: "PMOS"
+  short: "A p-channel MOSFET; it turns on when its gate is low, the opposite of NMOS."
+  see: [nmos, cmos]
+
+- id: cmos
+  term: "CMOS"
+  short: "Complementary MOS, logic built from matched pairs of NMOS and PMOS transistors, so that one of each pair is off and almost no current flows while idle."
+  see: [nmos, pmos]
+
+- id: voltage
+  term: "Voltage"
+  short: 'The electrical "push" between two points, measured in volts (V); like water pressure in a pipe.'
+
+- id: current
+  term: "Current"
+  short: "The amount of electric charge flowing past a point each second, measured in amperes (A)."
+
+- id: noise
+  term: "Noise"
+  short: "Small unwanted random changes added to a signal, from heat, interference or neighbouring wires."
+
+- id: logic-level
+  term: "Logic level"
+  short: "The range of voltages a circuit reads as 0 or as 1."
+  see: [noise-margin]
+
+- id: noise-margin
+  term: "Noise margin"
+  short: "How much noise a valid 0 or 1 can pick up and still be read correctly by the next stage."
+  see: [logic-level, transfer-curve]
+
+- id: transfer-curve
+  term: "Transfer curve"
+  short: "A graph of a circuit's output voltage against its input voltage; a steep S-shape is what makes digital logic restore signals."

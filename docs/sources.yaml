@@ -1,0 +1,456 @@
+# Citations for every historical or factual claim in the chapters.
+#
+# Fields:
+#   id         referenced from chapter text as [@id]
+#   claim      the claim exactly as the chapter states it
+#   sources    list of { title, url } (or `estimate: true` for illustrative figures)
+#   checked    how and when the claim was verified
+#   uncertain  present when sources or historians disagree; rendered visibly
+#
+# "web search, 2026-10-31" means the claim was cross-checked against the
+# listed pages via search-result text; some hosts (britannica.com,
+# computerhistory.org) could not be opened directly from the build machine.
+
+- id: ishango-bone
+  claim: >-
+    The Ishango bone, found in what is now the Democratic Republic of the Congo,
+    is roughly 20,000 years old and carries groups of notches.
+  sources:
+    - title: "QUANTA project: the Ishango bone (Max Planck Institute for Evolutionary Anthropology)"
+      url: https://quanta.eva.mpg.de/?p=974
+    - title: "Astronomical heritage thematic study, case study on Ishango (ICOMOS/IAU)"
+      url: https://web.astronomicalheritage.org/images/astronomicalheritage.org/thematic-study/ch01cs3.pdf
+  checked: web search, 2026-10-31
+  uncertain: >-
+    Dating estimates range from about 25,000 to 16,000 years ago. Whether the
+    notches record counting, arithmetic, a lunar calendar, or something
+    non-numerical (such as grip marks) is still debated.
+
+- id: lebombo-bone
+  claim: >-
+    The Lebombo bone, a baboon fibula from Border Cave in southern Africa, is
+    about 43,000 years old and has 29 notches.
+  sources:
+    - title: "Lebombo bone (Wikipedia, citing radiocarbon datings)"
+      url: https://en.wikipedia.org/wiki/Lebombo_bone
+  checked: web search, 2026-10-31
+  uncertain: >-
+    The bone is broken, so 29 may not be the full count, and it is debated
+    whether it is a tally or a lunar calendar.
+
+- id: abacus
+  claim: >-
+    Counting boards and abacuses are ancient; the exact origin is unknown, with
+    Mesopotamia a commonly suggested starting point. Roman hand abacuses and
+    the Chinese suanpan are later, well-documented forms.
+  sources:
+    - title: "Abacus (New World Encyclopedia)"
+      url: https://www.newworldencyclopedia.org/entry/abacus
+  checked: web search, 2026-10-31
+  uncertain: >-
+    Origin and dates are uncertain; sources give conflicting dates for the
+    earliest abacus and for the first written record of the suanpan.
+
+- id: antikythera
+  claim: >-
+    The Antikythera mechanism is a hand-cranked bronze gear mechanism from
+    ancient Greece that modelled the motions of the Sun, Moon and planets and
+    predicted eclipses. It was built before a shipwreck dated to about 60 BCE.
+  sources:
+    - title: "Jones (2020), Epoch Dates of the Antikythera Mechanism, ISAW Papers 17"
+      url: https://dlib.nyu.edu/awdl/isaw/isaw-papers/17
+    - title: "Antikythera mechanism (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Antikythera_mechanism
+  checked: web search, 2026-10-31
+  uncertain: >-
+    The construction date is debated: estimates mostly fall in the 2nd century
+    BCE (often 150-100 BCE), within an outer range of roughly 205-60 BCE.
+
+- id: napier-logarithms
+  claim: >-
+    John Napier published logarithms in 1614, turning multiplication into
+    addition.
+  sources:
+    - title: "Logarithms celebrate their 400th birthday (Science News)"
+      url: https://www.sciencenews.org/blog/context/logarithms-celebrate-their-400th-birthday
+    - title: "Napier (University of Toronto, Thomas Fisher Rare Book Library)"
+      url: https://fisherdigitus.library.utoronto.ca/exhibits/show/sciencehighlights/napier
+  checked: web search, 2026-10-31
+
+- id: slide-rule
+  claim: >-
+    Edmund Gunter drew a logarithmic scale on a ruler in 1620; within about a
+    decade, sliding two such scales against each other gave the slide rule.
+  sources:
+    - title: "Slide rule (Britannica)"
+      url: https://www.britannica.com/technology/slide-rule
+    - title: "Mathematical Treasure: slide rules (Mathematical Association of America)"
+      url: https://old.maa.org/node/1634263
+  checked: web search, 2026-10-31
+  uncertain: >-
+    Credit is shared and dates differ: William Oughtred is usually credited
+    (dates given range from about 1622 to 1632, the latter for his circular
+    rule), and Edmund Wingate described sliding scales around 1630.
+
+- id: pascaline
+  claim: >-
+    Blaise Pascal designed a gear-driven adding machine, the Pascaline,
+    starting in 1642.
+  sources:
+    - title: "Mechanical calculator (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Mechanical_calculator
+    - title: "Pascaline (University of Zagreb)"
+      url: https://web.math.pmf.unizg.hr/~nela/prteme/Pascaline.htm
+  checked: web search, 2026-10-31
+  uncertain: >-
+    Sources give 1642 (start of design) or 1645 (first machine presented).
+
+- id: leibniz-stepped-reckoner
+  claim: >-
+    Gottfried Leibniz began designing his stepped reckoner in 1672; it could
+    multiply and divide, not just add. Working machines were built in 1694 and
+    1706.
+  sources:
+    - title: "Stepped reckoner (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Stepped_reckoner
+    - title: "History of Information: Leibniz's stepped reckoner"
+      url: https://historyofinformation.com/detail.php?id=394
+  checked: web search, 2026-10-31
+
+- id: jacquard
+  claim: >-
+    Around 1804, Joseph-Marie Jacquard introduced a loom attachment driven by
+    chains of punched cards: the holes chose which threads to lift, so swapping
+    the cards changed the pattern.
+  sources:
+    - title: "Joseph-Marie Jacquard (Britannica)"
+      url: https://www.britannica.com/print/article/299152
+    - title: "Joseph Marie Jacquard (IEEE Computer Society pioneers)"
+      url: https://history.computer.org/pioneers/pdfs/j/Jacquard.pdf
+  checked: web search, 2026-10-31
+  uncertain: >-
+    Britannica gives 1804-05; other sources mention a 1801 demonstration and
+    an 1804 patent.
+
+- id: babbage-difference-engine
+  claim: >-
+    Charles Babbage demonstrated a small model of his Difference Engine, a
+    machine to calculate mathematical tables, in 1822. He never completed the
+    full machine; working engines were later built from his plans by the
+    Science Museum in London.
+  sources:
+    - title: "Charles Babbage (Science Museum Group collection)"
+      url: https://collection.sciencemuseumgroup.org.uk/people/cp36993/charles-babbage
+    - title: "What a difference the Difference Engine made (Smithsonian Magazine)"
+      url: https://www.smithsonianmag.com/history/what-a-difference-the-difference-engine-made-from-charles-babbages-calculator-emerged-todays-computer-109389254/
+  checked: web search, 2026-10-31
+
+- id: babbage-analytical-engine
+  claim: >-
+    In the 1830s Babbage designed the Analytical Engine: a general-purpose
+    machine with a separate store (memory) and mill (processor), programmed
+    with punched cards borrowed from the Jacquard loom. It was never built.
+  sources:
+    - title: "Joseph-Marie Jacquard (Britannica): Babbage adopted the punched cards"
+      url: https://www.britannica.com/print/article/299152
+    - title: "Charles Babbage: Pioneer of the Digital Age (Yale Beinecke Library)"
+      url: https://beinecke.library.yale.edu/node/65123
+  checked: web search, 2026-10-31
+
+- id: lovelace-notes
+  claim: >-
+    In 1843 Ada Lovelace published extensive notes on the Analytical Engine.
+    Note G sets out step by step how the engine could compute Bernoulli
+    numbers, and she argued such a machine could manipulate symbols, not only
+    numbers.
+  sources:
+    - title: "The Ada Lovelace controversies (Conversable Economist)"
+      url: https://conversableeconomist.com/2020/10/19/the-ada-lovelace-controversies/
+    - title: "Charles Babbage, Ada Lovelace, and the Bernoulli Numbers"
+      url: https://deepai.org/publication/charles-babbage-ada-lovelace-and-the-bernoulli-numbers
+  checked: web search, 2026-10-31
+  uncertain: >-
+    Whether this makes Lovelace "the first programmer" is debated: Babbage had
+    written earlier example programs, and historians disagree about how much
+    of Note G each of them authored and how to define "program".
+
+- id: hollerith
+  claim: >-
+    For the 1890 US census, Herman Hollerith's tabulating machines read
+    punched cards electrically: pins passing through holes dipped into mercury
+    and completed a circuit that advanced a counter. The 1880 census had taken
+    years to tabulate by hand.
+  sources:
+    - title: "The Hollerith Machine (US Census Bureau)"
+      url: https://www.census.gov/about/history/bureau-history/census-innovations/technology/hollerith-machine.html
+    - title: "Making Sense of the Census: Hollerith's Punched Card Solution (Computer History Museum)"
+      url: https://www.computerhistory.org/revolution/story/2
+  checked: web search, 2026-10-31
+  uncertain: >-
+    Sources say the 1880 tabulation took seven or eight years.
+
+- id: differential-analyzer
+  claim: >-
+    Vannevar Bush's differential analyzer at MIT, operational by 1931, was a
+    room-sized mechanical analog computer that solved differential equations
+    with shafts, gears and wheel-and-disc integrators.
+  sources:
+    - title: "Vannevar E. Bush (IEEE Computer Society)"
+      url: https://history.computer.org/pioneers/bush.html
+    - title: "Differential analyzer (Britannica)"
+      url: https://britannica.com/technology/differential-analyzer
+  checked: web search, 2026-10-31
+
+- id: boole
+  claim: >-
+    George Boole showed that logic can be written as algebra, in The
+    Mathematical Analysis of Logic (1847) and An Investigation of the Laws of
+    Thought (1854).
+  sources:
+    - title: "A Symbolic Analysis of Relay and Switching Circuits (Wikipedia), on Boole's algebra"
+      url: https://en.wikipedia.org/wiki/A_Symbolic_Analysis_of_Relay_and_Switching_Circuits
+    - title: "George Boole (Britannica)"
+      url: https://www.britannica.com/biography/George-Boole
+  checked: web search, 2026-10-31
+
+- id: turing
+  claim: >-
+    Alan Turing's 1936 paper "On Computable Numbers" described a simple
+    imaginary machine that can carry out any step-by-step procedure, and a
+    universal machine that can imitate any other given its description.
+  sources:
+    - title: "On Computable Numbers, with an Application to the Entscheidungsproblem (Proc. London Math. Soc., 1936)"
+      url: https://www.cs.virginia.edu/~robins/Turing_Paper_1936.pdf
+  checked: web search, 2026-10-31
+
+- id: shannon
+  claim: >-
+    Claude Shannon's 1937 MIT master's thesis showed that Boolean algebra
+    describes circuits of switches (relays), so logic can be built from
+    switches and switch circuits can be simplified with algebra. It was
+    published in 1938.
+  sources:
+    - title: "Shannon (1937), A Symbolic Analysis of Relay and Switching Circuits (MIT DSpace)"
+      url: https://dspace.mit.edu/bitstream/handle/1721.1/11173/34541425.pdf
+    - title: "A Symbolic Analysis of Relay and Switching Circuits (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/A_Symbolic_Analysis_of_Relay_and_Switching_Circuits
+  checked: web search, 2026-10-31
+
+- id: von-neumann-edvac
+  claim: >-
+    John von Neumann's "First Draft of a Report on the EDVAC" (June 1945)
+    described a computer that keeps its program in the same memory as its
+    data: the stored-program design used by almost every computer since.
+  sources:
+    - title: "First Draft of a Report on the EDVAC (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/First_Draft_of_a_Report_on_the_EDVAC
+    - title: "Eckert & Mauchly issue the first engineering report on the EDVAC (History of Information)"
+      url: https://www.historyofinformation.com/detail.php?id=3627
+  checked: web search, 2026-10-31
+  uncertain: >-
+    Only von Neumann's name appeared on the report, but the ideas grew out of
+    discussions with J. Presper Eckert, John Mauchly and others on the ENIAC
+    team, who had considered storing instructions in memory before von Neumann
+    joined. How to divide the credit is still debated.
+
+- id: harvard-mark-i
+  claim: >-
+    The Harvard Mark I (IBM ASCC), working in 1944, was a large electromechanical
+    computer built from relays, switches and rotating shafts.
+  sources:
+    - title: "Harvard Mark I (Computer History Museum, Revolution)"
+      url: https://www.computerhistory.org/revolution/birth-of-the-computer/4/86
+    - title: "Article about the ASCC (History of Information)"
+      url: https://historyofinformation.com/detail.php?id=624
+  checked: web search, 2026-10-31
+
+- id: eniac
+  claim: >-
+    ENIAC, completed in 1945, used 17,468 vacuum tubes.
+  sources:
+    - title: "ENIAC (PBS, A Science Odyssey)"
+      url: https://www.pbs.org/wgbh/aso/databank/entries/dt45en.html
+    - title: "ENIAC (linfo.org)"
+      url: https://linfo.org/eniac.html
+  checked: web search, 2026-10-31
+
+- id: point-contact-transistor
+  claim: >-
+    On 16 December 1947 at Bell Labs, John Bardeen and Walter Brattain got the
+    first transistor working: two gold contacts pressed onto a slab of
+    germanium, amplifying a signal up to 100 times. It was shown to Bell Labs
+    management on 23 December, and Bell Labs announced the transistor publicly
+    on 30 June 1948. William Shockley led the group.
+  sources:
+    - title: "1947: Invention of the Point-Contact Transistor (Computer History Museum)"
+      url: https://www.computerhistory.org/siliconengine/invention-of-the-point-contact-transistor/
+    - title: "Demonstration of the transistor (Physics Today)"
+      url: https://physicstoday.aip.org/news/demonstration-of-the-transistor
+  checked: web search, 2026-10-31
+
+- id: germanium-vs-silicon
+  claim: >-
+    Germanium's band gap (about 0.66 eV) is much smaller than silicon's (about
+    1.1 eV), so heat frees more electrons in germanium: its leakage current is
+    much larger and rises quickly with temperature. Early on, germanium was
+    easier to purify, which is why it came first.
+  sources:
+    - title: "Silicon and Germanium Transistor Biasing, Part 5 (Amplified Parts)"
+      url: https://www.amplifiedparts.com/tech-articles/silicon-germanium-transistor-biasing-part5
+    - title: "Germanium: the 'lost' semiconductor (PCIM / Mesago)"
+      url: https://news.pcim.mesago.com/germanium-the-lost-semiconductor-a-19720ae216e0db154b0e83468d1d849f/
+  checked: web search, 2026-10-31
+
+- id: germanium-oxide
+  claim: >-
+    Silicon grows a tough, stable insulating oxide (silicon dioxide). Germanium's
+    oxide dissolves in water and is unstable, so it cannot serve the same role.
+  sources:
+    - title: "Germanium gate stacks and the instability of GeO2 (HKU Scholars Hub)"
+      url: https://hub.hku.hk/handle/10722/158475
+    - title: "Thin germanium oxynitride gate dielectric for germanium-based devices (US7078300B2)"
+      url: https://patents.google.com/patent/US7078300
+  checked: web search, 2026-10-31
+
+- id: silicon-abundance
+  claim: >-
+    Silicon is the second most abundant element in Earth's crust (roughly a
+    quarter to almost 30 percent by mass); germanium is scarce and recovered
+    mainly as a by-product of zinc ore processing.
+  sources:
+    - title: "Mineral Resource of the Month: Silicon (USGS, via Earth Magazine)"
+      url: https://www.earthmagazine.org/article/mineral-resource-month-silicon/
+    - title: "Germanium fact sheet (USGS, 2015)"
+      url: https://pubs.usgs.gov/fs/2015/3011/fs20153011.pdf
+  checked: web search, 2026-10-31
+
+- id: silicon-transistor-1954
+  claim: >-
+    In January 1954 Morris Tanenbaum at Bell Labs made the first silicon
+    transistor. In 1954 Texas Instruments, with Gordon Teal, built and sold the
+    first commercial silicon transistors, announcing them on 10 May 1954.
+  sources:
+    - title: "1954: Silicon Transistors Offer Superior Operating Characteristics (Computer History Museum)"
+      url: https://www.computerhistory.org/siliconengine/silicon-transistors-offer-superior-operating-characteristics/
+    - title: "The Lost History of the Transistor (IEEE Spectrum)"
+      url: https://spectrum.ieee.org/the-lost-history-of-the-transistor
+  checked: web search, 2026-10-31
+  uncertain: >-
+    "First silicon transistor" is often credited to TI; Bell Labs' January 1954
+    device came first but was not publicized at the time.
+
+- id: integrated-circuit
+  claim: >-
+    Jack Kilby at Texas Instruments demonstrated the first integrated circuit,
+    made of germanium, on 12 September 1958. In 1959 Robert Noyce at Fairchild
+    conceived a silicon integrated circuit built with Jean Hoerni's planar
+    process, the approach the industry adopted. Kilby received the 2000 Nobel
+    Prize in Physics; Noyce had died in 1990.
+  sources:
+    - title: "Milestones: Semiconductor Planar Process and Integrated Circuit, 1959 (IEEE/ETHW)"
+      url: https://ethw.org/Milestones%3ASemiconductor_Planar_Process_and_Integrated_Circuit%2C_1959
+    - title: "Fairchild's Approach: The Planar Process (Computer History Museum)"
+      url: https://www.computerhistory.org/revolution/story/329
+  checked: web search, 2026-10-31
+
+- id: mosfet
+  claim: >-
+    Mohamed (John) Atalla and Dawon Kahng at Bell Labs built the first working
+    MOSFET (metal-oxide-semiconductor field-effect transistor) in 1959-60. It
+    relied on silicon's stable oxide.
+  sources:
+    - title: "1960: Metal Oxide Semiconductor (MOS) Transistor Demonstrated (Computer History Museum)"
+      url: https://www.computerhistory.org/siliconengine/metal-oxide-semiconductor-mos-transistor-demonstrated/
+    - title: "Fathers of the MOSFET: Dawon Kahng and Martin Atalla (All About Circuits)"
+      url: https://www.allaboutcircuits.com/news/fathers-of-the-mosfet-dawon-kahng-and-martin-atalla/
+  checked: web search, 2026-10-31
+  uncertain: >-
+    Sources date the invention to 1959 and the demonstration to 1960.
+
+- id: cmos
+  claim: >-
+    In 1963 Frank Wanlass and Chih-Tang Sah at Fairchild showed that logic built
+    from complementary pairs of n-channel and p-channel MOS transistors (CMOS)
+    draws almost no power while not switching.
+  sources:
+    - title: "1963: Complementary MOS Circuit Configuration is Invented (Computer History Museum)"
+      url: https://www.computerhistory.org/siliconengine/complementary-mos-circuit-configuration-is-invented/
+    - title: "US Patent 3,356,858, Low Stand-By Power Complementary Field Effect Circuitry"
+      url: https://en.wikisource.org/wiki/United_States_patent_3356858
+  checked: web search, 2026-10-31
+
+- id: moores-law
+  claim: >-
+    In 1965 Gordon Moore observed that the number of components on a chip was
+    doubling every year; in 1975 he revised this to every two years. He did not
+    predict "every 18 months".
+  sources:
+    - title: "Moore's law (Britannica)"
+      url: https://www.britannica.com/topic/Moores-law
+    - title: "Gordon Moore (Linda Hall Library)"
+      url: https://www.lindahall.org/about/news/scientist-of-the-day/gordon-moore
+  checked: web search, 2026-10-31
+
+- id: intel-4004
+  claim: >-
+    The Intel 4004, released on 15 November 1971, put a whole 4-bit processor on
+    one chip: about 2,300 transistors on a 10-micrometre process, running at
+    about 740 kHz.
+  sources:
+    - title: "Intel 4004 (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Intel_4004
+    - title: "The Intel 4004 at 50 (EE Times Asia)"
+      url: https://www.eetasia.com/the-intel-4004-at-50/
+  checked: web search, 2026-10-31
+
+- id: mg-silicon
+  claim: >-
+    Quartz sand (silicon dioxide) is reduced with carbon in an electric arc
+    furnace at about 1900 °C or more, giving metallurgical-grade silicon that
+    is about 98-99 percent pure.
+  sources:
+    - title: "Raw silicon (Semiconductor Technology from A to Z, halbleiter.org)"
+      url: https://halbleiter.org/en/waferfabrication/rawsilicon/
+    - title: "Czochralski and float-zone silicon ingot production (MicroChemicals)"
+      url: https://www.microchemicals.com/dokumente/application_notes/czochralski_floatzone_silicon_ingot_production.pdf
+  checked: web search, 2026-10-31
+
+- id: siemens-process
+  claim: >-
+    In the Siemens process, metallurgical silicon reacts with hydrogen chloride
+    to form trichlorosilane, a liquid that is purified by distillation and then
+    decomposed onto heated silicon rods (about 1100 °C), giving
+    electronic-grade polysilicon purer than 99.99999 percent.
+  sources:
+    - title: "Czochralski and float-zone silicon ingot production (MicroChemicals)"
+      url: https://www.microchemicals.com/dokumente/application_notes/czochralski_floatzone_silicon_ingot_production.pdf
+    - title: "Solar energy, section 12.2: silicon production (TU Delft OpenCourseWare)"
+      url: https://ocw.tudelft.nl/wp-content/uploads/solar_energy_section_12_2.pdf
+  checked: web search, 2026-10-31
+
+- id: czochralski
+  claim: >-
+    Jan Czochralski discovered his crystal-pulling method in 1916 (published
+    1918). Bell Labs' Gordon Teal and J. B. Little adapted it in 1948 to grow
+    single crystals of germanium. Today electronic-grade silicon is melted in a
+    quartz crucible above 1400 °C and a single crystal is slowly pulled from a
+    seed.
+  sources:
+    - title: "Milestones: Czochralski Process, 1916 (IEEE/ETHW)"
+      url: https://ethw.org/Milestones:Czochralski_Process%2C_1916
+    - title: "Modern Civilization Relies on This Crystal-Growing Method (IEEE Spectrum)"
+      url: https://spectrum.ieee.org/modern-civilization-relies-on-this-crystalgrowing-method
+  checked: web search, 2026-10-31
+
+- id: switch-scales
+  claim: >-
+    Rough sizes and switching times of gears, relays, vacuum tubes and
+    transistors, used in the switch timeline.
+  sources:
+    - estimate: true
+      note: >-
+        Illustrative orders of magnitude chosen for comparison, not
+        measurements of particular devices. Real devices vary widely.
+  checked: order-of-magnitude estimate, 2026-10-31
+  uncertain: >-
+    These are rough orders of magnitude for illustration, not measurements.
