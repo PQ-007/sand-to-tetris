@@ -10,27 +10,33 @@ Learners build components in a drag-and-drop editor, one level per component. A 
 
 ## Status
 
-Only the plan and this file exist so far. M0 (scaffold) creates the commands below. Until it lands they are the **intended contract**. When you implement or change them, update this section so it matches reality.
+M0 (scaffold) is done: Cargo workspace, Vite shell page that loads the WASM core, CI, and the commands below. Next is M1 (Chapter 0). Keep this section up to date when a milestone lands.
 
-## Commands (contract defined for M0)
+## Commands
 
 ```bash
 npm install                 # once, at repo root (npm workspaces: web/)
-npm test                    # everything: cargo test + vitest + content checks
-npm run dev                 # Vite dev server for the site (builds WASM first)
-npm run build               # static site into web/dist
-npm run lint                # cargo fmt --check, cargo clippy -D warnings, eslint, prettier --check
+npm run setup               # once per machine: wasm32 target + wasm-bindgen-cli (version pinned in scripts/wasm-config.mjs)
+npm test                    # cargo test, then WASM build, then vitest (which loads the real .wasm)
+npm run dev                 # WASM build + Vite dev server
+npm run build               # WASM build + static site into web/dist (set BASE_PATH=/repo-name/ for GitHub Pages)
+npm run lint                # cargo fmt --check, clippy -D warnings, eslint, prettier --check, tsc
+npm run format              # cargo fmt + prettier --write
 
-cargo test -p <crate> <test_name>                  # one Rust test, e.g. cargo test -p s2t-switch nand
-npx vitest run <path> -t "<name>"                  # one frontend test
-cargo run -p s2t-cli -- check hdl/levels/<layer>/<component>   # check one level's reference solution
+cargo test -p <crate> <test_name>                  # one Rust test, e.g. cargo test -p s2t-cli version
+npx vitest run --root web <path> -t "<name>"       # one frontend test
+cargo run -p s2t-cli -- version                    # CLI; `check <level-dir>` arrives in M2
 ```
 
-WASM build: `wasm32-unknown-unknown` target + `wasm-bindgen-cli`. Neither is installed in a fresh container. M0 adds a setup step for them.
+- The Cargo workspace root is the repo root (`Cargo.toml`), with members under `sim/crates/`. Toolchain crates join later.
+- `wasm-bindgen` (crate, pinned with `=` in `Cargo.toml`) and `wasm-bindgen-cli` (`scripts/wasm-config.mjs`, `.github/workflows/ci.yml`) must be the **same version**. Bump all three together.
+- The WASM build output `web/src/sim/pkg/` is generated and git-ignored. Run `npm run build:wasm` before vitest or tsc if it's missing.
+- Prettier ignores `*.md` on purpose (prose and tables are hand-formatted).
+- CI (`.github/workflows/ci.yml`) runs test, lint and build on every push and PR, and deploys `web/dist` to GitHub Pages on pushes to `main`.
 
 ## Architecture (big picture)
 
-- `sim/`: a Cargo workspace and the single source of truth for simulation and checking. It is compiled natively (tests, CLI, CI) and to WASM (browser), so the browser and CI can never disagree.
+- `sim/crates/`: Rust crates (`s2t-netlist`, `s2t-wasm`, `s2t-cli`; engines and checker arrive in M2+). They are the single source of truth for simulation and checking. They are compiled natively (tests, CLI, CI) and to WASM (browser), so the browser and CI can never disagree.
   - netlist: loads JSON, validates it, enforces layering, flattens the hierarchy.
   - engines: **switch-level** (Layer 1: values 0/1/Z/X; transistors are switches; nodes are grouped by conducting paths; a VDD–GND connection is reported as a short), **gate-level** (Layers 2–3: event-driven, unit delay, so feedback latches work and oscillation is detected), **fast models** (native behavioral components with identical pins).
   - checker: runs a level's tests and returns structured diagnostics. Each diagnostic has a failing row, the expected and actual values, the offending net or part ids so the UI can highlight them, and an authored hint.
@@ -59,6 +65,6 @@ WASM build: `wasm32-unknown-unknown` target + `wasm-bindgen-cli`. Neither is ins
 
 ## Code style
 
-- Rust: `cargo fmt` and `clippy -D warnings`. No `unwrap()` on paths that learner input can reach; return typed errors that become diagnostics.
+- Rust: `cargo fmt` and `clippy -D warnings` (toolchain pinned in `rust-toolchain.toml`). `unwrap`/`expect` warn outside tests (`clippy.toml`); never use them on paths learner input can reach. Return typed errors that become diagnostics. `unsafe` is forbidden workspace-wide.
 - TypeScript: `strict`, ES modules, prettier defaults. Every Web Component is self-contained and gets its configuration from attributes.
 - Chapter prose: a plain-language explanation first, then the precise term, linked to the glossary. Each chapter ends with a "What you built / What you learned" summary.
