@@ -42,6 +42,48 @@ describe("glossary links", () => {
     expect(chapter?.html).toContain('data-term="p-n-junction">junction</a>');
   });
 
+  it("keeps emphasis around and next to links", () => {
+    const { chapter } = renderChapter(
+      `${front}Bold **[[transistor]]** and *plain* and **in series**.\n`,
+      "c.md",
+    );
+    expect(chapter?.html).toContain('<strong><a class="term"');
+    expect(chapter?.html).toContain("<em>plain</em>");
+    expect(chapter?.html).toContain("<strong>in series</strong>");
+    expect(chapter?.html).not.toContain("**");
+  });
+
+  it("allows a [[shown\\|id]] link inside a table cell", () => {
+    const { chapter, errors } = renderChapter(
+      `${front}| a | b |\n|---|---|\n| 1 | **[[junction\\|p-n-junction]]** |\n`,
+      "c.md",
+    );
+    expect(errors).toEqual([]);
+    expect(chapter?.html).toContain(
+      '<strong><a class="term" href="#/glossary/p-n-junction" data-term="p-n-junction">junction</a></strong>',
+    );
+  });
+
+  it("reports a glossary link that a table cut in half", () => {
+    const { errors } = renderChapter(
+      `${front}| a | b |\n|---|---|\n| 1 | [[junction|p-n-junction]] |\n`,
+      "c.md",
+    );
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(
+      /^c\.md:8: .*\[\[junction.*wasn't rendered.*\\\|/,
+    );
+  });
+
+  it("wraps tables so they can scroll on narrow screens", () => {
+    const { chapter } = renderChapter(
+      `${front}| a | b |\n|---|---|\n| 1 | 2 |\n`,
+      "c.md",
+    );
+    expect(chapter?.html).toMatch(/^<div class="table-scroll"><table>/);
+    expect(chapter?.html).toContain("</table></div>");
+  });
+
   it("reports an unknown term with file and line", () => {
     const { errors } = renderChapter(
       `${front}\nFine line.\n\nA [[flux capacitor]].\n`,

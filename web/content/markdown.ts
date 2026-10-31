@@ -89,8 +89,14 @@ function bracketRule(
     if (!silent) {
       const html = handle(inner.trim(), state);
       const token = state.push("html_inline", "", 0);
+      // An unresolved reference (already reported) is shown as typed; the
+      // brackets are entities so the "unrendered [[" check skips it.
       token.content =
-        html ?? escapeHtml(state.src.slice(start, end + close.length));
+        html ??
+        escapeHtml(state.src.slice(start, end + close.length)).replace(
+          /\[/g,
+          "&#91;",
+        );
       token.info = name;
     }
     state.pos = end + close.length;
@@ -104,6 +110,9 @@ export function createRenderer(ctx: RenderContext) {
   const known = new Set(ctx.knownTags);
 
   const md = new MarkdownIt({ html: true, typographer: true });
+  // Tables scroll sideways on narrow screens instead of widening the page.
+  md.renderer.rules.table_open = () => '<div class="table-scroll"><table>\n';
+  md.renderer.rules.table_close = () => "</table></div>\n";
 
   const lineOf = (state: StateInline): number => {
     const env = state.env as Env;
@@ -178,6 +187,8 @@ export function createRenderer(ctx: RenderContext) {
         tok.map?.[0] ?? 0;
       tok.children = inlineState.tokens;
       md.inline.tokenize(inlineState);
+      // The post-processing pass turns `**`/`*` delimiters into <strong>/<em>.
+      for (const rule of md.inline.ruler2.getRules("")) rule(inlineState);
     }
   });
 
@@ -271,7 +282,21 @@ export function createRenderer(ctx: RenderContext) {
       routeBase,
       toc: [],
     };
-    const html = md.render(body, env) + sourcesSection(env.cited);
+    const rendered = md.render(body, env);
+    // A [[link]] that survives rendering was cut up, usually by a table
+    // splitting its cell at the `|`.
+    const lines = body.split("\n");
+    for (const m of rendered.matchAll(/\[\[([^\]<]{0,40})/g)) {
+      const word = (m[1] ?? "").split(/[|'’\s]/)[0] ?? "";
+      const at = Math.max(
+        0,
+        lines.findIndex((l) => l.includes(`[[${word}`)),
+      );
+      errors.push(
+        `${file}:${offset + at + 1}: [[${m[1]}… wasn't rendered as a glossary link; inside a table, write its | as \\|`,
+      );
+    }
+    const html = rendered + sourcesSection(env.cited);
     return {
       chapter: {
         number: m.number,

@@ -102,7 +102,7 @@ Once silicon could be purified and grown into perfect crystals, the pieces of th
 | 1958–59 | Jack Kilby at Texas Instruments demonstrated the first **[[integrated circuit]]**, made of germanium, in September 1958. In 1959 Robert Noyce at Fairchild conceived a silicon integrated circuit built with Jean Hoerni's planar process, the approach the whole industry adopted[@integrated-circuit]. |
 | 1959–60 | Mohamed (John) Atalla and Dawon Kahng at Bell Labs built the first working **[[MOSFET]]**, the transistor in almost every chip today. It depends on silicon's stable oxide[@mosfet]. |
 | 1963 | Frank Wanlass and Chih-Tang Sah at Fairchild showed that pairing two kinds of MOSFET, **[[CMOS]]**, makes logic that uses almost no power while idle[@cmos]. |
-| 1965 | Gordon Moore observed that the number of components on a chip was doubling every year; in 1975 he revised it to every two years. This became known as **[[Moore's law|moores-law]]**[@moores-law]. |
+| 1965 | Gordon Moore observed that the number of components on a chip was doubling every year; in 1975 he revised it to every two years. This became known as **[[Moore's law\|moores-law]]**[@moores-law]. |
 | 1971 | The Intel 4004 put a whole [[processor]] on one chip, the first commercial **[[microprocessor]]**: about 2,300 transistors running at about 740 kHz[@intel-4004]. |
 
 Two notes on credit. The "first silicon transistor" is often credited to Texas Instruments, but Bell Labs' January 1954 device came first; it just wasn't publicized. The integrated circuit is usually credited to both Kilby and Noyce, who worked independently. Kilby received the 2000 Nobel Prize in Physics; Noyce had died in 1990[@integrated-circuit].
