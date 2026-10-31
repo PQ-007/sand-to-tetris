@@ -6,8 +6,9 @@
 //! into the learner's own designs.
 
 use std::collections::{BTreeSet, HashMap};
+use std::sync::Arc;
 
-use s2t_gate::{bits_to_number, GateSim, Model, TruthTable};
+use s2t_gate::{bits_to_number, Clocked, GateSim, Model, TruthTable};
 use s2t_netlist::{flatten_gates, Design, GateCircuit, GateError, Level, Library, Problem, Value};
 
 use crate::table::{pack, Table, TableRow};
@@ -55,13 +56,94 @@ fn table_model(level: &Level) -> Option<Model> {
     }))
 }
 
-/// The model a component runs as when it's a leaf: its native model if it
-/// has one, else its truth table if that lists every input.
+/// A clocked native model (register, RAM, PC) for the gate engine.
+pub(crate) fn clocked_model(m: &'static s2t_models::ClockedModel) -> Clocked {
+    Clocked {
+        clk_bit: m.clk_bit(),
+        words: m.words,
+        tick: Arc::new(move |ins, mem| m.tick_bits(ins, mem)),
+        read: Arc::new(move |ins, mem| m.read_bits(ins, mem)),
+    }
+}
+
+/// The model a component runs as when it's a leaf: its native model (with
+/// memory, for registers and RAM) if it has one, else its truth table if
+/// that lists every input.
 pub fn leaf_model(level: &Level) -> Option<Model> {
     if let Some(m) = level.model.as_deref().and_then(s2t_models::model) {
         return Some(Model::native(move |ins| m.eval_bits(ins)));
     }
+    if let Some(m) = level.model.as_deref().and_then(s2t_models::clocked) {
+        return Some(Model::Clocked(clocked_model(m)));
+    }
     table_model(level)
+}
+
+/// Input values as flattened bits, in port order.
+pub(crate) fn bits_of(level: &Level, values: &[(String, u64)]) -> Vec<Value> {
+    let mut bits = Vec::new();
+    for (p, v) in values {
+        for i in 0..level.width(p) {
+            bits.push(Value::from_bit(v >> i & 1 == 1));
+        }
+    }
+    bits
+}
+
+/// Splits flattened bits into one word per port (`None` if any bit of it
+/// is unknown).
+pub(crate) fn words_of(level: &Level, ports: &[String], bits: &[Value]) -> Vec<Option<u64>> {
+    let mut out = Vec::new();
+    let mut i = 0usize;
+    for p in ports {
+        let w = level.width(p) as usize;
+        out.push(bits.get(i..i + w).and_then(bits_to_number));
+        i += w;
+    }
+    out
+}
+
+/// Random clock cycles for a level with memory: each cycle is two steps,
+/// fresh random inputs with the clock low, then the same inputs with the
+/// clock high, so only the clock changes at the rising edge (setup time).
+/// Addresses come from a small pool so reads often find written words;
+/// `reset` is rare so a counter gets to count.
+pub(crate) fn random_steps(
+    level: &Level,
+    clk: usize,
+    rng: &mut Rng,
+    cycles: usize,
+) -> Vec<Vec<(String, u64)>> {
+    let mask = |w: u32| if w >= 64 { u64::MAX } else { (1 << w) - 1 };
+    let pool: Vec<u64> = (0..8).map(|_| rng.next()).collect();
+    let mut steps = Vec::with_capacity(2 * cycles);
+    for _ in 0..cycles {
+        let low: Vec<(String, u64)> = level
+            .inputs
+            .iter()
+            .enumerate()
+            .map(|(i, p)| {
+                let m = mask(level.width(p));
+                let v = if i == clk {
+                    0
+                } else if p == "addr" {
+                    pool[(rng.next() % 8) as usize] & m
+                } else if p == "reset" {
+                    u64::from(rng.next() % 8 == 0)
+                } else {
+                    rng.next() & m
+                };
+                (p.clone(), v)
+            })
+            .collect();
+        let mut high = low.clone();
+        if let Some(c) = high.get_mut(clk) {
+            c.1 = 1;
+        }
+        steps.push(low);
+        steps.push(high);
+    }
+    steps
 }
 
 /// Leaf models: every Layer 1 level plus each `fast` component.
@@ -249,6 +331,15 @@ fn run_vector(
     Ok((result, diags, outcome.depth))
 }
 
+/// "Random step 3 (after random steps 1–2)".
+fn random_step_label(k: usize) -> String {
+    match k {
+        0 => "Random step 1".into(),
+        1 => "Random step 2 (after random step 1)".into(),
+        _ => format!("Random step {} (after random steps 1–{})", k + 1, k),
+    }
+}
+
 /// "Step 3 (after steps 1–2)": a step's result depends on the ones before.
 fn step_label(i: usize) -> String {
     match i {
@@ -333,7 +424,81 @@ pub(crate) fn check_gates(
         }
     }
     let mut random_ok = true;
-    if let Some(model) = level.model.as_deref().and_then(s2t_models::model) {
+    let clocked = level
+        .model
+        .as_deref()
+        .and_then(s2t_models::clocked)
+        .filter(|_| level.sequential);
+    if let Some(m) = clocked {
+        // Random clock cycles from power-on, against the model's own memory.
+        let mut rng = Rng::new(&level.id);
+        let steps = random_steps(
+            level,
+            m.clk,
+            &mut rng,
+            level.random_tests.unwrap_or(500) as usize,
+        );
+        let model = clocked_model(m);
+        let mut mem = model.power_on();
+        let mut sim = match prepared.sim() {
+            Ok(s) => s,
+            Err(e) => {
+                fail(&mut report, e);
+                return report;
+            }
+        };
+        let mut failed = 0usize;
+        for (k, inputs) in steps.iter().enumerate() {
+            let want = words_of(
+                level,
+                &level.outputs,
+                &model.eval(&bits_of(level, inputs), &mut mem),
+            );
+            let row = TableRow {
+                inputs: inputs.clone(),
+                outputs: level
+                    .outputs
+                    .iter()
+                    .zip(&want)
+                    .map(|(p, w)| (p.clone(), w.unwrap_or(0)))
+                    .collect(),
+                // Unknown in the model too (nothing stored yet): any value.
+                skip: level
+                    .outputs
+                    .iter()
+                    .zip(&want)
+                    .filter(|(_, w)| w.is_none())
+                    .map(|(p, _)| p.clone())
+                    .collect(),
+            };
+            match run_vector(
+                level,
+                &mut sim,
+                &random_step_label(k),
+                table.rows.len() + k + 1,
+                &row,
+            ) {
+                Ok((r, mut d, depth)) => {
+                    report.depth = report.depth.max(depth);
+                    if !r.passed {
+                        failed += 1;
+                        if failed <= MAX_RANDOM_DETAILS {
+                            report.diagnostics.append(&mut d);
+                        }
+                    }
+                }
+                Err(e) => {
+                    fail(&mut report, e);
+                    return report;
+                }
+            }
+        }
+        random_ok = failed == 0;
+        report.random = Some(crate::RandomSummary {
+            run: steps.len(),
+            failed,
+        });
+    } else if let Some(model) = level.model.as_deref().and_then(s2t_models::model) {
         let n = level.random_tests.unwrap_or(2000) as usize;
         let mut rng = Rng::new(&level.id);
         let mut failed = 0usize;

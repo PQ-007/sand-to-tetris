@@ -236,3 +236,56 @@ fn bad_state_is_an_error_not_a_crash() {
     let err = simulate_from(&lib, "srlatch", &latch, r#"{"s":0,"r":0}"#, "[1,2]").unwrap_err();
     assert!(err.contains("state"), "{err}");
 }
+
+#[test]
+fn a_fast_memory_part_remembers_in_live_simulation() {
+    // Register2 = one Register part running as its fast model.
+    let reg = read("layer3/register/level.toml");
+    let reg2 = reg
+        .replace("id = \"register\"", "id = \"register2\"")
+        .replace("requires = [\"bit\"]", "requires = [\"register\"]");
+    let reference: serde_json::Value =
+        serde_json::from_str(&read("layer3/register/reference.json")).unwrap();
+    let lib = serde_json::json!({
+        "levels": [reg, reg2],
+        "unlocked": [reference],
+        "fast": ["register"],
+    })
+    .to_string();
+    let design = r#"{"format":1,"component":"register2","parts":[{"id":"r","kind":"register"}],"wires":[
+        {"from":{"port":"d"},"to":{"part":"r","pin":"d"}},
+        {"from":{"port":"load"},"to":{"part":"r","pin":"load"}},
+        {"from":{"port":"clk"},"to":{"part":"r","pin":"clk"}},
+        {"from":{"part":"r","pin":"q"},"to":{"port":"q"}}]}"#;
+    let low = simulate_from(
+        &lib,
+        "register2",
+        design,
+        r#"{"d":42,"load":1,"clk":0}"#,
+        "{}",
+    )
+    .unwrap();
+    assert!(!low.blocked, "{:#?}", low.problems);
+    let s1 = serde_json::to_string(&low.state).unwrap();
+    let high = simulate_from(
+        &lib,
+        "register2",
+        design,
+        r#"{"d":42,"load":1,"clk":1}"#,
+        &s1,
+    )
+    .unwrap();
+    assert_eq!(q(&high), "42");
+    assert_eq!(high.state.get("r#mem").map(String::as_str), Some("1,0:2a"));
+    // Change d with no edge: the stored 42 stays.
+    let s2 = serde_json::to_string(&high.state).unwrap();
+    let hold = simulate_from(
+        &lib,
+        "register2",
+        design,
+        r#"{"d":7,"load":1,"clk":1}"#,
+        &s2,
+    )
+    .unwrap();
+    assert_eq!(q(&hold), "42");
+}

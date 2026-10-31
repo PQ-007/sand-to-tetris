@@ -223,8 +223,12 @@ fn simulate_gates(
         }
     };
     let mut sim = prepared.sim()?;
-    // Restore what each gate held, then apply the new inputs.
-    for cell in &prepared.circuit.cells {
+    // Restore what each gate held (and each fast memory part's contents),
+    // then apply the new inputs.
+    for (i, cell) in prepared.circuit.cells.iter().enumerate() {
+        if let Some(saved) = state.get(&memory_key(cell)) {
+            sim.set_memory(i, saved)?;
+        }
         for (port, nets) in &cell.outputs {
             for (i, net) in nets.iter().enumerate() {
                 match state
@@ -242,7 +246,10 @@ fn simulate_gates(
         sim.set_input(name, *v)?;
     }
     let outcome = sim.settle();
-    for cell in &prepared.circuit.cells {
+    for (i, cell) in prepared.circuit.cells.iter().enumerate() {
+        if let Some(mem) = sim.memory(i) {
+            view.state.insert(memory_key(cell), mem);
+        }
         for (port, nets) in &cell.outputs {
             for (i, net) in nets.iter().enumerate() {
                 let bit = match sim.value(*net) {
@@ -276,6 +283,11 @@ fn simulate_gates(
         .map(|(n, nets)| (n.clone(), bus_text(&read(nets))))
         .collect();
     Ok(view)
+}
+
+/// `ram/r3#mem`: where a fast memory part's contents are kept in the state.
+fn memory_key(cell: &s2t_netlist::Cell) -> String {
+    format!("{}#mem", cell.path.join("/"))
 }
 
 /// `ff/master/latch/top.out`, with `[i]` for a bit of a wide output.

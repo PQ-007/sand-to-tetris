@@ -15,7 +15,7 @@ mod matching;
 mod table;
 
 pub use gatecheck::{format_value, leaf_model};
-pub use matching::{MatchReport, Mismatch};
+pub use matching::{match_check, MatchReport, Mismatch, RANDOM_VECTORS};
 pub use table::{parse_number, Table, TableError, TableRow};
 
 // ---- reports -------------------------------------------------------------------

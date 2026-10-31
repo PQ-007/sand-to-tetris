@@ -1137,7 +1137,7 @@ class PlayPage {
       const next = this.root.dataset.next;
       const box = el("div", { class: "passed" });
       const tested = report.random
-        ? `All ${report.rows.length} rows and ${report.random.run.toLocaleString("en-US")} random tests match`
+        ? `All ${report.rows.length} ${this.level.sequential ? "steps" : "rows"} and ${report.random.run.toLocaleString("en-US")} random ${this.level.sequential ? "steps" : "tests"} match`
         : `All ${report.rows.length} ${this.level.sequential ? "steps" : "rows"} match`;
       const stats =
         this.level.layer === 1
@@ -1155,7 +1155,7 @@ class PlayPage {
     const failed = report.rows.filter((r) => !r.passed).length;
     const randomNote =
       report.random && report.random.failed > 0
-        ? ` ${report.random.failed.toLocaleString("en-US")} of ${report.random.run.toLocaleString("en-US")} random tests fail too.`
+        ? ` ${report.random.failed.toLocaleString("en-US")} of ${report.random.run.toLocaleString("en-US")} random ${this.level.sequential ? "steps" : "tests"} fail too.`
         : "";
     const head = report.rows.length
       ? `✗ ${failed} of ${report.rows.length} ${this.level.sequential ? "steps" : "rows"} don't match yet.${randomNote}`

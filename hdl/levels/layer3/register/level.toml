@@ -10,6 +10,8 @@ inputs = ["d", "load", "clk"]
 outputs = ["q"]
 requires = ["bit"]
 widths = { d = 16, q = 16 }
+model = "register"
+random_tests = 300
 truth_table = """
 d load clk | q
 0x1234 1 0 | -

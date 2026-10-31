@@ -10,10 +10,11 @@
 //! every other level's reference counts as unlocked: that's what a learner
 //! who passed those levels would have.
 
+use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use s2t_checker::{check, Report, Table};
+use s2t_checker::{check_with, Report, Table};
 use s2t_netlist::{Design, Level, Library};
 
 const USAGE: &str = "usage:
@@ -107,6 +108,25 @@ fn library_for(entries: &[Entry], exclude: &str) -> Library {
     lib
 }
 
+/// Memory components (registers, RAM) other than `exclude` run as their
+/// fast models: built all the way down to gates, RAM4K would be millions of
+/// gates. That's sound because each one's own reference is checked against
+/// that same model, just as a learner's design must match before a swap.
+fn fast_memory(entries: &[Entry], exclude: &str) -> BTreeSet<String> {
+    entries
+        .iter()
+        .filter(|e| e.level.id != exclude && e.level.sequential)
+        .filter(|e| {
+            e.level
+                .model
+                .as_deref()
+                .and_then(s2t_models::clocked)
+                .is_some()
+        })
+        .map(|e| e.level.id.clone())
+        .collect()
+}
+
 fn title(level: &Level) -> String {
     format!(
         "{} (Layer {}{})",
@@ -131,7 +151,13 @@ fn render(level: &Level, report: &Report) -> Result<String, String> {
         let random = report
             .random
             .as_ref()
-            .map(|r| format!(" + {} random tests", r.run))
+            .map(|r| {
+                format!(
+                    " + {} random {}",
+                    r.run,
+                    if level.sequential { "steps" } else { "tests" }
+                )
+            })
             .unwrap_or_default();
         return Ok(format!(
             "✓ {}: all {rows} {unit}{random} pass, {} gates, {} gate delay{} deep",
@@ -146,7 +172,12 @@ fn render(level: &Level, report: &Report) -> Result<String, String> {
     } else {
         let failed = report.rows.iter().filter(|r| !r.passed).count();
         let random = match &report.random {
-            Some(r) if r.failed > 0 => format!(", {} of {} random tests fail", r.failed, r.run),
+            Some(r) if r.failed > 0 => format!(
+                ", {} of {} random {} fail",
+                r.failed,
+                r.run,
+                if level.sequential { "steps" } else { "tests" }
+            ),
             _ => String::new(),
         };
         format!("✗ {}: {failed} of {rows} {unit} fail{random}", title(level))
@@ -192,8 +223,13 @@ fn check_dir(level_dir: &Path, design: Option<&Path>, json: bool) -> Result<Stri
         })?,
     };
     let lib = library_for(&entries, &me.level.id);
-    let report =
-        check(&me.level, &design, &lib).map_err(|e| format!("{}: {e}", me.dir.display()))?;
+    let report = check_with(
+        &me.level,
+        &design,
+        &lib,
+        &fast_memory(&entries, &me.level.id),
+    )
+    .map_err(|e| format!("{}: {e}", me.dir.display()))?;
     if json {
         let text = serde_json::to_string_pretty(&report).map_err(|e| e.to_string())?;
         return if report.passed { Ok(text) } else { Err(text) };
@@ -214,15 +250,14 @@ fn check_all(root: &Path) -> Result<String, String> {
         if let Some(m) = &e.level.model {
             let widths =
                 |ports: &[String]| ports.iter().map(|p| e.level.width(p)).collect::<Vec<_>>();
-            match s2t_models::model(m) {
+            match s2t_models::widths(m) {
                 None => {
                     ok = false;
                     lines.push(format!("✗ {}: model `{m}` doesn't exist", title(&e.level)));
                     continue;
                 }
-                Some(nm)
-                    if nm.inputs != widths(&e.level.inputs)
-                        || nm.outputs != widths(&e.level.outputs) =>
+                Some((ins, outs))
+                    if ins != widths(&e.level.inputs) || outs != widths(&e.level.outputs) =>
                 {
                     ok = false;
                     lines.push(format!(
@@ -246,8 +281,13 @@ fn check_all(root: &Path) -> Result<String, String> {
             lines.push(format!("✗ {}: no reference.json", title(&e.level)));
             continue;
         };
-        let report = check(&e.level, reference, &library_for(&entries, &e.level.id))
-            .map_err(|err| format!("{}: {err}", e.dir.display()))?;
+        let report = check_with(
+            &e.level,
+            reference,
+            &library_for(&entries, &e.level.id),
+            &fast_memory(&entries, &e.level.id),
+        )
+        .map_err(|err| format!("{}: {err}", e.dir.display()))?;
         match render(&e.level, &report) {
             Ok(line) => lines.push(line),
             Err(text) => {

@@ -16,12 +16,14 @@ fn bit_model() -> Model {
     Model::Clocked(Clocked {
         clk_bit: 2,
         words: 1,
-        tick: Arc::new(|ins: &[Value], mem: &mut [Option<u64>]| match (ins[0], ins[1]) {
-            (_, Zero) => {}
-            (One, One) => mem[0] = Some(1),
-            (Zero, One) => mem[0] = Some(0),
-            _ => mem[0] = None,
-        }),
+        tick: Arc::new(
+            |ins: &[Value], mem: &mut [Option<u64>]| match (ins[0], ins[1]) {
+                (_, Zero) => {}
+                (One, One) => mem[0] = Some(1),
+                (Zero, One) => mem[0] = Some(0),
+                _ => mem[0] = None,
+            },
+        ),
         read: Arc::new(|_: &[Value], mem: &[Option<u64>]| {
             vec![mem[0].map_or(X, |v| Value::from_bit(v == 1))]
         }),

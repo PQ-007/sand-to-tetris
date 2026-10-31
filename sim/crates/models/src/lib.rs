@@ -188,7 +188,201 @@ pub fn model(id: &str) -> Option<&'static NativeModel> {
 
 /// Every model id (for tests and tooling).
 pub fn ids() -> impl Iterator<Item = &'static str> {
-    MODELS.iter().map(|m| m.id)
+    MODELS
+        .iter()
+        .map(|m| m.id)
+        .chain(CLOCKED.iter().map(|m| m.id))
+}
+
+/// Port widths (inputs, outputs) of any model, combinational or clocked.
+pub fn widths(id: &str) -> Option<(&'static [u32], &'static [u32])> {
+    model(id)
+        .map(|m| (m.inputs, m.outputs))
+        .or_else(|| clocked(id).map(|m| (m.inputs, m.outputs)))
+}
+
+// ---- models with memory ------------------------------------------------------------
+
+/// A model with memory: `words` memory words, changed by `tick` when input
+/// port `clk` rises from 0 to 1, and read (as outputs) by `read`. Both get
+/// each input port as a word, `None` if any of its bits is unknown; a word
+/// of memory is `None` until something is stored in it. A model must stay
+/// honest about unknowns: if it can't tell what would be stored, the word
+/// becomes unknown.
+pub struct ClockedModel {
+    pub id: &'static str,
+    pub inputs: &'static [u32],
+    pub outputs: &'static [u32],
+    /// Index of the clock among the input ports.
+    pub clk: usize,
+    pub words: usize,
+    pub tick: fn(&[Option<u64>], &mut [Option<u64>]),
+    pub read: fn(&[Option<u64>], &[Option<u64>]) -> Vec<Option<u64>>,
+}
+
+impl ClockedModel {
+    /// Index of the clock among the flattened input bits.
+    pub fn clk_bit(&self) -> usize {
+        self.inputs.iter().take(self.clk).sum::<u32>() as usize
+    }
+
+    /// `tick` on bits, as the gate engine calls it.
+    pub fn tick_bits(&self, ins: &[Value], mem: &mut [Option<u64>]) {
+        (self.tick)(&port_words(ins, self.inputs), mem);
+    }
+
+    /// `read` on bits: unknown words become X bits.
+    pub fn read_bits(&self, ins: &[Value], mem: &[Option<u64>]) -> Vec<Value> {
+        let outs = (self.read)(&port_words(ins, self.inputs), mem);
+        let mut bits = Vec::new();
+        for (w, &width) in outs.iter().zip(self.outputs) {
+            for i in 0..width {
+                bits.push(w.map_or(Value::X, |w| Value::from_bit(w >> i & 1 == 1)));
+            }
+        }
+        bits
+    }
+}
+
+/// Each port's word, `None` if any of its bits is X or Z.
+pub fn port_words(bits: &[Value], widths: &[u32]) -> Vec<Option<u64>> {
+    let mut out = Vec::with_capacity(widths.len());
+    let mut i = 0usize;
+    for &w in widths {
+        let end = i + w as usize;
+        out.push(
+            bits.get(i..end)
+                .and_then(|b| words(b, &[w]))
+                .and_then(|v| v.first().copied()),
+        );
+        i = end;
+    }
+    out
+}
+
+fn opt(x: &[Option<u64>], i: usize) -> Option<u64> {
+    x.get(i).copied().flatten()
+}
+
+/// Register: d, load, clk → q.
+fn register_tick(x: &[Option<u64>], mem: &mut [Option<u64>]) {
+    match opt(x, 1) {
+        Some(0) => {}
+        Some(_) => mem[0] = opt(x, 0),
+        // Unknown load: the word survives only if d equals it anyway.
+        None => {
+            if opt(x, 0) != mem[0] {
+                mem[0] = None;
+            }
+        }
+    }
+}
+
+/// RAM: d, addr, load, clk → q (the word at addr).
+fn ram_tick(x: &[Option<u64>], mem: &mut [Option<u64>]) {
+    let (d, addr, load) = (opt(x, 0), opt(x, 1), opt(x, 2));
+    match (load, addr) {
+        (Some(0), _) => {}
+        (Some(_), Some(a)) => {
+            if let Some(slot) = mem.get_mut(a as usize) {
+                *slot = d;
+            }
+        }
+        (None, Some(a)) => {
+            if let Some(slot) = mem.get_mut(a as usize) {
+                if *slot != d {
+                    *slot = None;
+                }
+            }
+        }
+        // A write to an unknown address could have hit any word.
+        (_, None) => mem.iter_mut().for_each(|w| *w = None),
+    }
+}
+
+fn ram_read(x: &[Option<u64>], mem: &[Option<u64>]) -> Vec<Option<u64>> {
+    vec![opt(x, 1).and_then(|a| mem.get(a as usize).copied().flatten())]
+}
+
+fn word_read(_: &[Option<u64>], mem: &[Option<u64>]) -> Vec<Option<u64>> {
+    vec![mem.first().copied().flatten()]
+}
+
+/// Program counter: d, load, inc, reset, clk → q. On a rising edge, in
+/// priority order: reset → 0, load → d, inc → q + 1, else keep.
+fn pc_tick(x: &[Option<u64>], mem: &mut [Option<u64>]) {
+    let (d, load, inc, reset) = (opt(x, 0), opt(x, 1), opt(x, 2), opt(x, 3));
+    let q = mem[0];
+    mem[0] = match (reset, load, inc) {
+        (Some(1), _, _) => Some(0),
+        (Some(0), Some(1), _) => d,
+        (Some(0), Some(0), Some(1)) => q.map(|v| (v + 1) & W16),
+        (Some(0), Some(0), Some(0)) => q,
+        // Something that decides the next value is unknown.
+        _ => None,
+    };
+}
+
+static CLOCKED: &[ClockedModel] = &[
+    ClockedModel {
+        id: "register",
+        inputs: &[16, 1, 1],
+        outputs: &[16],
+        clk: 2,
+        words: 1,
+        tick: register_tick,
+        read: word_read,
+    },
+    ClockedModel {
+        id: "ram8",
+        inputs: &[16, 3, 1, 1],
+        outputs: &[16],
+        clk: 3,
+        words: 8,
+        tick: ram_tick,
+        read: ram_read,
+    },
+    ClockedModel {
+        id: "ram64",
+        inputs: &[16, 6, 1, 1],
+        outputs: &[16],
+        clk: 3,
+        words: 64,
+        tick: ram_tick,
+        read: ram_read,
+    },
+    ClockedModel {
+        id: "ram512",
+        inputs: &[16, 9, 1, 1],
+        outputs: &[16],
+        clk: 3,
+        words: 512,
+        tick: ram_tick,
+        read: ram_read,
+    },
+    ClockedModel {
+        id: "ram4k",
+        inputs: &[16, 12, 1, 1],
+        outputs: &[16],
+        clk: 3,
+        words: 4096,
+        tick: ram_tick,
+        read: ram_read,
+    },
+    ClockedModel {
+        id: "pc",
+        inputs: &[16, 1, 1, 1, 1],
+        outputs: &[16],
+        clk: 4,
+        words: 1,
+        tick: pc_tick,
+        read: word_read,
+    },
+];
+
+/// The model with memory with this id, if there is one.
+pub fn clocked(id: &str) -> Option<&'static ClockedModel> {
+    CLOCKED.iter().find(|m| m.id == id)
 }
 
 #[cfg(test)]
@@ -263,6 +457,93 @@ mod tests {
             model("xor16").unwrap().eval_words(&[0xff00, 0x0ff0]),
             vec![0xf0f0]
         );
+    }
+
+    /// Runs a clocked model on whole words: each step's inputs (clk
+    /// included), returning the outputs after each step.
+    fn run(id: &str, steps: &[&[u64]]) -> Vec<Option<u64>> {
+        let m = clocked(id).unwrap();
+        let mut mem = vec![None; m.words];
+        let mut prev = 0;
+        let mut out = vec![];
+        for s in steps {
+            let x: Vec<Option<u64>> = s.iter().map(|v| Some(*v)).collect();
+            if prev == 0 && s[m.clk] == 1 {
+                (m.tick)(&x, &mut mem);
+            }
+            prev = s[m.clk];
+            out.push((m.read)(&x, &mem)[0]);
+        }
+        out
+    }
+
+    #[test]
+    fn ram_writes_on_the_edge_and_reads_by_address() {
+        // d, addr, load, clk
+        let out = run(
+            "ram8",
+            &[
+                &[5, 3, 1, 0],
+                &[5, 3, 1, 1],
+                &[9, 4, 0, 0],
+                &[9, 4, 0, 1],
+                &[0, 3, 0, 0],
+            ],
+        );
+        assert_eq!(out, [None, Some(5), None, None, Some(5)]);
+    }
+
+    #[test]
+    fn pc_resets_loads_and_counts_in_priority_order() {
+        // d, load, inc, reset, clk
+        let out = run(
+            "pc",
+            &[
+                &[0, 0, 0, 1, 0],
+                &[0, 0, 0, 1, 1], // reset → 0
+                &[0, 0, 1, 0, 0],
+                &[0, 0, 1, 0, 1], // inc → 1
+                &[100, 1, 1, 0, 0],
+                &[100, 1, 1, 0, 1], // load beats inc → 100
+                &[7, 1, 1, 1, 0],
+                &[7, 1, 1, 1, 1], // reset beats load → 0
+                &[0, 0, 0, 0, 0],
+                &[0, 0, 0, 0, 1], // nothing → keep
+            ],
+        );
+        assert_eq!(
+            out,
+            [
+                None,
+                Some(0),
+                Some(0),
+                Some(1),
+                Some(1),
+                Some(100),
+                Some(100),
+                Some(0),
+                Some(0),
+                Some(0)
+            ]
+        );
+    }
+
+    #[test]
+    fn unknowns_stay_honest() {
+        let m = clocked("ram8").unwrap();
+        let mut mem = vec![Some(1); 8];
+        // A write to an unknown address could hit any word.
+        (m.tick)(&[Some(2), None, Some(1), Some(1)], &mut mem);
+        assert_eq!(mem, vec![None; 8]);
+        // Unknown load, d equal to what's stored: nothing can change.
+        let r = clocked("register").unwrap();
+        let mut word = vec![Some(7)];
+        (r.tick)(&[Some(7), None, Some(1)], &mut word);
+        assert_eq!(word, vec![Some(7)]);
+        (r.tick)(&[Some(8), None, Some(1)], &mut word);
+        assert_eq!(word, vec![None]);
+        assert_eq!(clocked("ram64").unwrap().clk_bit(), 16 + 6 + 1);
+        assert_eq!(widths("pc"), Some((&[16, 1, 1, 1, 1][..], &[16][..])));
     }
 
     #[test]

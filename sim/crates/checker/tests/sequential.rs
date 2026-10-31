@@ -96,3 +96,109 @@ fn dont_care_is_only_for_sequential_levels() {
     let e = check(&comb, &design("buf", &[], &[]), &lib()).unwrap_err();
     assert!(e.to_string().contains("`-`"), "{e}");
 }
+
+// ---- models with memory: random clock cycles and the match check ------------------
+
+/// The real level files and references from hdl/levels, all unlocked.
+fn real_library(ids: &[&str]) -> Library {
+    let root = format!("{}/../../../hdl/levels", env!("CARGO_MANIFEST_DIR"));
+    let mut lib = Library::new();
+    for layer in ["layer1", "layer2", "layer3"] {
+        for id in ids {
+            let dir = format!("{root}/{layer}/{id}");
+            let Ok(toml) = std::fs::read_to_string(format!("{dir}/level.toml")) else {
+                continue;
+            };
+            lib.add_level(lvl(&toml));
+            let json = std::fs::read_to_string(format!("{dir}/reference.json")).unwrap();
+            lib.unlock(s2t_netlist::Design::from_json(&json).unwrap());
+        }
+    }
+    lib
+}
+
+const BELOW_REGISTER: &[&str] = &[
+    "nand", "not", "nor", "one", "and", "or", "mux", "srlatch", "dlatch", "dff", "bit", "register",
+];
+
+#[test]
+fn a_register_with_a_model_also_runs_random_clock_cycles() {
+    let lib = real_library(BELOW_REGISTER);
+    let level = lib.level("register").unwrap().clone();
+    let reference = lib.design("register").unwrap().clone();
+    let r = check(&level, &reference, &lib).unwrap();
+    assert!(r.passed, "{r:#?}");
+    let random = r.random.unwrap();
+    assert_eq!(random.failed, 0);
+    // Each random cycle is two steps: clk low, then clk high.
+    assert_eq!(random.run, 2 * level.random_tests.unwrap() as usize);
+}
+
+/// Bit ×16 with load tied to 1: it loads on every edge.
+fn always_loads() -> s2t_netlist::Design {
+    design(
+        "register",
+        &[("bits", "bit"), ("yes", "one")],
+        &[
+            (port("d"), pin("bits", "d")),
+            (pin("yes", "out"), pin("bits", "load")),
+            (port("clk"), pin("bits", "clk")),
+            (pin("bits", "q"), port("q")),
+        ],
+    )
+}
+
+fn with_shared(mut d: s2t_netlist::Design) -> s2t_netlist::Design {
+    d.parts[0].repeat = Some(16);
+    d.parts[0].shared = vec!["load".into(), "clk".into()];
+    d
+}
+
+#[test]
+fn the_match_check_runs_clock_cycles_for_memory() {
+    let lib = real_library(BELOW_REGISTER);
+    let level = lib.level("register").unwrap().clone();
+    let good = s2t_checker::match_check(&level, lib.design("register").unwrap(), &lib).unwrap();
+    assert!(good.ok, "{good:#?}");
+    assert!(!good.exhaustive);
+    assert_eq!(good.compared, s2t_checker::RANDOM_VECTORS);
+    let bad = s2t_checker::match_check(&level, &with_shared(always_loads()), &lib).unwrap();
+    assert!(!bad.ok);
+    assert!(bad.failed > 0);
+    // The example says which clock cycle went wrong.
+    let m = &bad.mismatches[0];
+    assert!(
+        m.inputs.iter().any(|(k, v)| k == "load" && v == "0"),
+        "{m:#?}"
+    );
+}
+
+#[test]
+fn a_fast_register_inside_a_bigger_design_remembers() {
+    use std::collections::BTreeSet;
+    let lib = real_library(BELOW_REGISTER);
+    let level = lib.level("register").unwrap().clone();
+    // The register level itself, built from one fast register part.
+    let wrapper = design(
+        "register",
+        &[("r", "register")],
+        &[
+            (port("d"), pin("r", "d")),
+            (port("load"), pin("r", "load")),
+            (port("clk"), pin("r", "clk")),
+            (pin("r", "q"), port("q")),
+        ],
+    );
+    let fast: BTreeSet<String> = ["register".to_string()].into();
+    // A level can't use itself, so check a copy named `register2`.
+    let mut copy = level.clone();
+    copy.id = "register2".into();
+    copy.requires = vec!["register".into()];
+    let mut lib2 = lib.clone();
+    lib2.add_level(copy.clone());
+    let mut w = wrapper;
+    w.component = "register2".into();
+    let r = s2t_checker::check_with(&copy, &w, &lib2, &fast).unwrap();
+    assert!(r.passed, "{r:#?}");
+    assert_eq!(r.cells, 1);
+}
