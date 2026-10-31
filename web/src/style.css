@@ -193,8 +193,34 @@ h1:focus,
   background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
-.core-status {
+.lang-switch {
   margin-left: auto;
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.lang-switch button {
+  border: none;
+  border-radius: 0;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--muted);
+}
+
+.lang-switch button + button {
+  border-left: 1px solid var(--border-strong);
+}
+
+.lang-switch button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text);
+}
+
+.core-status {
   font-size: 0.8125rem;
   color: var(--muted);
   white-space: nowrap;

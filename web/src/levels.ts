@@ -10,9 +10,11 @@ import {
 } from "./app";
 import { fingerprint } from "./fast";
 import { orderLevels, playLibrary, type Status } from "./game";
+import { t, type Key } from "./i18n";
 import { matchCheck } from "./sim/core";
 import { parseProgressFile, progressFile } from "./progress";
 import { playHref } from "./router";
+import { levelGoal, levelName } from "./text";
 
 const esc = (s: string) =>
   s
@@ -21,21 +23,13 @@ const esc = (s: string) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
-const STATUS_TEXT: Record<Status, string> = {
-  passed: "✓ Passed",
-  open: "Open",
-  locked: "Locked",
-  broken: "⚠ Broken",
-};
+const statusText = (st: Status) => t(`status.${st}` as Key);
 
-const LAYER_NAMES: Record<number, string> = {
-  1: "Transistors to gates",
-  2: "Combinational logic",
-  3: "Memory",
-};
+/** Layer N is taught in chapter N, so it shares the chapter's title. */
+const layerName = (layer: number) => t(`outline.${layer}.title` as Key);
 
 export async function mountLevels(root: HTMLElement): Promise<void> {
-  root.innerHTML = `<p class="loading">Loading…</p>`;
+  root.innerHTML = `<p class="loading">${esc(t("page.loading"))}</p>`;
   const a = await getApp();
   render(root, a);
 }
@@ -53,26 +47,33 @@ function render(root: HTMLElement, a: App): void {
           const st = a.status[lv.id] ?? "locked";
           const need = lv.requires
             .filter((r) => a.status[r] !== "passed")
-            .map((r) => levelEntry(a, r)?.info.level.name ?? r);
+            .map((r) => {
+              const req = levelEntry(a, r)?.info.level;
+              return req ? levelName(req) : r;
+            });
           const detail =
             st === "locked"
-              ? `Opens after ${need.join(" and ")}.`
+              ? esc(
+                  t("levels.opensAfter", { names: need.join(t("levels.and")) }),
+                )
               : st === "broken"
-                ? "Something it uses changed and it no longer passes. Open it to see why."
-                : esc(lv.goal.trim().split("\n")[0] ?? "");
+                ? esc(t("levels.brokenText"))
+                : esc(levelGoal(lv).split("\n")[0] ?? "");
           const title =
-            esc(lv.name) +
-            (lv.optional ? ' <span class="badge">side quest</span>' : "");
+            esc(levelName(lv)) +
+            (lv.optional
+              ? ` <span class="badge">${esc(t("levels.sideQuest"))}</span>`
+              : "");
           const isFast = fast.has(lv.id);
           const swap =
             st === "passed" && lv.layer >= 2
-              ? `<p class="swap"><button type="button" data-swap="${lv.id}" aria-pressed="${isFast}">Runs as: ${isFast ? "fast model" : "your design"}</button></p>
+              ? `<p class="swap"><button type="button" data-swap="${lv.id}" aria-pressed="${isFast}">${esc(t("levels.runsAs", { mode: t(isFast ? "levels.fastModel" : "levels.yourDesign") }))}</button></p>
                  <p class="swap-result" data-swap-result="${lv.id}" aria-live="polite"></p>`
               : "";
           return `<li class="level-card" data-status="${st}">
             <div class="level-top">
               <h3>${st === "locked" ? title : `<a href="${playHref(lv.id)}">${title}</a>`}</h3>
-              <span class="pill level-status pill-${st}">${STATUS_TEXT[st]}</span>
+              <span class="pill level-status pill-${st}">${esc(statusText(st))}</span>
             </div>
             <p>${detail}</p>
             ${swap}
@@ -84,8 +85,8 @@ function render(root: HTMLElement, a: App): void {
         (l) => a.status[l.info.level.id] === "passed",
       ).length;
       return `<section class="layer">
-        <div class="section-head"><h2>Layer ${layer}: ${esc(LAYER_NAMES[layer] ?? "")}</h2>
-        <span class="muted">${done} of ${inLayer.length} passed</span></div>
+        <div class="section-head"><h2>${esc(t("levels.layer", { n: layer, name: layerName(layer) }))}</h2>
+        <span class="muted">${esc(t("levels.passedCount", { passed: done, total: inLayer.length }))}</span></div>
         <ol class="level-cards">${cards}</ol></section>`;
     })
     .join("");
@@ -96,17 +97,17 @@ function render(root: HTMLElement, a: App): void {
   root.innerHTML = `
     <div class="page-head">
       <div>
-        <h1 tabindex="-1">Build your computer</h1>
-        <p class="lead">Each level is one component. Pass it, and it joins your toolbox for the levels after it.</p>
+        <h1 tabindex="-1">${esc(t("levels.title"))}</h1>
+        <p class="lead">${esc(t("levels.lead"))}</p>
       </div>
       <section class="save-box" aria-labelledby="progress-h">
-        <h2 id="progress-h">Your progress</h2>
-        <p class="meter-label"><strong>${passed} of ${a.levels.length}</strong> levels passed</p>
-        <div class="meter" role="progressbar" aria-labelledby="progress-h" aria-valuemin="0" aria-valuemax="${a.levels.length}" aria-valuenow="${passed}" aria-valuetext="${passed} of ${a.levels.length} passed"><span style="width:${pct}%"></span></div>
-        <p class="help">${a.store.persistent ? "Saved in this browser automatically." : "This browser isn't letting the site save data, so export your progress before closing the tab."}
-        Export a file to back it up or move it to another browser.</p>
-        <p class="save-actions"><button type="button" data-export>Export</button>
-        <label class="file-button">Import<input type="file" accept="application/json,.json" data-import></label></p>
+        <h2 id="progress-h">${esc(t("levels.progress"))}</h2>
+        <p class="meter-label"><strong>${esc(t("levels.meter", { passed, total: a.levels.length }))}</strong> ${esc(t("levels.meterText"))}</p>
+        <div class="meter" role="progressbar" aria-labelledby="progress-h" aria-valuemin="0" aria-valuemax="${a.levels.length}" aria-valuenow="${passed}" aria-valuetext="${esc(t("levels.passedCount", { passed, total: a.levels.length }))}"><span style="width:${pct}%"></span></div>
+        <p class="help">${esc(t(a.store.persistent ? "levels.saved" : "levels.notSaved"))}
+        ${esc(t("levels.exportHint"))}</p>
+        <p class="save-actions"><button type="button" data-export>${esc(t("levels.export"))}</button>
+        <label class="file-button">${esc(t("levels.import"))}<input type="file" accept="application/json,.json" data-import></label></p>
         <p class="import-status" aria-live="polite"></p>
       </section>
     </div>
@@ -135,11 +136,10 @@ function render(root: HTMLElement, a: App): void {
         if (statusEl) statusEl.textContent = parsed;
         return;
       }
-      if (!confirm("Replace your current progress with the imported file?"))
-        return;
+      if (!confirm(t("levels.confirmImport"))) return;
       await replaceProgress(a, parsed);
       render(root, a);
-      root.querySelector(".import-status")!.textContent = "Imported.";
+      root.querySelector(".import-status")!.textContent = t("levels.imported");
     });
 }
 
@@ -156,10 +156,10 @@ function swap(root: HTMLElement, a: App, id: string): void {
     setFast(a, id, null);
     render(root, a);
     root.querySelector<HTMLElement>(`[data-swap-result="${id}"]`)!.textContent =
-      "Now running as your own design.";
+      t("levels.nowYours");
     return;
   }
-  out.textContent = "Comparing your design with the fast model…";
+  out.textContent = t("levels.comparing");
   // Let the message paint before the (possibly long) comparison.
   setTimeout(() => {
     let report;
@@ -169,23 +169,40 @@ function swap(root: HTMLElement, a: App, id: string): void {
         id,
       );
     } catch (e) {
-      out.textContent = `Can't swap: ${String(e)}`;
+      out.textContent = t("levels.cantSwap", { error: String(e) });
       return;
     }
     const memory = levelEntry(a, id)?.info.level.sequential;
-    const scope = report.exhaustive
-      ? `all ${report.compared.toLocaleString("en-US")} possible inputs`
-      : `${report.compared.toLocaleString("en-US")} random ${memory ? "clock cycles" : "inputs"}`;
+    const n = report.compared.toLocaleString("en-US");
+    const scope = t(
+      report.exhaustive
+        ? "levels.scopeAll"
+        : memory
+          ? "levels.scopeCycles"
+          : "levels.scopeRandom",
+      { n },
+    );
     if (!report.ok) {
       const m = report.mismatches[0];
       const show = (xs: [string, string][]) =>
         xs.map(([k, v]) => `${k}=${v}`).join(" ");
-      out.textContent = `✗ Not swapped: your design differs from the model on ${report.failed.toLocaleString("en-US")} of ${scope}.${m ? ` For example ${show(m.inputs)}: model gives ${show(m.expected)}, yours gives ${show(m.actual)}.` : ""}`;
+      out.textContent =
+        t("levels.notSwapped", {
+          failed: report.failed.toLocaleString("en-US"),
+          scope,
+        }) +
+        (m
+          ? t("levels.example", {
+              inputs: show(m.inputs),
+              expected: show(m.expected),
+              actual: show(m.actual),
+            })
+          : "");
       return;
     }
     setFast(a, id, fingerprint(design));
     render(root, a);
     root.querySelector<HTMLElement>(`[data-swap-result="${id}"]`)!.textContent =
-      `✓ Matched on ${scope}. Now running as the fast model.`;
+      t("levels.matched", { scope });
   }, 30);
 }

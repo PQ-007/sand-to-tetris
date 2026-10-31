@@ -1,5 +1,6 @@
 import { POWER_ON, settle, type Bit, type LatchState } from "../demos/latch";
-import { Demo, reducedMotion, sheet, svg, wide } from "./kit";
+import { t } from "../i18n";
+import { Demo, figcaption, reducedMotion, sheet, svg, wide } from "./kit";
 
 const CSS = sheet(`
   .wire { stroke: var(--muted); stroke-width: 3; fill: none; }
@@ -37,9 +38,7 @@ export class LatchDemo extends Demo {
 
   protected build(): void {
     const fig = document.createElement("figure");
-    fig.innerHTML = `<figcaption><strong>A loop that remembers</strong>
-      Two NOR gates, each one's output wired into the other. Set s or r to 1, then back to 0:
-      the latch keeps its value. Each change goes round the loop one gate delay at a time.</figcaption>`;
+    fig.append(figcaption(t("latch.caption"), t("latch.captionText")));
     const controls = document.createElement("div");
     controls.className = "controls";
     const btn = (onClick: () => void) => {
@@ -51,7 +50,7 @@ export class LatchDemo extends Demo {
     this.sBtn = btn(() => this.set(this.s ? 0 : 1, this.r));
     this.rBtn = btn(() => this.set(this.s, this.r ? 0 : 1));
     const both = btn(() => this.set(0, 0, true));
-    both.textContent = "Release both at once";
+    both.textContent = t("latch.release");
     const power = btn(() => {
       clearTimeout(this.timer);
       this.s = 0;
@@ -61,7 +60,7 @@ export class LatchDemo extends Demo {
       this.settled = true;
       this.draw();
     });
-    power.textContent = "Power off and on";
+    power.textContent = t("latch.power");
     controls.append(this.sBtn, this.rBtn, both, power);
     this.pic = document.createElement("div");
     this.status = document.createElement("p");
@@ -109,14 +108,14 @@ export class LatchDemo extends Demo {
 
   private draw(): void {
     const { q, qn } = this.state;
-    this.sBtn.textContent = `s (set) = ${this.s}`;
+    this.sBtn.textContent = t("latch.s", { v: this.s });
     this.sBtn.setAttribute("aria-pressed", String(this.s === 1));
-    this.rBtn.textContent = `r (reset) = ${this.r}`;
+    this.rBtn.textContent = t("latch.r", { v: this.r });
     this.rBtn.setAttribute("aria-pressed", String(this.r === 1));
     const pic = svg("svg", {
       viewBox: "0 0 560 230",
       role: "img",
-      "aria-label": `Two NOR gates. Top: inputs r = ${this.r} and q̄ = ${qn}, output q = ${q}. Bottom: inputs s = ${this.s} and q = ${q}, output q̄ = ${qn}.`,
+      "aria-label": t("latch.picLabel", { r: this.r, s: this.s, q, qn }),
     });
     const cls = (v: Bit) => `wire v${v}`;
     const wire = (d: string, v: Bit) => svg("path", { d, class: cls(v) }, pic);
@@ -168,28 +167,24 @@ export class LatchDemo extends Demo {
         "text",
         { x: 14, y: 222, class: "delay" },
         pic,
-        `after ${this.delay} gate delay${this.delay === 1 ? "" : "s"}`,
+        t("latch.delays", { n: this.delay }),
       );
     this.pic.replaceChildren(wide(pic));
     this.status.className = "note";
     if (!this.settled) {
       this.status.className = "note warn";
-      this.status.textContent =
-        "It never settles: from q = q̄ = 0, releasing both inputs makes both gates flip to 1, then both back to 0, forever. Real gates are never exactly equal, so one wins, but you can't predict which. That's why a latch must never get s = r = 1.";
+      this.status.textContent = t("latch.oscillates");
     } else if (q === "X") {
-      this.status.textContent =
-        "Unknown (X): at power-on nothing has set or reset the latch yet. Set s or r to 1.";
+      this.status.textContent = t("latch.unknown");
     } else if (this.s === 1 && this.r === 1) {
       this.status.className = "note warn";
-      this.status.textContent =
-        "Forbidden: with s = r = 1 both outputs are 0, so q and q̄ aren't opposites any more.";
+      this.status.textContent = t("latch.forbidden");
     } else if (this.s === 0 && this.r === 0) {
-      this.status.textContent = `Holding ${q}: q feeds the bottom gate, which keeps q̄ at ${qn}, which keeps q at ${q}. Nothing outside is driving it; the loop remembers.`;
+      this.status.textContent = t("latch.holding", { q, qn });
     } else {
-      this.status.textContent =
-        this.s === 1
-          ? "Setting: s = 1 forces q̄ to 0, and then the top gate makes q = 1."
-          : "Resetting: r = 1 forces q to 0, and then the bottom gate makes q̄ = 1.";
+      this.status.textContent = t(
+        this.s === 1 ? "latch.setting" : "latch.resetting",
+      );
     }
   }
 }

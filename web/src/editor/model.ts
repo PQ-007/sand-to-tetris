@@ -1,5 +1,6 @@
 // Pure editing operations on a design. Every operation returns a new
 // design (or an error message), which makes undo/redo trivial.
+import { t } from "../i18n";
 import type { Design, Endpoint, Part } from "../sim/types";
 
 export const PRIMITIVES = ["pmos", "nmos", "vdd", "gnd"] as const;
@@ -22,7 +23,9 @@ export function endpointLabel(
   inputs: readonly string[] = [],
 ): string {
   if ("port" in e)
-    return `${inputs.includes(e.port) ? "input" : "output"} ${e.port}`;
+    return t(inputs.includes(e.port) ? "endpoint.input" : "endpoint.output", {
+      name: e.port,
+    });
   return `${e.part}.${e.pin}`;
 }
 

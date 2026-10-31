@@ -2,6 +2,7 @@ import "./style.css";
 import "./components/core-status";
 import "./components/demos";
 import { installGlossaryPopover } from "./components/glossary-popover";
+import { getLang, setLang, t, type Key, type Lang } from "./i18n";
 import { mountLevels } from "./levels";
 import { installGlossaryFilter, renderRoute, trackSections } from "./pages";
 import { mountPlay } from "./play";
@@ -60,12 +61,43 @@ function show(): void {
 function showError(root: HTMLElement, e: unknown): void {
   root.innerHTML = "";
   const h = document.createElement("h1");
-  h.textContent = "Something went wrong loading this page";
+  h.textContent = t("page.error");
   const p = document.createElement("p");
   p.textContent = String(e);
   root.append(h, p);
 }
 
+/** The header and other text outside the page, in the current language. */
+function chrome(): void {
+  const lang = getLang();
+  document.documentElement.lang = lang;
+  document.querySelectorAll<HTMLElement>("[data-text]").forEach((el) => {
+    el.textContent = t(el.dataset.text as Key);
+  });
+  document
+    .querySelector(".site-nav")
+    ?.setAttribute("aria-label", t("nav.label"));
+  document
+    .querySelector(".lang-switch")
+    ?.setAttribute("aria-label", t("nav.language"));
+  document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) => {
+    b.setAttribute("aria-pressed", String(b.dataset.lang === lang));
+  });
+}
+
+document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) => {
+  b.addEventListener("click", () => {
+    const lang = b.dataset.lang as Lang;
+    if (lang !== getLang()) setLang(lang);
+  });
+});
+// A new language re-renders everything in place (no reload, same page).
+document.addEventListener("s2t-lang", () => {
+  chrome();
+  show();
+});
+
 if (app) installGlossaryPopover(app);
 window.addEventListener("hashchange", show);
+chrome();
 show();

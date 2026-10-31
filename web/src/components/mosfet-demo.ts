@@ -7,7 +7,8 @@ import {
   VDD,
   VTH,
 } from "../demos/semiconductor";
-import { Demo, chips, sheet, slider, svg, wide } from "./kit";
+import { t } from "../i18n";
+import { Demo, chips, figcaption, sheet, slider, svg, wide } from "./kit";
 
 const CSS = sheet(`
   .p { fill: var(--p-type); }
@@ -36,28 +37,25 @@ export class MosfetDemo extends Demo {
   protected build(): void {
     this.type = this.getAttribute("type") === "pmos" ? "pmos" : "nmos";
     const fig = document.createElement("figure");
-    fig.innerHTML = `<figcaption><strong>A MOSFET: a switch with no moving parts</strong>
-      A thin layer of glass-like oxide separates the gate from the silicon. Voltage on
-      the gate pulls carriers up to the surface, forming a <em>channel</em> that connects
-      source to drain. Drag the gate voltage.</figcaption>`;
+    fig.append(figcaption(t("mos.caption"), t("mos.captionHtml")));
     fig.append(
       chips(
-        "Transistor type",
+        t("mos.type"),
         "mostype",
         [
-          { value: "nmos", label: "NMOS (n-channel)" },
-          { value: "pmos", label: "PMOS (p-channel)" },
+          { value: "nmos", label: t("mos.nmos") },
+          { value: "pmos", label: t("mos.pmos") },
         ],
         this.type,
-        (t) => {
-          this.type = t as MosType;
+        (v) => {
+          this.type = v as MosType;
           this.draw();
         },
       ),
     );
     this.pic = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
     const { label } = slider(
-      "Gate voltage",
+      t("mos.gateSlider"),
       { min: 0, max: VDD, step: 0.05, value: 0 },
       (v) => {
         this.gate = v;
@@ -69,9 +67,9 @@ export class MosfetDemo extends Demo {
     controls.append(label);
     this.readout = document.createElement("ul");
     this.readout.className = "readout";
-    this.readout.innerHTML = `<li><b>Gate</b><output data-g></output></li>
-      <li><b>Switch</b><output data-s class="state"></output></li>
-      <li><b>Current, source → drain</b><output data-i></output></li>`;
+    this.readout.innerHTML = `<li><b>${t("mos.gate")}</b><output data-g></output></li>
+      <li><b>${t("mos.switch")}</b><output data-s class="state"></output></li>
+      <li><b>${t("mos.current")}</b><output data-i></output></li>`;
     this.plot = svg("svg", {
       viewBox: "0 0 320 180",
       role: "img",
@@ -91,20 +89,24 @@ export class MosfetDemo extends Demo {
   private note!: HTMLElement;
 
   private draw(): void {
-    const t = this.type;
+    const kind = this.type;
     const g = this.gate;
-    const on = isOn(t, g);
-    const strength = channelStrength(t, g);
-    const body = t === "nmos" ? "p" : "n";
-    const wells = t === "nmos" ? "n" : "p";
-    const carrier = t === "nmos" ? "−" : "+";
-    const sourceV = t === "nmos" ? "0 V" : `${VDD} V`;
+    const on = isOn(kind, g);
+    const strength = channelStrength(kind, g);
+    const body = kind === "nmos" ? "p" : "n";
+    const wells = kind === "nmos" ? "n" : "p";
+    const carrier = kind === "nmos" ? "−" : "+";
+    const sourceV = kind === "nmos" ? "0 V" : `${VDD} V`;
 
     const p = this.pic;
     p.replaceChildren();
     p.setAttribute(
       "aria-label",
-      `${t.toUpperCase()} transistor, gate at ${g.toFixed(2)} volts: switch ${on ? "on, channel formed" : "off, no channel"}.`,
+      t("mos.label", {
+        type: kind.toUpperCase(),
+        g: g.toFixed(2),
+        state: t(on ? "mos.stateOn" : "mos.stateOff"),
+      }),
     );
     const subY = 110;
     svg("rect", { x: 20, y: subY, width: W - 40, height: 120, class: body }, p);
@@ -112,7 +114,7 @@ export class MosfetDemo extends Demo {
       "text",
       { x: W / 2, y: 220, "text-anchor": "middle", "font-weight": 600 },
       p,
-      `${body}-type silicon (the body)`,
+      t("mos.body", { body }),
     );
     // Source and drain regions.
     svg(
@@ -129,13 +131,13 @@ export class MosfetDemo extends Demo {
       "text",
       { x: 135, y: subY + 34, "text-anchor": "middle", "font-weight": 600 },
       p,
-      `${wells}+ source`,
+      t("mos.source", { wells }),
     );
     svg(
       "text",
       { x: W - 135, y: subY + 34, "text-anchor": "middle", "font-weight": 600 },
       p,
-      `${wells}+ drain`,
+      t("mos.drain", { wells }),
     );
     // Channel: appears as gate voltage passes threshold.
     svg(
@@ -184,46 +186,49 @@ export class MosfetDemo extends Demo {
         "font-weight": 600,
       },
       p,
-      `gate: ${g.toFixed(2)} V`,
+      t("mos.gateV", { v: g.toFixed(2) }),
     );
-    svg("text", { x: W / 2 + 114, y: subY - 2, class: "muted" }, p, "oxide");
+    svg(
+      "text",
+      { x: W / 2 + 114, y: subY - 2, class: "muted" },
+      p,
+      t("mos.oxide"),
+    );
     // Terminals.
     svg("path", { d: `M135,${subY} V30 H90`, class: "wire" }, p);
     svg(
       "text",
       { x: 84, y: 34, "text-anchor": "end" },
       p,
-      `source: ${sourceV}`,
+      t("mos.sourceV", { v: sourceV }),
     );
     svg("path", { d: `M${W - 135},${subY} V30 H${W - 90}`, class: "wire" }, p);
-    svg("text", { x: W - 84, y: 34 }, p, "drain");
+    svg("text", { x: W - 84, y: 34 }, p, t("mos.drainLabel"));
     svg("path", { d: `M${W / 2},${subY - 40} V20`, class: "wire" }, p);
-    svg("text", { x: W / 2, y: 14, "text-anchor": "middle" }, p, "gate");
+    svg(
+      "text",
+      { x: W / 2, y: 14, "text-anchor": "middle" },
+      p,
+      t("mos.gateLabel"),
+    );
 
     const out = (sel: string) =>
       this.readout.querySelector(`[${sel}]`) as HTMLOutputElement;
     out("data-g").value = `${g.toFixed(2)} V`;
-    out("data-s").value = on ? "ON (closed)" : "OFF (open)";
-    out("data-i").value = formatAmps(drainCurrent(t, g));
+    out("data-s").value = t(on ? "mos.on" : "mos.off");
+    out("data-i").value = formatAmps(drainCurrent(kind, g));
 
-    this.note.textContent =
-      t === "nmos"
-        ? on
-          ? `Gate is more than ${VTH} V above the source: electrons gather under the oxide and form an n-type channel. Current flows.`
-          : `Gate is below the threshold (${VTH} V): no channel, so the switch is open. Only a tiny leakage current flows.`
-        : on
-          ? `Gate is at least ${VTH} V below the source (${VDD} V): holes gather under the oxide and form a p-type channel. Current flows. A PMOS turns on when its gate is LOW.`
-          : `Gate is too close to the source voltage (${VDD} V): no channel. A PMOS is off when its gate is HIGH, the opposite of an NMOS.`;
+    this.note.textContent = t(`mos.${kind}${on ? "On" : "Off"}`, {
+      vth: VTH,
+      vdd: VDD,
+    });
     this.drawPlot();
   }
 
   private drawPlot(): void {
     const p = this.plot;
     p.replaceChildren();
-    p.setAttribute(
-      "aria-label",
-      "Graph of current against gate voltage on a logarithmic scale, spanning more than a million-fold between off and on.",
-    );
+    p.setAttribute("aria-label", t("mos.plotLabel"));
     const x = (v: number) => 50 + (v / VDD) * 250;
     const lo = -14;
     const hi = -2;
@@ -243,7 +248,7 @@ export class MosfetDemo extends Demo {
       "text",
       { x: 300, y: 172, "text-anchor": "end", class: "muted" },
       p,
-      "gate voltage →",
+      t("mos.gAxis"),
     );
     svg("text", { x: x(0), y: 172, class: "muted" }, p, "0 V");
     let d = "";
@@ -264,7 +269,7 @@ export class MosfetDemo extends Demo {
       "text",
       { x: 300, y: 12, "text-anchor": "end", class: "muted" },
       p,
-      "each gridline: 1,000× more current",
+      t("mos.grid"),
     );
   }
 }

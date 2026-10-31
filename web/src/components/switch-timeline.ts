@@ -1,4 +1,5 @@
-import { compare, logPosition, SWITCHES } from "../demos/switches";
+import { compare, logPosition, SWITCHES, switchText } from "../demos/switches";
+import { t } from "../i18n";
 import { Demo, chips, formatLength, formatTime, sheet, svg, wide } from "./kit";
 
 const CSS = sheet(`
@@ -15,7 +16,7 @@ const W = 640;
 const AXES = [
   {
     key: "sizeM" as const,
-    title: "Size of one switch",
+    title: "sw.sizeAxis" as const,
     min: 1e-8,
     max: 1,
     ticks: [1e-8, 1e-6, 1e-4, 1e-2, 1],
@@ -24,7 +25,7 @@ const AXES = [
   },
   {
     key: "switchTimeS" as const,
-    title: "Time to flip once",
+    title: "sw.timeAxis" as const,
     min: 1e-12,
     max: 1,
     ticks: [1e-12, 1e-9, 1e-6, 1e-3, 1],
@@ -54,14 +55,19 @@ export class SwitchTimeline extends Demo {
 
   protected build(): void {
     const fig = document.createElement("figure");
-    fig.innerHTML = `<figcaption><strong>Switches through time</strong>
-      Pick a switch to see its rough size and speed. Both scales are logarithmic:
-      each step along an axis is 100 or 1,000 times bigger than the last.</figcaption>`;
+    const caption = document.createElement("figcaption");
+    const strong = document.createElement("strong");
+    strong.textContent = t("sw.caption");
+    caption.append(strong, " ", t("sw.captionText"));
+    fig.append(caption);
     fig.append(
       chips(
-        "Choose a switch",
+        t("sw.choose"),
         "switch",
-        SWITCHES.map((s) => ({ value: s.id, label: `${s.name} (${s.era})` })),
+        SWITCHES.map((s) => ({
+          value: s.id,
+          label: `${switchText(s, "name")} (${switchText(s, "era")})`,
+        })),
         this.selected.id,
         (id) => {
           this.selected = SWITCHES.find((s) => s.id === id) ?? this.selected;
@@ -79,10 +85,12 @@ export class SwitchTimeline extends Demo {
     const cmp = document.createElement("p");
     cmp.className = "compare";
     const label = document.createElement("label");
-    label.textContent = "Compare with ";
+    label.textContent = t("sw.compareWith");
     const select = document.createElement("select");
     for (const s of SWITCHES)
-      select.add(new Option(s.name, s.id, false, s === this.other));
+      select.add(
+        new Option(switchText(s, "name"), s.id, false, s === this.other),
+      );
     select.addEventListener("change", () => {
       this.other = SWITCHES.find((s) => s.id === select.value) ?? this.other;
       this.update();
@@ -100,7 +108,11 @@ export class SwitchTimeline extends Demo {
       plot.replaceChildren();
       plot.setAttribute(
         "aria-label",
-        `${s.name}: size ${formatLength(s.sizeM)}, switching time ${formatTime(s.switchTimeS)}`,
+        t("sw.plotLabel", {
+          name: switchText(s, "name"),
+          size: formatLength(s.sizeM),
+          time: formatTime(s.switchTimeS),
+        }),
       );
       for (const axis of AXES) {
         const g = svg("g", { class: "axis" }, plot);
@@ -110,7 +122,7 @@ export class SwitchTimeline extends Demo {
           "text",
           { x: x0, y: axis.y - 18, "font-weight": 600 },
           g,
-          axis.title,
+          t(axis.title),
         );
         svg(
           "line",
@@ -147,17 +159,19 @@ export class SwitchTimeline extends Demo {
       }
       card.innerHTML = "";
       const h = document.createElement("h3");
-      h.textContent = `${s.name} · ${s.era}`;
+      h.textContent = `${switchText(s, "name")} · ${switchText(s, "era")}`;
       const how = document.createElement("p");
-      how.textContent = s.how;
+      how.textContent = switchText(s, "how");
       const ex = document.createElement("p");
       ex.className = "muted";
-      ex.textContent = `Example: ${s.example}. Size ${formatLength(s.sizeM)}, flips in ${formatTime(s.switchTimeS)}.`;
+      ex.textContent = t("sw.example", {
+        example: switchText(s, "example"),
+        size: formatLength(s.sizeM),
+        time: formatTime(s.switchTimeS),
+      });
       card.append(h, how, ex);
       sentence.textContent =
-        s === this.other
-          ? "Pick a different switch to compare."
-          : compare(s, this.other);
+        s === this.other ? t("sw.pickOther") : compare(s, this.other);
     };
     this.update();
   }

@@ -1,4 +1,5 @@
 // Shared helpers for demo components (shadow DOM + constructable styles).
+import { t } from "../i18n";
 const NS = "http://www.w3.org/2000/svg";
 
 export function svg<K extends keyof SVGElementTagNameMap>(
@@ -135,9 +136,20 @@ export function wide(el: SVGSVGElement): HTMLDivElement {
   div.className = "wide";
   div.tabIndex = 0;
   div.setAttribute("role", "group");
-  div.setAttribute("aria-label", "Diagram (scroll sideways on small screens)");
+  div.setAttribute("aria-label", t("kit.wide"));
   div.append(el);
   return div;
+}
+
+/** A demo's caption: bold title, then text (`html` may hold <em> from the dictionaries). */
+export function figcaption(title: string, html: string): HTMLElement {
+  const cap = document.createElement("figcaption");
+  const strong = document.createElement("strong");
+  strong.textContent = title;
+  const rest = document.createElement("span");
+  rest.innerHTML = html;
+  cap.append(strong, " ", rest);
+  return cap;
 }
 
 /** Base class: opens a shadow root with the shared styles plus extra CSS. */

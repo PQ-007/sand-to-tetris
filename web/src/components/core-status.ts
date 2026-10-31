@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { getCoreVersion } from "../sim/core";
 
 /**
@@ -7,15 +8,20 @@ import { getCoreVersion } from "../sim/core";
 export class CoreStatus extends HTMLElement {
   connectedCallback(): void {
     this.setAttribute("role", "status");
-    this.textContent = "Loading simulator…";
+    this.update();
+    document.addEventListener("s2t-lang", () => this.update());
+  }
+
+  private update(): void {
+    this.textContent = t("core.loading");
     getCoreVersion().then(
       (version) => {
-        this.textContent = `Simulator ${version}`;
-        this.title = `Simulator core ${version} loaded`;
+        this.textContent = t("core.ok", { version });
+        this.title = t("core.okTitle", { version });
         this.dataset.state = "ok";
       },
       (err: unknown) => {
-        this.textContent = `Simulator core failed to load: ${String(err)}`;
+        this.textContent = t("core.failed", { error: String(err) });
         this.dataset.state = "error";
       },
     );

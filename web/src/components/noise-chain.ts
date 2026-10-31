@@ -5,7 +5,8 @@ import {
   readBit,
   runChain,
 } from "../demos/noise";
-import { Demo, chips, sheet, slider, svg, wide } from "./kit";
+import { t } from "../i18n";
+import { Demo, chips, figcaption, sheet, slider, svg, wide } from "./kit";
 
 const CSS = sheet(`
   .band0, .band1 { fill: var(--zone-ok); }
@@ -41,14 +42,11 @@ export class NoiseChain extends Demo {
 
   protected build(): void {
     const fig = document.createElement("figure");
-    fig.innerHTML = `<figcaption><strong>Analog drift vs digital restoration</strong>
-      A bit travels through a chain of stages. Each stage adds a little random noise.
-      An <em>analog</em> stage passes on whatever voltage it gets. A <em>digital</em>
-      stage first snaps the voltage back toward 0 or 1, then passes it on.</figcaption>`;
+    fig.append(figcaption(t("noise.caption"), t("noise.captionHtml")));
     const controls = document.createElement("div");
     controls.className = "controls";
     const bitChips = chips(
-      "Bit to send",
+      t("noise.bit"),
       "bit",
       [
         { value: "1", label: "1" },
@@ -62,7 +60,7 @@ export class NoiseChain extends Demo {
     );
     bitChips.style.margin = "0";
     const stages = slider(
-      "Stages",
+      t("noise.stages"),
       { min: 1, max: 30, step: 1, value: this.stages },
       (v) => {
         this.stages = v;
@@ -70,7 +68,7 @@ export class NoiseChain extends Demo {
       },
     );
     const noise = slider(
-      "Noise per stage",
+      t("noise.noise"),
       { min: 0, max: 0.2, step: 0.005, value: this.noise },
       (v) => {
         this.noise = v;
@@ -79,7 +77,7 @@ export class NoiseChain extends Demo {
     );
     const again = document.createElement("button");
     again.type = "button";
-    again.textContent = "Send again";
+    again.textContent = t("noise.again");
     again.addEventListener("click", () => {
       this.seed += 1;
       this.draw();
@@ -88,17 +86,14 @@ export class NoiseChain extends Demo {
     this.chart = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
     this.readout = document.createElement("ul");
     this.readout.className = "readout";
-    this.readout.innerHTML = `<li><b>Analog (dashed) arrives as</b><output data-a></output></li>
-      <li><b>Digital (solid) arrives as</b><output data-d></output></li>
-      <li><b>Errors in 1,000 sends</b><output data-e></output></li>`;
+    this.readout.innerHTML = `<li><b>${t("noise.analog")}</b><output data-a></output></li>
+      <li><b>${t("noise.digital")}</b><output data-d></output></li>
+      <li><b>${t("noise.errors")}</b><output data-e></output></li>`;
     const two = document.createElement("div");
     two.className = "two";
     const why = document.createElement("div");
-    why.innerHTML = `<h3>Why digital wins: the S-curve</h3>
-      <p class="note">The digital stage's <em>transfer curve</em> maps input voltage to output voltage.
-      It is steep in the middle and flat at the ends, so a slightly-off 1 comes out
-      as a cleaner 1. The <em>noise margin</em> is how much noise a valid output can pick up
-      and still be read correctly by the next stage.</p>`;
+    why.innerHTML = `<h3>${t("noise.whyTitle")}</h3>
+      <p class="note">${t("noise.whyHtml")}</p>`;
     this.curve = svg("svg", { viewBox: "0 0 260 230", role: "img" });
     two.append(why, this.curve);
     fig.append(controls, wide(this.chart), this.readout, two);
@@ -163,19 +158,19 @@ export class NoiseChain extends Demo {
       "text",
       { x: W - PAD.r - 6, y: y(1.22), "text-anchor": "end", class: "muted" },
       p,
-      "reads as 1",
+      t("noise.reads1"),
     );
     svg(
       "text",
       { x: W - PAD.r - 6, y: y(0.5) + 4, "text-anchor": "end", class: "muted" },
       p,
-      "unreliable zone",
+      t("noise.unreliable"),
     );
     svg(
       "text",
       { x: W - PAD.r - 6, y: y(-0.22), "text-anchor": "end", class: "muted" },
       p,
-      "reads as 0",
+      t("noise.reads0"),
     );
     for (const v of [0, 0.5, 1]) {
       svg(
@@ -190,12 +185,12 @@ export class NoiseChain extends Demo {
         `${v} V`,
       );
     }
-    svg("text", { x: PAD.l, y: H - 8, class: "muted" }, p, "sender");
+    svg("text", { x: PAD.l, y: H - 8, class: "muted" }, p, t("noise.sender"));
     svg(
       "text",
       { x: W - PAD.r, y: H - 8, "text-anchor": "end", class: "muted" },
       p,
-      `stage ${this.stages}`,
+      t("noise.stageN", { n: this.stages }),
     );
     const line = (vals: number[]) =>
       vals
@@ -223,21 +218,28 @@ export class NoiseChain extends Demo {
     const last = (vals: number[]) => vals[vals.length - 1] ?? 0;
     const verdict = (v: number) => {
       const b = readBit(v);
-      return `${b} ${b === this.bit ? "✓ correct" : "✗ wrong"} (${v.toFixed(2)} V)`;
+      return `${b} ${t(b === this.bit ? "noise.correct" : "noise.wrong")} (${v.toFixed(2)} V)`;
     };
     const a = last(run.analog);
     const d = last(run.digital);
     p.setAttribute(
       "aria-label",
-      `Sending ${this.bit} through ${this.stages} stages. Analog chain ends at ${a.toFixed(2)} volts; digital chain ends at ${d.toFixed(2)} volts.`,
+      t("noise.label", {
+        bit: this.bit,
+        n: this.stages,
+        a: a.toFixed(2),
+        d: d.toFixed(2),
+      }),
     );
     const rates = errorRates({ stages: this.stages, noise: this.noise }, 1000);
     const out = (sel: string) =>
       this.readout.querySelector(`[${sel}]`) as HTMLOutputElement;
     out("data-a").value = verdict(a);
     out("data-d").value = verdict(d);
-    out("data-e").value =
-      `analog ${Math.round(rates.analog * 1000)}, digital ${Math.round(rates.digital * 1000)}`;
+    out("data-e").value = t("noise.errorCounts", {
+      a: Math.round(rates.analog * 1000),
+      d: Math.round(rates.digital * 1000),
+    });
   }
 
   private drawCurve(): void {
@@ -250,7 +252,11 @@ export class NoiseChain extends Demo {
     const y = (v: number) => oy - v * s;
     p.setAttribute(
       "aria-label",
-      `Transfer curve of the digital stage. Inputs below ${m.vil.toFixed(2)} volts read as 0, inputs above ${m.vih.toFixed(2)} read as 1. Noise margin about ${m.nmLow.toFixed(2)} volts.`,
+      t("noise.curveLabel", {
+        vil: m.vil.toFixed(2),
+        vih: m.vih.toFixed(2),
+        nm: m.nmLow.toFixed(2),
+      }),
     );
     const grid = svg("g", { class: "grid" }, p);
     svg("line", { x1: x(0), x2: x(1), y1: y(0), y2: y(0) }, grid);
@@ -275,7 +281,7 @@ export class NoiseChain extends Demo {
       "text",
       { x: x(0.5), y: oy + 28, "text-anchor": "middle", class: "muted" },
       p,
-      "input voltage →",
+      t("noise.inAxis"),
     );
     svg(
       "text",
@@ -289,13 +295,18 @@ export class NoiseChain extends Demo {
       p,
       "0 V",
     );
-    svg("text", { x: x(0.02), y: y(0.98), class: "muted" }, p, "output ↑");
+    svg(
+      "text",
+      { x: x(0.02), y: y(0.98), class: "muted" },
+      p,
+      t("noise.outAxis"),
+    );
     // Lower-right corner is empty (the curve is near 1 V there).
     svg(
       "text",
       { x: x(1), y: y(0.3), "text-anchor": "end" },
       p,
-      "noise margin",
+      t("noise.margin"),
     );
     svg(
       "text",

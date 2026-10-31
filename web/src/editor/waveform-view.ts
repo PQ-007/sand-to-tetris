@@ -3,6 +3,7 @@
 // values hatched regions marked X, so shape and text carry the meaning,
 // not colour alone.
 import { svg } from "../components/kit";
+import { t } from "../i18n";
 import { segments, shortValue, type Signal } from "./waveform";
 
 const LABEL_W = 64;
@@ -35,7 +36,10 @@ export function drawWaveform(
     width,
     height,
     role: "img",
-    "aria-label": `Waveform of ${signals.map((s) => s.name).join(", ")} over ${steps} steps. The same values are listed in the table.`,
+    "aria-label": t("wave.label", {
+      names: signals.map((x) => x.name).join(", "),
+      n: steps,
+    }),
   });
   const defs = svg("defs", {}, root);
   const hatch = svg(
@@ -79,7 +83,7 @@ export function drawWaveform(
         { x: x(i), y: 0, width: STEP_W, height, class: "wave-hit" },
         col,
       );
-      svg("title", {}, hit, `Replay up to step ${i + first}`);
+      svg("title", {}, hit, t("wave.replay", { n: i + first }));
       hit.addEventListener("click", () => opts.pick?.(i));
     }
   }

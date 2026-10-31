@@ -60,6 +60,10 @@ export interface LevelInfo {
 export interface Problem {
   severity: "error" | "warning";
   message: string;
+  /** Kind of problem (e.g. `output-unconnected`) and the values its message
+   * mentions, for showing it in the learner's language. */
+  code: string;
+  args: Record<string, string>;
   parts: string[];
   ports: string[];
 }

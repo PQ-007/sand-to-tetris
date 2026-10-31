@@ -1,5 +1,6 @@
 // What the right-click (context) menu offers for each thing on the canvas.
 // Pure: the play page maps each entry's id to the edit it performs.
+import { t } from "../i18n";
 import type { Design, Endpoint } from "../sim/types";
 import { endpointKey, endpointLabel, sameEndpoint, wireCount } from "./model";
 import type { Point } from "./geometry";
@@ -46,39 +47,48 @@ export function menuFor(
       const part = ctx.design.parts.find((p) => p.id === target.id);
       const kind = part?.kind ?? "";
       const name =
-        ctx.tools.find((t) => t.kind === kind)?.label ?? kind.toUpperCase();
+        ctx.tools.find((tool) => tool.kind === kind)?.label ??
+        kind.toUpperCase();
       const entries: (MenuEntry | "separator")[] = [];
       if (ctx.components.has(kind) && ctx.canLookInside(target.id))
         entries.push({
           id: "look-inside",
-          label: "Look inside",
+          label: t("menu.lookInside"),
           hint: "Enter",
         });
       if (ctx.hasOptions(target.id))
-        entries.push({ id: "options", label: "Options…" });
+        entries.push({ id: "options", label: t("menu.options") });
       if (entries.length) entries.push("separator");
       entries.push(
-        { id: "connect", label: "Connect…" },
+        { id: "connect", label: t("menu.connect") },
         {
           id: "disconnect",
-          label: "Disconnect…",
+          label: t("menu.disconnect"),
           disabled: wireCount(ctx.design, { part: target.id }) === 0,
         },
-        { id: "duplicate", label: "Duplicate" },
+        { id: "duplicate", label: t("menu.duplicate") },
         "separator",
-        { id: "delete", label: "Delete", hint: "Del", danger: true },
+        { id: "delete", label: t("menu.delete"), hint: "Del", danger: true },
       );
       return { title: `${target.id} (${name})`, entries };
     }
     case "wire": {
       const w = ctx.design.wires[target.index];
       const title = w
-        ? `Wire ${endpointLabel(w.from, ctx.inputs)} — ${endpointLabel(w.to, ctx.inputs)}`
-        : "Wire";
+        ? t("menu.wireTitle", {
+            from: endpointLabel(w.from, ctx.inputs),
+            to: endpointLabel(w.to, ctx.inputs),
+          })
+        : t("menu.wire");
       return {
         title,
         entries: [
-          { id: "delete", label: "Delete wire", hint: "Del", danger: true },
+          {
+            id: "delete",
+            label: t("menu.deleteWire"),
+            hint: "Del",
+            danger: true,
+          },
         ],
       };
     }
@@ -89,40 +99,45 @@ export function menuFor(
       if (isInput)
         entries.push({
           id: "flip",
-          label: bus ? "Set value…" : "Flip 0 ↔ 1",
+          label: t(bus ? "menu.setValue" : "menu.flip"),
           hint: "Enter",
         });
       entries.push(
-        { id: "connect", label: "Connect…" },
+        { id: "connect", label: t("menu.connect") },
         {
           id: "disconnect",
-          label: "Disconnect…",
+          label: t("menu.disconnect"),
           disabled: wireCount(ctx.design, { port: target.name }) === 0,
         },
         {
           id: "reset-port",
-          label: "Move back to the edge",
+          label: t("menu.reset"),
           disabled: !ctx.design.port_pos?.[target.name],
         },
       );
       return {
-        title: `${isInput ? "Input" : "Output"} ${target.name}`,
+        title: t(isInput ? "menu.input" : "menu.output", { name: target.name }),
         entries,
       };
     }
     case "canvas":
       return {
-        title: "Canvas",
+        title: t("menu.canvas"),
         entries: [
-          ...ctx.tools.map((t) => ({
-            id: `add:${t.kind}`,
-            label: `Add ${t.label} here`,
+          ...ctx.tools.map((tool) => ({
+            id: `add:${tool.kind}`,
+            label: t("menu.addHere", { name: tool.label }),
           })),
           "separator",
-          { id: "undo", label: "Undo", hint: "Ctrl+Z", disabled: !ctx.canUndo },
+          {
+            id: "undo",
+            label: t("menu.undo"),
+            hint: "Ctrl+Z",
+            disabled: !ctx.canUndo,
+          },
           {
             id: "redo",
-            label: "Redo",
+            label: t("menu.redo"),
             hint: "Ctrl+Shift+Z",
             disabled: !ctx.canRedo,
           },
@@ -139,12 +154,12 @@ const ownedBy = (e: Endpoint, o: Owner) =>
     ? "part" in e && e.part === o.part
     : "port" in e && e.port === o.port;
 
-const wires = (n: number) => (n === 1 ? "1 wire" : `${n} wires`);
+const wires = (n: number) => t("menu.wireCount", { n });
 
 /** Step one of connecting a part: which of its pins. */
 export function pinMenu(id: string, pins: string[], design: Design): Menu {
   return {
-    title: `Connect which pin of ${id}?`,
+    title: t("menu.whichPin", { id }),
     entries: pins.map((pin) => {
       const n = wireCount(design, { part: id }, pin);
       return n
@@ -181,7 +196,9 @@ export function connectMenu(
   const ports = free.filter((e) => "port" in e).map(entry);
   const pins = free.filter((e) => "part" in e).map(entry);
   return {
-    title: `Connect ${"port" in from ? from.port : `${from.part}.${from.pin}`} to…`,
+    title: t("menu.connectTo", {
+      from: "port" in from ? from.port : `${from.part}.${from.pin}`,
+    }),
     entries: [
       ...ports,
       ...(ports.length && pins.length ? ["separator" as const] : []),
@@ -211,9 +228,15 @@ export function disconnectMenu(
       label: "part" in mine ? `${mine.pin} — ${label}` : label,
     });
   });
-  entries.push("separator", { id: "all", label: "All wires", danger: true });
+  entries.push("separator", {
+    id: "all",
+    label: t("menu.allWires"),
+    danger: true,
+  });
   return {
-    title: `Disconnect a wire from ${"part" in owner ? owner.part : owner.port}`,
+    title: t("menu.disconnectFrom", {
+      name: "part" in owner ? owner.part : owner.port,
+    }),
     entries,
   };
 }

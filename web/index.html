@@ -10,7 +10,7 @@
     <title>Sand to Tetris</title>
   </head>
   <body>
-    <a class="skip-link" href="#app">Skip to content</a>
+    <a class="skip-link" href="#app" data-text="site.skip">Skip to content</a>
     <header class="site-header">
       <a class="brand" href="#/">
         <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
@@ -19,13 +19,23 @@
           <rect x="9" y="7" width="6" height="6" rx="1" />
           <rect x="16" y="14" width="6" height="6" rx="1" />
         </svg>
-        <span>Sand to Tetris</span>
+        <span data-text="site.name">Sand to Tetris</span>
       </a>
       <nav aria-label="Site" class="site-nav">
-        <a href="#/" data-nav="learn">Learn</a>
-        <a href="#/levels" data-nav="build">Build</a>
-        <a href="#/glossary" data-nav="glossary">Glossary</a>
+        <a href="#/" data-nav="learn" data-text="nav.learn">Learn</a>
+        <a href="#/levels" data-nav="build" data-text="nav.build">Build</a>
+        <a href="#/glossary" data-nav="glossary" data-text="nav.glossary"
+          >Glossary</a
+        >
       </nav>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" data-lang="en" lang="en" title="English">
+          EN
+        </button>
+        <button type="button" data-lang="mn" lang="mn" title="Монгол">
+          МН
+        </button>
+      </div>
       <s2t-core-status class="core-status"></s2t-core-status>
     </header>
     <main id="app"></main>

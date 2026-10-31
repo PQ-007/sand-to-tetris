@@ -1,9 +1,10 @@
 // Hover/focus cards for glossary links (<a class="term" data-term="...">).
 // The link itself still goes to the glossary page, so nothing depends on
 // hovering; the card is a shortcut for mouse and keyboard users.
-import { glossary } from "virtual:s2t-content";
+import { site } from "../text";
 
-const byId = new Map(glossary.map((g) => [g.id, g]));
+/** The glossary entry for a term id, in the current language. */
+const entryFor = (id: string) => site().glossary.find((g) => g.id === id);
 
 export function installGlossaryPopover(root: HTMLElement): void {
   const card = document.createElement("div");
@@ -22,7 +23,7 @@ export function installGlossaryPopover(root: HTMLElement): void {
   };
 
   const show = (link: HTMLAnchorElement) => {
-    const entry = byId.get(link.dataset.term ?? "");
+    const entry = entryFor(link.dataset.term ?? "");
     if (!entry) return;
     current?.removeAttribute("aria-describedby");
     current = link;

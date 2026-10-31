@@ -16,6 +16,7 @@
 // Every wire shows its value as text (0, 1, Z, X), not just colour, and
 // every transistor says "on" or "off".
 import { svg } from "../components/kit";
+import { t, type Key } from "../i18n";
 import { connectionSummary, type MenuTarget } from "./actions";
 import type { Design, Endpoint, Part, SimView, Value } from "../sim/types";
 import {
@@ -150,7 +151,7 @@ export class CircuitCanvas {
       viewBox: `0 0 ${CANVAS.width} ${CANVAS.height}`,
       class: "circuit",
       role: "application",
-      "aria-label": "Circuit canvas",
+      "aria-label": t("canvas.label"),
       tabindex: 0,
     });
     this.el.addEventListener("pointerdown", (e) => this.onDown(e));
@@ -349,7 +350,7 @@ export class CircuitCanvas {
   /** "Wired: gate: input a. " for screen readers, or "Not wired. ". */
   private wiredText(owner: { part: string } | { port: string }): string {
     const s = connectionSummary(this.props.design, owner, this.props.inputs);
-    return s ? `Wired: ${s}. ` : "Not wired. ";
+    return s ? t("canvas.wired", { list: s }) : t("canvas.notWired");
   }
 
   private value(e: Endpoint): Value | undefined {
@@ -453,7 +454,7 @@ export class CircuitCanvas {
         "data-part": id,
         tabindex: 0,
         role: "button",
-        "aria-label": `${name} ${id}${state ? `, ${state}` : ""}${shorted ? ", part of a short circuit" : ""}. ${this.wiredText({ part: id })}Arrow keys move it, Delete removes it, the menu key shows more actions.`,
+        "aria-label": `${name} ${id}${state ? `, ${stateText(state)}` : ""}${shorted ? t("canvas.partShort") : ""}. ${this.wiredText({ part: id })}${t("canvas.partKeys")}`,
       },
       this.el,
     );
@@ -481,7 +482,12 @@ export class CircuitCanvas {
         line("M-4,-16 H10 V-30");
         line("M-4,16 H10 V30");
         svg("text", { x: 16, y: -3, class: "part-label" }, g, id);
-        svg("text", { x: 16, y: 12, class: "part-state" }, g, state ?? "");
+        svg(
+          "text",
+          { x: 16, y: 12, class: "part-state" },
+          g,
+          state ? stateText(state) : "",
+        );
         break;
       }
       case "vdd":
@@ -520,7 +526,9 @@ export class CircuitCanvas {
             class: "part-label",
           },
           g,
-          `${kind === "split" ? "Split" : "Join"} ${part.width ?? ""}`,
+          t(kind === "split" ? "canvas.split" : "canvas.join", {
+            w: part.width ?? "",
+          }),
         );
         for (const pin of shape.pins) {
           if (pin.pin === "in" || pin.pin === "out") continue;
@@ -574,7 +582,9 @@ export class CircuitCanvas {
               class: "pin-label",
             },
             g,
-            part.shared?.includes(pin.pin) ? `${pin.pin} (shared)` : pin.pin,
+            part.shared?.includes(pin.pin)
+              ? t("canvas.shared", { pin: pin.pin })
+              : pin.pin,
           );
         }
       }
@@ -612,7 +622,11 @@ export class CircuitCanvas {
         "title",
         {},
         hit,
-        `${id}.${pin.pin}${bits > 1 ? ` (${bits} bits)` : ""} = ${v ?? "–"}. Drag to another pin to wire it.`,
+        t("canvas.pinTitle", {
+          pin: `${id}.${pin.pin}`,
+          bits: bits > 1 ? t("canvas.pinBits", { n: bits }) : "",
+          value: v ?? "–",
+        }),
       );
       svg(
         "circle",
@@ -653,7 +667,15 @@ export class CircuitCanvas {
             : {
                 tabindex: 0,
                 role: "button",
-                "aria-label": `${isIn ? "Input" : "Output"} ${name} = ${value}. ${this.wiredText({ port: name })}${isIn ? (bus ? "Enter edits its value; " : "Enter flips it; ") : ""}arrow keys move it, the menu key shows more actions.`,
+                "aria-label": t(
+                  isIn ? "canvas.portLabelIn" : "canvas.portLabelOut",
+                  {
+                    name,
+                    value,
+                    wired: this.wiredText({ port: name }),
+                    bus: bus ? 1 : 0,
+                  },
+                ),
               }),
         },
         this.el,
@@ -672,15 +694,15 @@ export class CircuitCanvas {
         g,
         label,
       );
-      if (!isIn) svg("title", {}, g, `Output ${name}: drag to move`);
+      if (!isIn) svg("title", {}, g, t("canvas.outTitle", { name }));
       if (isIn)
         svg(
           "title",
           {},
           g,
           bus
-            ? `Input ${name}: click to type a number, drag to move`
-            : `Input ${name}: click to flip between 0 and 1, drag to move`,
+            ? t("canvas.inTitleBus", { name })
+            : t("canvas.inTitle", { name }),
         );
       const pending =
         this.pending && "port" in this.pending && this.pending.port === name;
@@ -1140,3 +1162,8 @@ export function valueClass(v: string): string {
 
 const zoomStepUp = (z: number) => zoomStep(z, 1);
 const zoomStepDown = (z: number) => zoomStep(z, -1);
+
+/** A transistor's state ("on", "off", "maybe") in the current language. */
+function stateText(state: string): string {
+  return t(`state.${state}` as Key);
+}
