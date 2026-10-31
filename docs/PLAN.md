@@ -115,7 +115,7 @@ sand-to-tetris/
 | **M0** ✓ | Scaffold: Cargo workspace, Vite app, CI, CLAUDE.md, one `test` command | CI runs and the empty site deploys |
 | **M1** ✓ | Chapter 0: content pipeline, prose, 5 demos (p-n junction and MOSFET are separate), glossary, sources | Chapter 0 is readable and interactive online |
 | **M2** ✓ | Switch-level core: netlist format, engine, checker, CLI, Layer 1 levels with reference solutions (NOT, NAND, NOR, optional AND) | `cargo test` passes NOT, NAND and NOR checks |
-| **M3** | Layer 1 in the browser: WASM bridge, editor, toolbox, level map, live truth table, look-inside, keyboard mode, Chapter 1 | You can build a CMOS NAND by dragging, pass Check and unlock it |
+| **M3** ✓ | Layer 1 in the browser: WASM bridge, editor, toolbox, level map, live truth table, look-inside, keyboard mode, Chapter 1 | You can build a CMOS NAND by dragging, pass Check and unlock it |
 | M4 | Layer 2: gate-level engine, buses, splitters, Repeat ×N, fast-model swap; mux, decoder, adders, 16-bit ALU | |
 | M5 | Layer 3: latches → flip-flops → registers → RAM → PC, plus a waveform view | |
 | M6 | **ISA designed together with the user** → written spec | |

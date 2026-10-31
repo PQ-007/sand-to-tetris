@@ -214,7 +214,17 @@ class PlayPage {
     toolbar.append(this.undoBtn, this.redoBtn);
     const wrap = el("div", { class: "canvas-wrap" });
     wrap.append(this.canvas.el);
-    bench.append(toolbar, wrap, this.statusLine, this.inside);
+    bench.append(
+      toolbar,
+      el(
+        "p",
+        { class: "narrow-note" },
+        "The editor works best on a larger screen. On a phone, scroll the canvas sideways, or use the parts and connections panel below.",
+      ),
+      wrap,
+      this.statusLine,
+      this.inside,
+    );
     bench.append(
       el(
         "p",

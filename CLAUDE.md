@@ -13,7 +13,8 @@ Learners build components in a drag-and-drop editor, one level per component. A 
 - M0 (scaffold): done.
 - M1 (Chapter 0): done. Content pipeline, Chapter 0 prose, five demos, glossary, cited sources.
 - M2 (switch-level core): done. Netlist format + validation + layering, switch-level engine, checker, `s2t check`, Layer 1 levels NOT/NAND/NOR (+ optional AND) with references.
-- Next: M3 (Layer 1 in the browser: WASM bridge, drag-and-drop editor, level map, Chapter 1). Keep this section up to date when a milestone lands.
+- M3 (Layer 1 in the browser): done. WASM API, drag-and-drop editor with live 0/1/Z/X, level map, unlocking, IndexedDB progress + export/import, look-inside, keyboard panel, Chapter 1. **The first vertical slice (M0-M3) is complete.**
+- Next: M4 (Layer 2: gate-level engine, buses, fast-model swap, combinational chips). Keep this section up to date when a milestone lands.
 
 ## Commands
 
@@ -37,7 +38,9 @@ cargo run -p s2t-cli -- check-all hdl/levels                      # every refere
 - `wasm-bindgen` (crate, pinned with `=` in `Cargo.toml`) and `wasm-bindgen-cli` (`scripts/wasm-config.mjs`, `.github/workflows/ci.yml`) must be the **same version**. Bump all three together.
 - The WASM build output `web/src/sim/pkg/` is generated and git-ignored. Run `npm run build:wasm` before vitest or tsc if it's missing.
 - Prettier ignores `*.md` on purpose (prose and tables are hand-formatted). It does format `docs/*.yaml`.
-- To stop a background `vite preview`, use `pkill -f "vite/bin"` or kill by port: `pkill -f "vite preview"` also matches (and kills) the shell running it.
+- To stop a background preview server, run a pkill pattern like `"[v]ite preview"` from a script file or a short command: pkill -f matches against full command lines, so if the shell command itself contains the plain words it kills its own shell.
+- Commit messages: write them to a file and use `git commit -F`; backticks inside a double-quoted `-m` run as shell commands.
+- Browser checks: Playwright scripts in the scratchpad drive the built site (`npm run build` with `BASE_PATH=/sand-to-tetris/`, then serve `web/dist` with Vite's preview command and `--base /sand-to-tetris/`). Click pins by coordinates (`page.mouse`), not `locator.click()`: the visible pin dot ignores pointer events and an invisible hit circle sits on top.
 - CI (`.github/workflows/ci.yml`) runs test, lint and build on every push and PR, and deploys `web/dist` to GitHub Pages on pushes to `main`.
 
 ## Architecture (big picture)
@@ -47,8 +50,11 @@ cargo run -p s2t-cli -- check-all hdl/levels                      # every refere
   - `s2t-switch`: switch-level engine. Values 0/1/Z/X; NMOS on with gate 1, PMOS with gate 0; nets joined by conducting switches take their drivers' value; 0+1 in one group = short (reported with parts); no driver = Z (no charge storage); X/Z gates solved both ways, disagreement = X; iterate from all-X to a fixpoint.
   - `s2t-checker`: parses truth tables (`a b | out`), runs every row, returns a serde-serializable `Report` with `Diagnostic`s (row, inputs, expected/actual, kind wrong/floating/short/unknown, message, authored hint, parts/ports). Learner mistakes go in the report; only a broken level definition is an `Err`.
   - Planned: **gate-level** engine (Layers 2–3: event-driven, unit delay, so feedback latches work) and **fast models** (behavioral, identical pins).
-  - `s2t-wasm`: a deliberately small JS API (load, set inputs, step, read, check). Keep it small.
-- `web/`: TypeScript + Vite, no framework. The schematic editor (M3) will be custom SVG; progress and designs will live in IndexedDB.
+  - `s2t-checker::api`: the browser API, JSON in/out, tested natively: `level_info(toml)`, `check(library, level, design)`, `simulate(library, level, design, inputs)` returning a `SimView` (value at every visible endpoint, transistor on/off/maybe, shorts, outputs). A *library* is `{"levels": [toml...], "unlocked": [designs...]}`. Live preview uses `flatten_preview` (an unconnected output doesn't block it; unknown/locked parts do).
+  - `s2t-wasm`: 1:1 wrappers over `api` returning JSON strings (errors become JS exceptions). Keep it that thin.
+- `web/`: TypeScript + Vite, no framework.
+  - Game: `src/sim/core.ts` (typed WASM wrapper; types in `sim/types.ts` mirror the Rust JSON, and `test/core.test.ts` drives the real .wasm to keep them in sync), `src/game.ts` (pure: level order, open/locked/passed/broken statuses with re-checking in dependency order, toolbox and library for a level), `src/app.ts` (loads core + levels + progress), `src/progress.ts` (IndexedDB, memory fallback, export/import), `src/levels.ts` (map), `src/play.ts` (level page), `src/editor/` (`model.ts` pure edits + undo, `geometry.ts` pin/port layout and routing, `canvas.ts` the SVG editor). Routes `#/levels`, `#/play/<id>`.
+  - Levels reach the site via the content plugin's `levelFiles` (raw `level.toml`, parsed by WASM `levelInfo`). Never `reference.json`.
   - A demo = a pure, tested model in `web/src/demos/*.ts` (physics, data, math; no DOM) + a thin Web Component in `web/src/components/*.ts` extending `Demo` from `kit.ts` (shadow DOM, shared styles, `svg()`, `chips()`, `slider()`, `wide()`). Register the tag in `known-tags.ts` and import it in `components/demos.ts`; a test checks the registry matches `customElements.define` calls.
   - Colours are CSS tokens on `:root` in `web/src/style.css` (light + dark); shadow DOM inherits them. Demos must give every state a text label, an `aria-label` on each diagram, and respect `prefers-reduced-motion`.
 - `docs/`: `chapters/NN-slug.md` (one per layer, YAML frontmatter `number`/`title`/`summary`), `glossary.yaml`, `sources.yaml`.

@@ -985,3 +985,15 @@ svg.circuit.read-only .part-hit,
 svg.circuit.read-only .pin-hit {
   cursor: default;
 }
+
+.narrow-note {
+  display: none;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .narrow-note {
+    display: block;
+  }
+}
