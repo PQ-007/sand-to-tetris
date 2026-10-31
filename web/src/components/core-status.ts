@@ -7,10 +7,11 @@ import { getCoreVersion } from "../sim/core";
 export class CoreStatus extends HTMLElement {
   connectedCallback(): void {
     this.setAttribute("role", "status");
-    this.textContent = "Loading simulator core…";
+    this.textContent = "Loading simulator…";
     getCoreVersion().then(
       (version) => {
-        this.textContent = `Simulator core ${version} loaded`;
+        this.textContent = `Simulator ${version}`;
+        this.title = `Simulator core ${version} loaded`;
         this.dataset.state = "ok";
       },
       (err: unknown) => {

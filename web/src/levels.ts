@@ -70,30 +70,47 @@ function render(root: HTMLElement, a: App): void {
                  <p class="swap-result" data-swap-result="${lv.id}" aria-live="polite"></p>`
               : "";
           return `<li class="level-card" data-status="${st}">
-            <h3>${st === "locked" ? title : `<a href="${playHref(lv.id)}">${title}</a>`}</h3>
-            <p class="level-status">${STATUS_TEXT[st]}</p>
+            <div class="level-top">
+              <h3>${st === "locked" ? title : `<a href="${playHref(lv.id)}">${title}</a>`}</h3>
+              <span class="pill level-status pill-${st}">${STATUS_TEXT[st]}</span>
+            </div>
             <p>${detail}</p>
             ${swap}
           </li>`;
         })
         .join("");
-      return `<section class="layer"><h2>Layer ${layer}: ${esc(LAYER_NAMES[layer] ?? "")}</h2><ol class="level-cards">${cards}</ol></section>`;
+      const inLayer = ordered.filter((l) => l.info.level.layer === layer);
+      const done = inLayer.filter(
+        (l) => a.status[l.info.level.id] === "passed",
+      ).length;
+      return `<section class="layer">
+        <div class="section-head"><h2>Layer ${layer}: ${esc(LAYER_NAMES[layer] ?? "")}</h2>
+        <span class="muted">${done} of ${inLayer.length} passed</span></div>
+        <ol class="level-cards">${cards}</ol></section>`;
     })
     .join("");
   const passed = Object.values(a.status).filter((s) => s === "passed").length;
+  const pct = a.levels.length
+    ? Math.round((passed / a.levels.length) * 100)
+    : 0;
   root.innerHTML = `
-    <h1 tabindex="-1">Build your computer</h1>
-    <p class="lead">Each level is one component. Pass it, and it joins your toolbox for the levels after it.
-      ${passed} of ${a.levels.length} passed.</p>
-    ${sections}
-    <section class="save-box">
-      <h2>Your progress</h2>
-      <p>${a.store.persistent ? "Saved in this browser automatically." : "This browser isn't letting the site save data, so export your progress before closing the tab."}
-      To move it to another browser or keep a backup, export it to a file.</p>
-      <p><button type="button" data-export>Export progress</button>
-      <label class="file-button">Import progress<input type="file" accept="application/json,.json" data-import></label></p>
-      <p class="import-status" aria-live="polite"></p>
-    </section>`;
+    <div class="page-head">
+      <div>
+        <h1 tabindex="-1">Build your computer</h1>
+        <p class="lead">Each level is one component. Pass it, and it joins your toolbox for the levels after it.</p>
+      </div>
+      <section class="save-box" aria-labelledby="progress-h">
+        <h2 id="progress-h">Your progress</h2>
+        <p class="meter-label"><strong>${passed} of ${a.levels.length}</strong> levels passed</p>
+        <div class="meter" role="progressbar" aria-labelledby="progress-h" aria-valuemin="0" aria-valuemax="${a.levels.length}" aria-valuenow="${passed}" aria-valuetext="${passed} of ${a.levels.length} passed"><span style="width:${pct}%"></span></div>
+        <p class="help">${a.store.persistent ? "Saved in this browser automatically." : "This browser isn't letting the site save data, so export your progress before closing the tab."}
+        Export a file to back it up or move it to another browser.</p>
+        <p class="save-actions"><button type="button" data-export>Export</button>
+        <label class="file-button">Import<input type="file" accept="application/json,.json" data-import></label></p>
+        <p class="import-status" aria-live="polite"></p>
+      </section>
+    </div>
+    ${sections}`;
   root.querySelectorAll<HTMLButtonElement>("[data-swap]").forEach((btn) => {
     btn.addEventListener("click", () => swap(root, a, btn.dataset.swap ?? ""));
   });

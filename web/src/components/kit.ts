@@ -41,7 +41,7 @@ export const BASE = sheet(`
   button, select { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 0.375rem; padding: 0.3rem 0.7rem; cursor: pointer; }
   button[aria-pressed=true], .chip input:checked + span { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
   :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-  a { color: var(--accent); }
+  a { color: var(--link); }
   .chips { display: flex; flex-wrap: wrap; gap: 0.375rem; border: 0; padding: 0; margin: 0 0 0.75rem; }
   .chips legend { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.375rem; }
   .chip { position: relative; }

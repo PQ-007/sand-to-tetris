@@ -4,7 +4,7 @@ import { Demo, sheet, svg, wide } from "./kit";
 const CSS = sheet(`
   .row { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
   .wire { stroke: var(--muted); stroke-width: 3; fill: none; }
-  .wire.live { stroke: var(--accent); }
+  .wire.live { stroke: var(--wire-1); }
   .lamp { fill: var(--bg); stroke: var(--text); stroke-width: 2; }
   .lamp.on { fill: var(--channel); }
   .switch-btn { display: flex; gap: 0.5rem; margin: 0.5rem 0 0.75rem; }

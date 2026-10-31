@@ -24,6 +24,8 @@ export interface Design {
   component: string;
   parts: Part[];
   wires: Wire[];
+  /** Editor-only: where moved ports are drawn, by port name. */
+  port_pos?: Record<string, [number, number]>;
 }
 
 export interface Level {

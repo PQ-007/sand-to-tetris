@@ -1,17 +1,37 @@
-// A level page: goal, toolbox, canvas, inputs, live truth table, Check,
-// and a keyboard/screen-reader panel listing every part and connection.
+// A level page: goal, toolbox, canvas, inputs, live truth table and Check.
+// Keyboard and screen-reader users work on the canvas itself: parts and
+// ports are focusable, say what they're wired to, and the actions menu
+// (menu key / Shift+F10) connects and disconnects them.
 import { fastIds, getApp, levelEntry, saveDesign, type App } from "./app";
+import {
+  connectMenu,
+  disconnectMenu,
+  menuFor,
+  pinMenu,
+  type MenuContext,
+  type MenuTarget,
+} from "./editor/actions";
 import { CircuitCanvas, type CanvasProps } from "./editor/canvas";
-import { clampToCanvas, freeSpot, snap, type Point } from "./editor/geometry";
+import {
+  clampToCanvas,
+  freeSpot,
+  snap,
+  zoomStep,
+  type Point,
+} from "./editor/geometry";
+import { openMenu } from "./editor/menu";
 import {
   addPart,
   addWire,
+  disconnect,
+  duplicatePart,
   emptyDesign,
   endpointKey,
   endpointLabel,
   History,
   removePart,
   removeWire,
+  resetPort,
   updatePart,
 } from "./editor/model";
 import { orderLevels, playLibrary, toolbox, type ToolboxItem } from "./game";
@@ -20,6 +40,7 @@ import { check, simulate } from "./sim/core";
 import type {
   Design,
   Diagnostic,
+  Endpoint,
   Level,
   LibraryInput,
   Report,
@@ -42,6 +63,16 @@ function el<K extends keyof HTMLElementTagNameMap>(
   for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
   if (text !== undefined) e.textContent = text;
   return e;
+}
+
+/** Message text with `backticked` names shown as code. */
+function rich(text: string): Node[] {
+  return text.split("`").map((part, i) => {
+    if (i % 2 === 0) return document.createTextNode(part);
+    const code = document.createElement("code");
+    code.textContent = part;
+    return code;
+  });
 }
 
 /** Ports of every component kind, for drawing component boxes. */
@@ -107,16 +138,16 @@ export async function mountPlay(
   const a = await getApp();
   const entry = levelEntry(a, levelId);
   if (!entry) {
-    root.innerHTML = `<h1 tabindex="-1">No such level</h1><p><a href="#/levels">Back to the level map</a></p>`;
+    root.innerHTML = `<div class="narrow-page"><h1 tabindex="-1">No such level</h1><p><a href="#/levels">Back to the level map</a></p></div>`;
     return;
   }
   const level = entry.info.level;
   const status = a.status[levelId];
   if (status === "locked") {
     const need = level.requires.filter((r) => a.status[r] !== "passed");
-    root.innerHTML = `<h1 tabindex="-1">${esc(level.name)} is locked</h1>
+    root.innerHTML = `<div class="narrow-page"><h1 tabindex="-1">${esc(level.name)} is locked</h1>
       <p>Pass ${need.map((r) => `<a href="${playHref(r)}">${esc(levelEntry(a, r)?.info.level.name ?? r)}</a>`).join(" and ")} first.</p>
-      <p><a href="#/levels">Back to the level map</a></p>`;
+      <p><a href="#/levels">Back to the level map</a></p></div>`;
     return;
   }
   new PlayPage(root, a, level, entry.info.table);
@@ -140,16 +171,19 @@ class PlayPage {
     class: "editor-status",
     "aria-live": "polite",
   });
+  private statusTimer = 0;
+  private emptyHint = el("p", { class: "canvas-empty" });
+  private zoomLabel = el(
+    "button",
+    { type: "button", title: "Reset to 100% (0)" },
+    "100%",
+  );
   private undoBtn = el("button", { type: "button" }, "Undo");
   private redoBtn = el("button", { type: "button" }, "Redo");
   private inputBox = el("div", { class: "input-toggles" });
   private tableBody = el("tbody");
   private result = el("div", { class: "check-result", "aria-live": "polite" });
   private problemList = el("ul", { class: "problems" });
-  private partsList = el("ul", { class: "kbd-list" });
-  private wiresList = el("ul", { class: "kbd-list" });
-  private fromSelect = el("select", { "aria-label": "Connect from" });
-  private toSelect = el("select", { "aria-label": "Connect to" });
   private inside = el("div", { class: "inside", hidden: "" });
   private stats = el("p", { class: "sim-stats", "aria-live": "polite" });
   private propsBox = el("div", { class: "props" });
@@ -189,6 +223,10 @@ class PlayPage {
           { id, design: this.design, inputs: this.inputs, view: this.view },
         ]),
       message: (t) => this.say(t),
+      menu: (target, at) => this.showMenu(target, at),
+      zoomed: (z) => {
+        this.zoomLabel.textContent = `${Math.round(z * 100)}%`;
+      },
     });
     this.build();
     this.refresh(true);
@@ -205,19 +243,12 @@ class PlayPage {
     const ordered = orderLevels(this.app.levels).map((e) => e.info.level.id);
     const next = ordered[ordered.indexOf(l.id) + 1];
     this.root.innerHTML = `
-      <nav class="crumbs" aria-label="Breadcrumb"><a href="#/levels">Levels</a> › Layer ${l.layer} › ${esc(l.name)}</nav>
-      <h1 tabindex="-1">${esc(l.name)}${l.optional ? ' <span class="badge">side quest</span>' : ""}</h1>
-      <p class="goal">${esc(l.goal.trim())}</p>`;
+      <div class="play-head">
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="#/levels">Levels</a> <span aria-hidden="true">/</span> Layer ${l.layer} <span aria-hidden="true">/</span></nav>
+        <h1 tabindex="-1">${esc(l.name)}${l.optional ? ' <span class="badge">side quest</span>' : ""}</h1>
+        ${next && this.app.status[next] !== "locked" ? `<a class="play-next" href="${playHref(next)}">Next level →</a>` : ""}
+      </div>`;
     this.root.dataset.next = next ?? "";
-    if (!this.app.store.persistent) {
-      this.root.append(
-        el(
-          "p",
-          { class: "notice" },
-          "Your browser isn't letting this site save data, so progress lasts only until you close this tab. Use Export on the level map to keep it.",
-        ),
-      );
-    }
 
     const grid = el("div", { class: "play-grid" });
     const bench = el("section", { class: "bench", "aria-label": "Workbench" });
@@ -226,6 +257,7 @@ class PlayPage {
       role: "toolbar",
       "aria-label": "Toolbox",
     });
+    toolbar.append(el("span", { class: "toolbar-label" }, "Parts"));
     for (const t of this.tools) {
       const b = el(
         "button",
@@ -249,37 +281,55 @@ class PlayPage {
     toolbar.append(el("span", { class: "spacer" }));
     this.undoBtn.addEventListener("click", () => this.undo());
     this.redoBtn.addEventListener("click", () => this.redo());
-    toolbar.append(this.undoBtn, this.redoBtn);
+    this.undoBtn.title = "Undo (Ctrl+Z)";
+    this.redoBtn.title = "Redo (Ctrl+Shift+Z)";
+    toolbar.append(this.undoBtn, this.redoBtn, this.shortcutsButton());
+
+    // The canvas scrolls inside a frame that also holds overlays: the
+    // status pill, the empty-canvas hint and the zoom controls.
+    const frame = el("div", { class: "canvas-frame" });
     const wrap = el("div", { class: "canvas-wrap" });
     wrap.append(this.canvas.el);
+    this.canvas.fillContainer(wrap);
+    frame.append(wrap, this.emptyHint, this.statusLine, this.zoomControls());
+    const footer = el("div", { class: "bench-footer" });
+    footer.append(this.stats);
     bench.append(
-      toolbar,
       el(
         "p",
         { class: "narrow-note" },
-        "The editor works best on a larger screen. On a phone, scroll the canvas sideways, or use the parts and connections panel below.",
+        "The editor works best on a larger screen. On a phone, drag the canvas to pan; the menu key or a right-click shows each part's actions.",
       ),
-      wrap,
-      this.stats,
-      this.statusLine,
+      toolbar,
+      frame,
+      footer,
       this.propsBox,
-      this.inside,
-    );
-    bench.append(
-      el(
-        "p",
-        { class: "help" },
-        "Drag parts from the toolbox. Drag from one pin to another (or click both) to wire them. Click an input on the left to flip it. Double-click a component to look inside. Delete removes the selection; Ctrl+Z undoes.",
-      ),
     );
 
     const side = el("aside", {
       class: "side",
-      "aria-label": "Inputs and tests",
+      "aria-label": "Goal, inputs and tests",
     });
-    side.append(el("h2", {}, "Inputs"), this.inputBox);
-    if (l.inputs.some((p) => this.width(p) > 1)) {
+    const goal = el("section", { class: "side-section goal-box" });
+    goal.append(
+      el("h2", {}, "Goal"),
+      el("p", { class: "goal" }, l.goal.trim()),
+    );
+    side.append(goal);
+    if (!this.app.store.persistent) {
       side.append(
+        el(
+          "p",
+          { class: "notice" },
+          "Your browser isn't letting this site save data, so progress lasts only until you close this tab. Use Export on the level map to keep it.",
+        ),
+      );
+    }
+    const inputs = el("section", { class: "side-section" });
+    inputs.append(el("h2", {}, "Inputs"), this.inputBox);
+    side.append(inputs);
+    if (l.inputs.some((p) => this.width(p) > 1)) {
+      inputs.append(
         el(
           "p",
           { class: "help", id: "bus-help" },
@@ -305,20 +355,24 @@ class PlayPage {
         checkBtn.disabled = false;
       }, 20);
     });
-    side.append(
+    const tests = el("section", { class: "side-section" });
+    const tableWrap = el("div", { class: "table-wrap" });
+    tableWrap.append(table);
+    tests.append(
       el("h2", {}, "Truth table"),
       el(
         "p",
         { class: "help" },
         "Updates live as you wire. Click a row to set those inputs.",
       ),
-      table,
-      checkBtn,
-      this.result,
+      tableWrap,
       this.problemList,
+      this.result,
     );
+    side.append(tests);
     if (l.layer >= 2) {
-      side.append(
+      const runs = el("section", { class: "side-section" });
+      runs.append(
         el("h2", {}, "How parts run"),
         el(
           "p",
@@ -327,11 +381,15 @@ class PlayPage {
         ),
         this.runsAs,
       );
+      side.append(runs);
     }
+    // Check stays in view at the bottom of the panel while it scrolls.
+    const actions = el("div", { class: "side-actions" });
+    actions.append(checkBtn);
+    side.append(actions);
 
     grid.append(bench, side);
-    this.root.append(grid);
-    this.root.append(this.keyboardPanel());
+    this.root.append(grid, this.inside);
 
     document.addEventListener("keydown", this.onKeys);
     window.addEventListener(
@@ -341,52 +399,87 @@ class PlayPage {
     );
   }
 
-  private keyboardPanel(): HTMLElement {
-    const details = el("details", { class: "kbd-panel" });
-    details.append(
-      el(
-        "summary",
-        {},
-        "Parts and connections (keyboard and screen-reader view)",
-      ),
+  private zoomControls(): HTMLElement {
+    const box = el("div", {
+      class: "zoom",
+      role: "group",
+      "aria-label": "Zoom",
+    });
+    const out = el("button", { type: "button", title: "Zoom out (−)" }, "−");
+    const into = el("button", { type: "button", title: "Zoom in (+)" }, "+");
+    const fit = el(
+      "button",
+      { type: "button", title: "Fit the circuit in view" },
+      "Fit",
     );
-    const form = el("form", { class: "connect" });
-    const btn = el("button", { type: "submit" }, "Connect");
-    form.append(
-      el("label", {}, "From "),
-      this.fromSelect,
-      el("label", {}, " to "),
-      this.toSelect,
-      btn,
+    out.setAttribute("aria-label", "Zoom out");
+    into.setAttribute("aria-label", "Zoom in");
+    this.zoomLabel.setAttribute("aria-label", "Zoom level; reset to 100%");
+    out.addEventListener("click", () =>
+      this.canvas.setZoom(zoomStep(this.canvas.getZoom(), -1)),
     );
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const all = this.canvas.endpoints();
-      const a = all.find((x) => endpointKey(x) === this.fromSelect.value);
-      const b = all.find((x) => endpointKey(x) === this.toSelect.value);
-      if (!a || !b) return;
-      const next = addWire(this.design, a, b);
-      if (typeof next === "string") this.say(next);
-      else {
-        this.onChange(next, true);
-        this.say(
-          `Connected ${endpointLabel(a, this.level.inputs)} to ${endpointLabel(b, this.level.inputs)}.`,
-        );
+    into.addEventListener("click", () =>
+      this.canvas.setZoom(zoomStep(this.canvas.getZoom(), 1)),
+    );
+    this.zoomLabel.addEventListener("click", () => this.canvas.setZoom(1));
+    fit.addEventListener("click", () => this.canvas.fit());
+    box.append(out, this.zoomLabel, into, fit);
+    return box;
+  }
+
+  /** A "Shortcuts" button that shows every mouse and keyboard control. */
+  private shortcutsButton(): HTMLElement {
+    const wrap = el("div", { class: "shortcuts" });
+    const btn = el(
+      "button",
+      {
+        type: "button",
+        "aria-expanded": "false",
+        "aria-controls": "shortcuts",
+      },
+      "Shortcuts",
+    );
+    const panel = el("div", {
+      class: "shortcuts-panel",
+      id: "shortcuts",
+      hidden: "",
+    });
+    const rows: [string, string][] = [
+      ["Add a part", "Drag it from the toolbox, or click it"],
+      ["Wire two pins", "Drag from one pin to the other, or click both"],
+      ["Move a part, input or output", "Drag it · Tab to it, then arrow keys"],
+      ["Flip an input", "Click it · Enter"],
+      [
+        "More actions (connect, delete…)",
+        "Right-click · menu key or Shift+F10",
+      ],
+      ["Look inside a component", "Double-click it · Enter"],
+      ["Delete", "Delete or Backspace"],
+      ["Undo / redo", "Ctrl+Z / Ctrl+Shift+Z"],
+      ["Pan", "Drag empty canvas · scroll"],
+      ["Zoom", "Ctrl+scroll · + and − · 0 resets"],
+      ["Cancel a wire", "Escape"],
+    ];
+    const dl = el("dl");
+    for (const [what, how] of rows)
+      dl.append(el("dt", {}, what), el("dd", {}, how));
+    panel.append(dl);
+    const set = (open: boolean) => {
+      panel.hidden = !open;
+      btn.setAttribute("aria-expanded", String(open));
+    };
+    btn.addEventListener("click", () => set(panel.hidden));
+    wrap.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !panel.hidden) {
+        set(false);
+        btn.focus();
       }
     });
-    details.append(
-      el(
-        "p",
-        { class: "help" },
-        "Add parts with the toolbox buttons. On the canvas, Tab to a part and use the arrow keys to move it (Shift for bigger steps).",
-      ),
-      el("h3", {}, "Parts"),
-      this.partsList,
-      el("h3", {}, "Connections"),
-      form,
-      this.wiresList,
-    );
-    return details;
+    document.addEventListener("pointerdown", (e) => {
+      if (e.target instanceof Node && !wrap.contains(e.target)) set(false);
+    });
+    wrap.append(btn, panel);
+    return wrap;
   }
 
   // ---- editing --------------------------------------------------------------
@@ -419,6 +512,7 @@ class PlayPage {
         ),
       );
     }
+    if (commit) this.say("");
     this.refresh(commit);
     if (commit) this.scheduleSave();
   }
@@ -433,6 +527,160 @@ class PlayPage {
     this.history.redo();
     this.refresh(true);
     this.scheduleSave();
+  }
+
+  // ---- right-click menu -------------------------------------------------------
+
+  private showMenu(target: MenuTarget, at: { x: number; y: number }): void {
+    const part = (id: string) => this.design.parts.find((p) => p.id === id);
+    const ctx: MenuContext = {
+      design: this.design,
+      inputs: this.level.inputs,
+      outputs: this.level.outputs,
+      components: new Set(Object.keys(this.ports)),
+      canLookInside: (id) => {
+        const kind = part(id)?.kind;
+        return kind !== undefined && Boolean(this.app.progress[kind]?.design);
+      },
+      hasOptions: (id) => {
+        const kind = part(id)?.kind ?? "";
+        return (
+          this.level.layer >= 2 &&
+          (kind === "split" || kind === "join" || Boolean(this.ports[kind]))
+        );
+      },
+      tools: this.tools.map((t) => ({ kind: t.kind, label: t.label })),
+      widths: this.level.widths,
+      canUndo: this.history.canUndo(),
+      canRedo: this.history.canRedo(),
+    };
+    const { title, entries } = menuFor(target, ctx);
+    this.menuAt = at;
+    const active = document.activeElement;
+    openMenu(
+      title,
+      entries,
+      at,
+      (id) => this.runMenu(target, id),
+      active && this.canvas.el.contains(active) ? active : this.canvas.el,
+    );
+  }
+
+  /** Where the last menu opened; follow-up menus open in the same spot. */
+  private menuAt = { x: 0, y: 0 };
+
+  /** Second step of Connect…: pick what to wire `from` to. */
+  private chooseTarget(from: Endpoint): void {
+    const all = this.canvas.endpoints();
+    const m = connectMenu(this.design, from, all, this.level.inputs);
+    openMenu(
+      m.title,
+      m.entries,
+      this.menuAt,
+      (pick) => {
+        const to = all.find((e) => `to:${endpointKey(e)}` === pick);
+        if (!to) return;
+        const next = addWire(this.design, from, to);
+        if (typeof next === "string") this.say(next);
+        else {
+          this.onChange(next, true);
+          this.say(
+            `Connected ${endpointLabel(from, this.level.inputs)} to ${endpointLabel(to, this.level.inputs)}.`,
+          );
+        }
+        this.canvas.el.focus({ preventScroll: true });
+      },
+      this.canvas.el,
+    );
+  }
+
+  /** Disconnect…: pick one wire of a part or port, or all of them. */
+  private chooseWire(owner: { part: string } | { port: string }): void {
+    const m = disconnectMenu(this.design, owner, this.level.inputs);
+    const name = "part" in owner ? owner.part : owner.port;
+    openMenu(
+      m.title,
+      m.entries,
+      this.menuAt,
+      (pick) => {
+        if (pick === "all") {
+          this.onChange(disconnect(this.design, owner), true);
+          this.say(`Disconnected every wire from ${name}.`);
+        } else {
+          this.onChange(removeWire(this.design, Number(pick.slice(5))), true);
+          this.say(`Disconnected a wire from ${name}.`);
+        }
+        this.canvas.el.focus({ preventScroll: true });
+      },
+      this.canvas.el,
+    );
+  }
+
+  private runMenu(target: MenuTarget, action: string): void {
+    const d = this.design;
+    // Keyboard users land back on the canvas after an edit.
+    const back = () => this.canvas.el.focus({ preventScroll: true });
+    if (target.kind === "part") {
+      const id = target.id;
+      if (action === "look-inside") {
+        this.openInside([
+          { id, design: d, inputs: this.inputs, view: this.view },
+        ]);
+      } else if (action === "options") {
+        this.selected = id;
+        this.renderProps();
+        const first = this.propsBox.querySelector<HTMLElement>("select, input");
+        first?.scrollIntoView({ block: "nearest" });
+        first?.focus();
+      } else if (action === "duplicate") {
+        const dup = duplicatePart(d, id);
+        if (dup) {
+          this.onChange(dup.design, true);
+          this.say(`Added ${dup.id}, a copy of ${id}.`);
+        }
+        back();
+      } else if (action === "connect") {
+        const pins = this.canvas.pinsOf(id);
+        const m = pinMenu(id, pins, d);
+        openMenu(m.title, m.entries, this.menuAt, (pick) =>
+          this.chooseTarget({ part: id, pin: pick.slice(4) }),
+        );
+      } else if (action === "disconnect") {
+        this.chooseWire({ part: id });
+      } else if (action === "delete") {
+        this.canvas.select(null);
+        this.onChange(removePart(d, id), true);
+        this.say(`Deleted ${id}.`);
+        back();
+      }
+    } else if (target.kind === "wire" && action === "delete") {
+      this.canvas.select(null);
+      this.onChange(removeWire(d, target.index), true);
+      this.say("Deleted the wire.");
+      back();
+    } else if (target.kind === "port") {
+      const name = target.name;
+      if (action === "flip") {
+        this.toggle(name);
+        if (this.width(name) === 1) back();
+      } else if (action === "connect") {
+        this.chooseTarget({ port: name });
+      } else if (action === "disconnect") {
+        this.chooseWire({ port: name });
+      } else if (action === "reset-port") {
+        this.onChange(resetPort(d, name), true);
+        this.say(`Moved ${name} back to the edge.`);
+        back();
+      }
+    } else if (target.kind === "canvas") {
+      if (action.startsWith("add:")) {
+        const { design, id } = addPart(d, action.slice(4), target.at);
+        this.onChange(design, true);
+        this.say(`Added ${id}.`);
+      } else if (action === "undo") this.undo();
+      else if (action === "redo") this.redo();
+      back();
+    }
   }
 
   private addAtFreeSpot(kind: string): void {
@@ -601,8 +849,14 @@ class PlayPage {
     for (const [k, v] of values) this.inputs[k] = Number(v);
   }
 
+  /** A short message in the canvas's status pill; it fades after a while. */
   private say(text: string): void {
     this.statusLine.textContent = text;
+    clearTimeout(this.statusTimer);
+    if (text)
+      this.statusTimer = window.setTimeout(() => {
+        this.statusLine.textContent = "";
+      }, 7000);
   }
 
   private scheduleSave(): void {
@@ -639,13 +893,15 @@ class PlayPage {
       highlightParts: this.highlightParts,
       highlightPorts: this.highlightPorts,
     });
+    this.emptyHint.hidden = this.design.parts.length > 0;
+    this.emptyHint.textContent =
+      "Drag a part here from the toolbox, or right-click the canvas to add one. Then drag from pin to pin to wire it.";
     this.renderInputs();
     this.renderStats();
     if (full) {
       this.renderProps();
       this.renderRunsAs();
       this.renderTable();
-      this.renderLists();
     } else {
       this.markCurrentRow();
     }
@@ -759,13 +1015,14 @@ class PlayPage {
   private renderProblems(): void {
     const problems = this.view?.problems ?? [];
     this.problemList.replaceChildren(
-      ...problems.map((p) =>
-        el(
-          "li",
-          { class: p.severity },
-          `${p.severity === "error" ? "Error" : "Note"}: ${p.message}`,
-        ),
-      ),
+      ...problems.map((p) => {
+        const li = el("li", { class: p.severity });
+        li.append(
+          el("strong", {}, p.severity === "error" ? "Error: " : "Note: "),
+          ...rich(p.message),
+        );
+        return li;
+      }),
     );
     if (this.view?.shorts.length) {
       this.problemList.prepend(
@@ -776,51 +1033,6 @@ class PlayPage {
         ),
       );
     }
-  }
-
-  private renderLists(): void {
-    const ins = this.level.inputs;
-    this.partsList.replaceChildren(
-      ...this.design.parts.map((p) => {
-        const li = el("li");
-        li.append(
-          `${p.id} (${this.ports[p.kind]?.name ?? p.kind.toUpperCase()}) `,
-        );
-        const del = el("button", { type: "button" }, `Remove ${p.id}`);
-        del.addEventListener("click", () =>
-          this.onChange(removePart(this.design, p.id), true),
-        );
-        li.append(del);
-        return li;
-      }),
-    );
-    if (!this.design.parts.length)
-      this.partsList.append(el("li", {}, "No parts yet."));
-    this.wiresList.replaceChildren(
-      ...this.design.wires.map((w, i) => {
-        const li = el("li");
-        li.append(
-          `${endpointLabel(w.from, ins)} — ${endpointLabel(w.to, ins)} `,
-        );
-        const del = el("button", { type: "button" }, "Disconnect");
-        del.addEventListener("click", () =>
-          this.onChange(removeWire(this.design, i), true),
-        );
-        li.append(del);
-        return li;
-      }),
-    );
-    if (!this.design.wires.length)
-      this.wiresList.append(el("li", {}, "No connections yet."));
-    const options = this.canvas.endpoints().map((e) => {
-      const o = el("option", { value: endpointKey(e) }, endpointLabel(e, ins));
-      return o;
-    });
-    const keep = [this.fromSelect.value, this.toSelect.value];
-    this.fromSelect.replaceChildren(...options.map((o) => o.cloneNode(true)));
-    this.toSelect.replaceChildren(...options);
-    if (keep[0]) this.fromSelect.value = keep[0];
-    if (keep[1]) this.toSelect.value = keep[1];
   }
 
   private runCheck(): void {
@@ -863,7 +1075,9 @@ class PlayPage {
     this.result.append(el("p", { class: "failed" }, head));
     const list = el("ul", { class: "diagnostics" });
     for (const p of report.problems.filter((x) => x.severity === "error")) {
-      list.append(el("li", {}, p.message));
+      const li = el("li");
+      li.append(...rich(p.message));
+      list.append(li);
     }
     for (const d of report.diagnostics) list.append(this.diagnosticItem(d));
     this.result.append(list);
@@ -871,7 +1085,8 @@ class PlayPage {
 
   private diagnosticItem(d: Diagnostic): HTMLElement {
     const li = el("li");
-    const b = el("button", { type: "button", class: "diag" }, d.message);
+    const b = el("button", { type: "button", class: "diag" });
+    b.append(...rich(d.message));
     b.addEventListener("click", () => {
       this.setInputs(d.inputs);
       this.highlightParts = new Set(d.parts);
@@ -880,7 +1095,11 @@ class PlayPage {
       this.say(`Showing row ${d.row}. Highlighted parts are marked with "!".`);
     });
     li.append(b);
-    if (d.hint) li.append(el("p", { class: "hint" }, `Hint: ${d.hint}`));
+    if (d.hint) {
+      const hint = el("p", { class: "hint" }, "Hint: ");
+      hint.append(...rich(d.hint));
+      li.append(hint);
+    }
     return li;
   }
 

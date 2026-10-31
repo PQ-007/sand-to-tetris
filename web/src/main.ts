@@ -3,7 +3,7 @@ import "./components/core-status";
 import "./components/demos";
 import { installGlossaryPopover } from "./components/glossary-popover";
 import { mountLevels } from "./levels";
-import { renderRoute } from "./pages";
+import { installGlossaryFilter, renderRoute, trackSections } from "./pages";
 import { mountPlay } from "./play";
 import { parseRoute } from "./router";
 
@@ -15,10 +15,20 @@ function show(): void {
   const { html, title, anchor } = renderRoute(route);
   app.innerHTML = html;
   document.title = title;
-  document.body.classList.toggle(
-    "wide",
-    route.page === "play" || route.page === "levels",
-  );
+  // Each page type gets its own layout (see style.css).
+  document.body.dataset.page = route.page;
+  const section =
+    route.page === "levels" || route.page === "play"
+      ? "build"
+      : route.page === "glossary"
+        ? "glossary"
+        : "learn";
+  document.querySelectorAll<HTMLElement>("[data-nav]").forEach((a) => {
+    if (a.dataset.nav === section) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  });
+  if (route.page === "chapter") trackSections(app);
+  if (route.page === "glossary") installGlossaryFilter(app);
   const done = () =>
     app.querySelector<HTMLElement>("h1")?.focus({ preventScroll: true });
   if (route.page === "play") {
