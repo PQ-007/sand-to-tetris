@@ -10,7 +10,9 @@ Learners build components in a drag-and-drop editor, one level per component. A 
 
 ## Status
 
-M0 (scaffold) is done: Cargo workspace, Vite shell page that loads the WASM core, CI, and the commands below. Next is M1 (Chapter 0). Keep this section up to date when a milestone lands.
+- M0 (scaffold): done.
+- M1 (Chapter 0): done. Content pipeline, Chapter 0 prose, five demos, glossary, cited sources.
+- Next: M2 (switch-level simulator core in Rust). Keep this section up to date when a milestone lands.
 
 ## Commands
 
@@ -31,7 +33,8 @@ cargo run -p s2t-cli -- version                    # CLI; `check <level-dir>` ar
 - The Cargo workspace root is the repo root (`Cargo.toml`), with members under `sim/crates/`. Toolchain crates join later.
 - `wasm-bindgen` (crate, pinned with `=` in `Cargo.toml`) and `wasm-bindgen-cli` (`scripts/wasm-config.mjs`, `.github/workflows/ci.yml`) must be the **same version**. Bump all three together.
 - The WASM build output `web/src/sim/pkg/` is generated and git-ignored. Run `npm run build:wasm` before vitest or tsc if it's missing.
-- Prettier ignores `*.md` on purpose (prose and tables are hand-formatted).
+- Prettier ignores `*.md` on purpose (prose and tables are hand-formatted). It does format `docs/*.yaml`.
+- To stop a background `vite preview`, use `pkill -f "vite/bin"` or kill by port: `pkill -f "vite preview"` also matches (and kills) the shell running it.
 - CI (`.github/workflows/ci.yml`) runs test, lint and build on every push and PR, and deploys `web/dist` to GitHub Pages on pushes to `main`.
 
 ## Architecture (big picture)
@@ -41,8 +44,14 @@ cargo run -p s2t-cli -- version                    # CLI; `check <level-dir>` ar
   - engines: **switch-level** (Layer 1: values 0/1/Z/X; transistors are switches; nodes are grouped by conducting paths; a VDD–GND connection is reported as a short), **gate-level** (Layers 2–3: event-driven, unit delay, so feedback latches work and oscillation is detected), **fast models** (native behavioral components with identical pins).
   - checker: runs a level's tests and returns structured diagnostics. Each diagnostic has a failing row, the expected and actual values, the offending net or part ids so the UI can highlight them, and an authored hint.
   - wasm: a deliberately small JS API (load, set inputs, step, read, check). Keep it small.
-- `web/`: TypeScript + Vite, no framework. Interactive demos are Web Components, used as custom tags directly in chapter Markdown (not MDX). The schematic editor is custom SVG. Progress and designs live in IndexedDB.
-- `docs/`: one chapter per layer, plus `glossary.yaml` (terms are auto-linked from the text) and `sources.yaml` (citation per historical claim, with `uncertain:` flags that render visibly).
+- `web/`: TypeScript + Vite, no framework. The schematic editor (M3) will be custom SVG; progress and designs will live in IndexedDB.
+  - A demo = a pure, tested model in `web/src/demos/*.ts` (physics, data, math; no DOM) + a thin Web Component in `web/src/components/*.ts` extending `Demo` from `kit.ts` (shadow DOM, shared styles, `svg()`, `chips()`, `slider()`, `wide()`). Register the tag in `known-tags.ts` and import it in `components/demos.ts`; a test checks the registry matches `customElements.define` calls.
+  - Colours are CSS tokens on `:root` in `web/src/style.css` (light + dark); shadow DOM inherits them. Demos must give every state a text label, an `aria-label` on each diagram, and respect `prefers-reduced-motion`.
+- `docs/`: `chapters/NN-slug.md` (one per layer, YAML frontmatter `number`/`title`/`summary`), `glossary.yaml`, `sources.yaml`.
+  - Chapter syntax: `[[term]]` or `[[shown text|glossary-id]]` links the glossary (hover card + link); `[@source-id]` adds a numbered citation (contested sources show `?` and a visible "Contested" note in the auto-generated Sources list). `<aside class="summary">` holds the required end-of-chapter summary; `<details class="deeper">` holds optional math.
+  - Demos are custom tags on their own line (`<mosfet-demo></mosfet-demo>`); only tags in `web/src/components/known-tags.ts` are allowed.
+  - `web/content/` (build-time only, never bundled) renders it all and exposes `virtual:s2t-content`. **Any broken glossary link, unknown citation, unregistered tag or missing summary fails the build and `npm test`**, with `file:line`.
+  - Hash routing (`#/chapter/0`, `#/chapter/0/s/<anchor>`, `#/glossary/<id>`) because GitHub Pages has no rewrites; in-page anchors must go through `/s/`, never a bare `#id`.
 - `hdl/levels/`: one definition per component: goal text, pin signature, layer, dependencies, truth table / test script, hidden tests, hints. Reference solutions live here too but **must never be bundled into the website**.
 - `tests/`: per-component and per-layer test tables, and CPU test programs.
 - `toolchain/`: reference assembler / VM translator / compiler, in Rust (M8+). Learners write their own versions in TypeScript in the browser.
@@ -52,7 +61,7 @@ cargo run -p s2t-cli -- version                    # CLI; `check <level-dir>` ar
 1. **Strict layering, enforced in code.** A component may use only components from its own or lower layers that are unlocked, and the dependency graph must have no cycles. The Rust netlist validator rejects violations even in imported files. Hiding parts in the toolbox is a convenience, not the enforcement. Base parts: Layer 1 = NMOS, PMOS, VDD, GND only. Each higher layer starts from the components built below it. Our own toolchain crates follow the same direction (compiler → VM → assembler → ISA), enforced by Cargo dependencies.
 2. **Tests first.** Before implementing a component, engine feature or toolchain stage, write its tests (truth table, test script, CPU program). Failure messages must name the row, inputs, expected vs actual, and point to the cause (e.g. "`out` is floating when a=1, b=0").
 3. **Abstraction swap.** A fast model is allowed for a component only after the learner's design passes its tests *and* a match check against the model (exhaustive for ≤16 input bits, otherwise 10k random inputs/cycles). The swap must stay visible and toggleable in the UI.
-4. **Facts are cited.** Every historical date or claim in chapter content needs an entry in `docs/sources.yaml` from a reliable source. Mark contested items `uncertain:` and present them as contested. Never guess.
+4. **Facts are cited.** Every historical date or claim in chapter content needs an entry in `docs/sources.yaml` from a reliable source. Mark contested items `uncertain:` and present them as contested. Never guess. Record how it was checked in `checked:`. Illustrative numbers use `estimate: true` with a `note`. britannica.com and computerhistory.org were not reachable from the cloud container in M1 (search results only); say so if that still holds.
 5. **The ISA and the high-level language are designed together with the user.** Propose options and trade-offs; do not decide them alone.
 6. **Accessibility:** circuit state is shown with labels (0/1/Z/X), never color alone. Every editor action has a keyboard path. Respect `prefers-reduced-motion`.
 7. **Original content.** The build-and-unlock interaction model is fine. Do not copy levels, text or visuals from nandgame.com, Nand to Tetris or similar.
