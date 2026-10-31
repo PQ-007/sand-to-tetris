@@ -26,6 +26,9 @@ pub struct Level {
     pub optional: bool,
     /// Expected behaviour, as a table: `a b | out` then rows like `0 1 | 1`.
     pub truth_table: String,
+    /// Width in bits of each multi-bit port (`{ a = 16 }`); others are 1.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub widths: BTreeMap<String, u32>,
     /// Authored hints keyed by failure kind: `floating`, `short`, `wrong`,
     /// `unknown`. Shown with the matching diagnostic.
     #[serde(default)]
@@ -61,7 +64,31 @@ impl Level {
                 )));
             }
         }
+        for (port, w) in &level.widths {
+            if !seen.contains(port) {
+                return Err(LevelParseError(format!(
+                    "level `{}`: `widths` names `{port}`, which isn't a port",
+                    level.id
+                )));
+            }
+            if !(1..=64).contains(w) {
+                return Err(LevelParseError(format!(
+                    "level `{}`: port `{port}` has width {w}; widths must be 1 to 64",
+                    level.id
+                )));
+            }
+        }
         Ok(level)
+    }
+
+    /// Width of a port in bits (1 unless listed in `widths`).
+    pub fn width(&self, port: &str) -> u32 {
+        self.widths.get(port).copied().unwrap_or(1)
+    }
+
+    /// Total number of input bits.
+    pub fn input_bits(&self) -> u32 {
+        self.inputs.iter().map(|p| self.width(p)).sum()
     }
 
     /// All port names, inputs first.
@@ -106,6 +133,23 @@ mod tests {
         assert!(l.is_input("a") && l.is_output("out") && !l.is_input("out"));
         assert_eq!(l.hints["floating"], "Connect out to both networks.");
         assert!(!l.optional);
+    }
+
+    #[test]
+    fn ports_can_be_buses() {
+        let wide = NOT.replace("[hints]", "widths = { a = 16, out = 16 }\n[hints]");
+        let l = Level::from_toml(&wide).unwrap();
+        assert_eq!((l.width("a"), l.width("out"), l.input_bits()), (16, 16, 16));
+        let bad = NOT.replace("[hints]", "widths = { q = 4 }\n[hints]");
+        assert!(Level::from_toml(&bad)
+            .unwrap_err()
+            .0
+            .contains("`q`, which isn't a port"));
+        let zero = NOT.replace("[hints]", "widths = { a = 0 }\n[hints]");
+        assert!(Level::from_toml(&zero)
+            .unwrap_err()
+            .0
+            .contains("widths must be 1 to 64"));
     }
 
     #[test]

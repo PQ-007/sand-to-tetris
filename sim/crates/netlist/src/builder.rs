@@ -28,6 +28,9 @@ pub fn design(component: &str, parts: &[(&str, &str)], wires: &[(Endpoint, Endpo
                 id: id.to_string(),
                 kind: kind.to_string(),
                 pos: None,
+                width: None,
+                repeat: None,
+                shared: vec![],
             })
             .collect(),
         wires: wires
@@ -53,6 +56,7 @@ pub fn level(id: &str, layer: u8, inputs: &[&str], outputs: &[&str]) -> Level {
         requires: vec![],
         optional: false,
         truth_table: String::new(),
+        widths: Default::default(),
         hints: Default::default(),
     }
 }
@@ -71,4 +75,22 @@ pub fn not_design() -> Design {
             (pin("g", "out"), pin("n1", "source")),
         ],
     )
+}
+
+/// A design part with options (bus width, repeat, shared pins).
+pub fn part_with(
+    id: &str,
+    kind: &str,
+    width: Option<u32>,
+    repeat: Option<u32>,
+    shared: &[&str],
+) -> Part {
+    Part {
+        id: id.to_string(),
+        kind: kind.to_string(),
+        pos: None,
+        width,
+        repeat,
+        shared: shared.iter().map(|s| s.to_string()).collect(),
+    }
 }
