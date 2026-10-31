@@ -1,0 +1,21 @@
+id = "xor16"
+name = "XOR16"
+layer = 2
+goal = """
+Build a 16-bit XOR: XOR each bit of a with the same bit of b.
+XOR is also a controllable inverter: x XOR 0 = x, but x XOR 1 = NOT x. Your ALU will use that to flip B on demand.
+"""
+inputs = ["a", "b"]
+outputs = ["out"]
+requires = ["xor"]
+widths = { a = 16, b = 16, out = 16 }
+model = "xor16"
+truth_table = """
+a b | out
+0x00ff 0x0ff0 | 0x0f0f
+0x1234 0xffff | 0xedcb
+0x1234 0x0000 | 0x1234
+"""
+
+[hints]
+wrong = "Use Repeat: one gate, repeated 16 times, works on all 16 bits at once."

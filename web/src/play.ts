@@ -296,7 +296,15 @@ class PlayPage {
       { type: "button", class: "primary" },
       "Check",
     );
-    checkBtn.addEventListener("click", () => this.runCheck());
+    checkBtn.addEventListener("click", () => {
+      // Big circuits take a moment: say so, and let the message paint first.
+      checkBtn.disabled = true;
+      this.result.replaceChildren(el("p", { class: "help" }, "Checking…"));
+      setTimeout(() => {
+        this.runCheck();
+        checkBtn.disabled = false;
+      }, 20);
+    });
     side.append(
       el("h2", {}, "Truth table"),
       el(
@@ -471,7 +479,11 @@ class PlayPage {
       return;
     }
     this.stats.textContent = v.settled
-      ? `Settled after ${v.depth} gate delay${v.depth === 1 ? "" : "s"}.`
+      ? `Settled after ${v.depth} gate delay${v.depth === 1 ? "" : "s"}${
+          this.library.fast?.length
+            ? " (each fast model counts as one step, so real hardware would take longer)"
+            : ""
+        }.`
       : "Still changing: this circuit oscillates and never settles.";
   }
 

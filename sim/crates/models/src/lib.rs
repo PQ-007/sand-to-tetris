@@ -136,7 +136,50 @@ static MODELS: &[NativeModel] = &[
         outputs: &[16],
         f: |x| vec![(arg(x, 0) + 1) & W16],
     },
+    NativeModel {
+        id: "xor16",
+        inputs: &[16, 16],
+        outputs: &[16],
+        f: |x| vec![arg(x, 0) ^ arg(x, 1)],
+    },
+    NativeModel {
+        id: "addc16",
+        inputs: &[16, 16, 1],
+        outputs: &[16, 1],
+        f: |x| {
+            let s = arg(x, 0) + arg(x, 1) + arg(x, 2);
+            vec![s & W16, s >> 16 & 1]
+        },
+    },
+    NativeModel {
+        id: "alu",
+        inputs: &[16, 16, 2, 1, 1],
+        outputs: &[16, 1, 1, 1],
+        f: alu,
+    },
 ];
+
+/// The ALU agreed with the learner (see docs/ISA.md): B is optionally
+/// inverted, then `f` picks ADD (with carry in), AND, OR or XOR. Flags:
+/// z = result is zero, n = top bit set, c = adder carry out (0 for logic).
+fn alu(x: &[u64]) -> Vec<u64> {
+    let (a, f, cin) = (arg(x, 0), arg(x, 2), arg(x, 4));
+    let b = if arg(x, 3) == 1 {
+        !arg(x, 1) & W16
+    } else {
+        arg(x, 1)
+    };
+    let (out, c) = match f {
+        0 => {
+            let s = a + b + cin;
+            (s & W16, s >> 16 & 1)
+        }
+        1 => (a & b, 0),
+        2 => (a | b, 0),
+        _ => (a ^ b, 0),
+    };
+    vec![out, u64::from(out == 0), out >> 15 & 1, c]
+}
 
 /// The native model with this id, if there is one.
 pub fn model(id: &str) -> Option<&'static NativeModel> {
@@ -182,6 +225,44 @@ mod tests {
         assert_eq!(m.eval_bits(&ins), vec![X; 16]);
         assert_eq!(m.eval_bits(&bits(0, 16))[0], One);
         assert_eq!(m.eval_bits(&bits(0xffff, 16))[15], Zero);
+    }
+
+    /// ALU inputs: a, b, f, invb, cin.
+    fn alu_run(a: u64, b: u64, f: u64, invb: u64, cin: u64) -> Vec<u64> {
+        model("alu").unwrap().eval_words(&[a, b, f, invb, cin])
+    }
+
+    #[test]
+    fn alu_adds_and_subtracts_with_flags() {
+        // [out, z, n, c]
+        assert_eq!(alu_run(2, 3, 0, 0, 0), vec![5, 0, 0, 0]);
+        assert_eq!(alu_run(0xffff, 1, 0, 0, 0), vec![0, 1, 0, 1]);
+        // a - b = a + NOT b + 1; carry 1 means a >= b (unsigned).
+        assert_eq!(alu_run(5, 3, 0, 1, 1), vec![2, 0, 0, 1]);
+        assert_eq!(alu_run(3, 5, 0, 1, 1), vec![0xfffe, 0, 1, 0]);
+        assert_eq!(alu_run(7, 7, 0, 1, 1), vec![0, 1, 0, 1]);
+        // increment and decrement with b = 0
+        assert_eq!(alu_run(9, 0, 0, 0, 1), vec![10, 0, 0, 0]);
+        assert_eq!(alu_run(9, 0, 0, 1, 0), vec![8, 0, 0, 1]);
+    }
+
+    #[test]
+    fn alu_logic_ops_never_carry() {
+        assert_eq!(alu_run(0x00ff, 0x0f0f, 1, 0, 1), vec![0x000f, 0, 0, 0]);
+        assert_eq!(alu_run(0x00ff, 0x0f0f, 1, 1, 0), vec![0x00f0, 0, 0, 0]);
+        assert_eq!(alu_run(0x00f0, 0x000f, 2, 0, 0), vec![0x00ff, 0, 0, 0]);
+        assert_eq!(alu_run(0x1234, 0, 3, 1, 0), vec![0xedcb, 0, 1, 0]);
+    }
+
+    #[test]
+    fn adder_with_carry_in_and_out() {
+        let m = model("addc16").unwrap();
+        assert_eq!(m.eval_words(&[0xffff, 0, 1]), vec![0, 1]);
+        assert_eq!(m.eval_words(&[1, 2, 1]), vec![4, 0]);
+        assert_eq!(
+            model("xor16").unwrap().eval_words(&[0xff00, 0x0ff0]),
+            vec![0xf0f0]
+        );
     }
 
     #[test]

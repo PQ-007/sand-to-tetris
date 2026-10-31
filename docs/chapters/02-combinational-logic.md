@@ -79,6 +79,31 @@ For a 16-bit number x, x + NOT x = 0xffff, because every column adds a 1 and a 0
 
 </details>
 
+## The ALU
+
+Everything in this chapter comes together in the **[[ALU|alu]]** (arithmetic logic unit), the part of the CPU that calculates. Its operations decide what your computer can compute, so we designed it together. It takes two 16-bit numbers, a and b, and a few control inputs:
+
+1. **invb** flips every bit of b first. An XOR with 1 inverts a bit and an XOR with 0 leaves it alone, so this is your XOR repeated 16 times, with invb shared.
+2. **f** (2 bits) chooses the result: 0 = ADD, 1 = AND, 2 = OR, 3 = XOR. The adder also takes a carry in, **cin**.
+3. Three **[[flags]]** describe the result: **z** (it's zero), **n** (it's negative: its top bit is 1), and **c** (the adder carried out of the top column; always 0 for AND, OR and XOR).
+
+Those few controls cover a lot:
+
+| You want | f | invb | cin | Because |
+|---|---|---|---|---|
+| a + b | ADD | 0 | 0 | plain addition |
+| a − b | ADD | 1 | 1 | a + NOT b + 1, two's complement |
+| a + 1 | ADD | 0 | 1 | with b = 0 |
+| a − 1 | ADD | 1 | 0 | with b = 0: adds 0xffff, which is −1 |
+| a AND NOT b | AND | 1 | – | clears the bits that are set in b |
+| NOT a | XOR | 1 | – | with b = 0: XOR with all ones |
+
+The flags are how a program makes decisions. Subtract b from a and look at z: if it's 1, a and b were equal. Look at c: after a − b it's 1 exactly when a ≥ b (for unsigned numbers). In Chapter 4 your CPU will use these flags to choose whether to jump.
+
+You'll need two helpers first: **XOR16**, and a 16-bit adder that brings out both ends of its carry chain. The ALU is the biggest circuit so far: built from your own gates it's about a thousand gates and over 80 gate delays deep, which is a good moment to try fast models (below).
+
+**[XOR16 →](#/play/xor16)** · **[ADD16 with carry →](#/play/addc16)** · **[ALU →](#/play/alu)**
+
 ## Fast models: trusting what you've built
 
 Your ADD16 is 305 gates. Your CPU will contain several adders and many more parts, and simulating every gate of every one adds up. So once a component has passed, you can switch it to a **[[fast model]]**: a built-in version that computes the same answer in one step.
@@ -89,7 +114,7 @@ The switch is never automatic. On the level map, each passed component has a **R
 
 ## What you built, and what you learned
 
-**What you built:** AND, OR and XOR from your NAND and NOT; a multiplexer and a demultiplexer; 16-bit NOT, AND, OR and MUX; an 8-way OR; a 4-way 16-bit multiplexer; a half adder, a full adder, a 16-bit adder and an incrementer.
+**What you built:** AND, OR and XOR from your NAND and NOT; a multiplexer and a demultiplexer; 16-bit NOT, AND, OR and MUX; an 8-way OR; a 4-way 16-bit multiplexer; a half adder, a full adder, a 16-bit adder and an incrementer; and the ALU, with its zero, negative and carry flags.
 
 **What you learned:**
 
@@ -101,6 +126,8 @@ The switch is never automatic. On the level map, each passed component has a **R
 - With two's complement, the same adder handles negative numbers, and subtraction is a + NOT b + 1.
 - A fast model can replace your design only after a match check shows they agree.
 
-**Next:** the ALU, the part of the CPU that calculates. We'll design its operations together, then Chapter 3 adds memory.
+- The ALU computes with a few control inputs, and its flags (zero, negative, carry) let a program compare numbers.
+
+**Next:** in Chapter 3 you'll give your circuits memory: latches, flip-flops, registers and RAM.
 
 </aside>

@@ -157,12 +157,11 @@ fn describe(level: &Level, values: &[(String, u64)], sep: &str) -> String {
 /// Runs one input vector; returns the row result and its diagnostics.
 fn run_vector(
     level: &Level,
-    prepared: &Prepared,
+    sim: &mut GateSim,
     label: &str,
     row_no: usize,
     row: &TableRow,
 ) -> Result<(RowResult, Vec<Diagnostic>, usize), String> {
-    let mut sim = prepared.sim()?;
     for (name, v) in &row.inputs {
         sim.set_input(name, *v)?;
     }
@@ -282,7 +281,12 @@ pub(crate) fn check_gates(
         });
     };
     for (i, row) in table.rows.iter().enumerate() {
-        match run_vector(level, &prepared, &format!("Row {}", i + 1), i + 1, row) {
+        // Each table row starts from scratch (all unknown), so a row can't
+        // pass by luck from the state the previous row left behind.
+        let fresh = prepared.sim();
+        let result = fresh
+            .and_then(|mut sim| run_vector(level, &mut sim, &format!("Row {}", i + 1), i + 1, row));
+        match result {
             Ok((r, mut d, depth)) => {
                 report.rows.push(r);
                 report.diagnostics.append(&mut d);
@@ -299,6 +303,15 @@ pub(crate) fn check_gates(
         let n = level.random_tests.unwrap_or(2000) as usize;
         let mut rng = Rng::new(&level.id);
         let mut failed = 0usize;
+        // Random tests reuse one simulator: for combinational circuits the
+        // result doesn't depend on the previous state, and it's much faster.
+        let mut sim = match prepared.sim() {
+            Ok(s) => s,
+            Err(e) => {
+                fail(&mut report, e);
+                return report;
+            }
+        };
         for k in 0..n {
             let inputs: Vec<(String, u64)> = level
                 .inputs
@@ -320,7 +333,7 @@ pub(crate) fn check_gates(
             let row_no = table.rows.len() + k + 1;
             match run_vector(
                 level,
-                &prepared,
+                &mut sim,
                 &format!("Random test {}", k + 1),
                 row_no,
                 &row,

@@ -1,0 +1,34 @@
+id = "alu"
+name = "ALU"
+layer = 2
+goal = """
+Build the arithmetic logic unit: the part of the CPU that calculates. We designed it together:
+- invb flips every bit of b first (XOR with invb).
+- f chooses the result: 0 = ADD (a + b + cin), 1 = AND, 2 = OR, 3 = XOR.
+- Flags: z = 1 if out is 0; n = 1 if out is negative (its top bit); c = the adder's carry out, or 0 for AND/OR/XOR.
+With these, a − b is ADD with invb = 1 and cin = 1.
+"""
+inputs = ["a", "b", "f", "invb", "cin"]
+outputs = ["out", "z", "n", "c"]
+requires = ["addc16", "xor16", "and16", "or16", "mux4way16", "or8way"]
+widths = { a = 16, b = 16, f = 2, out = 16 }
+model = "alu"
+truth_table = """
+a b f invb cin | out z n c
+2 3 0 0 0 | 5 0 0 0
+0xffff 1 0 0 0 | 0 1 0 1
+5 3 0 1 1 | 2 0 0 1
+3 5 0 1 1 | 0xfffe 0 1 0
+7 7 0 1 1 | 0 1 0 1
+9 0 0 0 1 | 10 0 0 0
+9 0 0 1 0 | 8 0 0 1
+0x00ff 0x0f0f 1 0 1 | 0x000f 0 0 0
+0x00ff 0x0f0f 1 1 0 | 0x00f0 0 0 0
+0x00f0 0x000f 2 0 0 | 0x00ff 0 0 0
+0x00ff 0x0ff0 3 0 0 | 0x0f0f 0 0 0
+0x1234 0 3 1 0 | 0xedcb 0 1 0
+0x8000 0 2 0 0 | 0x8000 0 1 0
+"""
+
+[hints]
+wrong = "Work in stages: flip b with XOR16 (sharing invb), compute ADD, AND, OR and XOR of a and the flipped b, then let a 4-way MUX16 pick one with f. Then the flags: n is bit 15 of the result; z is NOT (any bit is 1); c is the adder's cout, but only when f = 0."
