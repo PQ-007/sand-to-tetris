@@ -12,7 +12,8 @@ Learners build components in a drag-and-drop editor, one level per component. A 
 
 - M0 (scaffold): done.
 - M1 (Chapter 0): done. Content pipeline, Chapter 0 prose, five demos, glossary, cited sources.
-- Next: M2 (switch-level simulator core in Rust). Keep this section up to date when a milestone lands.
+- M2 (switch-level core): done. Netlist format + validation + layering, switch-level engine, checker, `s2t check`, Layer 1 levels NOT/NAND/NOR (+ optional AND) with references.
+- Next: M3 (Layer 1 in the browser: WASM bridge, drag-and-drop editor, level map, Chapter 1). Keep this section up to date when a milestone lands.
 
 ## Commands
 
@@ -27,7 +28,9 @@ npm run format              # cargo fmt + prettier --write
 
 cargo test -p <crate> <test_name>                  # one Rust test, e.g. cargo test -p s2t-cli version
 npx vitest run --root web <path> -t "<name>"       # one frontend test
-cargo run -p s2t-cli -- version                    # CLI; `check <level-dir>` arrives in M2
+cargo run -p s2t-cli -- check hdl/levels/layer1/nand              # check a level's reference
+cargo run -p s2t-cli -- check hdl/levels/layer1/nand my.json      # check any design (add --json for the report)
+cargo run -p s2t-cli -- check-all hdl/levels                      # every reference + exhaustive tables
 ```
 
 - The Cargo workspace root is the repo root (`Cargo.toml`), with members under `sim/crates/`. Toolchain crates join later.
@@ -39,11 +42,12 @@ cargo run -p s2t-cli -- version                    # CLI; `check <level-dir>` ar
 
 ## Architecture (big picture)
 
-- `sim/crates/`: Rust crates (`s2t-netlist`, `s2t-wasm`, `s2t-cli`; engines and checker arrive in M2+). They are the single source of truth for simulation and checking. They are compiled natively (tests, CLI, CI) and to WASM (browser), so the browser and CI can never disagree.
-  - netlist: loads JSON, validates it, enforces layering, flattens the hierarchy.
-  - engines: **switch-level** (Layer 1: values 0/1/Z/X; transistors are switches; nodes are grouped by conducting paths; a VDD–GND connection is reported as a short), **gate-level** (Layers 2–3: event-driven, unit delay, so feedback latches work and oscillation is detected), **fast models** (native behavioral components with identical pins).
-  - checker: runs a level's tests and returns structured diagnostics. Each diagnostic has a failing row, the expected and actual values, the offending net or part ids so the UI can highlight them, and an authored hint.
-  - wasm: a deliberately small JS API (load, set inputs, step, read, check). Keep it small.
+- `sim/crates/`: Rust crates, the single source of truth for simulation and checking. They are compiled natively (tests, CLI, CI) and to WASM (browser), so the browser and CI can never disagree. Dependency direction: `cli`/`wasm` → `checker` → `switch` → `netlist`.
+  - `s2t-netlist`: design JSON (`Design`: parts + wires between `{"port":..}` / `{"part":..,"pin":..}` endpoints; `pos`/`points` are editor-only), level TOML (`Level`), `validate()` (typed `Problem`s with message + parts/ports to highlight; **this is where layering is enforced**: primitives only in Layer 1, no higher-layer parts, only unlocked components, no self-reference or dependency loops), `flatten()` (component parts replaced recursively by their unlocked designs → `Circuit` of transistors and rails over numbered nets; each transistor keeps its part path for highlighting), and `builder` helpers for tests.
+  - `s2t-switch`: switch-level engine. Values 0/1/Z/X; NMOS on with gate 1, PMOS with gate 0; nets joined by conducting switches take their drivers' value; 0+1 in one group = short (reported with parts); no driver = Z (no charge storage); X/Z gates solved both ways, disagreement = X; iterate from all-X to a fixpoint.
+  - `s2t-checker`: parses truth tables (`a b | out`), runs every row, returns a serde-serializable `Report` with `Diagnostic`s (row, inputs, expected/actual, kind wrong/floating/short/unknown, message, authored hint, parts/ports). Learner mistakes go in the report; only a broken level definition is an `Err`.
+  - Planned: **gate-level** engine (Layers 2–3: event-driven, unit delay, so feedback latches work) and **fast models** (behavioral, identical pins).
+  - `s2t-wasm`: a deliberately small JS API (load, set inputs, step, read, check). Keep it small.
 - `web/`: TypeScript + Vite, no framework. The schematic editor (M3) will be custom SVG; progress and designs will live in IndexedDB.
   - A demo = a pure, tested model in `web/src/demos/*.ts` (physics, data, math; no DOM) + a thin Web Component in `web/src/components/*.ts` extending `Demo` from `kit.ts` (shadow DOM, shared styles, `svg()`, `chips()`, `slider()`, `wide()`). Register the tag in `known-tags.ts` and import it in `components/demos.ts`; a test checks the registry matches `customElements.define` calls.
   - Colours are CSS tokens on `:root` in `web/src/style.css` (light + dark); shadow DOM inherits them. Demos must give every state a text label, an `aria-label` on each diagram, and respect `prefers-reduced-motion`.
@@ -52,7 +56,7 @@ cargo run -p s2t-cli -- version                    # CLI; `check <level-dir>` ar
   - Demos are custom tags on their own line (`<mosfet-demo></mosfet-demo>`); only tags in `web/src/components/known-tags.ts` are allowed.
   - `web/content/` (build-time only, never bundled) renders it all and exposes `virtual:s2t-content`. **Any broken glossary link, unknown citation, unregistered tag or missing summary fails the build and `npm test`**, with `file:line`.
   - Hash routing (`#/chapter/0`, `#/chapter/0/s/<anchor>`, `#/glossary/<id>`) because GitHub Pages has no rewrites; in-page anchors must go through `/s/`, never a bare `#id`.
-- `hdl/levels/`: one definition per component: goal text, pin signature, layer, dependencies, truth table / test script, hidden tests, hints. Reference solutions live here too but **must never be bundled into the website**.
+- `hdl/levels/layerN/<id>/`: `level.toml` (id = folder name, layer = folder's N, goal, inputs, outputs, `optional`, `truth_table`, `[hints]` keyed wrong/floating/short/unknown) and `reference.json`. `cargo test` runs `check-all` over this tree (every reference must pass; truth tables must be exhaustive). Reference solutions **must never be bundled into the website**; a web test fails if anything in `web/src` or `web/content` imports from `hdl/`.
 - `tests/`: per-component and per-layer test tables, and CPU test programs.
 - `toolchain/`: reference assembler / VM translator / compiler, in Rust (M8+). Learners write their own versions in TypeScript in the browser.
 
