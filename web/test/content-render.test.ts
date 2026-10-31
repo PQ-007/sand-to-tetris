@@ -186,3 +186,47 @@ describe("data files", () => {
     expect(slugify("What is a computer?")).toBe("what-is-a-computer");
   });
 });
+
+describe("translated chapters", () => {
+  const mn = createRenderer({
+    glossary,
+    sources,
+    knownTags: ["mosfet-demo"],
+    labels: {
+      sources: "Эх сурвалж",
+      contested: "Маргаантай:",
+      checked: "Шалгасан:",
+      estimate: "Тооцоолол:",
+    },
+  });
+
+  it("take their heading ids from the original, so links work in both", () => {
+    const { chapter, errors } = mn.renderChapter(
+      `${front}## Нэгдүгээр\n\nТекст[@shaky].\n\n### Дэд\n\n## Хоёрдугаар\n`,
+      "mn.md",
+      { ids: ["first", "sub", "second"] },
+    );
+    expect(errors).toEqual([]);
+    expect(chapter?.toc).toEqual([
+      { id: "first", text: "Нэгдүгээр" },
+      { id: "second", text: "Хоёрдугаар" },
+    ]);
+    expect(chapter?.html).toContain('<h3 id="sub">Дэд</h3>');
+    expect(chapter?.html).toContain('<h2 id="sources">Эх сурвалж</h2>');
+    expect(chapter?.html).toContain("<strong>Маргаантай:</strong>");
+  });
+
+  it("must have the same headings as the original", () => {
+    const { errors } = mn.renderChapter(`${front}## Ганц\n`, "mn.md", {
+      ids: ["first", "second"],
+    });
+    expect(errors).toEqual([
+      "mn.md: has 1 heading but the original has 2; translate every heading, in order",
+    ]);
+  });
+
+  it("lists every heading id, for translations to follow", () => {
+    const { chapter } = renderChapter(`${front}## One\n\n### Two\n`, "c.md");
+    expect(chapter?.headingIds).toEqual(["one", "two"]);
+  });
+});

@@ -3,7 +3,15 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { KNOWN_TAGS } from "../src/components/known-tags";
-import { ContentError, parseGlossary, parseSources } from "./data";
+import { parse } from "yaml";
+import {
+  ContentError,
+  parseGlossary,
+  parseSourceTexts,
+  parseSources,
+  type GlossaryEntry,
+  type SourceEntry,
+} from "./data";
 import { createRenderer, type RenderedChapter } from "./markdown";
 
 export interface GlossaryItem {
@@ -45,11 +53,69 @@ export function loadLevels(levelsDir: string): LevelFile[] {
   return out;
 }
 
+export type Lang = "en" | "mn";
+
 export interface LoadResult {
-  content: SiteContent;
+  content: Record<Lang, SiteContent>;
   files: string[];
   errors: string[];
 }
+
+/** Translated texts of a level (hdl/levels/mn.yaml). */
+export interface LevelText {
+  name: string;
+  goal: string;
+  hints: Record<string, string>;
+}
+
+/**
+ * Reads the translation of every level's name, goal and hints. Not a
+ * reference solution: only text the learner sees on the level page.
+ */
+export function loadLevelText(file: string): Record<string, LevelText> {
+  if (!existsSync(file)) return {};
+  const data: unknown = parse(readFileSync(file, "utf8"));
+  if (typeof data !== "object" || data === null) return {};
+  const out: Record<string, LevelText> = {};
+  for (const [id, raw] of Object.entries(data as Record<string, unknown>)) {
+    const r = (raw ?? {}) as Record<string, unknown>;
+    out[id] = {
+      name: String(r.name ?? "").trim(),
+      goal: String(r.goal ?? "").trim(),
+      hints: Object.fromEntries(
+        Object.entries((r.hints ?? {}) as Record<string, unknown>).map(
+          ([k, v]) => [k, String(v).trim()],
+        ),
+      ),
+    };
+  }
+  return out;
+}
+
+const LABELS: Record<
+  Lang,
+  { sources: string; contested: string; checked: string; estimate: string }
+> = {
+  en: {
+    sources: "Sources",
+    contested: "Contested:",
+    checked: "Checked:",
+    estimate: "Estimate:",
+  },
+  mn: {
+    sources: "Эх сурвалж",
+    contested: "Маргаантай:",
+    checked: "Шалгасан:",
+    estimate: "Ойролцоо тооцоо:",
+  },
+};
+
+/** The demo tags a chapter uses, in order. */
+const tagsOf = (src: string) =>
+  [...src.matchAll(/^<([a-z0-9]+-[a-z0-9-]+)>/gm)].map((m) => m[1]);
+/** Source ids a chapter cites. */
+const citesOf = (src: string) =>
+  [...new Set([...src.matchAll(/\[@([a-z0-9-]+)\]/g)].map((m) => m[1]))].sort();
 
 export function loadContent(docsDir: string): LoadResult {
   const errors: string[] = [];
@@ -69,6 +135,7 @@ export function loadContent(docsDir: string): LoadResult {
     }
   };
 
+  // ---- English: the original ----
   const glossary = safely(
     "glossary.yaml",
     () =>
@@ -81,36 +148,145 @@ export function loadContent(docsDir: string): LoadResult {
       parseSources(read(join(docsDir, "sources.yaml")), "docs/sources.yaml"),
     [],
   );
+  const chapterDir = join(docsDir, "chapters");
+  const names = readdirSync(chapterDir)
+    .filter((f) => f.endsWith(".md"))
+    .sort();
+  const originals = new Map(
+    names.map((n) => [n, read(join(chapterDir, n))] as const),
+  );
+  const en = renderLanguage("en", glossary, sources, originals, "docs", errors);
+
+  // ---- Mongolian: every text translated, lined up with the original ----
+  const mnDir = join(docsDir, "mn");
+  const mnGlossary = safely(
+    "mn/glossary.yaml",
+    () =>
+      parseGlossary(
+        read(join(mnDir, "glossary.yaml")),
+        "docs/mn/glossary.yaml",
+      ),
+    [],
+  );
+  const mnTerms = new Map(mnGlossary.map((g) => [g.id, g]));
+  for (const g of glossary)
+    if (!mnTerms.has(g.id))
+      errors.push(`docs/mn/glossary.yaml: no translation of \`${g.id}\``);
+  for (const g of mnGlossary)
+    if (!glossary.some((o) => o.id === g.id))
+      errors.push(
+        `docs/mn/glossary.yaml: \`${g.id}\` isn't in docs/glossary.yaml`,
+      );
+  const glossaryMn = glossary.map((g) => {
+    const tr = mnTerms.get(g.id);
+    return tr ? { ...g, term: tr.term, short: tr.short, long: tr.long } : g;
+  });
+  const mnSources = safely(
+    "mn/sources.yaml",
+    () =>
+      parseSourceTexts(
+        read(join(mnDir, "sources.yaml")),
+        "docs/mn/sources.yaml",
+      ),
+    [],
+  );
+  const mnClaims = new Map(mnSources.map((x) => [x.id, x]));
+  const sourcesMn = sources.map((src) => {
+    const tr = mnClaims.get(src.id);
+    if (!tr) {
+      errors.push(`docs/mn/sources.yaml: no translation of \`${src.id}\``);
+      return src;
+    }
+    if (Boolean(src.uncertain) !== Boolean(tr.uncertain))
+      errors.push(
+        `docs/mn/sources.yaml: \`${src.id}\` must say why it's contested exactly when the original does`,
+      );
+    return {
+      ...src,
+      claim: tr.claim,
+      uncertain: tr.uncertain,
+      checked: tr.checked ?? src.checked,
+      sources: src.sources.map((r) =>
+        r.estimate && tr.note ? { ...r, note: tr.note } : r,
+      ),
+    };
+  });
+  const translations = new Map<string, string>();
+  for (const n of names) {
+    const path = join(mnDir, "chapters", n);
+    if (!existsSync(path)) {
+      errors.push(
+        `docs/mn/chapters/${n}: missing (translate docs/chapters/${n})`,
+      );
+      continue;
+    }
+    const src = read(path);
+    const orig = originals.get(n) ?? "";
+    if (tagsOf(src).join() !== tagsOf(orig).join())
+      errors.push(
+        `docs/mn/chapters/${n}: uses demos ${tagsOf(src).join(", ") || "none"}, the original ${tagsOf(orig).join(", ") || "none"}`,
+      );
+    if (citesOf(src).join() !== citesOf(orig).join())
+      errors.push(
+        `docs/mn/chapters/${n}: cites ${citesOf(src).join(", ") || "nothing"}, the original ${citesOf(orig).join(", ") || "nothing"}`,
+      );
+    translations.set(n, src);
+  }
+  const ids = new Map(
+    en.chapters.map((c, i) => [names[i] ?? "", c.headingIds] as const),
+  );
+  const mn = renderLanguage(
+    "mn",
+    glossaryMn,
+    sourcesMn,
+    translations,
+    "docs/mn",
+    errors,
+    ids,
+  );
+  for (const c of mn.chapters) {
+    if (!en.chapters.some((o) => o.number === c.number))
+      errors.push(`docs/mn/chapters: chapter ${c.number} has no original`);
+  }
+  return { content: { en, mn }, files, errors };
+}
+
+/** Renders one language's chapters and glossary. */
+function renderLanguage(
+  lang: Lang,
+  glossary: GlossaryEntry[],
+  sources: SourceEntry[],
+  chapterSources: Map<string, string>,
+  dir: string,
+  errors: string[],
+  ids?: Map<string, string[]>,
+): SiteContent {
   const { renderChapter, renderInline } = createRenderer({
     glossary,
     sources,
     knownTags: KNOWN_TAGS,
+    labels: LABELS[lang],
   });
-
-  const chapterDir = join(docsDir, "chapters");
   const chapters: RenderedChapter[] = [];
-  for (const name of readdirSync(chapterDir)
-    .filter((f) => f.endsWith(".md"))
-    .sort()) {
-    const result = renderChapter(
-      read(join(chapterDir, name)),
-      `docs/chapters/${name}`,
-    );
+  for (const [name, src] of chapterSources) {
+    const result = renderChapter(src, `${dir}/chapters/${name}`, {
+      ids: ids?.get(name),
+    });
     errors.push(...result.errors);
     if (result.chapter) chapters.push(result.chapter);
   }
   const numbers = chapters.map((c) => c.number);
   if (new Set(numbers).size !== numbers.length) {
     errors.push(
-      `docs/chapters: duplicate chapter numbers (${numbers.join(", ")})`,
+      `${dir}/chapters: duplicate chapter numbers (${numbers.join(", ")})`,
     );
   }
   chapters.sort((a, b) => a.number - b.number);
-
+  const file = `${dir}/glossary.yaml`;
   const items: GlossaryItem[] = glossary.map((g) => {
-    const short = renderInline(g.short, `docs/glossary.yaml (${g.id}.short)`);
+    const short = renderInline(g.short, `${file} (${g.id}.short)`);
     const long = g.long
-      ? renderInline(g.long, `docs/glossary.yaml (${g.id}.long)`)
+      ? renderInline(g.long, `${file} (${g.id}.long)`)
       : undefined;
     errors.push(...short.errors, ...(long?.errors ?? []));
     return {
@@ -125,6 +301,7 @@ export function loadContent(docsDir: string): LoadResult {
       see: g.see ?? [],
     };
   });
-
-  return { content: { chapters, glossary: items }, files, errors };
+  // Sorted by the term as shown in this language.
+  items.sort((a, b) => a.term.localeCompare(b.term, lang));
+  return { chapters, glossary: items };
 }

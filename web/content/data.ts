@@ -167,3 +167,39 @@ export function parseSources(
   if (errors.length) throw new ContentError(errors.join("\n"));
   return out;
 }
+
+/** A translated source: the claim (and, if the original is contested, why)
+ * in another language; links and dates of checking come from the original. */
+export interface SourceText {
+  id: string;
+  claim: string;
+  uncertain?: string;
+  checked?: string;
+  /** Translation of an estimate's note. */
+  note?: string;
+}
+
+export function parseSourceTexts(text: string, file: string): SourceText[] {
+  const errors: string[] = [];
+  const out = list(text, file).map((raw, i): SourceText => {
+    const where = `${file} entry ${i + 1}`;
+    if (!isRecord(raw)) {
+      errors.push(`${where}: expected a mapping`);
+      return { id: "", claim: "" };
+    }
+    return {
+      id: str(raw, "id", where, errors),
+      claim: str(raw, "claim", where, errors),
+      uncertain: optStr(raw, "uncertain"),
+      checked: optStr(raw, "checked"),
+      note: optStr(raw, "note"),
+    };
+  });
+  checkIds(
+    out.map((e) => e.id),
+    file,
+    errors,
+  );
+  if (errors.length) throw new ContentError(errors.join("\n"));
+  return out;
+}

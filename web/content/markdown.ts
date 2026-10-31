@@ -20,6 +20,8 @@ export interface TocEntry {
 export interface RenderedChapter extends ChapterMeta {
   html: string;
   toc: TocEntry[];
+  /** Every heading's id, in order (a translation reuses them). */
+  headingIds: string[];
 }
 
 export interface RenderResult {
@@ -32,6 +34,19 @@ export interface RenderContext {
   sources: SourceEntry[];
   /** Custom element tags that chapters may use. */
   knownTags: readonly string[];
+  /** Words used in the generated Sources list (default English). */
+  labels?: {
+    sources: string;
+    contested: string;
+    checked: string;
+    estimate: string;
+  };
+}
+
+export interface ChapterOptions {
+  /** Heading ids to use, in order (a translation takes the original's, so
+   * section links work in every language). */
+  ids?: string[];
 }
 
 interface Env extends MdEnv {
@@ -40,6 +55,9 @@ interface Env extends MdEnv {
   errors: string[];
   cited: string[];
   routeBase: string;
+  /** Heading ids to use instead of slugs, in order. */
+  ids?: string[];
+  headingIds: string[];
 }
 
 export function slugify(text: string): string {
@@ -108,6 +126,12 @@ export function createRenderer(ctx: RenderContext) {
   const terms = new Map(ctx.glossary.map((g) => [g.id, g]));
   const sources = new Map(ctx.sources.map((s) => [s.id, s]));
   const known = new Set(ctx.knownTags);
+  const labels = ctx.labels ?? {
+    sources: "Sources",
+    contested: "Contested:",
+    checked: "Checked:",
+    estimate: "Estimate:",
+  };
 
   const md = new MarkdownIt({ html: true, typographer: true });
   // Tables scroll sideways on narrow screens instead of widening the page.
@@ -200,7 +224,10 @@ export function createRenderer(ctx: RenderContext) {
       const t = tokens[i];
       const inline = tokens[i + 1];
       if (t?.type !== "heading_open" || !inline) continue;
-      const id = slugify(inline.content);
+      const id = env.ids
+        ? (env.ids[env.headingIds.length] ?? "extra-heading")
+        : slugify(inline.content);
+      env.headingIds.push(id);
       t.attrSet("id", id);
       if (t.tag === "h2")
         (env as Env & { toc: TocEntry[] }).toc.push({
@@ -246,24 +273,28 @@ export function createRenderer(ctx: RenderContext) {
         const refs = s.sources
           .map((r) =>
             r.estimate
-              ? `<li>Estimate: ${escapeHtml(r.note ?? "")}</li>`
+              ? `<li>${escapeHtml(labels.estimate)} ${escapeHtml(r.note ?? "")}</li>`
               : `<li><a href="${escapeHtml(r.url ?? "")}" rel="noopener" target="_blank">${escapeHtml(r.title ?? "")}</a></li>`,
           )
           .join("");
         const contested = s.uncertain
-          ? `<p class="contested"><strong>Contested:</strong> ${escapeHtml(s.uncertain)}</p>`
+          ? `<p class="contested"><strong>${escapeHtml(labels.contested)}</strong> ${escapeHtml(s.uncertain)}</p>`
           : "";
         return (
           `<li id="src-${id}"><p class="claim">${escapeHtml(s.claim)}</p>` +
           `${contested}<ul class="refs">${refs}</ul>` +
-          `<p class="checked">Checked: ${escapeHtml(s.checked)}</p></li>`
+          `<p class="checked">${escapeHtml(labels.checked)} ${escapeHtml(s.checked)}</p></li>`
         );
       })
       .join("");
-    return `<section class="sources" aria-labelledby="sources"><h2 id="sources">Sources</h2><ol>${items}</ol></section>`;
+    return `<section class="sources" aria-labelledby="sources"><h2 id="sources">${escapeHtml(labels.sources)}</h2><ol>${items}</ol></section>`;
   }
 
-  function renderChapter(src: string, file: string): RenderResult {
+  function renderChapter(
+    src: string,
+    file: string,
+    opts: ChapterOptions = {},
+  ): RenderResult {
     const errors: string[] = [];
     const { meta, body, offset } = splitFrontmatter(src);
     const m = meta as Partial<ChapterMeta> | undefined;
@@ -281,8 +312,16 @@ export function createRenderer(ctx: RenderContext) {
       cited: [],
       routeBase,
       toc: [],
+      ids: opts.ids,
+      headingIds: [],
     };
     const rendered = md.render(body, env);
+    if (opts.ids && env.headingIds.length !== opts.ids.length) {
+      const n = env.headingIds.length;
+      errors.push(
+        `${file}: has ${n} heading${n === 1 ? "" : "s"} but the original has ${opts.ids.length}; translate every heading, in order`,
+      );
+    }
     // A [[link]] that survives rendering was cut up, usually by a table
     // splitting its cell at the `|`.
     const lines = body.split("\n");
@@ -304,6 +343,7 @@ export function createRenderer(ctx: RenderContext) {
         summary: String(m.summary),
         html,
         toc: env.toc,
+        headingIds: env.headingIds,
       },
       errors,
     };
@@ -321,6 +361,7 @@ export function createRenderer(ctx: RenderContext) {
       cited: [],
       routeBase: "#/glossary",
       toc: [],
+      headingIds: [],
     };
     return { html: md.renderInline(src, env), errors: env.errors };
   }
