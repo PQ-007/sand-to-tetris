@@ -9,6 +9,9 @@
 //! chain of gates a signal passes through. Unit delay is also what makes
 //! feedback (latches, Layer 3) work, and lets us notice circuits that
 //! oscillate forever.
+//!
+//! A [`Clocked`] model has memory (a fast register or RAM): each such cell
+//! keeps its own words, updated on a rising edge of its clock input.
 
 use std::collections::BTreeSet;
 use std::sync::Arc;
@@ -83,6 +86,89 @@ impl TruthTable {
 /// A native evaluation function over flattened input bits.
 pub type NativeFn = Arc<dyn Fn(&[Value]) -> Vec<Value> + Send + Sync>;
 
+/// Updates memory words on a rising clock edge, from the input bits.
+pub type TickFn = Arc<dyn Fn(&[Value], &mut [Option<u64>]) + Send + Sync>;
+/// Computes the output bits from the input bits and memory words.
+pub type ReadFn = Arc<dyn Fn(&[Value], &[Option<u64>]) -> Vec<Value> + Send + Sync>;
+
+/// A component with memory: `words` words (`None` = unknown), changed by
+/// `tick` when input bit `clk_bit` rises from 0 to 1, read by `read`.
+#[derive(Clone)]
+pub struct Clocked {
+    pub clk_bit: usize,
+    pub words: usize,
+    pub tick: TickFn,
+    pub read: ReadFn,
+}
+
+/// One clocked cell's memory: its words and the clock level it last saw.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Memory {
+    pub prev_clk: Value,
+    pub words: Vec<Option<u64>>,
+}
+
+impl Clocked {
+    /// Memory at power-on: everything unknown.
+    pub fn power_on(&self) -> Memory {
+        Memory {
+            prev_clk: Value::X,
+            words: vec![None; self.words],
+        }
+    }
+
+    /// Outputs for these inputs; a 0→1 clock edge first runs `tick`.
+    pub fn eval(&self, ins: &[Value], mem: &mut Memory) -> Vec<Value> {
+        let clk = ins.get(self.clk_bit).copied().unwrap_or(Value::X);
+        if mem.prev_clk == Value::Zero && clk == Value::One {
+            (self.tick)(ins, &mut mem.words);
+        }
+        mem.prev_clk = clk;
+        (self.read)(ins, &mem.words)
+    }
+}
+
+impl Memory {
+    /// `1,0:1234,7:ff`: the last clock level, then each known word as
+    /// `index:hex`.
+    pub fn save(&self) -> String {
+        let mut out = match self.prev_clk {
+            Value::Zero => "0".to_string(),
+            Value::One => "1".to_string(),
+            _ => "x".to_string(),
+        };
+        for (i, w) in self.words.iter().enumerate() {
+            if let Some(w) = w {
+                out.push_str(&format!(",{i}:{w:x}"));
+            }
+        }
+        out
+    }
+
+    /// Reads [`Memory::save`]'s format for a model with `words` words.
+    pub fn load(text: &str, words: usize) -> Result<Memory, String> {
+        let bad = || format!("couldn't read saved memory `{text}`");
+        let mut parts = text.split(',');
+        let prev_clk = match parts.next() {
+            Some("0") => Value::Zero,
+            Some("1") => Value::One,
+            Some("x") => Value::X,
+            _ => return Err(bad()),
+        };
+        let mut mem = vec![None; words];
+        for p in parts {
+            let (i, w) = p.split_once(':').ok_or_else(bad)?;
+            let i: usize = i.parse().map_err(|_| bad())?;
+            let w = u64::from_str_radix(w, 16).map_err(|_| bad())?;
+            *mem.get_mut(i).ok_or_else(bad)? = Some(w);
+        }
+        Ok(Memory {
+            prev_clk,
+            words: mem,
+        })
+    }
+}
+
 /// How a cell computes its outputs.
 #[derive(Clone)]
 pub enum Model {
@@ -90,6 +176,8 @@ pub enum Model {
     /// A native function over the flattened input bits (same order as a
     /// table). It must handle X/Z inputs itself.
     Native(NativeFn),
+    /// A native model with memory.
+    Clocked(Clocked),
 }
 
 impl std::fmt::Debug for Model {
@@ -97,6 +185,7 @@ impl std::fmt::Debug for Model {
         match self {
             Model::Table(t) => write!(f, "Table({} in, {} out)", t.inputs, t.outputs),
             Model::Native(_) => write!(f, "Native"),
+            Model::Clocked(c) => write!(f, "Clocked({} words)", c.words),
         }
     }
 }
@@ -106,10 +195,13 @@ impl Model {
         Model::Native(Arc::new(f))
     }
 
+    /// Evaluates a model without memory. A clocked model evaluated this way
+    /// sees power-on memory every time; use [`GateSim`] for those.
     pub fn eval(&self, ins: &[Value]) -> Vec<Value> {
         match self {
             Model::Table(t) => t.eval(ins),
             Model::Native(f) => f(ins),
+            Model::Clocked(c) => c.eval(ins, &mut c.power_on()),
         }
     }
 }
@@ -132,6 +224,10 @@ pub struct GateSim<'a> {
     /// Cells reading each net.
     readers: Vec<Vec<usize>>,
     values: Vec<Value>,
+    /// Memory of each clocked cell (`None` for cells without memory).
+    memory: Vec<Option<Memory>>,
+    /// Cells whose inputs changed since they were last evaluated.
+    dirty: BTreeSet<usize>,
 }
 
 impl<'a> GateSim<'a> {
@@ -173,13 +269,22 @@ impl<'a> GateSim<'a> {
                 }
             }
         }
+        let memory = models
+            .iter()
+            .map(|m| match m {
+                Model::Clocked(c) => Some(c.power_on()),
+                _ => None,
+            })
+            .collect();
         Ok(GateSim {
             circuit,
+            dirty: (0..circuit.cells.len()).collect(),
             models,
             cell_inputs,
             cell_outputs,
             readers,
             values,
+            memory,
         })
     }
 
@@ -198,11 +303,37 @@ impl<'a> GateSim<'a> {
         Ok(())
     }
 
-    /// Sets a net's value directly (inputs, or an initial state).
+    /// Sets a net's value directly (inputs, or an initial state). Cells
+    /// reading it are evaluated on the next [`GateSim::settle`].
     pub fn force(&mut self, net: NetId, value: Value) {
         if let Some(v) = self.values.get_mut(net) {
-            *v = value;
+            if *v != value {
+                *v = value;
+                if let Some(r) = self.readers.get(net) {
+                    self.dirty.extend(r.iter().copied());
+                }
+            }
         }
+    }
+
+    /// A clocked cell's memory in [`Memory::save`]'s format (`None` for
+    /// cells without memory).
+    pub fn memory(&self, cell: usize) -> Option<String> {
+        self.memory.get(cell)?.as_ref().map(Memory::save)
+    }
+
+    /// Restores a clocked cell's memory saved by [`GateSim::memory`].
+    pub fn set_memory(&mut self, cell: usize, text: &str) -> Result<(), String> {
+        let words = match self.models.get(cell) {
+            Some(Model::Clocked(c)) => c.words,
+            _ => return Err(format!("cell {cell} has no memory")),
+        };
+        let mem = Memory::load(text, words)?;
+        if let Some(slot) = self.memory.get_mut(cell) {
+            *slot = Some(mem);
+        }
+        self.dirty.insert(cell);
+        Ok(())
     }
 
     pub fn value(&self, net: NetId) -> Value {
@@ -224,13 +355,19 @@ impl<'a> GateSim<'a> {
         bits_to_number(&self.output(name)?)
     }
 
-    /// Runs rounds until nothing changes (or the round limit is hit).
+    /// Runs rounds until nothing changes (or the round limit is hit). Only
+    /// cells whose inputs changed are evaluated, so settling again with no
+    /// new inputs costs nothing.
     pub fn settle(&mut self) -> Outcome {
         let limit = 2 * self.circuit.cells.len() + 16;
-        let mut pending: BTreeSet<usize> = (0..self.circuit.cells.len()).collect();
         let mut depth = 0;
-        while !pending.is_empty() {
+        loop {
+            let pending = std::mem::take(&mut self.dirty);
+            if pending.is_empty() {
+                break;
+            }
             if depth >= limit {
+                self.dirty = pending;
                 return Outcome {
                     settled: false,
                     depth,
@@ -239,25 +376,22 @@ impl<'a> GateSim<'a> {
             let mut changes: Vec<(NetId, Value)> = Vec::new();
             for &c in &pending {
                 let ins: Vec<Value> = self.cell_inputs[c].iter().map(|n| self.value(*n)).collect();
-                let outs = self.models[c].eval(&ins);
+                let outs = match (&self.models[c], self.memory.get_mut(c)) {
+                    (Model::Clocked(k), Some(Some(mem))) => k.eval(&ins, mem),
+                    (m, _) => m.eval(&ins),
+                };
                 for (net, v) in self.cell_outputs[c].iter().zip(outs) {
-                    if self.value(*net) != v {
+                    if self.values.get(*net).copied().unwrap_or(Value::X) != v {
                         changes.push((*net, v));
                     }
                 }
             }
-            pending.clear();
             if changes.is_empty() {
                 break;
             }
             depth += 1;
             for (net, v) in changes {
-                if self.value(net) != v {
-                    self.force(net, v);
-                    if let Some(r) = self.readers.get(net) {
-                        pending.extend(r.iter().copied());
-                    }
-                }
+                self.force(net, v);
             }
         }
         Outcome {
