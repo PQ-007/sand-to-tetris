@@ -1,0 +1,31 @@
+// Hash-based routes, so the static site works on any host (GitHub Pages
+// has no server-side rewrites). Sections inside a page use /s/<anchor>.
+export type Route =
+  | { page: "home" }
+  | { page: "chapter"; number: number; anchor?: string }
+  | { page: "glossary"; term?: string }
+  | { page: "not-found"; hash: string };
+
+export function parseRoute(hash: string): Route {
+  const path = hash.replace(/^#/, "");
+  if (path === "" || path === "/") return { page: "home" };
+  const chapter = /^\/chapter\/(\d+)(?:\/s\/([\w-]+))?\/?$/.exec(path);
+  if (chapter) {
+    const anchor = chapter[2];
+    return {
+      page: "chapter",
+      number: Number(chapter[1]),
+      ...(anchor ? { anchor } : {}),
+    };
+  }
+  const glossary = /^\/glossary(?:\/([\w-]+))?\/?$/.exec(path);
+  if (glossary) {
+    const term = glossary[1];
+    return { page: "glossary", ...(term ? { term } : {}) };
+  }
+  return { page: "not-found", hash };
+}
+
+export function chapterHref(number: number, anchor?: string): string {
+  return `#/chapter/${number}${anchor ? `/s/${anchor}` : ""}`;
+}

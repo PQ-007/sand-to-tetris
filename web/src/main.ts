@@ -1,32 +1,30 @@
 import "./style.css";
 import "./components/core-status";
-import { CHAPTERS, STATUS_LABEL } from "./chapters";
+import "./components/demos";
+import { installGlossaryPopover } from "./components/glossary-popover";
+import { renderRoute } from "./pages";
+import { parseRoute } from "./router";
 
-function renderChapters(list: HTMLElement): void {
-  for (const ch of CHAPTERS) {
-    const item = document.createElement("li");
-    item.className = "chapter";
-    item.dataset.status = ch.status;
+const app = document.getElementById("app");
 
-    const num = document.createElement("span");
-    num.className = "chapter-number";
-    num.textContent = String(ch.number);
-    num.setAttribute("aria-hidden", "true");
-
-    const body = document.createElement("div");
-    const title = document.createElement("h3");
-    title.textContent = `Chapter ${ch.number}: ${ch.title}`;
-    const summary = document.createElement("p");
-    summary.textContent = ch.summary;
-    const status = document.createElement("span");
-    status.className = "chapter-status";
-    status.textContent = STATUS_LABEL[ch.status];
-    body.append(title, summary, status);
-
-    item.append(num, body);
-    list.append(item);
+function show(): void {
+  if (!app) return;
+  const { html, title, anchor } = renderRoute(parseRoute(location.hash));
+  app.innerHTML = html;
+  document.title = title;
+  const target = anchor ? document.getElementById(anchor) : null;
+  if (target) {
+    target.scrollIntoView();
+    target.classList.add("flash");
+    target.setAttribute("tabindex", "-1");
+    target.focus({ preventScroll: true });
+  } else {
+    window.scrollTo(0, 0);
+    // Move focus to the new page's heading so screen readers announce it.
+    app.querySelector<HTMLElement>("h1")?.focus({ preventScroll: true });
   }
 }
 
-const list = document.getElementById("chapters");
-if (list) renderChapters(list);
+if (app) installGlossaryPopover(app);
+window.addEventListener("hashchange", show);
+show();
