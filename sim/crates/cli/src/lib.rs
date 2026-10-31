@@ -119,6 +119,7 @@ fn title(level: &Level) -> String {
 /// Human-readable report. `Ok` if it passed.
 fn render(level: &Level, report: &Report) -> Result<String, String> {
     let rows = report.rows.len();
+    let unit = if level.sequential { "steps" } else { "rows" };
     if report.passed {
         if level.layer == 1 {
             return Ok(format!(
@@ -133,7 +134,7 @@ fn render(level: &Level, report: &Report) -> Result<String, String> {
             .map(|r| format!(" + {} random tests", r.run))
             .unwrap_or_default();
         return Ok(format!(
-            "✓ {}: all {rows} rows{random} pass, {} gates, {} gate delay{} deep",
+            "✓ {}: all {rows} {unit}{random} pass, {} gates, {} gate delay{} deep",
             title(level),
             report.cells,
             report.depth,
@@ -148,7 +149,7 @@ fn render(level: &Level, report: &Report) -> Result<String, String> {
             Some(r) if r.failed > 0 => format!(", {} of {} random tests fail", r.failed, r.run),
             _ => String::new(),
         };
-        format!("✗ {}: {failed} of {rows} rows fail{random}", title(level))
+        format!("✗ {}: {failed} of {rows} {unit} fail{random}", title(level))
     };
     for p in &report.problems {
         out.push_str(&format!("\n  {}: {}", p.severity, p.message));

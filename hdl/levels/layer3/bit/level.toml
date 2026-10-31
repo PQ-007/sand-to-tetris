@@ -1,0 +1,30 @@
+id = "bit"
+name = "Bit"
+layer = 3
+goal = """
+A 1-bit register: memory you control. On each rising edge of clk, if load is 1 it stores d; if load is 0 it keeps the bit it has.
+A flip-flop stores something on every rising edge, so choose what it stores: a multiplexer picks either its own output q (keep) or d (load).
+"""
+sequential = true
+inputs = ["d", "load", "clk"]
+outputs = ["q"]
+requires = ["dff", "mux"]
+truth_table = """
+d load clk | q
+1 1 0 | -
+1 1 1 | 1
+0 0 0 | 1
+0 0 1 | 1
+0 1 0 | 1
+0 1 1 | 0
+1 0 0 | 0
+1 0 1 | 0
+1 1 0 | 0
+1 1 1 | 1
+0 0 0 | 1
+0 0 1 | 1
+"""
+
+[hints]
+wrong = "With load=0 the flip-flop must store its own output again. Feed q back into the multiplexer, and let load choose between q and d."
+unknown = "If q stays unknown after a load, check that the multiplexer's output reaches the flip-flop's d and that clk reaches the flip-flop."

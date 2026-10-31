@@ -44,9 +44,77 @@ fn every_reference_solution_passes_its_level() {
         "xor16",
         "addc16",
         "alu",
+        "srlatch",
+        "dlatch",
+        "dff",
+        "bit",
+        "register",
     ] {
         assert!(text.contains(&format!("✓ {id} ")), "{text}");
     }
+}
+
+/// Checks a design (as JSON) against a real level; the CLI's output text.
+fn check_design(level: &str, json: &str) -> String {
+    let file = std::env::temp_dir().join(format!(
+        "s2t-{}-{}-{:?}.json",
+        level.replace('/', "-"),
+        std::process::id(),
+        std::thread::current().id()
+    ));
+    std::fs::write(&file, json).unwrap_or_default();
+    let dir = format!("{}/{level}", levels());
+    let out = run(&args(&["check", &dir, &file.to_string_lossy()])).unwrap_or_else(|e| e);
+    let _ = std::fs::remove_file(&file);
+    out
+}
+
+#[test]
+fn sequential_levels_count_steps() {
+    let dir = format!("{}/layer3/dff", levels());
+    let out = run(&args(&["check", &dir])).unwrap_or_else(|e| e);
+    assert_eq!(
+        out,
+        "✓ dff (Layer 3): all 12 steps pass, 15 gates, 6 gate delays deep"
+    );
+}
+
+#[test]
+fn a_d_latch_is_not_a_flip_flop() {
+    // One D latch enabled by clk: transparent while clk is 1.
+    let out = check_design(
+        "layer3/dff",
+        r#"{"format":1,"component":"dff","parts":[{"id":"l","kind":"dlatch"}],"wires":[
+            {"from":{"port":"d"},"to":{"part":"l","pin":"d"}},
+            {"from":{"port":"clk"},"to":{"part":"l","pin":"en"}},
+            {"from":{"part":"l","pin":"q"},"to":{"port":"q"}}]}"#,
+    );
+    assert!(out.starts_with("✗ dff (Layer 3): "), "{out}");
+    assert!(out.contains("steps fail"), "{out}");
+    assert!(
+        out.contains("Step 3 (after steps 1–2): d=0 clk=1 → expected q=1, got q=0."),
+        "{out}"
+    );
+    assert!(
+        out.contains("hint: If q changes while clk stays 1"),
+        "{out}"
+    );
+}
+
+#[test]
+fn a_bit_must_keep_its_value_without_load() {
+    // A flip-flop straight from d: it loads on every edge.
+    let out = check_design(
+        "layer3/bit",
+        r#"{"format":1,"component":"bit","parts":[{"id":"f","kind":"dff"}],"wires":[
+            {"from":{"port":"d"},"to":{"part":"f","pin":"d"}},
+            {"from":{"port":"clk"},"to":{"part":"f","pin":"clk"}},
+            {"from":{"part":"f","pin":"q"},"to":{"port":"q"}}]}"#,
+    );
+    assert!(
+        out.contains("Step 4 (after steps 1–3): d=0 load=0 clk=1 → expected q=1, got q=0."),
+        "{out}"
+    );
 }
 
 #[test]

@@ -1,0 +1,88 @@
+{
+  "format": 1,
+  "component": "dff",
+  "parts": [
+    {
+      "id": "inv",
+      "kind": "not",
+      "pos": [
+        220,
+        320
+      ]
+    },
+    {
+      "id": "master",
+      "kind": "dlatch",
+      "pos": [
+        360,
+        200
+      ]
+    },
+    {
+      "id": "slave",
+      "kind": "dlatch",
+      "pos": [
+        540,
+        200
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "master",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "inv",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "inv",
+        "pin": "out"
+      },
+      "to": {
+        "part": "master",
+        "pin": "en"
+      }
+    },
+    {
+      "from": {
+        "part": "master",
+        "pin": "q"
+      },
+      "to": {
+        "part": "slave",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "slave",
+        "pin": "en"
+      }
+    },
+    {
+      "from": {
+        "part": "slave",
+        "pin": "q"
+      },
+      "to": {
+        "port": "q"
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+id = "dlatch"
+name = "D latch"
+layer = 3
+goal = """
+Make the latch easier to use: one data input d instead of separate set and reset. While en (enable) is 1, q follows d. When en goes back to 0, q keeps the value d had at that moment.
+Use your SR latch: set it when d is 1 and en is 1, reset it when d is 0 and en is 1.
+"""
+sequential = true
+inputs = ["d", "en"]
+outputs = ["q"]
+requires = ["srlatch", "and", "not"]
+truth_table = """
+d en | q
+0 0 | -
+1 1 | 1
+0 1 | 0
+1 1 | 1
+1 0 | 1
+0 0 | 1
+1 0 | 1
+0 1 | 0
+0 0 | 0
+1 0 | 0
+"""
+
+[hints]
+wrong = "When en is 0, neither set nor reset may be 1, so the latch holds. When en is 1, exactly one of them is 1, depending on d."
+unknown = "The latch stays unknown until en is 1 at least once. Check that en reaches both AND gates."

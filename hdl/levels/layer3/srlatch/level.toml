@@ -1,0 +1,31 @@
+id = "srlatch"
+name = "SR latch"
+layer = 3
+goal = """
+Build your first memory. Set s to 1 and q becomes 1; set r (reset) to 1 and q becomes 0. With both back at 0, q keeps its last value: the circuit remembers.
+Use two NOR gates, each one's output wired to an input of the other. That loop is the memory. Don't set s and r to 1 at the same time.
+"""
+sequential = true
+inputs = ["s", "r"]
+outputs = ["q"]
+requires = ["nor"]
+truth_table = """
+# Steps run in order, and the circuit keeps its state between them.
+# `-` means any value is fine: a latch starts out unknown.
+s r | q
+0 0 | -
+1 0 | 1
+0 0 | 1
+1 0 | 1
+0 0 | 1
+0 1 | 0
+0 0 | 0
+0 1 | 0
+0 0 | 0
+1 0 | 1
+0 0 | 1
+"""
+
+[hints]
+wrong = "With s=0 and r=0, q must keep its previous value. That needs feedback: wire each NOR's output to an input of the other NOR."
+unknown = "A latch is unknown (X) until it's first set or reset. If q stays X even after s=1, check that s and r each reach one of the NORs, and that q comes from a NOR's output."

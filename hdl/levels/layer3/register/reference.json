@@ -1,0 +1,57 @@
+{
+  "format": 1,
+  "component": "register",
+  "parts": [
+    {
+      "id": "bits",
+      "kind": "bit",
+      "pos": [
+        380,
+        220
+      ],
+      "repeat": 16,
+      "shared": [
+        "load",
+        "clk"
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "bits",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "port": "load"
+      },
+      "to": {
+        "part": "bits",
+        "pin": "load"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "bits",
+        "pin": "clk"
+      }
+    },
+    {
+      "from": {
+        "part": "bits",
+        "pin": "q"
+      },
+      "to": {
+        "port": "q"
+      }
+    }
+  ]
+}
