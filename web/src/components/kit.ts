@@ -30,16 +30,33 @@ export function sheet(css: string): CSSStyleSheet {
 /** Styles every demo shares. Colours come from site tokens on :root. */
 export const BASE = sheet(`
   :host { display: block; margin: 1.5rem 0; color: var(--text); container-type: inline-size; }
-  figure { margin: 0; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 0.75rem; }
-  figcaption { margin: 0 0 0.75rem; color: var(--muted); font-size: 0.9375rem; }
-  figcaption strong { color: var(--text); display: block; font-size: 1rem; }
-  svg { display: block; width: 100%; height: auto; font: 12px system-ui, sans-serif; }
+  /* A HUD panel like the site's: square corners with brackets on them. */
+  figure {
+    --corner: color-mix(in srgb, var(--accent) 65%, transparent);
+    margin: 0; padding: 1.25rem; border: 1px solid var(--border); border-radius: 3px;
+    background:
+      linear-gradient(var(--corner), var(--corner)) top left / 12px 2px no-repeat,
+      linear-gradient(var(--corner), var(--corner)) top left / 2px 12px no-repeat,
+      linear-gradient(var(--corner), var(--corner)) top right / 12px 2px no-repeat,
+      linear-gradient(var(--corner), var(--corner)) top right / 2px 12px no-repeat,
+      linear-gradient(var(--corner), var(--corner)) bottom left / 12px 2px no-repeat,
+      linear-gradient(var(--corner), var(--corner)) bottom left / 2px 12px no-repeat,
+      linear-gradient(var(--corner), var(--corner)) bottom right / 12px 2px no-repeat,
+      linear-gradient(var(--corner), var(--corner)) bottom right / 2px 12px no-repeat,
+      linear-gradient(180deg, var(--surface-2), var(--surface));
+    background-origin: border-box;
+  }
+  figcaption { margin: 0 0 1rem; color: var(--muted); font-size: 0.9375rem; line-height: 1.55; }
+  figcaption strong { color: var(--text); display: block; margin-bottom: 0.2rem; font-family: var(--display); font-size: 1.125rem; font-weight: 700; }
+  svg { display: block; width: 100%; height: auto; font: 12px var(--font); }
   svg text { fill: var(--text); }
   .muted, svg .muted { color: var(--muted); fill: var(--muted); }
   .controls { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: center; margin: 0.75rem 0; }
   label { display: inline-flex; gap: 0.5rem; align-items: center; font-size: 0.9375rem; }
   input[type=range] { width: min(16rem, 60vw); accent-color: var(--accent); }
-  button, select { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 0.375rem; padding: 0.3rem 0.7rem; cursor: pointer; }
+  button, select { font: inherit; color: var(--text); background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 0.3125rem; padding: 0.3rem 0.75rem; cursor: pointer; }
+  button:hover:not(:disabled), select:hover { border-color: color-mix(in srgb, var(--accent) 70%, var(--border-strong)); }
+  button:disabled { opacity: 0.45; cursor: default; }
   button[aria-pressed=true], .chip input:checked + span { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
   :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
   a { color: var(--link); }
@@ -47,12 +64,12 @@ export const BASE = sheet(`
   .chips legend { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.375rem; }
   .chip { position: relative; }
   .chip input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
-  .chip span { display: inline-block; padding: 0.25rem 0.7rem; border: 1px solid var(--border); border-radius: 999px; font-size: 0.875rem; }
+  .chip span { display: inline-block; padding: 0.25rem 0.75rem; border: 1px solid var(--border-strong); border-radius: 999px; font-size: 0.875rem; }
   .chip input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
   .readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.5rem; margin: 0.75rem 0 0; padding: 0; list-style: none; }
-  .readout li { background: var(--bg); border-radius: 0.5rem; padding: 0.5rem 0.75rem; }
-  .readout b { display: block; font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-  .readout output, .readout span { font-variant-numeric: tabular-nums; font-size: 1.0625rem; }
+  .readout li { background: var(--surface-2); border: 1px solid var(--border); border-radius: 3px; padding: 0.55rem 0.8rem; }
+  .readout b { display: block; margin-bottom: 0.15rem; font-family: var(--mono); font-size: 0.6875rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+  .readout output, .readout span { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 1rem; }
   .note { font-size: 0.9375rem; margin: 0.75rem 0 0; }
   /* Wide diagrams keep a readable minimum size on phones and pan sideways
      inside their frame instead (the page itself never scrolls sideways). */

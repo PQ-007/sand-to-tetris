@@ -58,7 +58,8 @@ We use this build-and-unlock pattern as an interaction model only. Levels, wordi
 - **Passing a level** turns the component into a black box in the toolbox.
 - **Look inside:** double-click a box to open it and see your own design running live. A breadcrumb (`Computer › CPU › ALU`) takes you back up.
 - **Wide signals:** bus wires (16 bits in one thick wire), splitters/joiners, and a **Repeat ×N** block (build one bit slice, stamp out N copies).
-- **Keyboard and screen readers:** every action works from the keyboard (place parts with arrow keys, connect from a pin menu), and there's a readable list view of the circuit.
+- **Keyboard and screen readers:** every action works from the keyboard on the canvas itself: parts and ports are focusable and move with the arrow keys, the actions menu (menu key or Shift+F10) connects, disconnects, duplicates and deletes, and each part's label lists its wires. (An earlier separate keyboard panel was folded into this.)
+- **The level map is a tech tree:** each level sits below the levels it needs, one band per layer; selecting a level shows what it needs and unlocks. A list view stays available.
 - **Errors appear on the canvas:**
   - an unconnected pin pulses;
   - a wire with two drivers turns red;
@@ -79,7 +80,7 @@ We use this build-and-unlock pattern as an interaction model only. Levels, wordi
 - Each unlocked component has a toggle: **Your design ⇄ Fast model**.
 - A swap is allowed only after a **match check**: your design and the fast model must agree on the tests plus every input combination (for ≤16 input bits) or 10,000 random inputs/cycles. The result is shown.
 - When a component is swapped, flattening stops at its box: thousands of gates become one native element.
-- The level map shows each component's mode, with presets "As you built it" and "Playable speed", plus a meter for elements simulated and cycles per second.
+- The level map shows each component's mode (Runs as: your design / fast model). Checks always run passed memory components (registers, RAM, CPU, memory map) as their models, since each was compared with its model when it passed; the live editor runs what the learner chose. Not built yet: presets ("As you built it", "Playable speed") and a cycles-per-second meter.
 
 ## 6. Repo structure
 ```

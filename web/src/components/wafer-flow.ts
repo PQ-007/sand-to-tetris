@@ -9,7 +9,7 @@ const CSS = sheet(`
   ol.flow button::before { content: counter(step) " → "; color: var(--muted); font-variant-numeric: tabular-nums; }
   ol.flow button[aria-pressed=true]::before { color: inherit; }
   ol.flow li:last-child button::before { content: counter(step) " ✓ "; }
-  .panel { background: var(--bg); border-radius: 0.5rem; padding: 0.75rem 1rem; margin-top: 0.75rem; }
+  .panel { background: var(--surface-2); border: 1px solid var(--border); border-radius: 3px; padding: 0.85rem 1rem; margin-top: 0.75rem; }
   .panel h3 { margin: 0 0 0.25rem; }
   .panel p { margin: 0.375rem 0; }
   .meter { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem; font-size: 0.9375rem; }

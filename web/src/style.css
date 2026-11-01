@@ -3086,8 +3086,14 @@ button.primary:hover:not(:disabled),
   }
 }
 
-.view-toggle button[aria-pressed="true"] {
+/* Pressed stays pressed under the pointer (the hover rule above would
+   otherwise clear its fill and hide the label). */
+.view-toggle button[aria-pressed="true"],
+.view-toggle button[aria-pressed="true"]:hover:not(:disabled) {
   font-family: var(--display);
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: transparent;
   box-shadow: var(--glow);
 }
 
