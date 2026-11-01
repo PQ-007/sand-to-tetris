@@ -22,7 +22,7 @@ on the computer built in the course. Agreed with the user on 2026-11-01:
   5 cells, all inside a 5 × 5 square. Every game sees different shapes.
 - A piece appears at the top, centred. It falls one row every few frames;
   the delay is `max(6, 33 − 3 · level)` frames (a frame is 1/60 s).
-- Left and right arrows move it, up rotates it clockwise (trying a shift of
+- Left and right arrows move it, up or **C** rotates it clockwise (trying a shift of
   one or two cells if it doesn't fit), down moves it down one row, and space
   drops it to the bottom at once.
 - When it can't fall further it **locks** into the board. Then every row

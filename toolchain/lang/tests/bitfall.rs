@@ -229,3 +229,46 @@ fn moving_and_rotating_follow_the_keys() {
     );
     assert!(o.result > 0, "something landed in the leftmost column");
 }
+
+#[test]
+fn try_rotate_turns_the_falling_piece_and_keeps_it_on_the_board() {
+    let mut o = run("fn main() { seed_random(1);\n\
+         piece[0] = 16; piece[1] = 16; piece[2] = 24; piece[3] = 0; piece[4] = 0;\n\
+         px = 0; py = 5;\n\
+         try_rotate();\n\
+         for r in 0..5 { mem[0x4000 + r] = piece[r]; }\n\
+         mem[0x4005] = px;\n\
+         piece[0] = 28; piece[1] = 0; piece[2] = 0; piece[3] = 0; piece[4] = 0;\n\
+         px = 7; py = 5;\n\
+         try_rotate();\n\
+         mem[0x4006] = piece[0]; mem[0x4007] = piece[2]; mem[0x4008] = px; }");
+    let w = out(&mut o, 9);
+    assert_eq!(&w[0..5], &[0b11100, 0b10000, 0, 0, 0], "an L turned");
+    assert_eq!(w[5], 0);
+    // A flat 3 turned upright at the right wall: pushed back inside.
+    assert_eq!((w[6], w[7]), (16, 16), "now a vertical bar");
+    assert!(w[8] <= 9, "px {}", w[8]);
+}
+
+#[test]
+fn the_c_key_rotates_like_up() {
+    // Hold C for a few frames, let go, and compare with the piece turned by hand.
+    let script = Script {
+        steps_per_frame: 20_000,
+        keys: vec![(30, 99), (34, 0)],
+    };
+    let mut o = run_with(
+        "fn main() { seed_random(4); new_game(); draw_all();\n\
+         copy(piece, spare); rotate(spare); var want = spare[0] * 32 + spare[1];\n\
+         var last = 0; var t = ticks();\n\
+         while ticks() - t < 60 {\n\
+           var k = key();\n\
+           if k != last { if k == UP or k == 'c' or k == 'C' { try_rotate(); } last = k; }\n\
+         }\n\
+         mem[0x4000] = want; mem[0x4001] = piece[0] * 32 + piece[1]; }",
+        &script,
+        100_000_000,
+    );
+    let w = out(&mut o, 2);
+    assert_eq!(w[0], w[1], "turned once by C (or it didn't fit and stayed)");
+}

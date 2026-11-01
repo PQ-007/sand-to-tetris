@@ -1,5 +1,6 @@
 // Bitfall: an original falling-block game (docs/GAME.md), in C Shard, on
-// the OS. Arrows move and rotate, down drops one row, space drops at once.
+// the OS. Left and right move, up or C rotates, down drops one row, space
+// drops at once.
 
 const W = 10;
 const H = 20;
@@ -317,7 +318,7 @@ fn play() {
         if k != last {
             if k == LEFT { try_move(-1, 0); }
             else if k == RIGHT { try_move(1, 0); }
-            else if k == UP { try_rotate(); }
+            else if k == UP or k == 'c' or k == 'C' { try_rotate(); }
             else if k == ' ' { drop(); due = ticks() + delay(); }
             else if k == DOWN { fall(); repeat_at = ticks() + 4; }
             last = k;
