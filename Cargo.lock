@@ -98,6 +98,7 @@ version = "0.1.0"
 dependencies = [
  "s2t-asm",
  "s2t-checker",
+ "s2t-lang",
  "s2t-models",
  "s2t-netlist",
  "s2t-vm",
@@ -116,6 +117,16 @@ name = "s2t-isa"
 version = "0.1.0"
 dependencies = [
  "s2t-models",
+]
+
+[[package]]
+name = "s2t-lang"
+version = "0.1.0"
+dependencies = [
+ "s2t-isa",
+ "s2t-vm",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

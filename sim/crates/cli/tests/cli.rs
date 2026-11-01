@@ -291,3 +291,17 @@ fn translates_a_vm_file_into_assembly() {
     );
     assert!(err.contains("line 3: unknown command frob"), "{err}");
 }
+
+#[test]
+fn compiles_c_shard_to_vm_code() {
+    let dir = std::env::temp_dir().join(format!("s2t-lang-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let good = dir.join("sum.shard");
+    std::fs::write(&good, "fn main() -> int { return 2 + 3; }\n").unwrap();
+    let out = run(&args(&["compile", good.to_str().unwrap()])).unwrap();
+    assert_eq!(out, "func main 0 0\npush 2\npush 3\nadd\nreturn");
+    let bad = dir.join("bad.shard");
+    std::fs::write(&bad, "fn main() {\n  x = 1;\n}\n").unwrap();
+    let err = run(&args(&["compile", bad.to_str().unwrap()])).unwrap_err();
+    assert!(err.contains("line 2: x isn't declared"), "{err}");
+}

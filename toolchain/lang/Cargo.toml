@@ -1,0 +1,17 @@
+[package]
+name = "s2t-lang"
+description = "The reference C Shard compiler (docs/LANGUAGE.md): tokenize, parse, check, generate VM code"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+s2t-vm.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+s2t-isa.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

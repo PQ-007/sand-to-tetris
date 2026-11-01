@@ -22,7 +22,8 @@ const USAGE: &str = "usage:
   s2t check <level-dir> [design.json] [--json]
   s2t check-all <levels-dir>
   s2t asm <program.s> [--json]
-  s2t vm <program.vm> [--json]";
+  s2t vm <program.vm> [--json]
+  s2t compile <program.shard>";
 
 struct Entry {
     dir: PathBuf,
@@ -362,6 +363,18 @@ fn vm(path: &Path, json: bool) -> Result<String, String> {
     Ok(out.join("\n"))
 }
 
+/// Compiles a C Shard program to VM code; every error with its line
+/// otherwise.
+fn compile(path: &Path) -> Result<String, String> {
+    let c = s2t_lang::compile(&read(path)?);
+    if c.errors.is_empty() {
+        Ok(c.vm.join("\n"))
+    } else {
+        let lines: Vec<String> = c.errors.iter().map(|e| e.to_string()).collect();
+        Err(format!("{}:\n{}", path.display(), lines.join("\n")))
+    }
+}
+
 /// Runs a command. `Ok` output goes to stdout with exit code 0; `Err`
 /// output goes to stderr with exit code 1.
 pub fn run(args: &[String]) -> Result<String, String> {
@@ -382,8 +395,9 @@ pub fn run(args: &[String]) -> Result<String, String> {
         ["check-all", root] => check_all(Path::new(root)),
         ["asm", file] => asm(Path::new(file), json),
         ["vm", file] => vm(Path::new(file), json),
+        ["compile", file] => compile(Path::new(file)),
         [] => Err(USAGE.to_string()),
-        [cmd, ..] if !["check", "check-all", "asm", "vm", "version"].contains(cmd) => {
+        [cmd, ..] if !["check", "check-all", "asm", "vm", "compile", "version"].contains(cmd) => {
             Err(format!("unknown command `{cmd}`\n\n{USAGE}"))
         }
         _ => Err(USAGE.to_string()),
