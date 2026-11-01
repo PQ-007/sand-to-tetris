@@ -76,9 +76,23 @@ pub fn match_check(library: &str, component: &str) -> Result<String, JsError> {
     js(to_json(api::match_check(library, component)))
 }
 
+/// An instruction word as assembly, e.g. `SET r1, 5` (docs/ISA.md).
+/// Every 16-bit word is an instruction, so this never fails.
+#[wasm_bindgen]
+pub fn disassemble(word: u16) -> String {
+    s2t_isa::decode(word).to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn disassembles_any_word() {
+        assert_eq!(disassemble(0x4405), "SET r1, 5");
+        assert_eq!(disassemble(0xf700), "RET");
+        assert_eq!(disassemble(0xc000), "JMP 0");
+    }
 
     #[test]
     fn core_version_names_crate_and_format() {

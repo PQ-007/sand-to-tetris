@@ -47,7 +47,7 @@ import { t, type Key } from "./i18n";
 import { diagnosticText, knownText, problemText } from "./messages";
 import { playHref } from "./router";
 import { levelGoal, levelHint, levelName } from "./text";
-import { check, simulate, simulateSteps } from "./sim/core";
+import { check, disassemble, simulate, simulateSteps } from "./sim/core";
 import type {
   Design,
   Diagnostic,
@@ -1083,6 +1083,11 @@ class PlayPage {
             value: formatValue(v, w),
             "aria-describedby": "bus-help",
           });
+          // For an instruction, its assembly next to the number.
+          const describe = this.describer(name);
+          const asm = describe
+            ? el("span", { class: "asm" }, describe(String(v)))
+            : null;
           input.addEventListener("change", () => {
             const n = parseNumber(input.value);
             if (n === undefined || n >= 2 ** w || n < 0) {
@@ -1094,9 +1099,11 @@ class PlayPage {
             }
             this.inputs[name] = n;
             this.currentStep = null;
+            if (asm) asm.textContent = describe?.(String(n)) ?? "";
             this.refresh(false);
           });
           label.append(input);
+          if (asm) label.append(asm);
           return label;
         }
         const b = el(
@@ -1132,7 +1139,11 @@ class PlayPage {
           ? `<td class="step">${i + 1}</td>`
           : "";
         cells += row.inputs
-          .map(([n, v]) => `<td>${formatValue(v, this.width(n))}</td>`)
+          .map(([n, v]) => {
+            const asm = this.describer(n)?.(String(v));
+            const title = asm ? ` title="${esc(asm)}"` : "";
+            return `<td${title}>${formatValue(v, this.width(n))}</td>`;
+          })
           .join("");
         for (const [name, want] of row.outputs) {
           const got = view?.blocked
@@ -1252,6 +1263,12 @@ class PlayPage {
     this.renderWave();
   }
 
+  /** For a 16-bit `instr` port: its value as assembly ("SET r1, 5"). */
+  private describer(name: string): ((value: string) => string) | undefined {
+    if (name !== "instr" || this.width(name) !== 16) return undefined;
+    return (value) => (/^\d+$/.test(value) ? disassemble(Number(value)) : "");
+  }
+
   private renderWave(): void {
     if (!this.level.sequential || this.wave.hidden) return;
     const l = this.level;
@@ -1260,6 +1277,7 @@ class PlayPage {
     const input = (name: string): Signal => ({
       name,
       width: this.width(name),
+      describe: this.describer(name),
       values: live
         ? this.liveLog.map((h) => String(h.inputs[name] ?? 0))
         : this.table.map((r) =>

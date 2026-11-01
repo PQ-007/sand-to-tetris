@@ -4,7 +4,7 @@
 // not colour alone.
 import { svg } from "../components/kit";
 import { t } from "../i18n";
-import { segments, shortValue, type Signal } from "./waveform";
+import { segmentLabel, segments, shortValue, type Signal } from "./waveform";
 
 const LABEL_W = 64;
 const STEP_W = 40;
@@ -162,7 +162,7 @@ export function drawWaveform(
         },
         g,
       );
-      svg(
+      const text = svg(
         "text",
         {
           x: (a + b) / 2,
@@ -171,8 +171,10 @@ export function drawWaveform(
           class: "wave-val",
         },
         g,
-        shortValue(seg.value, sig.width),
+        segmentLabel(sig, seg.value, b - a - 2 * s),
       );
+      const long = sig.describe?.(seg.value);
+      if (long) svg("title", {}, text, long);
       prevY = null;
     }
   });

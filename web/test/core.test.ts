@@ -42,6 +42,12 @@ describe("simulator core (WASM)", () => {
     });
   });
 
+  it("disassembles instruction words", () => {
+    expect(wasm.disassemble(0x4405)).toBe("SET r1, 5");
+    expect(wasm.disassemble(0x0ca0)).toBe("ADD r3, r1, r2");
+    expect(wasm.disassemble(0xf700)).toBe("RET");
+  });
+
   it("reports its version and netlist format", () => {
     expect(wasm.coreVersion()).toMatch(/^\d+\.\d+\.\d+ \(format 1\)$/);
   });

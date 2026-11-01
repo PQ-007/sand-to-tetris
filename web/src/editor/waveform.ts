@@ -10,6 +10,9 @@ export interface Signal {
   values: string[];
   /** Outputs are drawn after a divider. */
   output?: boolean;
+  /** A longer description of a bus value (e.g. an instruction's assembly):
+   * shown as a tooltip, and instead of the short label where it fits. */
+  describe?: (value: string) => string;
 }
 
 export interface Segment {
@@ -39,4 +42,16 @@ export function shortValue(value: string, width: number): string {
   return width > 8
     ? n.toString(16).padStart(Math.ceil(width / 4), "0")
     : String(n);
+}
+
+/** The label for a bus segment `room` pixels wide: the description if it
+ * fits (about 7 px per character), else the short value. */
+export function segmentLabel(
+  signal: Pick<Signal, "width" | "describe">,
+  value: string,
+  room: number,
+): string {
+  const short = shortValue(value, signal.width);
+  const long = signal.describe?.(value);
+  return long && long.length * 7 <= room ? long : short;
 }

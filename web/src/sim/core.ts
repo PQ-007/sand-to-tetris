@@ -26,6 +26,11 @@ export async function getCoreVersion(): Promise<string> {
 
 // The functions below need loadCore() to have finished.
 
+/** An instruction word as assembly, e.g. "SET r1, 5" (docs/ISA.md). */
+export function disassemble(word: number): string {
+  return wasm.disassemble(word & 0xffff);
+}
+
 export function levelInfo(toml: string): LevelInfo {
   return JSON.parse(wasm.levelInfo(toml)) as LevelInfo;
 }

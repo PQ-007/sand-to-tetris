@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { segments, shortValue } from "../src/editor/waveform";
+import { segmentLabel, segments, shortValue } from "../src/editor/waveform";
 
 describe("waveform segments", () => {
   it("merges steps that keep the same value", () => {
@@ -29,5 +29,12 @@ describe("bus values in a waveform", () => {
     // Partly unknown buses (bit strings) and blanks stay readable.
     expect(shortValue("XXXX1111XXXX0000", 16)).toBe("X");
     expect(shortValue("", 16)).toBe("");
+  });
+
+  it("shows a description instead of the short value where it fits", () => {
+    const instr = { width: 16, describe: (v: string) => `op ${v}` };
+    expect(segmentLabel(instr, "17669", 80)).toBe("op 17669");
+    expect(segmentLabel(instr, "17669", 30)).toBe("4505");
+    expect(segmentLabel({ width: 16 }, "17669", 200)).toBe("4505");
   });
 });

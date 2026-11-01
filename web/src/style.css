@@ -2004,6 +2004,12 @@ svg.circuit.read-only .pin-hit {
   width: 8rem;
 }
 
+.bus-input .asm {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
 .runs-as {
   padding-left: 1.1rem;
   font-size: 0.9375rem;
