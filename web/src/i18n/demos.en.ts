@@ -260,4 +260,50 @@ export const demosEn = {
     "Setting: s = 1 forces q̄ to 0, and then the top gate makes q = 1.",
   "latch.resetting":
     "Resetting: r = 1 forces q to 0, and then the bottom gate makes q̄ = 1.",
+
+  // ---- CPU ----
+  "cpu.caption": "A CPU, one instruction at a time",
+  "cpu.captionText":
+    "This is the CPU we designed, running a small program. Each Step fetches the instruction at PC, decodes it and carries it out in one clock cycle.",
+  "cpu.program": "Program",
+  "cpu.sum": "Sum 10 + 9 + … + 1",
+  "cpu.call": "Call and return",
+  "cpu.screen": "Draw on the screen",
+  "cpu.step": "Step",
+  "cpu.run": "Run",
+  "cpu.reset": "Reset",
+  "cpu.listing": "Program ROM",
+  "cpu.addr": "Address",
+  "cpu.instr": "Instruction",
+  "cpu.current": "the instruction at PC",
+  "cpu.state": "Registers",
+  "cpu.flags": "Flags",
+  "cpu.new": "← changed",
+  "cpu.screenLabel": "The screen's top-left corner (16 × 2 pixels):",
+  "cpu.pixelRow": "row {y}: {bits}",
+  "cpu.start": "Reset: PC is 0. Press Step to run the first instruction.",
+  "cpu.did": "Step {n}: {asm}.",
+  "cpu.group.alu":
+    "The register file reads two registers, the ALU combines them, and the result goes back into a register. The flags are saved.",
+  "cpu.group.cmp":
+    "The ALU subtracts to compare the two registers; only the flags are kept.",
+  "cpu.group.imm":
+    "The number is inside the instruction itself. SET and SETH load it; ADDI and SUBI add or subtract it and save the flags.",
+  "cpu.group.shift": "The barrel shifter slides a register's bits in one step.",
+  "cpu.group.load":
+    "The ALU adds the offset to a register to make an address, and the word at that address goes into a register.",
+  "cpu.group.store":
+    "The ALU makes the address, and a register's value is written to memory there.",
+  "cpu.group.jump":
+    "The control unit tests the condition on the saved flags. If it holds, PC becomes PC + offset instead of PC + 1.",
+  "cpu.group.call":
+    "CALL saves the return address in r7 and jumps; RET jumps back to the address in r7.",
+  "cpu.chReg": "r{r}: {from} → {to}",
+  "cpu.chFlags": "flags: Z={z} N={n} C={c}",
+  "cpu.chMem": "memory at {addr} ← {value}",
+  "cpu.chJump": "PC jumps to {to}",
+  "cpu.nothing":
+    "No register or memory changed; PC moves to the next instruction.",
+  "cpu.halted":
+    "The program has stopped: JMP 0 jumps to itself, forever. Press Reset to run it again.",
 } satisfies Messages;

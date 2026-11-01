@@ -7,3 +7,4 @@ import "./noise-chain";
 import "./switch-network";
 import "./ripple-adder";
 import "./latch-demo";
+import "./cpu-demo";

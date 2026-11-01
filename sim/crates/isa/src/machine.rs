@@ -181,3 +181,28 @@ impl Cpu {
         self.pc = pc;
     }
 }
+
+/// Runs `rom` from reset for `steps` instructions with a fresh `Memory`.
+/// Entry 0 is the start state; entry i + 1 is the CPU after instruction i,
+/// with the word it stored, if any, as (address, value).
+pub fn trace(rom: &[u16], steps: usize) -> Vec<(Cpu, Option<(u16, u16)>)> {
+    struct Watch<'a>(&'a mut Memory, Option<(u16, u16)>);
+    impl Bus for Watch<'_> {
+        fn read(&mut self, addr: u16) -> u16 {
+            self.0.read(addr)
+        }
+        fn write(&mut self, addr: u16, value: u16) {
+            self.1 = Some((addr, value));
+            self.0.write(addr, value);
+        }
+    }
+    let mut cpu = Cpu::default();
+    let mut mem = Memory::default();
+    let mut out = vec![(cpu, None)];
+    for _ in 0..steps {
+        let mut bus = Watch(&mut mem, None);
+        cpu.step(rom, &mut bus);
+        out.push((cpu, bus.1));
+    }
+    out
+}

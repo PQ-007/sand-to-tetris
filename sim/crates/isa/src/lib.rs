@@ -10,8 +10,8 @@ use std::fmt;
 
 mod machine;
 pub use machine::{
-    alu, shift, Bus, Cpu, Flags, Memory, KEYBOARD, RAM_WORDS, SCREEN, SCREEN_HEIGHT, SCREEN_WIDTH,
-    SCREEN_WORDS,
+    alu, shift, trace, Bus, Cpu, Flags, Memory, KEYBOARD, RAM_WORDS, SCREEN, SCREEN_HEIGHT,
+    SCREEN_WIDTH, SCREEN_WORDS,
 };
 
 /// The ALU's control inputs, straight from bits 3–0 of an ALU or CMP word.

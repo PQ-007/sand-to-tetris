@@ -145,3 +145,19 @@ export interface MatchReport {
     actual: [string, string][];
   }[];
 }
+
+/** The reference CPU's state (s2t-isa), as `isaTrace` reports it. */
+export interface IsaState {
+  pc: number;
+  regs: number[];
+  z: boolean;
+  n: boolean;
+  c: boolean;
+}
+
+/** A program run from reset: `states[0]` is the start, `states[i + 1]`
+ * follows instruction i; `writes[i]` is what it stored, if anything. */
+export interface IsaTrace {
+  states: IsaState[];
+  writes: ([number, number] | null)[];
+}

@@ -490,3 +490,28 @@ fn jumps_wrap_and_unloaded_rom_reads_as_zero() {
     cpu.step(&[], &mut Memory::default()); // word 0 = ADD r0, r0, r0
     assert_eq!(cpu.pc, 11);
 }
+
+#[test]
+fn trace_records_states_and_stores() {
+    let rom: Vec<u16> = [
+        Instr::Set { rd: 1, imm: 5 },
+        Instr::Store {
+            rs: 1,
+            ra: 1,
+            off: 0,
+        },
+        Instr::Jump {
+            cond: Cond::Always,
+            off: 0,
+        },
+    ]
+    .iter()
+    .map(|i| encode(i).unwrap())
+    .collect();
+    let t = s2t_isa::trace(&rom, 3);
+    assert_eq!(t.len(), 4);
+    assert_eq!((t[0].0.pc, t[0].1), (0, None));
+    assert_eq!(t[1].0.regs[1], 5);
+    assert_eq!(t[2].1, Some((5, 5)));
+    assert_eq!(t[3].0.pc, 2);
+}

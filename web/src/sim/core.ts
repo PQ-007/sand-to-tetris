@@ -3,6 +3,7 @@
 import init, * as wasm from "./pkg/s2t_wasm.js";
 import type {
   Design,
+  IsaTrace,
   LevelInfo,
   LibraryInput,
   MatchReport,
@@ -29,6 +30,11 @@ export async function getCoreVersion(): Promise<string> {
 /** An instruction word as assembly, e.g. "SET r1, 5" (docs/ISA.md). */
 export function disassemble(word: number): string {
   return wasm.disassemble(word & 0xffff);
+}
+
+/** Runs `rom` on the reference CPU from reset, for `steps` instructions. */
+export function isaTrace(rom: number[], steps: number): IsaTrace {
+  return JSON.parse(wasm.isaTrace(JSON.stringify(rom), steps)) as IsaTrace;
 }
 
 export function levelInfo(toml: string): LevelInfo {
