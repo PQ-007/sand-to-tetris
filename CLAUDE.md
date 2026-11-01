@@ -22,7 +22,8 @@ Learners build components in a drag-and-drop editor, one level per component. A 
 - M8 (assembler): done. The language (`docs/ASSEMBLY.md`, agreed with the user: constants, pseudo-instructions, a .data section a loader copies to RAM) and the reference `s2t-asm`; the Machine page (run programs with screen, keyboard, registers, RAM); the assembler workshop (the learner's TypeScript assembler in four tested stages); Chapter 5.
 - M9 (VM): done. The VM agreed with the user (`docs/VM.md`: stack machine, locals/args/globals + load/store, true = −1, mul/div/mod commands); the reference `s2t-vm` (translator + interpreter); VM programs on the Machine page; the translator workshop (`#/translator`); Chapter 6 with a stack demo.
 - M10 (language): done. C Shard, designed with the user in two rounds (`docs/LANGUAGE.md`); the reference compiler `s2t-lang`; C Shard on the Machine page; the compiler workshop (`#/compiler`); Chapter 7 with a compiler demo.
-- Next: M11, the mini OS written in C Shard (screen, text, keyboard, timer, random numbers; the timer and random devices sit at 0x6001+, and the provisional keyboard codes get revisited). Decisions so far are in `docs/PLAN.md` ("M10 decisions"). Keep this section up to date when a milestone lands.
+- M11 (OS): done. Agreed with the user: a frame-counter timer at 0x6001, software random numbers, M8's keyboard codes kept, the OS put in front of every C Shard program. The timer in hardware (memory/computer levels, models, s2t-isa); the OS in C Shard (`os/os.shard`, `docs/OS.md`); the OS workshop (`#/os`); Chapter 8 with a font demo.
+- Next: M12, Tetris in C Shard on the learner's own OS and computer. Decisions so far are in `docs/PLAN.md` ("M11 decisions"). Keep this section up to date when a milestone lands.
 
 ## Commands
 
@@ -103,6 +104,8 @@ cargo run -p s2t-cli -- check-all hdl/levels                      # every refere
     - `web/src/compiler.ts` (pure): `compileWith(stages, source)`, the glue the Machine page uses for the learner's compiler.
     - Compiler workshop (`#/compiler`, a third `WorkshopDef`): `compiler-tests.ts` (tokenize/parse/check compared as JSON with the stage before from the reference; generate and whole programs run on the VM interpreter and compared by result, globals and screen), `compiler-starter.ts` (documents the exact JSON), `web/test/fixtures/compiler-solution.ts` (must pass all ~99 tests). Its code is the workshop store's `compiler` entry.
     - Machine page: a third language, C Shard (compiled by the built-in or the learner's compiler, then translated and assembled); errors and the ▶ line map back through VM and assembly to C Shard lines; the VM code and assembly are shown.
+  - The OS: `os/os.shard` (C Shard, spec `docs/OS.md`), tested in `toolchain/lang/tests/os.rs` on the VM interpreter with a scripted clock and keyboard (`s2t_vm::run_scripted`; WASM `vmRunScripted`). The web imports it raw (`web/src/os.ts`: `BUILTIN_OS`, `withOs` puts an OS in front of a program, `programLines` maps errors/source map back and marks mistakes in the OS, `fontWords`). The Machine page always compiles C Shard with an OS (the learner's once it passes, `osChoices`); it feeds the timer at 0x6001 from running time.
+    - OS workshop (`#/os`, a fourth `WorkshopDef`, code in C Shard, no worker: the VM run is bounded): `os-tests.ts` (each test = the learner's OS + a small program, run scripted, compared by result and screen with the built-in OS), `os-starter.ts` (empty functions; the font block is taken from the built-in OS). Its code is the workshop store's `os` entry.
 
 ## Rules
 

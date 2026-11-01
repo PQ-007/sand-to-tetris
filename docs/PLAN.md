@@ -175,7 +175,14 @@ Agreed with the user in two rounds: braces (C-family) syntax; int, bool and arra
 - Globals are VM globals from 0 in declaration order; starting values are stored by a generated `_init` that `main` calls first; constant scalars are inlined.
 - The reference is `toolchain/lang` (`s2t-lang`: tokenize, parse, check → `Info`, generate, plus a source map). Its tests include 600 random expressions run as code vs folded as constants.
 - The workshop compares tokenize/parse/check JSON exactly (each fed the reference's previous stage) and grades generate by running the VM code.
-| M11 | Mini OS: screen, keyboard, timer, random numbers | |
+| M11 ✓ | Mini OS: screen, keyboard, timer, random numbers | The OS passes its tests on the VM; the learner's OS (in C Shard) is graded against it; C Shard programs get it automatically on the Machine page; Chapter 8 is live |
+
+### M11 decisions (2026-11-01)
+Agreed with the user: a frame-counter timer at 0x6001 (60 a second, fed from outside like the keyboard); random numbers in software (16-bit xorshift in the OS); M8's keyboard codes kept; the OS put in front of every C Shard program (no `use os;`). The rest (`docs/OS.md`):
+- Hardware: the `memory` and `computer` levels gain a `timer` input (key or timer picked by address bit 0; learners who built them before rewire one input), s2t-isa's `Memory.timer`, the models, the Machine page feeds it from running time (paused time doesn't count).
+- The OS is `os/os.shard`: clear, plot, fill_rect (a word at a time), draw_rect, a 3 × 5 font drawn for the project in 4 × 6 cells (32 × 16 text), draw_char/draw_text/draw_int, key, wait_key (the first press seeds the generator from the timer), ticks, wait, seed_random/random/random_below (shifts 7, 9, 8; full period checked), abs/min/max. It takes those names and anything starting with `OS_`/`os_`.
+- C Shard clarification: a string literal may appear inside a function (a hidden constant array), as the approved option's `draw_text("HELLO", ...)` showed.
+- The OS workshop is C Shard, graded on the VM interpreter with a scripted timer and keyboard (`s2t_vm::run_scripted`, WASM `vmRunScripted`) against the built-in OS; text uses the learner's own screen functions, so its stages build in order.
 | M12 | Tetris on the learner's own computer | |
 | M13 | (optional) Chip layout editor → extracted transistor netlist | |
 

@@ -26,6 +26,7 @@ export const toolsMn: Record<keyof typeof toolsEn, Message> = {
   "machine.ex.shard-sum": "for давталттай нийлбэр",
   "machine.ex.shard-box": "Дэлгэц дээр дөрвөлжин зурах",
   "machine.ex.shard-dot": "Сумтай товчоор цэг хөдөлгөх",
+  "machine.ex.shard-hello": "Бичвэр, товч ба шоо (OS ашиглана)",
   "machine.lang.shard": "C Shard",
   "machine.sourceShard": "C Shard эх код",
   "machine.compiler": "Хөрвүүлэгч",

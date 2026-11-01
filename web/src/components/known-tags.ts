@@ -14,4 +14,5 @@ export const KNOWN_TAGS = [
   "asm-demo",
   "stack-demo",
   "compile-demo",
+  "font-demo",
 ] as const;

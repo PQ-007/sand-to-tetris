@@ -658,3 +658,28 @@
   term: "Short-circuit evaluation"
   short: "Stopping early: in `a and b`, b isn't evaluated when a is false; in `a or b`, not when a is true."
   see: [high-level-language]
+
+- id: operating-system
+  term: "Operating system"
+  short: "The code every program shares to use the machine: here, drawing, text, the keyboard, time and random numbers. Larger systems also share the machine between programs and keep files."
+  see: [bitmap-font, pseudo-random]
+
+- id: bit-mask
+  term: "Bit mask"
+  short: "A word with 1s where you want to act: OR with it sets those bits, AND with its inverse clears them, and the other bits stay as they were."
+  see: [operating-system]
+
+- id: bitmap-font
+  term: "Bitmap font"
+  short: "A font stored as small pictures, one bit per pixel: here 3 × 5 pixels per character, one word each."
+  see: [operating-system]
+
+- id: pseudo-random
+  term: "Pseudo-random"
+  short: "Numbers from a formula that look random: the same start always gives the same sequence."
+  see: [random-seed]
+
+- id: random-seed
+  term: "Seed"
+  short: "The starting value of a pseudo-random generator; a different seed gives a different sequence."
+  see: [pseudo-random]

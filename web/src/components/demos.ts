@@ -11,3 +11,4 @@ import "./cpu-demo";
 import "./asm-demo";
 import "./stack-demo";
 import "./compile-demo";
+import "./font-demo";

@@ -33,3 +33,20 @@ export function programLines(
     osErrors: c.errors.map((e) => e.line > 0 && e.line <= offset),
   };
 }
+
+/** The words of an OS's `OS_FONT` table (64 for the built-in one). */
+export function fontWords(os: string): number[] {
+  const start = os.indexOf("const OS_FONT");
+  const open = os.indexOf("[", os.indexOf("=", start));
+  const end = os.indexOf("];", open);
+  if (start < 0 || open < 0 || end < 0) return [];
+  return os
+    .slice(open + 1, end)
+    .split("\n")
+    .map((l) => l.split("//")[0] ?? "")
+    .join(",")
+    .split(",")
+    .map((w) => w.trim())
+    .filter((w) => w)
+    .map((w) => Number(w));
+}

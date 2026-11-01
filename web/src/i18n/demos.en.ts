@@ -317,6 +317,19 @@ export const demosEn = {
   "asmd.unused": "unused",
   "asmd.readsBack": "Read back by the disassembler:",
 
+  // ---- font ----
+  "font.caption": "A font is numbers",
+  "font.captionText":
+    "Each character of the OS font is 3 × 5 pixels, stored as one word: 15 bits, the top row first. Click a pixel (or press Enter on it) to flip its bit and watch the word change.",
+  "font.try": "Try",
+  "font.char": "Character",
+  "font.gridLabel": "The pixels of {char}",
+  "font.pixelOn": "Row {row}, column {col}: on",
+  "font.pixelOff": "Row {row}, column {col}: off",
+  "font.bitsTitle": "Bit 15 (unused), then the five rows",
+  "font.note":
+    "draw_char reads this word and plots a pixel for every 1: (word >> (14 − 3·row − column)) & 1. The whole font is 64 words: 128 bytes.",
+
   // ---- compiler ----
   "cmp.caption": "A compiler, stage by stage",
   "cmp.captionText":

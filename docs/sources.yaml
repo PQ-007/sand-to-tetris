@@ -709,3 +709,28 @@
     web search, 2026-11-01; Bell Labs' own copy of Ritchie's paper refused
     the request (HTTP 403), so the paper's wording was checked through search
     results and a university mirror
+
+- id: gm-naa-io
+  claim: >-
+    GM-NAA I/O was developed in 1956 by Robert L. Patrick of General Motors
+    Research and Owen Mock of North American Aviation for the IBM 704. It is
+    described as the first operating system for the IBM 704; its main job
+    was to start the next program automatically when the current one had
+    finished (batch processing).
+  sources:
+    - title: "GM-NAA I/O (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/GM-NAA_I/O
+  checked: the article read, 2026-11-01
+
+- id: marsaglia-xorshift
+  claim: >-
+    George Marsaglia described xorshift random number generators in "Xorshift
+    RNGs", Journal of Statistical Software 8(14), 2003, as "simple, extremely
+    fast random number generators".
+  sources:
+    - title: "George Marsaglia, Xorshift RNGs, Journal of Statistical Software 8(14), 2003"
+      url: https://www.jstatsoft.org/article/view/v008i14
+  checked: the journal's article page read, 2026-11-01
+  note: >-
+    The 16-bit shifts (7, 9, 8) the OS uses are not from the paper; their
+    full period of 65,535 is checked by a test in toolchain/lang/tests/os.rs.

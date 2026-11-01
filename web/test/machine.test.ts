@@ -3,6 +3,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { EXAMPLES } from "../src/machine-programs";
 import { keyCode } from "../src/machine";
 import { BUILTIN_OS, withOs } from "../src/os";
+import { en } from "../src/i18n/en";
+import { mn } from "../src/i18n/mn";
 import type { AsmProgram, LangCompiled, VmBuilt } from "../src/sim/types";
 import * as wasm from "../src/sim/pkg/s2t_wasm.js";
 
@@ -157,6 +159,13 @@ describe("Machine page examples", () => {
     m.run(500);
     expect(at(64, 48)).toBe(false);
     expect(at(65, 48)).toBe(true);
+  });
+
+  it("every example has a name in both languages", () => {
+    for (const ex of EXAMPLES) {
+      expect(en, ex.id).toHaveProperty([`machine.ex.${ex.id}`]);
+      expect(mn, ex.id).toHaveProperty([`machine.ex.${ex.id}`]);
+    }
   });
 
   it("maps keys to the provisional keyboard codes", () => {

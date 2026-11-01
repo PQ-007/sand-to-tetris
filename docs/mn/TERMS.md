@@ -160,3 +160,8 @@ and `web/src/i18n/demos.mn.ts`.
 | Recursive descent | Recursive descent |
 | Type checker | Type checker |
 | Short-circuit evaluation | Short-circuit evaluation |
+| Operating system | Үйлдлийн систем |
+| Bit mask | Bit mask |
+| Bitmap font | Bitmap font |
+| Pseudo-random | Pseudo-random |
+| Seed | Seed |
