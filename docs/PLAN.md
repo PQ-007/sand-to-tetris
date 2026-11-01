@@ -127,7 +127,17 @@ sand-to-tetris/
 - **Live memory in the editor:** `simulate` takes the previous state and returns the new one, keyed by gate path (not net number), so stored bits survive unrelated edits. Clicking a test step replays the test up to it; "Tick clk" pulses the clock; "Reset memory" returns to power-on.
 - **Big memories run as fast models.** Fully flattened, RAM64 is ~32,000 gates and RAM4K ~2 million. The editor says so when a circuit passes 5,000 gates and names the parts that could swap; `check-all` and the background status re-check run lower memory components as their models (each already matched that model).
 - Order of work: core (sequential checking) ✓ → latch…register levels ✓ → stateful editor ✓ → RAM, PC, Layer 2 helpers, stateful fast models and sequential match check ✓ → waveform view ✓ (Test steps: click a column to replay; Live: the learner's own clicks and ticks) → Chapter 3 ✓.
-| M6 | **ISA designed together with the user** → written spec in `docs/ISA.md` (word size and ALU already agreed) | |
+| M6 ✓ | **ISA designed together with the user** → written spec in `docs/ISA.md` (word size and ALU already agreed) | The spec is agreed and `s2t-isa` runs it, with a test per rule |
+
+### M6 decisions (2026-11-01)
+Agreed with the user in three rounds; the reasons are in `docs/ISA.md`.
+- 8 general-purpose registers r0–r7 (all real; CMP has its own opcode); r7 holds CALL's return address.
+- Separate program ROM (Harvard); every instruction is one 16-bit word and takes one clock, so the CPU needs no control state machine.
+- 16-bit constants in two halves (SET low byte, SETH high byte).
+- Conditional jumps test saved flags Z N C (8 conditions); jumps and calls are PC-relative; JR / CALLR / RET jump through a register.
+- A barrel shifter (SHL / SHR / SAR by 0–15), to be built from 4 stages of MUX16.
+- Memory-mapped I/O: RAM16K at 0x0000, a 128 × 96 black-and-white screen (768 words) at 0x4000 with the leftmost pixel in bit 15, keyboard at 0x6000; timer and random numbers reserved at 0x6001+ for M11.
+- New levels this implies for M7: RAM16K, the barrel shifter, the register file (8 Registers, DMUX8WAY, two MUX8WAY16), then the CPU and the Computer.
 | M7 | CPU, Computer, CPU test programs, fast CPU model | |
 | M8 | Assembler | |
 | M9 | VM + translator | |
