@@ -11,4 +11,5 @@ export const KNOWN_TAGS = [
   "ripple-adder",
   "latch-demo",
   "cpu-demo",
+  "asm-demo",
 ] as const;

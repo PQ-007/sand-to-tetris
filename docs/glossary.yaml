@@ -540,3 +540,40 @@
   term: "Memory-mapped I/O"
   short: "Reaching devices like the screen and keyboard through ordinary memory addresses: storing to the screen's addresses draws, loading from the keyboard's address reads a key."
   see: [address]
+
+- id: assembler
+  term: "Assembler"
+  short: "The program that turns assembly language into machine code: names and labels in, instruction words out."
+  long: "Ours works in two passes: the first finds where everything goes and what each [[label]] means, the second writes the words."
+  see: [assembly-language, two-pass-assembler]
+
+- id: label
+  term: "Label"
+  short: "A name for an address in a program, written as `name:` before a line, so jumps and data can refer to it by name."
+  see: [symbol-table]
+
+- id: symbol-table
+  term: "Symbol table"
+  short: "The assembler's list of every name (label or constant) and the number it stands for."
+  see: [label, two-pass-assembler]
+
+- id: two-pass-assembler
+  term: "Two-pass assembler"
+  short: "An assembler that reads the program twice: once to learn every label's address, once to write the instructions that use them."
+  long: "Two passes are needed because a jump can name a [[label]] that only appears further down."
+  see: [assembler, symbol-table]
+
+- id: pseudo-instruction
+  term: "Pseudo-instruction"
+  short: "A handy name the assembler accepts but the CPU doesn't have; it becomes one or more real instructions, like SET16 or HALT."
+  see: [assembler]
+
+- id: directive
+  term: "Directive"
+  short: "A line that tells the assembler something instead of becoming an instruction, like `.equ` (a constant) or `.word` (data)."
+  see: [assembler]
+
+- id: loader
+  term: "Loader"
+  short: "What puts a program in place before it runs: here, it copies the program's data into RAM."
+  see: [assembler]

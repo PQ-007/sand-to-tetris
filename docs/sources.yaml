@@ -575,3 +575,39 @@
     - title: "AVR CPU: Architecture (Microchip documentation)"
       url: https://onlinedocs.microchip.com/oxy/GUID-8109B192-2AF1-4902-BA7D-C3C6DA7BDC69-en-US-3/GUID-F9B6741C-7F50-477E-81A8-5423F10CD41A.html
   checked: web search, 2026-11-01
+
+- id: booth-contracted-notation
+  claim: >-
+    Kathleen Booth devised a symbolic "contracted notation" for the ARC2
+    computer at Birkbeck, writing instructions with mnemonics instead of
+    binary; it is widely credited as the first assembly language. Her 1947
+    report with Andrew Booth, "General Considerations in the Design of an
+    All-Purpose Electronic Digital Computer", is the usual reference.
+  sources:
+    - title: "Kathleen Booth (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Kathleen_Booth
+    - title: "RIP: Kathleen Booth, the inventor of assembly language (The Register)"
+      url: https://www.theregister.com/2022/10/29/kathleen_booth_obit
+  checked: web search, 2026-11-01
+  uncertain: >-
+    "First assembly language" is a later label: the term came into use in the
+    late 1950s, and one article argues the 1947 report gives a notation for the
+    machine's language rather than an assembly language as such. The primary
+    1947 document was not checked.
+
+- id: edsac-initial-orders
+  claim: >-
+    In May 1949 David Wheeler wrote the "initial orders" for the EDSAC at
+    Cambridge: a few dozen words that read a program from paper tape written
+    with letter mnemonics and put it in memory. Initial Orders 2 (September
+    1949) added a relocating loader in 41 instructions.
+  sources:
+    - title: "EDSAC (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/EDSAC
+    - title: "EDSAC initial orders (University of Cambridge Computer Laboratory)"
+      url: https://www.cl.cam.ac.uk/relics/orders.notes.html
+  checked: web search, 2026-11-01
+  uncertain: >-
+    It is often called the world's first assembler; that is a claim about
+    firsts, and other early systems (such as Booth's notation) are credited
+    with similar ideas.

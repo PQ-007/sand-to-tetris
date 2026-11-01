@@ -1,3 +1,4 @@
+import { bits, fieldsOf } from "../src/demos/asm";
 import { describe, expect, it } from "vitest";
 import {
   buffer,
@@ -248,5 +249,29 @@ describe("NOR latch", () => {
       { q: 1, qn: 1 },
       { q: 0, qn: 0 },
     ]);
+  });
+});
+
+describe("instruction fields", () => {
+  it("every word splits into fields that cover all 16 bits", () => {
+    for (let w = 0; w < 0x10000; w += 7) {
+      const f = fieldsOf(w);
+      expect(f.reduce((n, x) => n + x.width, 0)).toBe(16);
+      expect(f.map(bits).join("")).toBe(w.toString(2).padStart(16, "0"));
+    }
+  });
+
+  it("names the fields of each group", () => {
+    const names = (w: number) =>
+      fieldsOf(w)
+        .map((f) => `${f.name}=${f.value}`)
+        .join(" ");
+    expect(names(0x0ca0)).toBe("group=0 rd=3 ra=1 rb=2 f=0 invb=0 cin=0"); // ADD r3, r1, r2
+    expect(names(0x4405)).toBe("group=2 rd=1 k=0 imm=5"); // SET r1, 5
+    expect(names(0x7a71)).toBe(
+      "group=3 rd=6 ra=4 reg=1 right=1 arith=1 unused=0 rb=1",
+    ); // SAR r6, r4, r1
+    expect(names(0xcbfe)).toBe("group=6 cond=2 off=1022"); // JNZ -2
+    expect(names(0xf700)).toBe("group=7 kind=1 link=0 ra=7 unused=0"); // RET
   });
 });

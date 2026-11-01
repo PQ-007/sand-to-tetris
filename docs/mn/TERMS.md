@@ -137,3 +137,10 @@ and `web/src/i18n/demos.mn.ts`.
 | Harvard architecture | Harvard architecture |
 | RISC | RISC |
 | Memory-mapped I/O | Memory-mapped I/O |
+| Assembler | Ассемблер |
+| Label | Label |
+| Symbol table | Symbol table |
+| Two-pass assembler | Two-pass assembler |
+| Pseudo-instruction | Pseudo-instruction |
+| Directive | Directive |
+| Loader | Loader |

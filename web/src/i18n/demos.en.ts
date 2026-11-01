@@ -306,4 +306,14 @@ export const demosEn = {
     "No register or memory changed; PC moves to the next instruction.",
   "cpu.halted":
     "The program has stopped: JMP 0 jumps to itself, forever. Press Reset to run it again.",
+
+  // ---- one instruction, bit by bit ----
+  "asmd.caption": "One instruction, bit by bit",
+  "asmd.captionText":
+    "Type an instruction, or pick one, and see the 16 bits the assembler makes from it, field by field.",
+  "asmd.try": "Try",
+  "asmd.instruction": "Instruction",
+  "asmd.group": "group",
+  "asmd.unused": "unused",
+  "asmd.readsBack": "Read back by the disassembler:",
 } satisfies Messages;

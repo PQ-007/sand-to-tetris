@@ -148,7 +148,14 @@ Agreed with the user in three rounds; the reasons are in `docs/ISA.md`.
 - **CPU and Computer tests are program traces** printed by the models (two steps per instruction, assembly on a `#` line), so they can't drift from the spec.
 - **Check runs passed memory components as models,** like the status re-check (a learner-built RAM16K is ~8 million gates); the live editor still runs the learner's choice. Flattening stops past 100,000 gates with a translated "too big" problem that points at the fast-model switch.
 - **Chapter 4** with a `<cpu-demo>` that runs `s2t-isa` through WASM (`isaTrace`), and cited history (Harvard Mark I and the contested "Harvard architecture" name, IBM 801 and Berkeley RISC, ARM's link register, AVR's separate buses).
-| M8 | Assembler | |
+| M8 ✓ | Assembler | The reference assembler passes its spec tests; the learner's TypeScript assembler is graded stage by stage; programs run on the Machine page; Chapter 5 is live |
+
+### M8 decisions (2026-11-01)
+Agreed with the user: constants and a few pseudo-instructions; a .data section copied into RAM by a loader; the learner's assembler in TypeScript, in four tested stages; a Machine page now.
+- The language is `docs/ASSEMBLY.md`. SET16 is one word only when its value is known in pass 1 and fits a byte; NOP is `JMP 1` (the only instruction that changes nothing); a jump's number operand is the offset (so disassembly reassembles).
+- The reference (`toolchain/asm`) and the learner's assembler share the same four stages and JSON shapes, so the reference grades each stage on its own, fed correct input from the stage before.
+- The learner's code runs in a worker (5 s limit) after sucrase strips its types; a full solution in the tests proves the workshop solvable.
+- The Machine page runs programs on the reference CPU (`s2t-isa` in WASM): fast enough for games. Keyboard codes are provisional (ASCII, Enter 13, Backspace 8, Escape 27, arrows 128–131; Tab is never captured); revisit with the OS in M11.
 | M9 | VM + translator | |
 | M10 | High-level language (designed together) + compiler | |
 | M11 | Mini OS: screen, keyboard, timer, random numbers | |
