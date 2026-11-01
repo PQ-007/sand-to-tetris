@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Sand to Tetris: a static, browser-only educational site. Learners go from the physics of silicon to a playable Tetris running on a computer they build themselves. The approved plan (architecture, milestones, defaults) is in `docs/PLAN.md`. Read it before starting a milestone, and keep it up to date when a decision changes.
+Sand to Tetris: a static, browser-only educational site. Learners go from the physics of silicon to a playable falling-block game, Bitfall (original: the user asked for classic Tetris, which I can't recreate, so the rules are theirs and the pieces and name ours), running on a computer they build themselves. The site's title still says "Tetris"; renaming it is the user's call. The approved plan (architecture, milestones, defaults) is in `docs/PLAN.md`. Read it before starting a milestone, and keep it up to date when a decision changes.
 
 Learners build components in a drag-and-drop editor, one level per component. A passed component unlocks and becomes a black box in the toolbox for later levels, so the computer grows as a stack of the learner's own parts. There is no text HDL for learners. Designs are JSON netlists, and nobody edits them by hand.
 
@@ -23,7 +23,8 @@ Learners build components in a drag-and-drop editor, one level per component. A 
 - M9 (VM): done. The VM agreed with the user (`docs/VM.md`: stack machine, locals/args/globals + load/store, true = −1, mul/div/mod commands); the reference `s2t-vm` (translator + interpreter); VM programs on the Machine page; the translator workshop (`#/translator`); Chapter 6 with a stack demo.
 - M10 (language): done. C Shard, designed with the user in two rounds (`docs/LANGUAGE.md`); the reference compiler `s2t-lang`; C Shard on the Machine page; the compiler workshop (`#/compiler`); Chapter 7 with a compiler demo.
 - M11 (OS): done. Agreed with the user: a frame-counter timer at 0x6001, software random numbers, M8's keyboard codes kept, the OS put in front of every C Shard program. The timer in hardware (memory/computer levels, models, s2t-isa); the OS in C Shard (`os/os.shard`, `docs/OS.md`); the OS workshop (`#/os`); Chapter 8 with a font demo.
-- Next: M12, Tetris in C Shard on the learner's own OS and computer. Decisions so far are in `docs/PLAN.md` ("M11 decisions"). Keep this section up to date when a milestone lands.
+- M12 (the game): done. Bitfall (`docs/GAME.md`, `games/bitfall.shard`): an original falling-block game agreed with the user (full rows plus a binary-target bonus, a 10 × 20 board; pieces grown at random). C Shard now lets locals hide globals. Chapter 9 closes the course.
+- Next: M13 (optional), the chip layout editor (see `docs/PLAN.md`). Keep this section up to date when a milestone lands.
 
 ## Commands
 
@@ -105,6 +106,7 @@ cargo run -p s2t-cli -- check-all hdl/levels                      # every refere
     - Compiler workshop (`#/compiler`, a third `WorkshopDef`): `compiler-tests.ts` (tokenize/parse/check compared as JSON with the stage before from the reference; generate and whole programs run on the VM interpreter and compared by result, globals and screen), `compiler-starter.ts` (documents the exact JSON), `web/test/fixtures/compiler-solution.ts` (must pass all ~99 tests). Its code is the workshop store's `compiler` entry.
     - Machine page: a third language, C Shard (compiled by the built-in or the learner's compiler, then translated and assembled); errors and the ▶ line map back through VM and assembly to C Shard lines; the VM code and assembly are shown.
   - The OS: `os/os.shard` (C Shard, spec `docs/OS.md`), tested in `toolchain/lang/tests/os.rs` on the VM interpreter with a scripted clock and keyboard (`s2t_vm::run_scripted`; WASM `vmRunScripted`). The web imports it raw (`web/src/os.ts`: `BUILTIN_OS`, `withOs` puts an OS in front of a program, `programLines` maps errors/source map back and marks mistakes in the OS, `fontWords`). The Machine page always compiles C Shard with an OS (the learner's once it passes, `osChoices`); it feeds the timer at 0x6001 from running time.
+    - Bitfall: `games/bitfall.shard` (rules `docs/GAME.md`), a Machine page example imported raw; `toolchain/lang/tests/bitfall.rs` cuts off its `main` (below `// ---- main ----`) to test growing, rotation, collision, clearing, spawning and whole scripted games. The Machine's Fast speed is 200,000 instructions per frame.
     - OS workshop (`#/os`, a fourth `WorkshopDef`, code in C Shard, no worker: the VM run is bounded): `os-tests.ts` (each test = the learner's OS + a small program, run scripted, compared by result and screen with the built-in OS), `os-starter.ts` (empty functions; the font block is taken from the built-in OS). Its code is the workshop store's `os` entry.
 
 ## Rules

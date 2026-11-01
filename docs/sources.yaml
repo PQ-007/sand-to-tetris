@@ -734,3 +734,19 @@
   note: >-
     The 16-bit shifts (7, 9, 8) the OS uses are not from the paper; their
     full period of 65,535 is checked by a test in toolchain/lang/tests/os.rs.
+
+- id: tetris-origin
+  claim: >-
+    Tetris was created by Alexey Pajitnov, a software engineer at the
+    Dorodnitsyn Computing Center of the Soviet Academy of Sciences, in the
+    mid-1980s, on an Elektronika 60 (a Soviet clone of the PDP-11); it is
+    credited with establishing the market for puzzle video games.
+  sources:
+    - title: "Tetris (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Tetris
+  checked: the article read, 2026-11-01
+  uncertain: >-
+    Accounts give 1984 or 1985 for the first version (the article's
+    creation section covers 1984-1985), so the chapter says "the
+    mid-1980s"; the article calls Tetris influential in the genre rather
+    than saying it created it.

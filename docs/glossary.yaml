@@ -683,3 +683,13 @@
   term: "Seed"
   short: "The starting value of a pseudo-random generator; a different seed gives a different sequence."
   see: [pseudo-random]
+
+- id: collision-detection
+  term: "Collision detection"
+  short: "Finding out whether two things in a game overlap: in Bitfall, a piece row AND the board row under it is 0 only if they don't."
+  see: [game-loop, bit-mask]
+
+- id: game-loop
+  term: "Game loop"
+  short: "The loop at the heart of a game: read the input, update the game on a timer, draw what changed, again and again."
+  see: [collision-detection]

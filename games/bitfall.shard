@@ -211,12 +211,12 @@ fn draw_board() {
 }
 
 fn draw_panel() {
-    fill_rect(0, 12, 40, 6, false);
-    draw_int(score, 0, 2);
-    fill_rect(0, 30, 40, 6, false);
-    draw_int(lines, 0, 5);
-    fill_rect(0, 48, 40, 6, false);
-    draw_int(level, 0, 8);
+    fill_rect(4, 12, 36, 6, false);
+    draw_int(score, 1, 2);
+    fill_rect(4, 30, 36, 6, false);
+    draw_int(lines, 1, 5);
+    fill_rect(4, 48, 36, 6, false);
+    draw_int(level, 1, 8);
     // the next piece, in small cells
     fill_rect(92, 14, 20, 20, false);
     for r in 0..5 {
@@ -233,9 +233,9 @@ fn draw_panel() {
 fn draw_all() {
     clear();
     draw_rect(BOARD_X - 2, BOARD_Y - 2, 4 * W + 3, 4 * H + 3);
-    draw_text("SCORE", 5, 0, 1);
-    draw_text("LINES", 5, 0, 4);
-    draw_text("LEVEL", 5, 0, 7);
+    draw_text("SCORE", 5, 1, 1);
+    draw_text("LINES", 5, 1, 4);
+    draw_text("LEVEL", 5, 1, 7);
     draw_text("NEXT", 4, 22, 1);
     draw_text("TARGET", 6, 22, 7);
     draw_board();

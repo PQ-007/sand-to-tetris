@@ -183,7 +183,12 @@ Agreed with the user: a frame-counter timer at 0x6001 (60 a second, fed from out
 - The OS is `os/os.shard`: clear, plot, fill_rect (a word at a time), draw_rect, a 3 × 5 font drawn for the project in 4 × 6 cells (32 × 16 text), draw_char/draw_text/draw_int, key, wait_key (the first press seeds the generator from the timer), ticks, wait, seed_random/random/random_below (shifts 7, 9, 8; full period checked), abs/min/max. It takes those names and anything starting with `OS_`/`os_`.
 - C Shard clarification: a string literal may appear inside a function (a hidden constant array), as the approved option's `draw_text("HELLO", ...)` showed.
 - The OS workshop is C Shard, graded on the VM interpreter with a scripted timer and keyboard (`s2t_vm::run_scripted`, WASM `vmRunScripted`) against the built-in OS; text uses the learner's own screen functions, so its stages build in order.
-| M12 | Tetris on the learner's own computer | |
+| M12 ✓ | The game on the learner's own computer | Bitfall passes its tests on the VM and plays on the Machine page; Chapter 9 closes the course |
+
+### M12 decisions (2026-11-01)
+The user asked for classic Tetris. I can't build a recreation of a specific existing game, so we kept the user's choices (full rows clear plus a binary-target bonus; a 10 × 20 board of 4-pixel cells) and made the pieces and name our own (the user had no preference): pieces grown at random from 3 to 5 cells, and the name Bitfall. Rules and layout: `docs/GAME.md`. The site title "Sand to Tetris" is unchanged; renaming it is the user's call.
+- The board is 20 ten-bit rows and a piece five 5-bit rows: collision is AND, locking OR, clearing a comparison; rotation maps (y, x) to (x, h − 1 − y) with wall kicks of up to two cells.
+- Making the OS a prelude exposed a clash: the OS's locals (e.g. `px` in fill_rect) blocked programs' globals of the same name. C Shard now lets a local or parameter hide a global, constant or function (`docs/LANGUAGE.md`); declaring a name twice in one function is still an error.
 | M13 | (optional) Chip layout editor → extracted transistor netlist | |
 
 The first vertical slice is M0–M3.

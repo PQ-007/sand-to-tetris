@@ -165,3 +165,5 @@ and `web/src/i18n/demos.mn.ts`.
 | Bitmap font | Bitmap font |
 | Pseudo-random | Pseudo-random |
 | Seed | Seed |
+| Collision detection | Collision detection |
+| Game loop | Game loop |

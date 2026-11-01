@@ -40,7 +40,7 @@ const H = 96;
 const SPEEDS = [
   { id: "slow", perFrame: 1 },
   { id: "medium", perFrame: 250 },
-  { id: "fast", perFrame: 60_000 },
+  { id: "fast", perFrame: 200_000 },
 ] as const;
 
 const esc = (s: string) =>

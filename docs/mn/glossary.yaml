@@ -589,3 +589,11 @@
 - id: random-seed
   term: "Seed"
   short: "Pseudo-random генераторын эхлэх утга; өөр seed өөр дараалал өгнө."
+
+- id: collision-detection
+  term: "Collision detection"
+  short: "Тоглоомын хоёр зүйл давхцаж байгааг олох нь: Bitfall-д хэсгийн мөр ба доорх талбайн мөрийн AND зөвхөн давхцаагүй үед 0."
+
+- id: game-loop
+  term: "Game loop"
+  short: "Тоглоомын гол давталт: оролт унш, timer-ээр тоглоомыг шинэчил, өөрчлөгдсөнийг зур, дахин дахин."

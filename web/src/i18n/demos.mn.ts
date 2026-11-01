@@ -321,6 +321,22 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   "asmd.unused": "ашиглагдаагүй",
   "asmd.readsBack": "Disassembler буцааж уншвал:",
 
+  "brow.caption": "Талбай бол тоо",
+  "brow.captionText":
+    "Bitfall-ын талбайн мөр бүр 10 битийн тоо. Нүднүүд дээр дарж мөрүүдийг өөрчил: бүгд 1 (1023) мөр арилах ба target-тэй тэнцүү мөр ч урамшуулалтай арилна. Доор тоглоомын хэсгийн мөр сүүлийн мөрийн дагуу гулсана: хоёулаа 1-тэй газарт AND 0 биш тул хэсэг хаагдана.",
+  "brow.target": "Target: {bits}",
+  "brow.rowLabel": "{n}-р мөр",
+  "brow.cellOn": "{row}-р мөр, {col}-р нүд: дүүрсэн",
+  "brow.cellOff": "{row}-р мөр, {col}-р нүд: хоосон",
+  "brow.fate.full": "дүүрсэн (1023): арилна, +10",
+  "brow.fate.target": "target-тэй тэнцүү: арилна, +50",
+  "brow.fate.stays": "үлдэнэ",
+  "brow.pieceHead": "Сүүлийн мөрийн дээрх хэсгийн мөр",
+  "brow.pieceLabel": "{col}-р багана дахь хэсгийн мөр: {bits}",
+  "brow.column": "Хэсгийн багана",
+  "brow.fits": "хэсэг AND мөр = {and}: багтана.",
+  "brow.blocked": "хэсэг AND мөр = {and}: 0 биш тул хаагдана.",
+
   "font.caption": "Фонт бол тоо",
   "font.captionText":
     "OS-ын фонтын тэмдэгт бүр 3 × 5 пиксел бөгөөд нэг үгэнд хадгалагдана: 15 бит, дээд мөр нь эхэндээ. Пиксел дээр дарж (эсвэл Enter дарж) битийг нь сольж, үг хэрхэн өөрчлөгдөхийг хар.",

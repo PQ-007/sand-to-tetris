@@ -317,6 +317,23 @@ export const demosEn = {
   "asmd.unused": "unused",
   "asmd.readsBack": "Read back by the disassembler:",
 
+  // ---- Bitfall rows ----
+  "brow.caption": "The board is numbers",
+  "brow.captionText":
+    "Each row of the Bitfall board is a 10-bit number. Click cells to change the rows: a row of all 1s (1023) clears, and so does a row equal to the target, for a bonus. Below, a piece row slides along the last row: where both have a 1, the AND isn't 0 and the piece is blocked.",
+  "brow.target": "Target: {bits}",
+  "brow.rowLabel": "Row {n}",
+  "brow.cellOn": "Row {row}, cell {col}: filled",
+  "brow.cellOff": "Row {row}, cell {col}: empty",
+  "brow.fate.full": "full (1023): clears, +10",
+  "brow.fate.target": "equals the target: clears, +50",
+  "brow.fate.stays": "stays",
+  "brow.pieceHead": "A piece row over the last row",
+  "brow.pieceLabel": "The piece row at column {col}: {bits}",
+  "brow.column": "Piece column",
+  "brow.fits": "piece AND row = {and}: it fits.",
+  "brow.blocked": "piece AND row = {and}: not 0, so it's blocked.",
+
   // ---- font ----
   "font.caption": "A font is numbers",
   "font.captionText":
