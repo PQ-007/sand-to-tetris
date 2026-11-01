@@ -669,3 +669,43 @@
     - title: "WebAssembly becomes a W3C Recommendation (W3C press release)"
       url: https://www.w3.org/press-releases/2019/wasm
   checked: the specification's overview read, 2026-11-01
+
+- id: hopper-a0
+  claim: >-
+    Grace Hopper wrote the A-0 system for the UNIVAC I in 1951 and 1952. It
+    is often called the first compiler, but it worked more as a loader or
+    linker, joining ready-made routines, than as a compiler in today's sense.
+  sources:
+    - title: "A-0 System (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/A-0_System
+  checked: the article read, 2026-11-01
+  uncertain: >-
+    "First compiler" is a contested label: the article itself calls A-0 "an
+    early compiler-related tool" that "functioned more as a loader or linker".
+
+- id: fortran-1957
+  claim: >-
+    The first FORTRAN compiler, built at IBM by a team led by John Backus, was
+    delivered for the IBM 704 in April 1957 (the first manual appeared in
+    October 1956). It produced code efficient enough that assembly-language
+    programmers accepted a high-level language in its place.
+  sources:
+    - title: "Fortran (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Fortran
+  checked: the article read, 2026-11-01
+
+- id: c-language
+  claim: >-
+    C came into being at Bell Labs between 1969 and 1973, with its most
+    creative period in 1972, growing out of B, whose only data type was the
+    machine word; adding types to variables was among the first changes
+    Dennis Ritchie made.
+  sources:
+    - title: "Dennis M. Ritchie, The Development of the C Language (HOPL II, 1993), university mirror"
+      url: https://www.cs.tufts.edu/~nr/cs257/archive/dennis-ritchie/chist.pdf
+    - title: "B (programming language) (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/B_(programming_language)
+  checked: >-
+    web search, 2026-11-01; Bell Labs' own copy of Ritchie's paper refused
+    the request (HTTP 403), so the paper's wording was checked through search
+    results and a university mirror

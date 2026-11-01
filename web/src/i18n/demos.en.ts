@@ -317,6 +317,25 @@ export const demosEn = {
   "asmd.unused": "unused",
   "asmd.readsBack": "Read back by the disassembler:",
 
+  // ---- compiler ----
+  "cmp.caption": "A compiler, stage by stage",
+  "cmp.captionText":
+    "Edit the program and watch each stage: the tokens, the syntax tree (each operator above what it works on), and the VM code. A mistake shows the stage that found it, with its line.",
+  "cmp.try": "Try",
+  "cmp.ex.expr": "Precedence",
+  "cmp.ex.if": "if and a call",
+  "cmp.ex.loop": "A loop and an array",
+  "cmp.source": "C Shard source",
+  "cmp.tokens": "1 · Tokens ({n})",
+  "cmp.tree": "2 · Syntax tree",
+  "cmp.vm": "3–4 · Checked, then VM code ({n} lines)",
+  "cmp.error": "Line {line}: {message}",
+  "cmp.kind.num": "number",
+  "cmp.kind.str": "string",
+  "cmp.kind.name": "name",
+  "cmp.kind.kw": "keyword",
+  "cmp.kind.sym": "symbol",
+
   // ---- stack machine ----
   "stk.caption": "A stack machine, one command at a time",
   "stk.captionText":

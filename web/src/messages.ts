@@ -86,7 +86,12 @@ export function knownText(text: string): string {
 /** A C Shard error (docs/LANGUAGE.md) in the current language; a code the
  * site doesn't know (the learner's own) keeps its message. */
 export function langErrorText(e: AsmError): string {
-  if (getLang() === "en" || !(`lang.${e.code}` in en)) return e.message;
+  if (!(`lang.${e.code}` in en)) return e.message;
+  // English keeps the compiler's own message, except "expected", whose
+  // short `what` codes read better spelled out.
+  if (getLang() === "en" && e.code !== "expected") return e.message;
+  // A learner's own error may not carry the values the text needs.
+  if (e.code === "expected" && !(e.args.what && e.args.found)) return e.message;
   const args: Record<string, string> = { ...e.args };
   if (args.what && !args.what.startsWith("`") && `lang.what.${args.what}` in en)
     args.what = t(`lang.what.${args.what}` as Key);

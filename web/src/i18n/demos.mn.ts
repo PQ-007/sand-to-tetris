@@ -321,6 +321,24 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   "asmd.unused": "ашиглагдаагүй",
   "asmd.readsBack": "Disassembler буцааж уншвал:",
 
+  "cmp.caption": "Хөрвүүлэгч, үе шат бүрээр",
+  "cmp.captionText":
+    "Програмыг засаад үе шат бүрийг хар: token-ууд, syntax tree (үйлдэл бүр ажиллах зүйлсийнхээ дээр) ба VM код. Алдаа гарвал түүнийг олсон үе шат мөрийн дугаартай нь харагдана.",
+  "cmp.try": "Турших",
+  "cmp.ex.expr": "Үйлдлийн дараалал",
+  "cmp.ex.if": "if ба дуудлага",
+  "cmp.ex.loop": "Давталт ба массив",
+  "cmp.source": "C Shard эх код",
+  "cmp.tokens": "1 · Token-ууд ({n})",
+  "cmp.tree": "2 · Syntax tree",
+  "cmp.vm": "3–4 · Шалгасны дараах VM код ({n} мөр)",
+  "cmp.error": "{line}-р мөр: {message}",
+  "cmp.kind.num": "тоо",
+  "cmp.kind.str": "string",
+  "cmp.kind.name": "нэр",
+  "cmp.kind.kw": "түлхүүр үг",
+  "cmp.kind.sym": "тэмдэгт",
+
   "stk.caption": "Stack machine, нэг удаад нэг команд",
   "stk.captionText":
     "Програм сонгоод алхам алхмаар ажиллуул. Stack-ийг оройгоос нь харуулна; үг бүр юунд зориулагдсанаа хэлнэ: ажлын утга, хувьсагч эсвэл функцийн frame-ийн хэсэг.",

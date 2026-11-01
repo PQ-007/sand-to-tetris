@@ -152,3 +152,11 @@ and `web/src/i18n/demos.mn.ts`.
 | Calling convention | Calling convention |
 | Recursion | Рекурс |
 | Interpreter | Интерпретатор |
+| High-level language | Дээд түвшний хэл |
+| Compiler | Хөрвүүлэгч |
+| Token | Token |
+| Syntax tree | Syntax tree |
+| Precedence | Үйлдлийн дараалал |
+| Recursive descent | Recursive descent |
+| Type checker | Type checker |
+| Short-circuit evaluation | Short-circuit evaluation |

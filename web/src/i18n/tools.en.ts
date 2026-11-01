@@ -12,7 +12,7 @@ export const toolsEn = {
   // ---- Machine page ----
   "machine.title": "Machine",
   "machine.lead":
-    "Write a program in assembly or VM code, build it and run it: the screen, keyboard, registers and RAM of the computer you designed.",
+    "Write a program in assembly, VM code or C Shard, build it and run it: the screen, keyboard, registers and RAM of the computer you designed.",
   "machine.example": "Example",
   "machine.pick": "Choose an example…",
   "machine.ex.sum": "Sum 10 + 9 + … + 1",

@@ -618,3 +618,43 @@
   term: "Interpreter"
   short: "A program that runs another program's commands one by one, instead of translating them into machine code first."
   see: [virtual-machine]
+
+- id: high-level-language
+  term: "High-level language"
+  short: "A programming language written in terms of the problem (variables, expressions, loops, functions) rather than the machine's instructions."
+  see: [compiler]
+
+- id: compiler
+  term: "Compiler"
+  short: "A program that turns a program in one language into another, lower-level one: here, C Shard into VM code."
+  see: [high-level-language, token, syntax-tree, type-checker]
+
+- id: token
+  term: "Token"
+  short: "The smallest meaningful piece of program text: a name, a number, a keyword or a symbol like `<=`."
+  see: [compiler]
+
+- id: syntax-tree
+  term: "Syntax tree"
+  short: "A program as a tree: each operator or statement above the parts it works on, so the grouping is plain to see."
+  see: [precedence, recursive-descent]
+
+- id: precedence
+  term: "Precedence"
+  short: "Which operators group first: in 2 + 3 * 4, * binds tighter than +, so the result is 14."
+  see: [syntax-tree]
+
+- id: recursive-descent
+  term: "Recursive descent"
+  short: "A way of parsing with one function per grammar rule (or precedence level), each calling the functions for its parts."
+  see: [syntax-tree, precedence]
+
+- id: type-checker
+  term: "Type checker"
+  short: "The stage of a compiler that makes sure every value is used as its type allows, before any code is made."
+  see: [compiler]
+
+- id: short-circuit-evaluation
+  term: "Short-circuit evaluation"
+  short: "Stopping early: in `a and b`, b isn't evaluated when a is false; in `a or b`, not when a is true."
+  see: [high-level-language]

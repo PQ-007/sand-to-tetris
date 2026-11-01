@@ -166,7 +166,15 @@ Agreed with the user: a stack machine; numbered locals, args and globals plus lo
 - The reference is `toolchain/vm` (`s2t-vm`): parse, checks, translate, bootstrap/runtime, build (assembling with `s2t-asm`), and an interpreter with the same memory layout, which the tests compare every translation with.
 - The learner's translator has three parts (parse, translate per command, bootstrap + runtime); the whole-program checks and the loop are shared code (`web/src/translator.ts`, kept identical to `s2t-vm` by a test). Tests run small programs on the CPU and compare result, SP, globals and screen with the interpreter; each stage's tests use the learner's code only for that stage's commands, so the stages are independent.
 - Machine page: a language choice (Assembly / VM); VM code shows its errors on VM lines, the assembly it became, and the stack.
-| M10 | High-level language (designed together) + compiler | |
+| M10 ✓ | High-level language (designed together) + compiler | The reference compiler passes its spec tests; the learner's TypeScript compiler is graded stage by stage; C Shard runs on the Machine page; Chapter 7 is live |
+
+### M10 decisions (2026-11-01)
+Agreed with the user in two rounds: braces (C-family) syntax; int, bool and arrays, type-checked; fixed-size arrays known when compiling; `mem[addr]` built in so the OS can be written in the language; `and`/`or`/`not` for bool (short-circuit) and `& | ^ ~` for bits with ordinary precedence; if/else, while, `for i in a..b`, break, continue; `'A'` chars and `"text"` as constant arrays. The user named it **C Shard** (my pick: the `.shard` extension). The rest (in `docs/LANGUAGE.md`):
+- `>>` shifts zeros in (0x8000 is negative as an int; an arithmetic shift would smear the pixel mask); bit operators bind tighter than comparisons; comparisons don't chain.
+- Arrays live only in globals and constants; functions take `[T]` (a reference: the array's address); locals must be initialised; a name can't be reused inside a function or shadow a global.
+- Globals are VM globals from 0 in declaration order; starting values are stored by a generated `_init` that `main` calls first; constant scalars are inlined.
+- The reference is `toolchain/lang` (`s2t-lang`: tokenize, parse, check → `Info`, generate, plus a source map). Its tests include 600 random expressions run as code vs folded as constants.
+- The workshop compares tokenize/parse/check JSON exactly (each fed the reference's previous stage) and grades generate by running the VM code.
 | M11 | Mini OS: screen, keyboard, timer, random numbers | |
 | M12 | Tetris on the learner's own computer | |
 | M13 | (optional) Chip layout editor → extracted transistor netlist | |
