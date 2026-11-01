@@ -2,14 +2,23 @@
 // stripped (sucrase, loaded only when needed), then it runs in a worker
 // with a time limit.
 import {
+  buildCompilerTests,
+  gradeCompilerTest,
+  type CmOutcome,
+  type CmResult,
+  type CmTestCase,
+} from "./compiler-tests";
+import {
   asmAssemble,
   asmStages,
+  langCompile,
+  langStages,
   Machine,
   vmBuild,
   vmRun,
   vmStages,
 } from "./sim/core";
-import type { AsmProgram } from "./sim/types";
+import type { AsmProgram, LangCompiled } from "./sim/types";
 import { fromAsmErrors, type VmTranslation } from "./translator";
 import {
   buildTranslatorTests,
@@ -237,5 +246,81 @@ export async function translatorChoices(): Promise<
   const mine = (await (await workshopStore()).load()).translator;
   return mine?.passed
     ? [{ id: "yours", translate: learnerTranslator(mine.code) }, builtin]
+    : [builtin];
+}
+
+// ---- the C Shard compiler workshop ------------------------------------------------
+
+export type CompileFn = (source: string) => Promise<LangCompiled>;
+
+let cmTests: CmTestCase[] | undefined;
+
+/** Every compiler test, with answers from the reference (needs the core). */
+export function compilerTests(): CmTestCase[] {
+  cmTests ??= buildCompilerTests({
+    ...langStages,
+    compile: langCompile,
+    run: vmRun,
+  });
+  return cmTests;
+}
+
+/** Runs every compiler test on the learner's code. */
+export async function runCompilerTests(
+  code: string,
+): Promise<{ results: CmResult[] } | { error: RunError }> {
+  const t = await transpile(code);
+  if ("error" in t) return t;
+  const tests = compilerTests();
+  const r = await inWorker<{ outcomes: CmOutcome[] }>({
+    kind: "compiler-test",
+    js: t.js,
+    tests,
+  });
+  if ("error" in r) return r;
+  return {
+    results: tests.map((test, i) =>
+      gradeCompilerTest(
+        test,
+        r.outcomes[i] ?? {
+          kind: "value",
+          got: { error: "crash", message: "" },
+        },
+        vmRun,
+      ),
+    ),
+  };
+}
+
+/** The learner's compiler as a CompileFn. */
+export function learnerCompiler(code: string): CompileFn {
+  return async (source) => {
+    const fail = (e: RunError): LangCompiled => ({
+      vm: [],
+      sourceMap: [],
+      errors: [{ line: 0, code: e.code, args: {}, message: e.message }],
+    });
+    const t = await transpile(code);
+    if ("error" in t) return fail(t.error);
+    const r = await inWorker<{ compiled: LangCompiled }>({
+      kind: "compile",
+      js: t.js,
+      source,
+    });
+    return "error" in r ? fail(r.error) : r.compiled;
+  };
+}
+
+/** Built-in first; the learner's own once every test passes. */
+export async function compilerChoices(): Promise<
+  { id: "builtin" | "yours"; compile: CompileFn }[]
+> {
+  const builtin = {
+    id: "builtin" as const,
+    compile: async (s: string) => langCompile(s),
+  };
+  const mine = (await (await workshopStore()).load()).compiler;
+  return mine?.passed
+    ? [{ id: "yours", compile: learnerCompiler(mine.code) }, builtin]
     : [builtin];
 }

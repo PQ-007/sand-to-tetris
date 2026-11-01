@@ -170,6 +170,7 @@ dependencies = [
  "s2t-asm",
  "s2t-checker",
  "s2t-isa",
+ "s2t-lang",
  "s2t-netlist",
  "s2t-vm",
  "serde",

@@ -7,6 +7,7 @@ export const toolsMn: Record<keyof typeof toolsEn, Message> = {
   "title.machine": "Машин",
   "title.assembler": "Таны ассемблер",
   "title.translator": "Таны VM translator",
+  "title.compiler": "Таны хөрвүүлэгч",
 
   "machine.title": "Машин",
   "machine.lead":
@@ -21,6 +22,16 @@ export const toolsMn: Record<keyof typeof toolsEn, Message> = {
   "machine.ex.vm-fact": "Факториал, рекурсээр",
   "machine.ex.vm-stripes": "Дэлгэц дээрх судал",
   "machine.ex.vm-dot": "Сумтай товчоор цэг хөдөлгөх",
+  "machine.ex.shard-sum": "for давталттай нийлбэр",
+  "machine.ex.shard-box": "Дэлгэц дээр дөрвөлжин зурах",
+  "machine.ex.shard-dot": "Сумтай товчоор цэг хөдөлгөх",
+  "machine.lang.shard": "C Shard",
+  "machine.sourceShard": "C Shard эх код",
+  "machine.compiler": "Хөрвүүлэгч",
+  "machine.cm.builtin": "Суурилуулсан",
+  "machine.cm.yours": "Таных",
+  "machine.compiling": "Хөрвүүлж байна…",
+  "machine.vmCode": "Болсон VM код ({n} мөр)",
   "machine.language": "Хэл",
   "machine.lang.asm": "Ассемблер",
   "machine.lang.vm": "VM",
@@ -119,6 +130,66 @@ export const toolsMn: Record<keyof typeof toolsEn, Message> = {
   "translator.stage.functions": "5 · Функц",
   "translator.stage.muldiv": "6 · mul, div, mod",
   "translator.stage.program": "Бүтэн програмууд",
+
+  "compiler.title": "Таны хөрвүүлэгч",
+  "compiler.lead":
+    "C Shard хөрвүүлэгчийг өөрөө TypeScript-ээр бич: token, syntax tree, нэр ба төрөл, дараа нь VM код. Бүх шалгалт давбал Машин хуудас програмуудыг түүгээр хөрвүүлж чадна.",
+  "compiler.how":
+    "Явцдаа шалгалтуудыг ажиллуул (нийт {n}). Үе шат бүр өмнөх үе шатны зөв гаралтаар шалгагдах тул дарааллаар нь бүтээ; таны гаргасан VM кодыг ажиллуулж, юу хийснээр нь харьцуулна. Tab нь догол мөр хийнэ; засварлагчаас гарахын тулд Escape, дараа нь Tab дар. Хэлний тайлбар:",
+  "compiler.chapter": "7-р бүлэг.",
+  "compiler.source": "Таны хөрвүүлэгч (TypeScript)",
+  "compiler.notRun":
+    "Хөрвүүлэгч тань хэр ажиллаж байгааг харахын тулд «Шалгалтуудыг ажиллуулах»-ыг дар.",
+  "compiler.allPassed":
+    "✓ Таны хөрвүүлэгч бүх {n} шалгалтыг давлаа. Машин хуудас одоо үүнийг санал болгоно.",
+  "compiler.stage.tokenize": "1 · Tokenize",
+  "compiler.stage.parse": "2 · Parse",
+  "compiler.stage.check": "3 · Нэр ба төрлийг шалгах",
+  "compiler.stage.generate": "4 · VM код гаргах",
+  "compiler.stage.program": "Бүтэн програмууд",
+
+  "lang.what.name": "нэр",
+  "lang.what.type": "төрөл (int, bool, [int; N] эсвэл [int])",
+  "lang.what.expression": "утга эсвэл илэрхийлэл",
+  "lang.what.declaration": "fn, var эсвэл const",
+  "lang.what.statement": "statement",
+  "lang.bad-char": "Энд байж болохгүй тэмдэгт: `{char}`",
+  "lang.bad-number": "0-ээс 65535 хүртэлх тоо биш: `{text}`",
+  "lang.bad-char-literal":
+    "Тэмдэгт биш: `{text}` ('A', '\\'', '\\\\' эсвэл '\\n' гэж бич)",
+  "lang.bad-string":
+    "Мөр (string) өөрийн мөрөн дээрээ, хэвлэгдэх тэмдэгтүүдтэй дуусах ёстой",
+  "lang.expected": "{what} байх ёстой, гэтэл: `{found}`",
+  "lang.chained-comparison":
+    "Харьцуулалт гинжлэгдэхгүй: a < b and b < c гэж бич",
+  "lang.unknown-name": "Зарлагдаагүй нэр: `{name}`",
+  "lang.duplicate-name": "Аль хэдийн зарлагдсан нэр: `{name}`",
+  "lang.reserved-name": "`{name}`: _-ээр эхэлсэн нэр хөрвүүлэгчид хамаарна",
+  "lang.type-mismatch": "{expected} байх ёстой, гэтэл: {found}",
+  "lang.not-a-function": "Функц биш: `{name}`",
+  "lang.not-a-value":
+    "Энд утга биш: массивын утга global эсвэл тогтмолд л өгөгдөнө, функцийг (...)-ээр дуудна",
+  "lang.arg-count": "`{name}`: аргументын тоо {expected}, {got} биш",
+  "lang.missing-type": "`{name}`: төрөл эсвэл эхлэх утга хэрэгтэй",
+  "lang.not-assignable":
+    "Зөвхөн хувьсагч, хувьсагч массивын элемент эсвэл mem[...]-д утга оноож болно",
+  "lang.not-an-array": "Массив биш: `{name}`",
+  "lang.not-constant":
+    "Энэ тогтмол байх ёстой: тоо, true/false, тогтмолууд ба тэдгээр дээрх үйлдлүүд",
+  "lang.bad-array-size":
+    "Массивын хэмжээ 1-ээс {max} хүртэлх тогтмол байх ёстой",
+  "lang.array-length": "Утгад {found} элемент байна, төрөлд {expected} гэжээ",
+  "lang.break-outside-loop": "break ба continue давталт дотор байх ёстой",
+  "lang.missing-return": "`{name}`: зам бүр return-ээр төгсөх ёстой",
+  "lang.call-not-statement":
+    "Энэ юу ч хийхгүй: зөвхөн дуудлага дангаараа statement байж болно",
+  "lang.no-main": "Програмд main функц хэрэгтэй: fn main() { ... }",
+  "lang.main-signature":
+    "main параметргүй бөгөөд int буцаах эсвэл юу ч буцаахгүй байх ёстой",
+  "lang.too-many-variables":
+    "`{name}`: параметр ба local хэт олон, хамгийн ихдээ {max}",
+  "lang.too-many-globals":
+    "Global-ууд {words} үг эзэлж байна; хамгийн ихдээ {max} багтана",
 
   "vm.bad-number": "Тоо биш: `{text}` (42, -5, 0x2A эсвэл 0b101 гэж бич)",
   "vm.out-of-range": "{value} багтахгүй: {min}..{max} байх ёстой",

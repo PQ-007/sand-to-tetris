@@ -299,3 +299,120 @@ export interface VmFrame {
   args: number;
   locals: number;
 }
+
+// ---- C Shard (docs/LANGUAGE.md; mirrors s2t-lang's JSON) ------------------------
+
+export type LangToken =
+  | { kind: "num"; value: number; line: number }
+  | { kind: "str"; text: string; line: number }
+  | { kind: "name"; text: string; line: number }
+  | { kind: "kw"; text: string; line: number }
+  | { kind: "sym"; text: string; line: number };
+
+export type LangType =
+  | { kind: "int" }
+  | { kind: "bool" }
+  | { kind: "array"; elem: LangType; size: LangExpr | null };
+
+export type LangExpr =
+  | { kind: "num"; value: number; line: number }
+  | { kind: "bool"; value: boolean; line: number }
+  | { kind: "str"; text: string; line: number }
+  | { kind: "array"; items: LangExpr[]; line: number }
+  | { kind: "name"; name: string; line: number }
+  | { kind: "index"; name: string; index: LangExpr; line: number }
+  | { kind: "mem"; addr: LangExpr; line: number }
+  | { kind: "call"; name: string; args: LangExpr[]; line: number }
+  | { kind: "unary"; op: string; operand: LangExpr; line: number }
+  | {
+      kind: "binary";
+      op: string;
+      left: LangExpr;
+      right: LangExpr;
+      line: number;
+    };
+
+export type LangStmt =
+  | {
+      kind: "var";
+      name: string;
+      type: LangType | null;
+      value: LangExpr;
+      line: number;
+    }
+  | { kind: "assign"; target: LangExpr; value: LangExpr; line: number }
+  | {
+      kind: "if";
+      cond: LangExpr;
+      then: LangStmt[];
+      else: LangStmt[] | null;
+      line: number;
+    }
+  | { kind: "while"; cond: LangExpr; body: LangStmt[]; line: number }
+  | {
+      kind: "for";
+      var: string;
+      from: LangExpr;
+      to: LangExpr;
+      body: LangStmt[];
+      line: number;
+    }
+  | { kind: "break"; line: number }
+  | { kind: "continue"; line: number }
+  | { kind: "return"; value: LangExpr | null; line: number }
+  | { kind: "expr"; expr: LangExpr; line: number };
+
+export type LangItem =
+  | {
+      kind: "fn";
+      name: string;
+      params: { name: string; type: LangType }[];
+      result: LangType | null;
+      body: LangStmt[];
+      line: number;
+    }
+  | {
+      kind: "var";
+      name: string;
+      type: LangType | null;
+      value: LangExpr | null;
+      line: number;
+    }
+  | {
+      kind: "const";
+      name: string;
+      type: LangType | null;
+      value: LangExpr;
+      line: number;
+    };
+
+export interface LangProgram {
+  items: LangItem[];
+}
+
+export interface LangInfo {
+  globals: Record<
+    string,
+    { index: number; size: number; array: boolean; init: number[] }
+  >;
+  consts: Record<string, number>;
+  functions: Record<
+    string,
+    {
+      params: string[];
+      result: boolean;
+      locals: Record<string, number>;
+      count: number;
+    }
+  >;
+}
+
+/** Same shape as the assembler's errors. */
+export type LangError = AsmError;
+
+export interface LangCompiled {
+  vm: string[];
+  /** For each VM line, its source line (0: none). */
+  sourceMap: number[];
+  errors: LangError[];
+}

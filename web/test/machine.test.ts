@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
 import { EXAMPLES } from "../src/machine-programs";
 import { keyCode } from "../src/machine";
-import type { AsmProgram, VmBuilt } from "../src/sim/types";
+import type { AsmProgram, LangCompiled, VmBuilt } from "../src/sim/types";
 import * as wasm from "../src/sim/pkg/s2t_wasm.js";
 
 const assemble = (src: string) =>
@@ -28,11 +28,47 @@ describe("Machine page examples", () => {
     return b.program;
   };
 
+  /** A C Shard example, compiled, translated and assembled. */
+  const shard = (id: string) => {
+    const c = JSON.parse(
+      wasm.langCompile(EXAMPLES.find((e) => e.id === id)!.source),
+    ) as LangCompiled;
+    expect(c.errors, id).toEqual([]);
+    const b = JSON.parse(wasm.vmBuild(c.vm.join("\n"))) as VmBuilt;
+    expect(b.errors, id).toEqual([]);
+    return b.program;
+  };
+
   it("every example builds", () => {
     for (const ex of EXAMPLES)
       if (ex.lang === "asm")
         expect(assemble(ex.source).errors, ex.id).toEqual([]);
-      else build(ex.id);
+      else if (ex.lang === "vm") build(ex.id);
+      else shard(ex.id);
+  });
+
+  it("C Shard examples: sum, boxes, dot", () => {
+    const m = machine(shard("shard-sum"));
+    m.run(100_000);
+    expect(m.halted()).toBe(true);
+    expect(m.ram(0x3fff, 1)[0]).toBe(55);
+    const b = machine(shard("shard-box"));
+    b.run(5_000_000);
+    expect(b.halted()).toBe(true);
+    const at = (mm: typeof b, x: number, y: number) =>
+      ((mm.screen()[y * 8 + (x >> 4)]! >> (15 - (x % 16))) & 1) === 1;
+    expect(at(b, 8, 4)).toBe(true);
+    expect(at(b, 119, 91)).toBe(true);
+    expect(at(b, 60, 50)).toBe(false);
+    const d = machine(shard("shard-dot"));
+    d.run(20_000);
+    expect(at(d, 64, 48)).toBe(true);
+    d.setKey(130);
+    d.run(20_000);
+    d.setKey(0);
+    d.run(20_000);
+    expect(at(d, 64, 48)).toBe(false);
+    expect(at(d, 65, 48)).toBe(true);
   });
 
   it("VM examples: sum, factorial, stripes", () => {

@@ -7,6 +7,7 @@ export const toolsEn = {
   "title.machine": "Machine",
   "title.assembler": "Your assembler",
   "title.translator": "Your VM translator",
+  "title.compiler": "Your compiler",
 
   // ---- Machine page ----
   "machine.title": "Machine",
@@ -22,6 +23,16 @@ export const toolsEn = {
   "machine.ex.vm-fact": "Factorial with recursion",
   "machine.ex.vm-stripes": "Stripes on the screen",
   "machine.ex.vm-dot": "Move a dot with the arrow keys",
+  "machine.ex.shard-sum": "Sum with a for loop",
+  "machine.ex.shard-box": "Draw boxes on the screen",
+  "machine.ex.shard-dot": "Move a dot with the arrow keys",
+  "machine.lang.shard": "C Shard",
+  "machine.sourceShard": "C Shard source",
+  "machine.compiler": "Compiler",
+  "machine.cm.builtin": "Built-in",
+  "machine.cm.yours": "Yours",
+  "machine.compiling": "Compiling…",
+  "machine.vmCode": "The VM code it became ({n} lines)",
   "machine.language": "Language",
   "machine.lang.asm": "Assembly",
   "machine.lang.vm": "VM",
@@ -121,6 +132,64 @@ export const toolsEn = {
   "translator.stage.functions": "5 · Functions",
   "translator.stage.muldiv": "6 · mul, div, mod",
   "translator.stage.program": "Whole programs",
+
+  // ---- compiler workshop ----
+  "compiler.title": "Your compiler",
+  "compiler.lead":
+    "Write the C Shard compiler yourself, in TypeScript: tokens, a syntax tree, names and types, then VM code. When every test passes, the Machine page can compile programs with it.",
+  "compiler.how":
+    "Run the tests as you go ({n} in all). Each stage is tested on correct input from the stage before, so build them in order; the VM code you generate is run and compared by what it does. Tab indents; press Escape, then Tab, to leave the editor. The language is explained in",
+  "compiler.chapter": "Chapter 7.",
+  "compiler.source": "Your compiler (TypeScript)",
+  "compiler.notRun": "Press Run the tests to see how your compiler is doing.",
+  "compiler.allPassed":
+    "✓ Your compiler passes all {n} tests. The Machine page now offers it.",
+  "compiler.stage.tokenize": "1 · Tokenize",
+  "compiler.stage.parse": "2 · Parse",
+  "compiler.stage.check": "3 · Check names and types",
+  "compiler.stage.generate": "4 · Generate VM code",
+  "compiler.stage.program": "Whole programs",
+
+  // ---- C Shard errors (codes from docs/LANGUAGE.md) ----
+  "lang.what.name": "a name",
+  "lang.what.type": "a type (int, bool, [int; N] or [int])",
+  "lang.what.expression": "a value or an expression",
+  "lang.what.declaration": "fn, var or const",
+  "lang.what.statement": "a statement",
+  "lang.bad-char": "`{char}` can't appear here",
+  "lang.bad-number": "`{text}` isn't a number from 0 to 65535",
+  "lang.bad-char-literal":
+    "`{text}` isn't a character: write 'A', '\\'', '\\\\' or '\\n'",
+  "lang.bad-string": "a string must end on its line, with printable characters",
+  "lang.expected": "expected {what}, found `{found}`",
+  "lang.chained-comparison": "comparisons don't chain: write a < b and b < c",
+  "lang.unknown-name": "`{name}` isn't declared",
+  "lang.duplicate-name": "`{name}` is already declared",
+  "lang.reserved-name":
+    "`{name}`: names starting with _ belong to the compiler",
+  "lang.type-mismatch": "expected {expected}, found {found}",
+  "lang.not-a-function": "`{name}` isn't a function",
+  "lang.not-a-value":
+    "this isn't a value here: an array value belongs to a global or constant, and a function needs (...)",
+  "lang.arg-count": "`{name}` takes {expected} argument(s), not {got}",
+  "lang.missing-type": "`{name}` needs a type or a starting value",
+  "lang.not-assignable":
+    "only a variable, an element of a variable array, or mem[...] can be assigned",
+  "lang.not-an-array": "`{name}` isn't an array",
+  "lang.not-constant":
+    "this must be a constant: numbers, true/false, constants and operators on them",
+  "lang.bad-array-size": "an array's size must be a constant from 1 to {max}",
+  "lang.array-length":
+    "the value has {found} elements, the type says {expected}",
+  "lang.break-outside-loop": "break and continue belong inside a loop",
+  "lang.missing-return": "`{name}` must end with return (on every path)",
+  "lang.call-not-statement":
+    "this does nothing: only a call can be a statement on its own",
+  "lang.no-main": "a program needs a function main: fn main() { ... }",
+  "lang.main-signature": "main takes no parameters and returns int or nothing",
+  "lang.too-many-variables":
+    "`{name}` has too many parameters and locals: at most {max}",
+  "lang.too-many-globals": "the globals take {words} words; at most {max} fit",
 
   // ---- VM errors (codes from docs/VM.md) ----
   "vm.bad-number": "`{text}` isn't a number: write 42, -5, 0x2A or 0b101",

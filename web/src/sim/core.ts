@@ -18,6 +18,11 @@ import type {
   Report,
   SimView,
   StepsView,
+  LangCompiled,
+  LangError,
+  LangInfo,
+  LangProgram,
+  LangToken,
   VmBuilt,
   VmCommand,
   VmCtx,
@@ -101,6 +106,28 @@ export function vmRun(source: string, maxSteps: number): VmRunResult {
  * Its constructor throws the program's errors as JSON. */
 export const VmRunner = wasm.VmRunner;
 export type VmRunner = wasm.VmRunner;
+
+/** Compiles C Shard with the reference compiler (to VM code). */
+export function langCompile(source: string): LangCompiled {
+  return JSON.parse(wasm.langCompile(source)) as LangCompiled;
+}
+
+type Staged<T> = { ok: T } | { error: LangError };
+
+/** The reference compiler's stages, for grading the learner's. */
+export const langStages = {
+  tokenize: (source: string) =>
+    JSON.parse(wasm.langTokenize(source)) as Staged<LangToken[]>,
+  parse: (tokens: LangToken[]) =>
+    JSON.parse(wasm.langParse(JSON.stringify(tokens))) as Staged<LangProgram>,
+  check: (program: LangProgram) =>
+    JSON.parse(wasm.langCheck(JSON.stringify(program))) as
+      { ok: LangInfo } | { error: LangError; errors: LangError[] },
+  generate: (program: LangProgram, info: LangInfo) =>
+    JSON.parse(
+      wasm.langGenerate(JSON.stringify(program), JSON.stringify(info)),
+    ) as string[],
+};
 
 /** A program running on the reference CPU (needs loadCore() first). */
 export const Machine = wasm.Machine;

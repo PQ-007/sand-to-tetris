@@ -4,7 +4,14 @@ use crate::{Expr, FuncInfo, Info, Item, Program, Stmt};
 
 /// The program as VM code, one command per line.
 pub fn generate(program: &Program, info: &Info) -> Vec<String> {
-    let mut out = Vec::new();
+    generate_mapped(program, info).0
+}
+
+/// The VM code, and for each of its lines the source line it came from
+/// (the statement's, or the function's for its start and end; 0 for
+/// `_init`).
+pub fn generate_mapped(program: &Program, info: &Info) -> (Vec<String>, Vec<usize>) {
+    let mut out: Vec<(String, usize)> = Vec::new();
     // Starting values of globals and constant arrays (zeros are already 0).
     let mut init = Vec::new();
     for g in info.globals.values() {
@@ -16,45 +23,66 @@ pub fn generate(program: &Program, info: &Info) -> Vec<String> {
         }
     }
     for item in &program.items {
-        let Item::Fn { name, body, .. } = item else {
+        let Item::Fn {
+            name, body, line, ..
+        } = item
+        else {
             continue;
         };
         let Some(f) = info.functions.get(name) else {
             continue;
         };
-        out.push(format!("func {name} {} {}", f.params.len(), f.count));
+        let at = |s: &str| (s.to_string(), *line);
+        out.push(at(&format!("func {name} {} {}", f.params.len(), f.count)));
         if name == "main" && !init.is_empty() {
-            out.push("call _init 0".into());
-            out.push("pop".into());
+            out.push(at("call _init 0"));
+            out.push(at("pop"));
         }
         let mut g = Gen {
             info,
             f,
             out: &mut out,
+            line: *line,
             labels: 0,
             loops: Vec::new(),
         };
         for s in body {
             g.stmt(s);
         }
-        if out.last().map(String::as_str) != Some("return") {
-            out.push("push 0".into());
-            out.push("return".into());
+        if out.last().map(|l| l.0.as_str()) != Some("return") {
+            out.push(at("push 0"));
+            out.push(at("return"));
         }
     }
     if !init.is_empty() {
-        out.push("func _init 0 0".into());
-        out.extend(init);
-        out.push("push 0".into());
-        out.push("return".into());
+        out.push(("func _init 0 0".into(), 0));
+        out.extend(init.into_iter().map(|l| (l, 0)));
+        out.push(("push 0".into(), 0));
+        out.push(("return".into(), 0));
     }
-    out
+    out.into_iter().unzip()
+}
+
+fn stmt_line(s: &Stmt) -> usize {
+    match s {
+        Stmt::Var { line, .. }
+        | Stmt::Assign { line, .. }
+        | Stmt::If { line, .. }
+        | Stmt::While { line, .. }
+        | Stmt::For { line, .. }
+        | Stmt::Break { line }
+        | Stmt::Continue { line }
+        | Stmt::Return { line, .. }
+        | Stmt::Expr { line, .. } => *line,
+    }
 }
 
 struct Gen<'a> {
     info: &'a Info,
     f: &'a FuncInfo,
-    out: &'a mut Vec<String>,
+    out: &'a mut Vec<(String, usize)>,
+    /// The source line being compiled.
+    line: usize,
     labels: usize,
     /// (continue label, break label) of each loop we're in.
     loops: Vec<(String, String)>,
@@ -62,7 +90,7 @@ struct Gen<'a> {
 
 impl Gen<'_> {
     fn emit(&mut self, s: impl Into<String>) {
-        self.out.push(s.into());
+        self.out.push((s.into(), self.line));
     }
 
     fn label(&mut self) -> String {
@@ -102,6 +130,13 @@ impl Gen<'_> {
     }
 
     fn stmt(&mut self, s: &Stmt) {
+        let outer = self.line;
+        self.line = stmt_line(s);
+        self.stmt_here(s);
+        self.line = outer;
+    }
+
+    fn stmt_here(&mut self, s: &Stmt) {
         match s {
             Stmt::Var { name, value, .. } => {
                 self.expr(value);

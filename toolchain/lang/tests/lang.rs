@@ -583,3 +583,33 @@ fn random_expressions_run_as_they_fold() {
         );
     }
 }
+
+#[test]
+fn every_vm_line_maps_to_its_source_line() {
+    let c = compile("var a = 2;\nfn main() -> int {\n  var x = 1;\n  while x < 5 {\n    x = x + a;\n  }\n  return x;\n}");
+    assert_eq!(c.vm.len(), c.source_map.len());
+    let lines = |src_line: usize| -> Vec<&str> {
+        c.vm.iter()
+            .zip(&c.source_map)
+            .filter(|(_, l)| **l == src_line)
+            .map(|(v, _)| v.as_str())
+            .collect()
+    };
+    assert_eq!(lines(3), ["push 1", "set local 0"]);
+    assert!(lines(5).contains(&"add"));
+    assert!(
+        lines(4).contains(&"lt") && lines(4).contains(&"jump L1"),
+        "{:?}",
+        lines(4)
+    );
+    assert_eq!(
+        lines(0),
+        [
+            "func _init 0 0",
+            "push 2",
+            "set global 0",
+            "push 0",
+            "return"
+        ]
+    );
+}

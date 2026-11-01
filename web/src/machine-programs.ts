@@ -11,8 +11,11 @@ export interface Example {
     | "vm-sum"
     | "vm-fact"
     | "vm-stripes"
-    | "vm-dot";
-  lang: "asm" | "vm";
+    | "vm-dot"
+    | "shard-sum"
+    | "shard-box"
+    | "shard-dot";
+  lang: "asm" | "vm" | "shard";
   source: string;
 }
 
@@ -328,6 +331,89 @@ func flip 2 1
         store
         push 0
         return
+`,
+  },
+  {
+    id: "shard-sum",
+    lang: "shard",
+    source: `// Add 1 + 2 + ... + n. main's result is shown under Stack.
+fn sum(n: int) -> int {
+    var total = 0;
+    for i in 1..n + 1 {
+        total = total + i;
+    }
+    return total;
+}
+
+fn main() -> int {
+    return sum(10);
+}
+`,
+  },
+  {
+    id: "shard-box",
+    lang: "shard",
+    source: `// Boxes inside boxes, drawn pixel by pixel with mem[].
+const SCREEN = 0x4000;
+
+fn pixel(x: int, y: int) {
+    var a = SCREEN + y * 8 + x / 16;
+    mem[a] = mem[a] | (0x8000 >> (x % 16));
+}
+
+fn box(left: int, top: int, right: int, bottom: int) {
+    for x in left..right + 1 {
+        pixel(x, top);
+        pixel(x, bottom);
+    }
+    for y in top..bottom + 1 {
+        pixel(left, y);
+        pixel(right, y);
+    }
+}
+
+fn main() {
+    for k in 0..6 {
+        box(8 + k * 8, 4 + k * 6, 119 - k * 8, 91 - k * 6);
+    }
+}
+`,
+  },
+  {
+    id: "shard-dot",
+    lang: "shard",
+    source: `// Move a dot with the arrow keys (click the screen first).
+const SCREEN = 0x4000;
+const KEYBOARD = 0x6000;
+const LEFT = 128;
+const UP = 129;
+const RIGHT = 130;
+const DOWN = 131;
+
+fn flip(x: int, y: int) {
+    var a = SCREEN + y * 8 + x / 16;
+    mem[a] = mem[a] ^ (0x8000 >> (x % 16));
+}
+
+fn main() {
+    var x = 64;
+    var y = 48;
+    flip(x, y);
+    while true {
+        var key = mem[KEYBOARD];
+        if key != 0 {
+            flip(x, y);
+            if key == LEFT { x = x - 1; }
+            if key == RIGHT { x = x + 1; }
+            if key == UP { y = y - 1; }
+            if key == DOWN { y = y + 1; }
+            x = x & 127;
+            y = (y + 96) % 96;
+            flip(x, y);
+            while mem[KEYBOARD] != 0 { }
+        }
+    }
+}
 `,
   },
 ];

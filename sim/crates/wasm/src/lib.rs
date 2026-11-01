@@ -263,6 +263,53 @@ impl VmRunner {
     }
 }
 
+// ---- the C Shard compiler (docs/LANGUAGE.md) ---------------------------------
+
+fn lang_stage<T: serde::Serialize>(r: Result<T, s2t_lang::LangError>) -> Result<String, JsError> {
+    let v = match r {
+        Ok(v) => serde_json::json!({ "ok": v }),
+        Err(e) => serde_json::json!({ "error": e }),
+    };
+    Ok(v.to_string())
+}
+
+/// Compiles a whole program → `Compiled` JSON (vm, sourceMap, errors).
+#[wasm_bindgen(js_name = langCompile)]
+pub fn lang_compile(source: &str) -> Result<String, JsError> {
+    js(to_json(Ok::<_, String>(s2t_lang::compile(source))))
+}
+
+/// Stage 1 → `{"ok": [Token]}` or `{"error": ...}`.
+#[wasm_bindgen(js_name = langTokenize)]
+pub fn lang_tokenize(source: &str) -> Result<String, JsError> {
+    lang_stage(s2t_lang::tokenize(source))
+}
+
+/// Stage 2 on a JSON token list → `{"ok": Program}` or `{"error": ...}`.
+#[wasm_bindgen(js_name = langParse)]
+pub fn lang_parse(tokens: &str) -> Result<String, JsError> {
+    lang_stage(s2t_lang::parse(&from_json::<Vec<s2t_lang::Token>>(tokens)?))
+}
+
+/// Stage 3 on a JSON program → `{"ok": Info}` or `{"error": first}` (and
+/// `errors`: all of them).
+#[wasm_bindgen(js_name = langCheck)]
+pub fn lang_check(program: &str) -> Result<String, JsError> {
+    let p: s2t_lang::Program = from_json(program)?;
+    let v = match s2t_lang::check(&p) {
+        Ok(info) => serde_json::json!({ "ok": info }),
+        Err(errors) => serde_json::json!({ "error": errors.first(), "errors": errors }),
+    };
+    Ok(v.to_string())
+}
+
+/// Stage 4 on a JSON program and info → `[VM line]`.
+#[wasm_bindgen(js_name = langGenerate)]
+pub fn lang_generate(program: &str, info: &str) -> Result<String, JsError> {
+    let lines = s2t_lang::generate(&from_json(program)?, &from_json(info)?);
+    js(to_json(Ok::<_, String>(lines)))
+}
+
 // ---- the Machine page: a program running on the reference CPU ---------------
 
 /// A running program: the reference CPU, RAM, screen and keyboard. Kept in
@@ -394,6 +441,22 @@ mod tests {
         v.step();
         assert_eq!(v.stack()[0], 6);
         assert!(v.frames().contains("\"func\":\"main\""));
+    }
+
+    #[test]
+    fn compiler_stages_round_trip_through_json() {
+        let src = "fn main() -> int { return 6 * 7; }";
+        let tokens: serde_json::Value = serde_json::from_str(&lang_tokenize(src).unwrap()).unwrap();
+        let program: serde_json::Value =
+            serde_json::from_str(&lang_parse(&tokens["ok"].to_string()).unwrap()).unwrap();
+        let info: serde_json::Value =
+            serde_json::from_str(&lang_check(&program["ok"].to_string()).unwrap()).unwrap();
+        let vm = lang_generate(&program["ok"].to_string(), &info["ok"].to_string()).unwrap();
+        assert!(vm.contains("mul"), "{vm}");
+        assert!(lang_compile(src).unwrap().contains("\"sourceMap\":[1,"));
+        let bad = lang_check(r#"{"items":[]}"#).unwrap();
+        assert!(bad.contains("no-main"), "{bad}");
+        assert!(lang_tokenize("x = #").unwrap().contains("bad-char"));
     }
 
     #[test]

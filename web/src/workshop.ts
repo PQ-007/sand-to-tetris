@@ -4,11 +4,15 @@
 import { getLang, t, type Key, type Lang } from "./i18n";
 import { chapterHref } from "./router";
 import { loadCore } from "./sim/core";
+import { CM_STAGES } from "./compiler-tests";
+import { COMPILER_STARTERS } from "./compiler-starter";
 import { TR_STAGES } from "./translator-tests";
 import { TRANSLATOR_STARTERS } from "./translator-starter";
 import { STARTERS } from "./workshop-starter";
 import { workshopStore, type WorkshopEntry } from "./workshop-store";
 import {
+  compilerTests,
+  runCompilerTests,
   runTranslatorTests,
   runWorkshopTests,
   translatorTests,
@@ -29,9 +33,9 @@ interface Result {
 }
 
 interface WorkshopDef {
-  id: "assembler" | "translator";
+  id: "assembler" | "translator" | "compiler";
   /** Key prefix for the title, lead, how and stage names. */
-  keys: "workshop" | "translator";
+  keys: "workshop" | "translator" | "compiler";
   stages: string[];
   chapter: number;
   starters: Record<Lang, string>;
@@ -57,6 +61,15 @@ const WORKSHOPS: Record<WorkshopDef["id"], WorkshopDef> = {
     starters: TRANSLATOR_STARTERS,
     count: () => translatorTests().length,
     run: runTranslatorTests,
+  },
+  compiler: {
+    id: "compiler",
+    keys: "compiler",
+    stages: CM_STAGES,
+    chapter: 7,
+    starters: COMPILER_STARTERS,
+    count: () => compilerTests().length,
+    run: runCompilerTests,
   },
 };
 

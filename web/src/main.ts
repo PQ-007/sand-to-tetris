@@ -26,7 +26,8 @@ function show(): void {
       ? "build"
       : route.page === "machine" ||
           route.page === "assembler" ||
-          route.page === "translator"
+          route.page === "translator" ||
+          route.page === "compiler"
         ? "machine"
         : route.page === "glossary"
           ? "glossary"
@@ -49,7 +50,8 @@ function show(): void {
   if (
     route.page === "machine" ||
     route.page === "assembler" ||
-    route.page === "translator"
+    route.page === "translator" ||
+    route.page === "compiler"
   ) {
     const page = route.page;
     const root = document.getElementById(`${page}-root`);

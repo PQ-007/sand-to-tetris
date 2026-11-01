@@ -83,6 +83,16 @@ export function knownText(text: string): string {
 
 /** An assembler error in the current language: English comes from the
  * assembler itself; other languages are built from its code and values. */
+/** A C Shard error (docs/LANGUAGE.md) in the current language; a code the
+ * site doesn't know (the learner's own) keeps its message. */
+export function langErrorText(e: AsmError): string {
+  if (getLang() === "en" || !(`lang.${e.code}` in en)) return e.message;
+  const args: Record<string, string> = { ...e.args };
+  if (args.what && !args.what.startsWith("`") && `lang.what.${args.what}` in en)
+    args.what = t(`lang.what.${args.what}` as Key);
+  return t(`lang.${e.code}` as Key, args);
+}
+
 /** A VM error (docs/VM.md) in the current language; a code the site
  * doesn't know (the learner's own, like "todo") keeps its message. */
 export function vmErrorText(e: AsmError): string {

@@ -22,7 +22,7 @@ mod lex;
 mod parse;
 
 pub use check::check;
-pub use gen::generate;
+pub use gen::{generate, generate_mapped};
 pub use lex::tokenize;
 pub use parse::parse;
 
@@ -325,16 +325,19 @@ pub struct Info {
 
 /// A compiled program: VM code, or the errors.
 #[derive(Clone, Debug, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Compiled {
     pub vm: Vec<String>,
+    /// For each VM line, the source line it came from (0: none).
+    pub source_map: Vec<usize>,
     pub errors: Vec<LangError>,
 }
 
 /// All four stages over a source text.
 pub fn compile(source: &str) -> Compiled {
     let fail = |errors: Vec<LangError>| Compiled {
-        vm: Vec::new(),
         errors,
+        ..Compiled::default()
     };
     let tokens = match tokenize(source) {
         Ok(t) => t,
@@ -345,10 +348,14 @@ pub fn compile(source: &str) -> Compiled {
         Err(e) => return fail(vec![e]),
     };
     match check(&program) {
-        Ok(info) => Compiled {
-            vm: generate(&program, &info),
-            errors: Vec::new(),
-        },
+        Ok(info) => {
+            let (vm, source_map) = generate_mapped(&program, &info);
+            Compiled {
+                vm,
+                source_map,
+                errors: Vec::new(),
+            }
+        }
         Err(errors) => fail(errors),
     }
 }

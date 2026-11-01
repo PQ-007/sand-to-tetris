@@ -2,15 +2,17 @@
 // reference CPU with its screen, keyboard, registers, stack and RAM in view.
 import { t, type Key } from "./i18n";
 import { EXAMPLES, type Example } from "./machine-programs";
-import { asmErrorText, vmErrorText } from "./messages";
+import { asmErrorText, langErrorText, vmErrorText } from "./messages";
 import { asmAssemble, disassemble, loadCore, Machine } from "./sim/core";
-import type { AsmError, AsmProgram } from "./sim/types";
+import type { AsmError, AsmProgram, LangCompiled } from "./sim/types";
 import { fromAsmErrors, type VmTranslation } from "./translator";
 import {
   assemblerChoices,
   builtinTranslate,
+  compilerChoices,
   translatorChoices,
   type AssembleFn,
+  type CompileFn,
   type TranslateFn,
 } from "./workshop-run";
 
@@ -20,7 +22,13 @@ const LANG_KEY = "s2t-machine-lang";
 const SOURCE_KEYS: Record<Lang, string> = {
   asm: "s2t-machine-source",
   vm: "s2t-machine-vm",
+  shard: "s2t-machine-shard",
 };
+const LANGS: Lang[] = ["asm", "vm", "shard"];
+
+function asLang(v: string | null): Lang {
+  return LANGS.find((l) => l === v) ?? "asm";
+}
 /** Stack words shown (VM programs). */
 const STACK_ROWS = 12;
 const W = 128;
@@ -87,7 +95,9 @@ export async function mountMachine(root: HTMLElement): Promise<void> {
 }
 
 class MachinePage {
-  private lang: Lang = stored(LANG_KEY) === "vm" ? "vm" : "asm";
+  private lang: Lang = asLang(stored(LANG_KEY));
+  /** C Shard programs: what the compiler made. */
+  private compiled: LangCompiled | null = null;
   private program: AsmProgram | null = null;
   /** VM programs: the translation the program was assembled from. */
   private translation: VmTranslation | null = null;
@@ -101,6 +111,7 @@ class MachinePage {
   private speed: (typeof SPEEDS)[number] = SPEEDS[2];
   private assemble: AssembleFn = async (s) => asmAssemble(s);
   private translate: TranslateFn = builtinTranslate;
+  private compile: CompileFn | null = null;
   private colors = { on: [77, 163, 255], off: [10, 15, 22] };
 
   private editor: HTMLTextAreaElement;
@@ -117,14 +128,13 @@ class MachinePage {
   private stackBox: HTMLElement;
   private stackView: HTMLElement;
   private asmBox: HTMLDetailsElement;
+  private vmBox: HTMLDetailsElement;
 
   constructor(private root: HTMLElement) {
-    const langs = (["asm", "vm"] as const)
-      .map(
-        (l) =>
-          `<option value="${l}"${l === this.lang ? " selected" : ""}>${esc(t(`machine.lang.${l}`))}</option>`,
-      )
-      .join("");
+    const langs = LANGS.map(
+      (l) =>
+        `<option value="${l}"${l === this.lang ? " selected" : ""}>${esc(t(`machine.lang.${l}`))}</option>`,
+    ).join("");
     const speeds = SPEEDS.map(
       (s) =>
         `<option value="${s.id}"${s === this.speed ? " selected" : ""}>${esc(t(`machine.speed.${s.id}` as Key))}</option>`,
@@ -140,6 +150,8 @@ class MachinePage {
             <select data-lang>${langs}</select></label>
           <label>${esc(t("machine.example"))}
             <select data-example></select></label>
+          <label data-compiler-box hidden>${esc(t("machine.compiler"))}
+            <select data-compiler></select></label>
           <label data-translator-box hidden>${esc(t("machine.translator"))}
             <select data-translator></select></label>
           <label data-assembler-box hidden>${esc(t("machine.assembler"))}
@@ -161,7 +173,8 @@ class MachinePage {
             <textarea spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off"></textarea>
           </div>
           <ul class="asm-errors" aria-live="polite"></ul>
-          <details class="machine-asm" hidden><summary></summary><pre></pre></details>
+          <details class="machine-asm machine-vmcode" hidden><summary></summary><pre></pre></details>
+          <details class="machine-asm" data-asm hidden><summary></summary><pre></pre></details>
         </section>
         <section class="machine-side">
           <div class="screen-box">
@@ -198,8 +211,10 @@ class MachinePage {
     this.examples = q("[data-example]");
     this.stackBox = q("[data-stack]");
     this.stackView = q(".machine-stack");
-    this.asmBox = q(".machine-asm");
+    this.asmBox = q("[data-asm]");
     this.asmBox.addEventListener("toggle", () => this.renderTranslation());
+    this.vmBox = q(".machine-vmcode");
+    this.vmBox.addEventListener("toggle", () => this.renderTranslation());
 
     this.editor.value = readSource(this.lang);
     this.editor.addEventListener("input", () => {
@@ -207,7 +222,7 @@ class MachinePage {
       this.renderGutter();
     });
     q<HTMLSelectElement>("[data-lang]").addEventListener("change", (e) => {
-      this.lang = (e.target as HTMLSelectElement).value === "vm" ? "vm" : "asm";
+      this.lang = asLang((e.target as HTMLSelectElement).value);
       store(LANG_KEY, this.lang);
       this.replaceSource(readSource(this.lang));
       this.renderLang();
@@ -245,6 +260,7 @@ class MachinePage {
       q("[data-translator-box]"),
       q("[data-translator]"),
     );
+    void this.offerCompilers(q("[data-compiler-box]"), q("[data-compiler]"));
     this.renderLang();
     this.renderGutter();
     this.renderState();
@@ -259,6 +275,7 @@ class MachinePage {
     this.machine = null;
     this.program = null;
     this.translation = null;
+    this.compiled = null;
     this.problems = [];
     this.renderGutter();
     this.renderErrors();
@@ -277,15 +294,47 @@ class MachinePage {
         .join("");
     this.editor.setAttribute(
       "aria-label",
-      t(this.lang === "vm" ? "machine.sourceVm" : "machine.source"),
+      t(
+        this.lang === "vm"
+          ? "machine.sourceVm"
+          : this.lang === "shard"
+            ? "machine.sourceShard"
+            : "machine.source",
+      ),
     );
     const box = this.root.querySelector<HTMLElement>("[data-translator-box]");
-    if (box) box.hidden = this.lang !== "vm" || !this.hasOwnTranslator;
-    this.stackBox.hidden = this.lang !== "vm";
+    if (box) box.hidden = this.lang === "asm" || !this.hasOwnTranslator;
+    const cbox = this.root.querySelector<HTMLElement>("[data-compiler-box]");
+    if (cbox) cbox.hidden = this.lang !== "shard" || !this.compile;
+    this.stackBox.hidden = this.lang === "asm";
     this.asmBox.hidden = true;
+    this.vmBox.hidden = true;
   }
 
   private hasOwnTranslator = false;
+
+  /** The learner's own compiler, once it passes its tests. */
+  private async offerCompilers(
+    box: HTMLElement,
+    select: HTMLSelectElement,
+  ): Promise<void> {
+    const choices = await compilerChoices();
+    this.compile = choices[0]?.compile ?? null;
+    if (choices.length < 2) return;
+    select.innerHTML = choices
+      .map(
+        (c, i) =>
+          `<option value="${i}">${esc(t(`machine.cm.${c.id}` as Key))}</option>`,
+      )
+      .join("");
+    box.hidden = this.lang !== "shard";
+    select.addEventListener("change", () => {
+      const c = choices[Number(select.value)];
+      if (c) this.compile = c.compile;
+      this.program = null;
+      this.machine = null;
+    });
+  }
 
   /** The learner's own translator, once it passes its tests. */
   private async offerTranslators(
@@ -301,7 +350,7 @@ class MachinePage {
       )
       .join("");
     this.hasOwnTranslator = true;
-    box.hidden = this.lang !== "vm";
+    box.hidden = this.lang === "asm";
     this.translate = choices[0]?.translate ?? this.translate;
     select.addEventListener("change", () => {
       const c = choices[Number(select.value)];
@@ -355,13 +404,35 @@ class MachinePage {
       return this.problems.length === 0;
     this.assembled = source;
     this.translation = null;
+    this.compiled = null;
+    let vm = source;
     let asm = source;
-    if (this.lang === "vm") {
+    // VM errors in compiled code: on the C Shard line they came from.
+    const onSource = (errors: AsmError[]): AsmError[] =>
+      this.compiled
+        ? errors.map((e) => ({
+            ...e,
+            line: this.compiled?.sourceMap[e.line - 1] ?? 0,
+          }))
+        : errors;
+    if (this.lang === "shard") {
+      this.status.textContent = t("machine.compiling");
+      const compile = this.compile ?? (await compilerChoices())[0]?.compile;
+      if (!compile) return false;
+      this.compiled = await compile(source);
+      if (this.compiled.errors.length) {
+        this.program = null;
+        this.fail(this.compiled.errors, langErrorText);
+        return false;
+      }
+      vm = this.compiled.vm.join("\n");
+    }
+    if (this.lang !== "asm") {
       this.status.textContent = t("machine.translating");
-      this.translation = await this.translate(source);
+      this.translation = await this.translate(vm);
       if (this.translation.errors.length) {
         this.program = null;
-        this.fail(this.translation.errors, vmErrorText);
+        this.fail(onSource(this.translation.errors), vmErrorText);
         return false;
       }
       asm = this.translation.lines.join("\n");
@@ -369,10 +440,12 @@ class MachinePage {
     this.status.textContent = t("machine.assembling");
     this.program = await this.assemble(asm);
     if (this.program.errors.length) {
-      // VM code: the assembler's errors on the VM lines they came from.
+      // The assembler's errors on the lines they came from.
       if (this.translation)
         this.fail(
-          fromAsmErrors(this.program.errors, this.translation.sourceMap),
+          onSource(
+            fromAsmErrors(this.program.errors, this.translation.sourceMap),
+          ),
           vmErrorText,
         );
       else this.fail(this.program.errors, asmErrorText);
@@ -394,10 +467,29 @@ class MachinePage {
     this.renderState();
   }
 
-  /** VM code: the assembly it became, with ▶ at the current instruction. */
+  /** What the code became (VM code, assembly), with ▶ at the current
+   * instruction and the VM command it came from. */
   private renderTranslation(): void {
     const tr = this.translation;
-    this.asmBox.hidden = !tr || this.lang !== "vm";
+    const c = this.compiled;
+    this.vmBox.hidden = !c || !tr || this.lang !== "shard";
+    if (c && tr) {
+      const summary = this.vmBox.querySelector("summary");
+      const pre = this.vmBox.querySelector("pre");
+      if (summary)
+        summary.textContent = t("machine.vmCode", { n: c.vm.length });
+      if (pre && this.vmBox.open) {
+        const pc = this.machine?.pc();
+        const asmLine =
+          pc !== undefined ? this.program?.sourceMap[pc] : undefined;
+        const vmLine =
+          asmLine !== undefined ? tr.sourceMap[asmLine - 1] : undefined;
+        pre.textContent = c.vm
+          .map((l, i) => `${i + 1 === vmLine ? "▶" : " "} ${l}`)
+          .join("\n");
+      }
+    }
+    this.asmBox.hidden = !tr || this.lang === "asm";
     if (!tr) return;
     const summary = this.asmBox.querySelector("summary");
     const pre = this.asmBox.querySelector("pre");
@@ -507,6 +599,8 @@ class MachinePage {
         : undefined;
     if (current !== undefined && this.translation)
       current = this.translation.sourceMap[current - 1];
+    if (current !== undefined && this.compiled)
+      current = this.compiled.sourceMap[current - 1];
     this.gutter.textContent = Array.from({ length: lines }, (_, i) =>
       i + 1 === current ? `▶${i + 1}` : String(i + 1),
     ).join("\n");
@@ -591,7 +685,7 @@ class MachinePage {
 
   /** VM code: the words from SP (r6) down to the bottom of the stack. */
   private renderStack(): void {
-    if (!this.machine || this.lang !== "vm") return;
+    if (!this.machine || this.lang === "asm") return;
     const sp = this.machine.regs()[6] ?? 0;
     const n = sp >= 0x4000 || sp === 0 ? 0 : Math.min(STACK_ROWS, 0x4000 - sp);
     const words = n ? this.machine.ram(sp, n) : new Uint16Array(0);

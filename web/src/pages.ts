@@ -282,6 +282,11 @@ export function renderRoute(route: Route): {
         html: `<div id="translator-root" class="workshop"></div>`,
         title: titled(t("title.translator")),
       };
+    case "compiler":
+      return {
+        html: `<div id="compiler-root" class="workshop"></div>`,
+        title: titled(t("title.compiler")),
+      };
     case "not-found":
       return { html: notFound(), title: titled(t("title.notFound")) };
   }
