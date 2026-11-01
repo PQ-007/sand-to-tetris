@@ -380,7 +380,7 @@ fn name_errors() {
         (2, "duplicate-name".into())
     );
     assert_eq!(
-        e("var a = 1;\nfn main() {\n var a = 2;\n}"),
+        e("fn main() {\n var a = 1;\n for a in 0..2 { }\n}"),
         (3, "duplicate-name".into())
     );
     assert_eq!(
@@ -627,4 +627,12 @@ fn a_string_in_a_function_is_a_hidden_constant_array() {
     assert_eq!(info.globals["\"HI\""].index, 4);
     assert_eq!(info.globals["\"HI\""].init, vec![72, 73]);
     assert_eq!(info.globals.len(), 3);
+}
+
+#[test]
+fn a_local_hides_a_global_constant_or_function_of_the_same_name() {
+    let src = "var n = 100;\nconst K = 7;\nfn f() -> int { return 1; }\n\
+               fn g(n: int) -> int { var K = n * 2; var f = K + 1; return f; }\n\
+               fn main() -> int { return g(5) * 1000 + n + K + f(); }";
+    assert_eq!(run(src), 11 * 1000 + 100 + 7 + 1);
 }

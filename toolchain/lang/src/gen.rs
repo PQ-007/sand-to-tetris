@@ -264,7 +264,10 @@ impl Gen<'_> {
             }
             Expr::Array { .. } => {}
             Expr::Name { name, .. } => {
-                if let Some(v) = self.info.consts.get(name) {
+                // A local or parameter hides a global or constant.
+                let local =
+                    self.f.locals.contains_key(name) || self.f.params.iter().any(|p| p == name);
+                if let (false, Some(v)) = (local, self.info.consts.get(name)) {
                     self.emit(format!("push {v}"));
                 } else if self.is_array_global(name) {
                     self.base(name);

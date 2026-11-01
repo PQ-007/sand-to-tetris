@@ -1,6 +1,7 @@
 // Example programs for the Machine page: assembly (docs/ASSEMBLY.md) and
 // VM (docs/VM.md). A test builds every one with the reference toolchain
 // and runs them.
+import BITFALL from "../../games/bitfall.shard?raw";
 
 export interface Example {
   id:
@@ -15,7 +16,8 @@ export interface Example {
     | "shard-sum"
     | "shard-box"
     | "shard-dot"
-    | "shard-hello";
+    | "shard-hello"
+    | "bitfall";
   lang: "asm" | "vm" | "shard";
   source: string;
 }
@@ -333,6 +335,12 @@ func flip 2 1
         push 0
         return
 `,
+  },
+  {
+    // The capstone game (docs/GAME.md), straight from games/bitfall.shard.
+    id: "bitfall",
+    lang: "shard",
+    source: BITFALL,
   },
   {
     id: "shard-hello",

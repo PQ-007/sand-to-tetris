@@ -115,8 +115,10 @@ fn clear() { ... }                     // no result
 | `return;` · `return expr;` | |
 | `f(args);` | a call whose result (if any) is dropped; no other expression can be a statement |
 
-A name can't be declared twice in one function, or with the name of a
-global, constant or function.
+A name can't be declared twice in one function. A local or parameter may
+have the name of a global, constant or function: inside its scope the name
+means the local (changed 2026-11-01 with the OS: the OS's locals must not
+clash with a program's globals).
 
 ## Expressions
 

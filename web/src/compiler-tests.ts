@@ -146,7 +146,10 @@ const CHECK_ERRORS: [string, string][] = [
   ["unknown name", "fn main() {\n x = 1;\n}"],
   ["unknown function", "fn main() {\n g();\n}"],
   ["duplicate global", "var a = 1;\nfn a() { }\nfn main() { }"],
-  ["local with a global's name", "var a = 1;\nfn main() {\n var a = 2;\n}"],
+  [
+    "a name twice in one function",
+    "fn main() {\n var a = 1;\n for a in 0..2 { }\n}",
+  ],
   ["out of scope", "fn main() {\n if true { var t = 1; }\n var u = t;\n}"],
   ["reserved name", "var _x = 1;\nfn main() { }"],
   ["not a function", "var x = 1;\nfn main() {\n x(2);\n}"],

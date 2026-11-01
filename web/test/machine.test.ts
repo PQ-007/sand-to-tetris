@@ -50,6 +50,20 @@ describe("Machine page examples", () => {
       else shard(ex.id);
   });
 
+  it("Bitfall shows its title, starts on a key and draws the board", () => {
+    const m = machine(shard("bitfall"));
+    const at = (x: number, y: number) =>
+      ((m.screen()[y * 8 + (x >> 4)]! >> (15 - (x % 16))) & 1) === 1;
+    m.run(3_000_000);
+    expect(at(20, 20)).toBe(true); // the title box
+    m.setKey(32);
+    m.run(100_000);
+    m.setKey(0);
+    m.run(5_000_000);
+    expect(at(42, 6) && at(84, 88)).toBe(true); // the board's frame
+    expect(m.halted()).toBe(false); // the game loop keeps running
+  });
+
   it("the OS example writes text, waits for a key, rolls a dice", () => {
     const m = machine(shard("shard-hello"));
     m.run(3_000_000);

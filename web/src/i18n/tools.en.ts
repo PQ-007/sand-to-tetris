@@ -28,6 +28,7 @@ export const toolsEn = {
   "machine.ex.shard-box": "Draw boxes on the screen",
   "machine.ex.shard-dot": "Move a dot with the arrow keys",
   "machine.ex.shard-hello": "Text, a key and a dice (uses the OS)",
+  "machine.ex.bitfall": "Bitfall: the game",
   "machine.lang.shard": "C Shard",
   "machine.sourceShard": "C Shard source",
   "machine.compiler": "Compiler",

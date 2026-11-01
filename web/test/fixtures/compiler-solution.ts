@@ -876,8 +876,7 @@ export function check(program: Program): Info {
     let loops = 0;
     const declare = (name: string, line: number) => {
       if (name.startsWith("_")) p.add(line, "reserved-name", name);
-      else if (declared.has(name) || items.has(name))
-        p.add(line, "duplicate-name", name);
+      else if (declared.has(name)) p.add(line, "duplicate-name", name);
       else {
         declared.add(name);
         return true;
@@ -1163,7 +1162,8 @@ export function generate(program: Program, info: Info): string[] {
           out.push(e.value ? "push -1" : "push 0");
           break;
         case "name":
-          if (e.name in info.consts) out.push(`push ${info.consts[e.name]}`);
+          if (!isVar(e.name) && e.name in info.consts)
+            out.push(`push ${info.consts[e.name]}`);
           else if (!isVar(e.name) && info.globals[e.name]?.array) base(e.name);
           else out.push(`push ${place(e.name)}`);
           break;

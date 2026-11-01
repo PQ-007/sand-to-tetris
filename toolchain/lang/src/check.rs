@@ -686,7 +686,7 @@ impl Func<'_, '_> {
         if reserved(name) {
             self.c.errors.push(reserved_error(line, name));
             false
-        } else if self.declared.contains(name) || self.c.items.contains_key(name) {
+        } else if self.declared.contains(name) {
             self.c.errors.push(duplicate(line, name));
             false
         } else {
