@@ -258,7 +258,11 @@ impl Gen<'_> {
         match e {
             Expr::Num { value, .. } => self.emit(format!("push {value}")),
             Expr::Bool { value, .. } => self.emit(if *value { "push -1" } else { "push 0" }),
-            Expr::Str { .. } | Expr::Array { .. } => {}
+            Expr::Str { text, .. } => {
+                let at = self.info.globals.get(&crate::check::string_key(text));
+                self.emit(format!("push {}", at.map_or(0, |g| g.index)));
+            }
+            Expr::Array { .. } => {}
             Expr::Name { name, .. } => {
                 if let Some(v) = self.info.consts.get(name) {
                     self.emit(format!("push {v}"));

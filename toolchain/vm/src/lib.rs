@@ -23,7 +23,7 @@ mod parse;
 mod program;
 mod translate;
 
-pub use interp::{run, Frame, Outcome, Vm};
+pub use interp::{run, run_scripted, Frame, Outcome, Script, Vm};
 pub use parse::parse;
 pub use program::{build, check, Built};
 pub use translate::{bootstrap, runtime, translate};

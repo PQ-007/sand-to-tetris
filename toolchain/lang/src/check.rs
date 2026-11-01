@@ -107,6 +107,9 @@ struct Checker<'a> {
     /// Constants being worked out (to catch one defined by itself).
     busy: BTreeSet<String>,
     errors: Vec<LangError>,
+    /// String literals used inside functions, in order of first use: each
+    /// becomes a hidden constant array.
+    strings: Vec<String>,
 }
 
 /// Where every name lives, or every mistake (sorted by line).
@@ -116,6 +119,7 @@ pub fn check(program: &Program) -> Result<Info, Vec<LangError>> {
         consts: BTreeMap::new(),
         busy: BTreeSet::new(),
         errors: Vec::new(),
+        strings: Vec::new(),
     };
     for item in &program.items {
         let (name, line) = match item {
@@ -233,7 +237,10 @@ pub fn check(program: &Program) -> Result<Info, Vec<LangError>> {
             Item::Fn { .. } => {}
         }
     }
-    if next > MAX_GLOBALS {
+    let globals_end_check = |next: u32, c: &mut Checker| {
+        if next <= MAX_GLOBALS {
+            return;
+        }
         c.errors.push(LangError::new(
             program.items.last().map_or(0, item_line),
             "too-many-globals",
@@ -243,7 +250,7 @@ pub fn check(program: &Program) -> Result<Info, Vec<LangError>> {
                 ("max", MAX_GLOBALS.to_string()),
             ],
         ));
-    }
+    };
     // Function signatures.
     for item in &program.items {
         let Item::Fn {
@@ -368,6 +375,21 @@ pub fn check(program: &Program) -> Result<Info, Vec<LangError>> {
             },
         );
     }
+    // Strings used in functions, after every declared global.
+    for text in std::mem::take(&mut c.strings) {
+        let words: Vec<u16> = text.bytes().map(u16::from).collect();
+        info.globals.insert(
+            string_key(&text),
+            GlobalInfo {
+                index: next as u16,
+                size: words.len() as u16,
+                array: true,
+                init: words.clone(),
+            },
+        );
+        next += words.len() as u32;
+    }
+    globals_end_check(next, &mut c);
     if c.errors.is_empty() {
         Ok(info)
     } else {
@@ -375,6 +397,12 @@ pub fn check(program: &Program) -> Result<Info, Vec<LangError>> {
         errors.sort_by_key(|e| e.line);
         Err(errors)
     }
+}
+
+/// The `Info::globals` key of a string literal used in a function: the text
+/// in double quotes, which no name can be.
+pub fn string_key(text: &str) -> String {
+    format!("\"{text}\"")
 }
 
 fn item_line(item: &Item) -> usize {
@@ -845,7 +873,13 @@ impl Func<'_, '_> {
         Some(match e {
             Expr::Num { .. } => T::Int,
             Expr::Bool { .. } => T::Bool,
-            Expr::Str { .. } | Expr::Array { .. } => {
+            Expr::Str { text, .. } => {
+                if !self.c.strings.contains(text) {
+                    self.c.strings.push(text.clone());
+                }
+                T::Arr(Box::new(T::Int), text.len() as u16)
+            }
+            Expr::Array { .. } => {
                 self.c.errors.push(LangError::new(
                     line,
                     "not-a-value",

@@ -53,7 +53,10 @@ fn main() -> int {
   escapes.
 - **Strings**: `"GAME OVER"`: printable ASCII; `\"`, `\\` and `\n` are
   escapes. A string is a constant array of its characters (no length word,
-  no terminator).
+  no terminator). It can start a constant, or appear inside a function
+  (`draw_text("SCORE", 5, 0, 0)`), where it is a hidden constant array
+  (clarified 2026-11-01, with the OS: the option the user approved showed
+  `draw_text("HELLO", 5, 40, 44)`).
 - **Symbols**: `( ) { } [ ] , ; : -> .. = + - * / % & | ^ ~ << >> == != <
   <= > >=`.
 
@@ -144,7 +147,9 @@ Bit operators sit above comparisons, so `x & 1 == 0` means `(x & 1) == 0`.
   RAM address of its first element, which is its first global's number.
   At most 4096 words of globals.
 - Constant scalars are not stored: their value is put where they're used.
-  Constant arrays are stored like globals.
+  Constant arrays are stored like globals. A string inside a function gets
+  globals after all the declared ones, once per distinct text, in order of
+  first use; its `Info.globals` key is the text in double quotes.
 - Starting values of globals and the contents of constant arrays are
   stored by a function `_init` that `main` calls first (the VM's `.data`
   starts as zeros, so zeros aren't stored).

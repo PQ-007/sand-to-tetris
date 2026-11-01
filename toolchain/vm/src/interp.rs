@@ -2,7 +2,7 @@
 //! same memory layout as the translation (docs/VM.md), so the two can be
 //! compared word for word. The one difference: a frame's return address is
 //! the index of the next command, not a ROM address.
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use s2t_isa::{Bus, Memory};
 
@@ -51,10 +51,51 @@ pub struct Outcome {
     pub memory: Memory,
 }
 
+/// Time and keys for a run: every `steps_per_frame` commands the timer at
+/// 0x6001 counts one frame (0: it never moves), and `keys` says which key
+/// is held from which frame on: (frame, key).
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Script {
+    pub steps_per_frame: usize,
+    pub keys: Vec<(u16, u16)>,
+}
+
 /// Runs a program until it halts or `max_steps` commands have run.
 pub fn run(source: &str, max_steps: usize) -> Result<Outcome, Vec<VmError>> {
+    run_scripted(source, max_steps, &Script::default())
+}
+
+/// `run`, with the timer and keyboard driven by a script.
+pub fn run_scripted(
+    source: &str,
+    max_steps: usize,
+    script: &Script,
+) -> Result<Outcome, Vec<VmError>> {
     let mut vm = Vm::new(source)?;
-    vm.run(max_steps);
+    let key_at = |frame: u16| {
+        script
+            .keys
+            .iter()
+            .filter(|(f, _)| *f <= frame)
+            .max_by_key(|(f, _)| *f)
+            .map_or(0, |(_, k)| *k)
+    };
+    if script.steps_per_frame == 0 {
+        vm.memory.keyboard = key_at(0);
+        vm.run(max_steps);
+    } else {
+        let mut left = max_steps;
+        let mut frame: u16 = 0;
+        while left > 0 && !vm.halted {
+            vm.memory.timer = frame;
+            vm.memory.keyboard = key_at(frame);
+            let n = script.steps_per_frame.min(left);
+            vm.run(n);
+            left -= n;
+            frame = frame.wrapping_add(1);
+        }
+    }
     Ok(Outcome {
         halted: vm.halted,
         result: vm.memory.read(STACK_TOP - 1),

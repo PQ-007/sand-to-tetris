@@ -574,3 +574,26 @@ fn the_interpreter_steps_one_command_at_a_time() {
     assert!(vm.halted());
     assert_eq!(vm.stack(), vec![5]);
 }
+
+#[test]
+fn a_script_drives_the_timer_and_the_keyboard() {
+    use s2t_vm::{run_scripted, Script};
+    // Wait for frame 5, then for a key, and return timer * 1000 + key.
+    let src = "func main 0 0\n\
+               label wait\npush 0x6001\nload\npush 5\nlt\njumpif wait\n\
+               label key\npush 0x6000\nload\njumpifnot key\n\
+               push 0x6001\nload\npush 1000\nmul\npush 0x6000\nload\nadd\nreturn";
+    let script = Script {
+        steps_per_frame: 10,
+        keys: vec![(8, 65), (9, 0)],
+    };
+    let o = run_scripted(src, 10_000, &script).unwrap();
+    assert!(o.halted);
+    assert_eq!(o.result, 8 * 1000 + 65);
+    // Without a clock the timer stays 0.
+    assert!(
+        !run_scripted(src, 10_000, &Script::default())
+            .unwrap()
+            .halted
+    );
+}

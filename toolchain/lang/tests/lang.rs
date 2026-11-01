@@ -613,3 +613,18 @@ fn every_vm_line_maps_to_its_source_line() {
         ]
     );
 }
+
+#[test]
+fn a_string_in_a_function_is_a_hidden_constant_array() {
+    let src = "var log: [int; 2];\n\
+               fn first(s: [int]) -> int { return s[0]; }\n\
+               fn main() -> int { var t = \"OK\"; log[0] = first(\"HI\"); log[1] = first(\"HI\"); return t[1] + first(\"HI\"); }";
+    assert_eq!(run(src), 'K' as i16 + 'H' as i16);
+    let p = parse(&tokenize(src).unwrap_or_default()).unwrap_or_default();
+    let info = s2t_lang::check(&p).unwrap_or_default();
+    // After the declared globals, once per text, in order of first use.
+    assert_eq!(info.globals["\"OK\""].index, 2);
+    assert_eq!(info.globals["\"HI\""].index, 4);
+    assert_eq!(info.globals["\"HI\""].init, vec![72, 73]);
+    assert_eq!(info.globals.len(), 3);
+}
