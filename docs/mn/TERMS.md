@@ -144,3 +144,11 @@ and `web/src/i18n/demos.mn.ts`.
 | Pseudo-instruction | Pseudo-instruction |
 | Directive | Directive |
 | Loader | Loader |
+| Virtual machine | Виртуал машин |
+| Stack | Stack |
+| Stack machine | Stack machine |
+| Stack pointer | Stack pointer |
+| Stack frame | Stack frame |
+| Calling convention | Calling convention |
+| Recursion | Рекурс |
+| Interpreter | Интерпретатор |

@@ -156,7 +156,16 @@ Agreed with the user: constants and a few pseudo-instructions; a .data section c
 - The reference (`toolchain/asm`) and the learner's assembler share the same four stages and JSON shapes, so the reference grades each stage on its own, fed correct input from the stage before.
 - The learner's code runs in a worker (5 s limit) after sucrase strips its types; a full solution in the tests proves the workshop solvable.
 - The Machine page runs programs on the reference CPU (`s2t-isa` in WASM): fast enough for games. Keyboard codes are provisional (ASCII, Enter 13, Backspace 8, Escape 27, arrows 128–131; Tab is never captured); revisit with the OS in M11.
-| M9 | VM + translator | |
+| M9 ✓ | VM + translator | The reference translator matches the interpreter on edge cases and random programs; the learner's TypeScript translator is graded by running programs; VM programs run on the Machine page; Chapter 6 is live |
+
+### M9 decisions (2026-11-01)
+Agreed with the user: a stack machine; numbered locals, args and globals plus load/store; true = −1; mul/div/mod as VM commands backed by runtime routines. The rest (my choices, in `docs/VM.md`):
+- Commands: push/set (with `push n` for constants), pop, dup, load, store, add sub and or xor neg not shl shr sar, mul div mod (signed, rounding toward 0; ÷0 gives −1 and a), eq ne lt gt le ge (signed, exact even when a − b overflows), label/jump/jumpif/jumpifnot, func f n k, call f n, return. Every function returns one value; main takes no arguments; a function must end with return or jump.
+- Calling convention: SP r6 (the stack grows down from 0x4000), FP r5, r7 the return address, r0–r4 scratch; the callee saves r7 and FP and cleans up its arguments; global i = RAM[i] (a `.data` of zeros). Calls go through SET16 + CALLR so functions can sit anywhere; jumps inside a function reach ±511 words (`function-too-long` otherwise).
+- Names: function f → label `f`, label L in f → `f__L`; VM names may not contain `__`, which the translator keeps for itself.
+- The reference is `toolchain/vm` (`s2t-vm`): parse, checks, translate, bootstrap/runtime, build (assembling with `s2t-asm`), and an interpreter with the same memory layout, which the tests compare every translation with.
+- The learner's translator has three parts (parse, translate per command, bootstrap + runtime); the whole-program checks and the loop are shared code (`web/src/translator.ts`, kept identical to `s2t-vm` by a test). Tests run small programs on the CPU and compare result, SP, globals and screen with the interpreter; each stage's tests use the learner's code only for that stage's commands, so the stages are independent.
+- Machine page: a language choice (Assembly / VM); VM code shows its errors on VM lines, the assembly it became, and the stack.
 | M10 | High-level language (designed together) + compiler | |
 | M11 | Mini OS: screen, keyboard, timer, random numbers | |
 | M12 | Tetris on the learner's own computer | |

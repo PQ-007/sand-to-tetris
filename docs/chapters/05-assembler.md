@@ -93,6 +93,6 @@ On the **Machine** page you can write a program, assemble it and run it: on the 
 - Labels can be used before they're defined, so the assembler makes two passes: the first builds the symbol table, the second encodes.
 - Data the program needs goes in its own section, which the loader copies into RAM before the program starts.
 
-**Next:** in Chapter 6 you'll build a virtual machine and a small language on top of the assembler, so programs no longer have to think in registers.
+**Next:** in Chapter 6 you'll build a virtual machine on top of the assembler, a stack machine whose programs no longer have to think in registers.
 
 </aside>

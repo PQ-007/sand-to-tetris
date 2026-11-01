@@ -611,3 +611,61 @@
     It is often called the world's first assembler; that is a claim about
     firsts, and other early systems (such as Booth's notation) are credited
     with similar ideas.
+
+- id: burroughs-b5000
+  claim: >-
+    The Burroughs B5000, designed by a team led by Robert Barton and
+    described in Datamation in May 1961, was a stack machine built for
+    high-level languages (ALGOL 60) rather than assembly: all its arithmetic
+    used operands on the stack, so instructions never had to name registers
+    or temporary locations.
+  sources:
+    - title: "The Burroughs Stack Architectures (Douglas W. Jones, University of Iowa)"
+      url: https://homepage.cs.uiowa.edu/~jones/arch/notes/11burroughs.html
+    - title: "Burroughs Large Systems (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Burroughs_Large_Systems
+  checked: web search and both pages read, 2026-11-01
+
+- id: pascal-p-code
+  claim: >-
+    Niklaus Wirth's group at ETH Zurich distributed its Pascal compiler as
+    Pascal-P, a compiler producing p-code for a virtual stack machine plus an
+    interpreter for it, so moving Pascal to a new computer meant writing
+    only the interpreter. UCSD Pascal, based on Pascal-P2 and first released
+    in 1977, built a portable system (the p-System) on the same idea; it was
+    one of the operating systems IBM offered for the original IBM PC.
+  sources:
+    - title: "UCSD Pascal (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/UCSD_Pascal
+    - title: "P-code machine (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/P-code_machine
+  checked: web search and the UCSD Pascal article read, 2026-11-01
+  uncertain: >-
+    The year of the first Pascal-P compiler is given as 1973 by a single
+    reference; the chapter says only "a decade later" than the B5000.
+
+- id: jvm-operand-stack
+  claim: >-
+    In the Java Virtual Machine a new frame is created each time a method is
+    invoked, with its own local variables and operand stack; instructions
+    take their operands from the operand stack and push the result back
+    (iadd pops two ints and pushes their sum). The first edition of the
+    specification, by Tim Lindholm and Frank Yellin, appeared in 1996.
+  sources:
+    - title: "The Java Virtual Machine Specification, Java SE 21, chapter 2 (Oracle)"
+      url: https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-2.html
+    - title: "The Java Virtual Machine Specification, first edition (InformIT)"
+      url: https://www.informit.com/cseng/titles/0-201-63452-X
+  checked: the specification's sections 2.6 and 2.6.2 read, 2026-11-01
+
+- id: webassembly-stack
+  claim: >-
+    The WebAssembly Core Specification became a W3C Recommendation on
+    5 December 2019; it says "The computational model of WebAssembly is
+    based on a stack machine."
+  sources:
+    - title: "WebAssembly Core Specification (W3C Recommendation, 5 December 2019)"
+      url: https://www.w3.org/TR/wasm-core-1/
+    - title: "WebAssembly becomes a W3C Recommendation (W3C press release)"
+      url: https://www.w3.org/press-releases/2019/wasm
+  checked: the specification's overview read, 2026-11-01
