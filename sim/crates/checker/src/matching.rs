@@ -55,8 +55,15 @@ pub fn match_check(
         );
     }
     let model = leaf_model(level).ok_or_else(|| format!("`{}` has no fast model", level.id))?;
+    // Lower memory components (registers, RAM, ...) run as their models, as
+    // in Check: each one was already compared with its model.
+    let memory: BTreeSet<String> = library
+        .levels()
+        .filter(|l| l.id != level.id && l.sequential && l.model.is_some())
+        .map(|l| l.id.clone())
+        .collect();
     let prepared =
-        prepare(level, design, library, &BTreeSet::new(), false).map_err(|problems| {
+        prepare(level, design, library, &memory, false).map_err(|problems| {
             let first = problems
                 .first()
                 .map(|p| p.message.clone())
