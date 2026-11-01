@@ -184,11 +184,11 @@ function renderDetail(root: HTMLElement, a: App, id: string): void {
           .join("")}</ul>`
       : `<p class="muted">${esc(empty)}</p>`;
   panel.innerHTML = `
-    <p class="muted">${esc(t("levels.layer", { n: lv.layer, name: layerName(lv.layer) }))}</p>
+    <p class="panel-kicker">${esc(t("levels.layer", { n: lv.layer, name: layerName(lv.layer) }))}</p>
     <h2>${esc(levelName(lv))}</h2>
     <p><span class="pill level-status pill-${st}">${esc(statusText(st))}</span></p>
     <p>${esc(detailText(a, id))}</p>
-    ${st === "locked" ? "" : `<p><a class="button primary" href="${playHref(id)}">${esc(t("levels.play"))}</a></p>`}
+    ${st === "locked" ? "" : `<p><a class="button primary block" href="${playHref(id)}">${esc(t("levels.play"))}</a></p>`}
     ${swapHtml(a, id)}
     <h3>${esc(t("levels.needs"))}</h3>${chips(needs, t("levels.needsNothing"))}
     <h3>${esc(t("levels.unlocks"))}</h3>${chips(unlocks, t("levels.unlocksNothing"))}`;
@@ -299,7 +299,7 @@ function render(root: HTMLElement, a: App): void {
   const toggle = (v: View, key: Key) =>
     `<button type="button" data-view="${v}" aria-pressed="${view === v}">${esc(t(key))}</button>`;
   root.innerHTML = `
-    <div class="page-head">
+    <div class="page-head levels-head">
       <div>
         <h1 tabindex="-1">${esc(t("levels.title"))}</h1>
         <p class="lead">${esc(t("levels.lead"))}</p>

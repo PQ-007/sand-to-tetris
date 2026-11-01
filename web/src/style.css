@@ -1110,7 +1110,7 @@ th {
 
 .save-box {
   flex: 0 1 22rem;
-  padding: 1rem 1.25rem;
+  padding: 1.25rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -2289,16 +2289,37 @@ svg.waveform text {
   font-weight: 600;
 }
 
+/* The level page's header and the tree share one grid, so the progress
+   box sits exactly above the detail panel, same width and edges. */
+.levels-head,
 .tree-wrap {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 18rem;
-  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr) 19rem;
+  gap: 1.5rem;
   align-items: start;
 }
 
+.levels-head {
+  align-items: end;
+  margin-bottom: 1.5rem;
+}
+
+.levels-head .lead {
+  margin-bottom: 0;
+}
+
+.levels-head .save-box {
+  margin: 0;
+}
+
 @media (max-width: 1100px) {
+  .levels-head,
   .tree-wrap {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .tree-detail .button.block {
+    display: inline-flex;
+    width: auto;
   }
   .tree-detail {
     order: -1;
@@ -2447,25 +2468,47 @@ svg.waveform text {
 
 .tree-detail {
   position: sticky;
-  top: calc(var(--header-h) + 1rem);
-  padding: 1rem 1.1rem;
+  top: calc(var(--header-h) + 1.25rem);
+  padding: 1.25rem;
   border: 1px solid var(--border);
-  border-radius: 1rem;
   background: var(--surface);
+  font-size: 0.9375rem;
+  line-height: 1.55;
 }
 
 .tree-detail h2 {
-  margin: 0.15rem 0 0.4rem;
-  font-size: 1.25rem;
+  margin: 0.25rem 0 0.5rem;
+  font-size: 1.375rem;
+  line-height: 1.2;
 }
 
+/* Section labels, like the progress box's title. */
 .tree-detail h3 {
-  margin: 1rem 0 0.4rem;
-  font-size: 0.875rem;
+  margin: 1.25rem 0 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
 }
 
 .tree-detail p {
-  margin: 0.4rem 0;
+  margin: 0.5rem 0;
+}
+
+.panel-kicker {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--copper);
+}
+
+.button.block {
+  display: flex;
+  width: 100%;
+  margin-top: 0.25rem;
 }
 
 .tree-chips {
@@ -2686,6 +2729,24 @@ s2t-core-status[data-state="ok"]::before {
   vertical-align: 0.05em;
 }
 
+.site-nav a {
+  white-space: nowrap;
+}
+
+/* Narrower windows: the simulator status keeps only its light, then the
+   levels meter only its count. */
+@media (max-width: 1200px) {
+  .site-header {
+    gap: 1.25rem;
+  }
+  s2t-core-status[data-state="ok"] {
+    font-size: 0;
+  }
+  s2t-core-status[data-state="ok"]::before {
+    margin-right: 0;
+  }
+}
+
 @media (max-width: 900px) {
   .hud-xp-label,
   .hud-xp-bar {
@@ -2696,6 +2757,9 @@ s2t-core-status[data-state="ok"]::before {
 /* ---- Panels: HUD corner brackets ---- */
 
 :is(.save-box, .tree-detail, .steps > div, .side, .chapter[data-ready="true"]) {
+  /* Brackets sit on the border's corners: square corners, border-box. */
+  border-radius: 3px;
+  background-origin: border-box;
   --corner: color-mix(in srgb, var(--accent) 65%, transparent);
   background:
     linear-gradient(var(--corner), var(--corner)) top left / 12px 2px no-repeat,
@@ -2968,16 +3032,19 @@ button.primary:hover:not(:disabled),
 }
 
 .tree-edges path {
-  stroke: color-mix(in srgb, var(--copper) 30%, transparent);
+  stroke: color-mix(in srgb, var(--copper) 16%, transparent);
 }
 
 .tree-edges path.done {
-  stroke: color-mix(in srgb, var(--ok) 45%, transparent);
+  stroke: color-mix(in srgb, var(--ok) 28%, transparent);
 }
 
 .tree-edges path.hot {
   stroke: var(--accent);
-  filter: drop-shadow(0 0 3px var(--accent));
+  stroke-width: 2;
+  filter: drop-shadow(
+    0 0 2px color-mix(in srgb, var(--accent) 60%, transparent)
+  );
 }
 
 .tree-node {
