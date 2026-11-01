@@ -111,18 +111,10 @@ function listHtml(a: App): string {
         .join("");
       return `<section class="layer">
         <div class="section-head"><h2>${esc(t("levels.layer", { n: layer, name: layerName(layer) }))}</h2>
-        <span class="muted">${esc(layerCount(a, layer))}</span></div>
+</div>
         <ol class="level-cards">${cards}</ol></section>`;
     })
     .join("");
-}
-
-function layerCount(a: App, layer: number): string {
-  const inLayer = a.levels.filter((l) => l.info.level.layer === layer);
-  const done = inLayer.filter(
-    (l) => a.status[l.info.level.id] === "passed",
-  ).length;
-  return t("levels.passedCount", { passed: done, total: inLayer.length });
 }
 
 function treeInput(a: App): TreeInput[] {
@@ -139,7 +131,7 @@ function treeHtml(a: App): string {
   const bands = tree.bands
     .map(
       (b) => `<div class="tree-band" style="top:${b.y}px;height:${b.height}px">
-        <h2>${esc(t("levels.layer", { n: b.layer, name: layerName(b.layer) }))} <span class="muted">${esc(layerCount(a, b.layer))}</span></h2></div>`,
+        <h2>${esc(t("levels.layer", { n: b.layer, name: layerName(b.layer) }))}</h2></div>`,
     )
     .join("");
   const edges = tree.edges
@@ -304,10 +296,6 @@ function wireTree(root: HTMLElement, a: App): void {
 
 function render(root: HTMLElement, a: App): void {
   const view = savedView();
-  const passed = Object.values(a.status).filter((s) => s === "passed").length;
-  const pct = a.levels.length
-    ? Math.round((passed / a.levels.length) * 100)
-    : 0;
   const toggle = (v: View, key: Key) =>
     `<button type="button" data-view="${v}" aria-pressed="${view === v}">${esc(t(key))}</button>`;
   root.innerHTML = `
@@ -318,12 +306,10 @@ function render(root: HTMLElement, a: App): void {
         <div class="view-toggle" role="group" aria-label="${esc(t("levels.viewLabel"))}">
           ${toggle("tree", "levels.viewTree")}${toggle("list", "levels.viewList")}
         </div>
-        ${view === "tree" ? `<p class="help" id="tree-help">${esc(t("levels.treeHelp"))}</p>` : ""}
+        ${view === "tree" ? `<p class="visually-hidden" id="tree-help">${esc(t("levels.treeHelp"))}</p>` : ""}
       </div>
       <section class="save-box" aria-labelledby="progress-h">
         <h2 id="progress-h">${esc(t("levels.progress"))}</h2>
-        <p class="meter-label"><strong>${esc(t("levels.meter", { passed, total: a.levels.length }))}</strong> ${esc(t("levels.meterText"))}</p>
-        <div class="meter" role="progressbar" aria-labelledby="progress-h" aria-valuemin="0" aria-valuemax="${a.levels.length}" aria-valuenow="${passed}" aria-valuetext="${esc(t("levels.passedCount", { passed, total: a.levels.length }))}"><span style="width:${pct}%"></span></div>
         <p class="help">${esc(t(a.store.persistent ? "levels.saved" : "levels.notSaved"))}
         ${esc(t("levels.exportHint"))}</p>
         <p class="save-actions"><button type="button" data-export>${esc(t("levels.export"))}</button>

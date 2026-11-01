@@ -38,8 +38,8 @@ describe("translations", () => {
       "Pass NOT first.",
     );
     setLang("en");
-    expect(t("levels.passedCount", { passed: 1, total: 5 })).toBe(
-      "1 of 5 passed",
+    expect(t("hud.levelsLabel", { passed: 1, total: 5 })).toBe(
+      "Levels passed: 1 of 5. Open the level map.",
     );
     setLang("mn");
     expect(t("nav.learn")).toBe(mn["nav.learn"]);

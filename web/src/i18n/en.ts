@@ -77,9 +77,6 @@ export const en = {
   "home.unlockText":
     "Pass the tests and it joins your toolbox as a sealed block for the next layer.",
   "home.chapters": "Chapters",
-  "home.readyCount": "{ready} of {total} ready",
-  "home.ready": "Ready to read",
-  "home.soon": "Coming soon",
   "home.chapterN": "Chapter {n}",
 
   // ---- chapter page ----
@@ -113,7 +110,6 @@ export const en = {
   "levels.lead":
     "Each level is one component. Pass it, and it joins your toolbox for the levels after it.",
   "levels.layer": "Layer {n}: {name}",
-  "levels.passedCount": "{passed} of {total} passed",
   "status.passed": "✓ Passed",
   "status.open": "Open",
   "status.locked": "Locked",
@@ -137,8 +133,6 @@ export const en = {
   "levels.play": "Open level →",
   "levels.fastBadge": "⚡ fast",
   "levels.progress": "Your progress",
-  "levels.meter": "{passed} of {total}",
-  "levels.meterText": "levels passed",
   "levels.saved": "Saved in this browser automatically.",
   "levels.notSaved":
     "This browser isn't letting the site save data, so export your progress before closing the tab.",

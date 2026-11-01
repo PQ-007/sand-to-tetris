@@ -40,7 +40,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "outline.3.summary": "Latch, flip-flop, регистр, RAM ба програмын тоолуур.",
   "outline.4.title": "Төв процессор",
   "outline.4.summary":
-    "Хамтдаа зохиох зааврын систем, өгөгдлийн зам ба удирдлагын нэгж.",
+    "Хамтдаа зохиох instruction set, datapath ба control unit.",
   "outline.5.title": "Ассемблер",
   "outline.5.summary":
     "Уншихад хялбар ассемблер кодыг машины хоёртын код болгох.",
@@ -72,9 +72,6 @@ export const mn: Record<keyof typeof en, Message> = {
   "home.unlockText":
     "Шалгалтыг давбал тэр нь дараагийн давхаргад ашиглах битүү блок болж toolbox-д чинь нэмэгдэнэ.",
   "home.chapters": "Бүлгүүд",
-  "home.readyCount": "{total}-аас {ready} нь бэлэн",
-  "home.ready": "Уншихад бэлэн",
-  "home.soon": "Удахгүй",
   "home.chapterN": "{n}-р бүлэг",
 
   // ---- бүлгийн хуудас ----
@@ -107,7 +104,6 @@ export const mn: Record<keyof typeof en, Message> = {
   "levels.lead":
     "Түвшин бүр нэг бүрэлдэхүүн. Давбал дараагийн түвшнүүдэд ашиглахаар toolbox-д чинь нэмэгдэнэ.",
   "levels.layer": "{n}-р давхарга: {name}",
-  "levels.passedCount": "{total}-аас {passed} нь давсан",
   "status.passed": "✓ Давсан",
   "status.open": "Нээлттэй",
   "status.locked": "Хаалттай",
@@ -131,8 +127,6 @@ export const mn: Record<keyof typeof en, Message> = {
   "levels.play": "Түвшинг нээх →",
   "levels.fastBadge": "⚡ хурдан",
   "levels.progress": "Таны ахиц",
-  "levels.meter": "{total}-аас {passed}",
-  "levels.meterText": "түвшин давсан",
   "levels.saved": "Энэ хөтөчид автоматаар хадгалагдана.",
   "levels.notSaved":
     "Энэ хөтөч сайтад өгөгдөл хадгалахыг зөвшөөрөхгүй байна. Цонхоо хаахаас өмнө ахицаа файл болгон export хийгээрэй.",

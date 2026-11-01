@@ -1129,24 +1129,6 @@ th {
   margin: 0.375rem 0;
 }
 
-.meter-label {
-  font-size: 0.9375rem;
-}
-
-.meter {
-  height: 0.5rem;
-  border-radius: 999px;
-  background: var(--border);
-  overflow: hidden;
-}
-
-.meter span {
-  display: block;
-  height: 100%;
-  background: var(--ok);
-  border-radius: inherit;
-}
-
 .save-actions {
   display: flex;
   gap: 0.5rem;

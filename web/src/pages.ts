@@ -23,12 +23,14 @@ function home(): string {
     const isReady = ready.has(ch.number);
     const title = esc(outline(ch.number, "title"));
     const sr = `<span class="visually-hidden">${esc(t("chapter.n", { n: ch.number }))}: </span>`;
+    // Ready chapters are lit and linked, the rest dashed: no tag needed.
+    // Screen readers still hear "(soon)".
+    const soon = `<span class="visually-hidden"> ${esc(t("chapter.soonSr"))}</span>`;
     return `<li class="chapter" data-ready="${isReady}">
       <div class="chapter-top">
         <span class="chapter-number" aria-hidden="true">${String(ch.number).padStart(2, "0")}</span>
-        <span class="pill${isReady ? " pill-ok" : ""}">${esc(t(isReady ? "home.ready" : "home.soon"))}</span>
       </div>
-      <h3>${isReady ? `<a href="${chapterHref(ch.number)}">${sr}${title}</a>` : `${sr}${title}`}</h3>
+      <h3>${isReady ? `<a href="${chapterHref(ch.number)}">${sr}${title}</a>` : `${sr}${title}${soon}`}</h3>
       <p>${esc(outline(ch.number, "summary"))}</p>
     </li>`;
   }).join("");
@@ -63,7 +65,6 @@ function home(): string {
     <section aria-labelledby="chapters-h">
       <div class="section-head">
         <h2 id="chapters-h">${esc(t("home.chapters"))}</h2>
-        <span class="muted">${esc(t("home.readyCount", { ready: ready.size, total: CHAPTERS.length }))}</span>
       </div>
       <ol class="chapters">${items}</ol>
     </section>`;
