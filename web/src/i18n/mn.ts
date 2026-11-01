@@ -113,6 +113,19 @@ export const mn: Record<keyof typeof en, Message> = {
   "levels.and": ", ",
   "levels.brokenText":
     "Ашигладаг зүйлсийн нэг нь өөрчлөгдөж, одоо шалгалтыг давахгүй байна. Нээж шалтгааныг нь үзээрэй.",
+  "levels.viewLabel": "Харагдац",
+  "levels.viewTree": "Tech tree",
+  "levels.viewList": "Жагсаалт",
+  "levels.treeLabel":
+    "Түвшнүүд tech tree хэлбэрээр: түвшин бүр өөрт хэрэгтэй түвшнүүдийн доор байрлана",
+  "levels.treeHelp":
+    "Түвшин бүр өөрт хэрэгтэй хэсгүүдийн доор байрлана. Аль нэгийг сонгож юу хэрэгтэй, юуг нээдгийг хар; сумтай товчоор түвшнүүдийн хооронд шилжинэ.",
+  "levels.needs": "Хэрэгтэй",
+  "levels.unlocks": "Нээдэг",
+  "levels.needsNothing": "Юу ч хэрэггүй: эндээс эхэл.",
+  "levels.unlocksNothing": "Одоохондоо юу ч биш: энэ бол модны оройн хэсэг.",
+  "levels.play": "Түвшинг нээх →",
+  "levels.fastBadge": "⚡ хурдан",
   "levels.progress": "Таны ахиц",
   "levels.meter": "{total}-аас {passed}",
   "levels.meterText": "түвшин давсан",

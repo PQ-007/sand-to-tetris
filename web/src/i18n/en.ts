@@ -120,6 +120,19 @@ export const en = {
   "levels.and": " and ",
   "levels.brokenText":
     "Something it uses changed and it no longer passes. Open it to see why.",
+  "levels.viewLabel": "View",
+  "levels.viewTree": "Tech tree",
+  "levels.viewList": "List",
+  "levels.treeLabel":
+    "Levels as a tech tree: each level sits below the levels it needs",
+  "levels.treeHelp":
+    "Each level sits below the parts it needs. Select one to see what it needs and unlocks; arrow keys move between levels.",
+  "levels.needs": "Needs",
+  "levels.unlocks": "Unlocks",
+  "levels.needsNothing": "Nothing: start here.",
+  "levels.unlocksNothing": "Nothing yet: this is the top of the tree so far.",
+  "levels.play": "Open level →",
+  "levels.fastBadge": "⚡ fast",
   "levels.progress": "Your progress",
   "levels.meter": "{passed} of {total}",
   "levels.meterText": "levels passed",
