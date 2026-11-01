@@ -7,6 +7,7 @@ license.workspace = true
 
 [dependencies]
 s2t-netlist.workspace = true
+s2t-isa.workspace = true
 
 [lints]
 workspace = true

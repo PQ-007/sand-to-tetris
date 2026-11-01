@@ -14,6 +14,9 @@
 
 use s2t_netlist::Value;
 
+mod cpu;
+pub use cpu::{control, Control};
+
 /// A model: input widths, output widths, and a function on whole words.
 pub struct NativeModel {
     pub id: &'static str,
@@ -189,15 +192,16 @@ fn alu(x: &[u64]) -> Vec<u64> {
 
 /// The native model with this id, if there is one.
 pub fn model(id: &str) -> Option<&'static NativeModel> {
-    MODELS.iter().find(|m| m.id == id)
+    MODELS.iter().chain(cpu::MODELS).find(|m| m.id == id)
 }
 
 /// Every model id (for tests and tooling).
 pub fn ids() -> impl Iterator<Item = &'static str> {
     MODELS
         .iter()
+        .chain(cpu::MODELS)
         .map(|m| m.id)
-        .chain(CLOCKED.iter().map(|m| m.id))
+        .chain(CLOCKED.iter().chain(cpu::CLOCKED).map(|m| m.id))
 }
 
 /// Port widths (inputs, outputs) of any model, combinational or clocked.
@@ -393,7 +397,7 @@ static CLOCKED: &[ClockedModel] = &[
 
 /// The model with memory with this id, if there is one.
 pub fn clocked(id: &str) -> Option<&'static ClockedModel> {
-    CLOCKED.iter().find(|m| m.id == id)
+    CLOCKED.iter().chain(cpu::CLOCKED).find(|m| m.id == id)
 }
 
 #[cfg(test)]

@@ -112,6 +112,7 @@ dependencies = [
 name = "s2t-models"
 version = "0.1.0"
 dependencies = [
+ "s2t-isa",
  "s2t-netlist",
 ]
 
