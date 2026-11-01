@@ -13,6 +13,9 @@ export const mn: Record<keyof typeof en, Message> = {
   "nav.build": "Бүтээх",
   "nav.glossary": "Нэр томьёо",
   "nav.language": "Хэл",
+  "hud.levels": "Түвшин",
+  "hud.levelsLabel":
+    "Давсан түвшин: {total}-аас {passed}. Түвшнүүдийн хуудсыг нээх.",
   "core.loading": "Simulator-ыг ачаалж байна…",
   "core.ok": "Simulator {version}",
   "core.okTitle": "Simulator-ын цөм {version} ачаалагдлаа",
@@ -55,6 +58,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "home.title": "Элснээс Тетрис хүртэл",
   "home.tagline":
     "Элснээс эхэлнэ. Унтраалга, логик хаалга, санах ой, төв процессор, хөрвүүлэгч, үйлдлийн систем бүтээнэ. Эцэст нь өөрийн бүтээсэн компьютер дээр Тетрис тоглоно.",
+  "home.stackLabel": "Хичээл: доор элс, дээр Тетрис",
   "home.start": "Уншиж эхлэх",
   "home.workbench": "Workbench нээх",
   "home.howItWorks": "Хэрхэн ажилладаг вэ",

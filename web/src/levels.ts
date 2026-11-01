@@ -213,8 +213,11 @@ function renderDetail(root: HTMLElement, a: App, id: string): void {
     ?.addEventListener("click", () => swap(root, a, id));
 }
 
-/** Lights up a level's lines and neighbours (on hover, focus or select). */
-function highlight(root: HTMLElement, id: string | null): void {
+/**
+ * Lights up a level's lines and neighbours. While hovering or focusing
+ * (`dim`), the rest of the tree fades; the selected level alone doesn't.
+ */
+function highlight(root: HTMLElement, id: string | null, dim = true): void {
   root.querySelectorAll<SVGPathElement>(".tree-edges path").forEach((p) => {
     const on = id !== null && (p.dataset.from === id || p.dataset.to === id);
     p.classList.toggle("hot", on);
@@ -233,7 +236,7 @@ function highlight(root: HTMLElement, id: string | null): void {
       near.has(n.dataset.node ?? "") && n.dataset.node !== id,
     );
   });
-  root.querySelector(".tree")?.classList.toggle("focusing", id !== null);
+  root.querySelector(".tree")?.classList.toggle("focusing", dim && id !== null);
 }
 
 function select(root: HTMLElement, a: App, id: string): void {
@@ -241,7 +244,7 @@ function select(root: HTMLElement, a: App, id: string): void {
   root.querySelectorAll<HTMLElement>(".tree-node").forEach((n) => {
     n.setAttribute("aria-pressed", String(n.dataset.node === id));
   });
-  highlight(root, id);
+  highlight(root, id, false);
   renderDetail(root, a, id);
 }
 
@@ -278,9 +281,9 @@ function wireTree(root: HTMLElement, a: App): void {
     const id = n.dataset.node ?? "";
     n.addEventListener("click", () => select(root, a, id));
     n.addEventListener("pointerenter", () => highlight(root, id));
-    n.addEventListener("pointerleave", () => highlight(root, selected));
+    n.addEventListener("pointerleave", () => highlight(root, selected, false));
     n.addEventListener("focus", () => highlight(root, id));
-    n.addEventListener("blur", () => highlight(root, selected));
+    n.addEventListener("blur", () => highlight(root, selected, false));
     n.addEventListener("keydown", (e) => {
       if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key))
         return;

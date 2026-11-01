@@ -34,14 +34,26 @@ function home(): string {
   }).join("");
   const step = (n: number, h: Key, p: Key) =>
     `<div><span class="step-n" aria-hidden="true">${n}</span><h2>${esc(t(h))}</h2><p>${esc(t(p))}</p></div>`;
+  // The whole course as a stack of chips: sand at the bottom, Tetris on top.
+  const stack = [...CHAPTERS]
+    .reverse()
+    .map((ch) => {
+      const on = ready.has(ch.number);
+      const label = `<span class="chip-n" aria-hidden="true">${ch.number}</span><span class="chip-name">${esc(outline(ch.number, "title"))}</span>`;
+      return `<li class="stack-chip" data-ready="${on}" style="--i:${ch.number}">${on ? `<a href="${chapterHref(ch.number)}">${label}</a>` : `${label}<span class="visually-hidden"> ${esc(t("chapter.soonSr"))}</span>`}</li>`;
+    })
+    .join("");
   return `<section class="hero">
-      <p class="eyebrow">${esc(t("home.eyebrow", { n: CHAPTERS.length }))}</p>
-      <h1 tabindex="-1">${esc(t("home.title"))}</h1>
-      <p class="tagline">${esc(t("home.tagline"))}</p>
-      <p class="hero-actions">
-        <a class="button primary" href="${chapterHref(0)}">${esc(t("home.start"))}</a>
-        <a class="button" href="#/levels">${esc(t("home.workbench"))}</a>
-      </p>
+      <div class="hero-text">
+        <p class="eyebrow">${esc(t("home.eyebrow", { n: CHAPTERS.length }))}</p>
+        <h1 tabindex="-1">${esc(t("home.title"))}</h1>
+        <p class="tagline">${esc(t("home.tagline"))}</p>
+        <p class="hero-actions">
+          <a class="button primary" href="${chapterHref(0)}">${esc(t("home.start"))}</a>
+          <a class="button" href="#/levels">${esc(t("home.workbench"))}</a>
+        </p>
+      </div>
+      <ol class="stack" aria-label="${esc(t("home.stackLabel"))}">${stack}</ol>
     </section>
     <section class="steps" aria-label="${esc(t("home.howItWorks"))}">
       ${step(1, "home.read", "home.readText")}

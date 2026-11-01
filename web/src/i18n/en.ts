@@ -19,6 +19,8 @@ export const en = {
   "nav.build": "Build",
   "nav.glossary": "Glossary",
   "nav.language": "Language",
+  "hud.levels": "Levels",
+  "hud.levelsLabel": "Levels passed: {passed} of {total}. Open the level map.",
   "core.loading": "Loading simulator…",
   "core.ok": "Simulator {version}",
   "core.okTitle": "Simulator core {version} loaded",
@@ -61,6 +63,7 @@ export const en = {
   "home.title": "From sand to Tetris",
   "home.tagline":
     "Start with sand. Build switches, gates, memory, a CPU, a compiler and an operating system. Finish by playing Tetris on the computer you made.",
+  "home.stackLabel": "The course, from sand at the bottom to Tetris at the top",
   "home.start": "Start reading",
   "home.workbench": "Open the workbench",
   "home.howItWorks": "How it works",

@@ -1,6 +1,7 @@
 import "./style.css";
 import "./components/core-status";
 import "./components/demos";
+import { getApp } from "./app";
 import { installGlossaryPopover } from "./components/glossary-popover";
 import { getLang, setLang, t, type Key, type Lang } from "./i18n";
 import { mountLevels } from "./levels";
@@ -67,6 +68,23 @@ function showError(root: HTMLElement, e: unknown): void {
   root.append(h, p);
 }
 
+/** The header's levels meter: passed out of all levels. */
+async function updateHud(): Promise<void> {
+  const box = document.querySelector<HTMLElement>(".hud-xp");
+  if (!box) return;
+  // No meter if the simulator can't load; the page says why.
+  const a = await getApp().catch(() => null);
+  if (!a) return;
+  const total = a.levels.length;
+  const passed = Object.values(a.status).filter((s) => s === "passed").length;
+  const count = box.querySelector(".hud-xp-count");
+  if (count) count.textContent = `${passed}/${total}`;
+  const bar = box.querySelector<HTMLElement>(".hud-xp-bar > span");
+  if (bar) bar.style.width = `${total ? (passed / total) * 100 : 0}%`;
+  box.setAttribute("aria-label", t("hud.levelsLabel", { passed, total }));
+  box.hidden = false;
+}
+
 /** The header and other text outside the page, in the current language. */
 function chrome(): void {
   const lang = getLang();
@@ -95,9 +113,12 @@ document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) => {
 document.addEventListener("s2t-lang", () => {
   chrome();
   show();
+  void updateHud();
 });
+document.addEventListener("s2t-progress", () => void updateHud());
 
 if (app) installGlossaryPopover(app);
 window.addEventListener("hashchange", show);
 chrome();
 show();
+void updateHud();
