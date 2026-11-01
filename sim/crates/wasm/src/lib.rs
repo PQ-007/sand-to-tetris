@@ -156,6 +156,113 @@ pub fn asm_encode(body: &str, symbols: &str, placed: &str) -> Result<String, JsE
     ))
 }
 
+// ---- the VM (docs/VM.md) ----------------------------------------------------
+
+fn vm_stage<T: serde::Serialize>(r: Result<T, s2t_vm::VmError>) -> Result<String, JsError> {
+    let v = match r {
+        Ok(v) => serde_json::json!({ "ok": v }),
+        Err(e) => serde_json::json!({ "error": e }),
+    };
+    Ok(v.to_string())
+}
+
+/// Translates and assembles a VM program → `Built` JSON (lines, sourceMap,
+/// program, errors).
+#[wasm_bindgen(js_name = vmBuild)]
+pub fn vm_build(source: &str) -> Result<String, JsError> {
+    js(to_json(Ok::<_, String>(s2t_vm::build(source))))
+}
+
+/// Stage 1 on one line → `{"ok": Command | null}` or `{"error": ...}`.
+#[wasm_bindgen(js_name = vmParse)]
+pub fn vm_parse(line: &str) -> Result<String, JsError> {
+    vm_stage(s2t_vm::parse(line))
+}
+
+/// Stage 2: one command (JSON) in its context (JSON `Ctx`) → `[line]`.
+#[wasm_bindgen(js_name = vmTranslate)]
+pub fn vm_translate(cmd: &str, ctx: &str) -> Result<String, JsError> {
+    let lines = s2t_vm::translate(&from_json(cmd)?, &from_json(ctx)?);
+    js(to_json(Ok::<_, String>(lines)))
+}
+
+/// Stage 3: the bootstrap and the runtime routines → `{bootstrap, runtime}`.
+#[wasm_bindgen(js_name = vmStart)]
+pub fn vm_start() -> String {
+    serde_json::json!({ "bootstrap": s2t_vm::bootstrap(), "runtime": s2t_vm::runtime() })
+        .to_string()
+}
+
+/// The whole-program checks on a JSON list of commands (null for blank
+/// lines) → `[VmError]`.
+#[wasm_bindgen(js_name = vmCheck)]
+pub fn vm_check(commands: &str) -> Result<String, JsError> {
+    let commands: Vec<Option<s2t_vm::Command>> = from_json(commands)?;
+    js(to_json(Ok::<_, String>(s2t_vm::check(&commands))))
+}
+
+/// Runs a VM program on the interpreter → `{halted, result, steps, ram
+/// (the first 64 words), screen}` or `{errors}`.
+#[wasm_bindgen(js_name = vmRun)]
+pub fn vm_run(source: &str, max_steps: u32) -> String {
+    match s2t_vm::run(source, max_steps as usize) {
+        Ok(o) => serde_json::json!({
+            "halted": o.halted,
+            "result": o.result,
+            "steps": o.steps,
+            "ram": &o.memory.ram[..64],
+            "screen": o.memory.screen,
+        }),
+        Err(errors) => serde_json::json!({ "errors": errors }),
+    }
+    .to_string()
+}
+
+/// A VM program running on the interpreter, one command per step: for the
+/// chapter's stack demo.
+#[wasm_bindgen]
+pub struct VmRunner {
+    vm: s2t_vm::Vm,
+}
+
+#[wasm_bindgen]
+impl VmRunner {
+    /// Throws the program's errors (JSON) if it doesn't pass the checks.
+    #[wasm_bindgen(constructor)]
+    pub fn new(source: &str) -> Result<VmRunner, JsError> {
+        s2t_vm::Vm::new(source)
+            .map(|vm| VmRunner { vm })
+            .map_err(|e| JsError::new(&serde_json::to_string(&e).unwrap_or_default()))
+    }
+
+    pub fn step(&mut self) {
+        self.vm.step();
+    }
+
+    pub fn halted(&self) -> bool {
+        self.vm.halted()
+    }
+
+    /// The line that runs next (0 once halted).
+    pub fn line(&self) -> usize {
+        self.vm.line()
+    }
+
+    pub fn sp(&self) -> u16 {
+        self.vm.sp()
+    }
+
+    /// Every word from SP to the bottom of the stack, top first.
+    pub fn stack(&mut self) -> Vec<u16> {
+        self.vm.whole_stack()
+    }
+
+    /// The frames, innermost first (JSON: func, fp, args, locals).
+    pub fn frames(&mut self) -> String {
+        serde_json::to_string(&self.vm.frames()).unwrap_or_default()
+    }
+}
+
 // ---- the Machine page: a program running on the reference CPU ---------------
 
 /// A running program: the reference CPU, RAM, screen and keyboard. Kept in
@@ -260,6 +367,33 @@ mod tests {
         assert!(err.contains("\"code\":\"bad-char\""), "{err}");
         let p = asm_assemble("SET r1, 5\nHALT").unwrap();
         assert!(p.contains("\"code\":[17413,49152]"), "{p}");
+    }
+
+    #[test]
+    fn vm_stages_and_runs_through_json() {
+        let cmd: serde_json::Value =
+            serde_json::from_str(&vm_parse("push local 2").unwrap()).unwrap();
+        assert_eq!(
+            cmd,
+            serde_json::json!({"ok": {"op": "push", "seg": "local", "n": 2}})
+        );
+        assert_eq!(vm_parse("; nothing").unwrap(), r#"{"ok":null}"#);
+        assert!(vm_parse("frob").unwrap().contains("unknown-command"));
+        let ctx = r#"{"func":"main","args":0,"locals":3,"line":2}"#;
+        let lines = vm_translate(r#"{"op":"push","seg":"local","n":2}"#, ctx).unwrap();
+        assert!(lines.contains("LOAD r0, [r5 + 2]"), "{lines}");
+        assert!(vm_start().contains("__mul:"));
+        let errors = vm_check(r#"[{"op":"add"}]"#).unwrap();
+        assert!(errors.contains("outside-function"), "{errors}");
+        let b = vm_build("func main 0 0\npush 6\npush 7\nmul\nreturn").unwrap();
+        assert!(b.contains("\"errors\":[]"), "{b}");
+        let r = vm_run("func main 0 0\npush 6\npush 7\nmul\nreturn", 100);
+        assert!(r.contains("\"result\":42"), "{r}");
+        let mut v = VmRunner::new("func main 0 0\npush 6\nreturn").unwrap();
+        v.step();
+        v.step();
+        assert_eq!(v.stack()[0], 6);
+        assert!(v.frames().contains("\"func\":\"main\""));
     }
 
     #[test]

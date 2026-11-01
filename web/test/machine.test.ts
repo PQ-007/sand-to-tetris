@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
 import { EXAMPLES } from "../src/machine-programs";
 import { keyCode } from "../src/machine";
-import type { AsmProgram } from "../src/sim/types";
+import type { AsmProgram, VmBuilt } from "../src/sim/types";
 import * as wasm from "../src/sim/pkg/s2t_wasm.js";
 
 const assemble = (src: string) =>
@@ -20,9 +20,60 @@ describe("Machine page examples", () => {
     });
   });
 
-  it("every example assembles", () => {
+  const build = (id: string) => {
+    const b = JSON.parse(
+      wasm.vmBuild(EXAMPLES.find((e) => e.id === id)!.source),
+    ) as VmBuilt;
+    expect(b.errors, id).toEqual([]);
+    return b.program;
+  };
+
+  it("every example builds", () => {
     for (const ex of EXAMPLES)
-      expect(assemble(ex.source).errors, ex.id).toEqual([]);
+      if (ex.lang === "asm")
+        expect(assemble(ex.source).errors, ex.id).toEqual([]);
+      else build(ex.id);
+  });
+
+  it("VM examples: sum, factorial, stripes", () => {
+    for (const [id, result] of [
+      ["vm-sum", 55],
+      ["vm-fact", 5040],
+      ["vm-stripes", 0],
+    ] as const) {
+      const m = machine(build(id));
+      m.run(200_000);
+      expect(m.halted(), id).toBe(true);
+      expect(m.ram(0x3fff, 1)[0], id).toBe(result);
+    }
+    const m = machine(build("vm-stripes"));
+    m.run(200_000);
+    expect(m.screen()[0]).toBe(0x8080);
+    expect(m.screen()[8]).toBe(0x4040);
+    expect(m.screen()[8 * 9]).toBe(0x4040);
+  });
+
+  it("the VM dot moves with the arrow keys", () => {
+    const m = machine(build("vm-dot"));
+    const at = (x: number, y: number) =>
+      ((m.screen()[y * 8 + (x >> 4)]! >> (15 - (x % 16))) & 1) === 1;
+    m.run(5000);
+    expect(at(64, 48)).toBe(true);
+    m.setKey(129); // up
+    m.run(5000);
+    m.setKey(0);
+    m.run(5000);
+    expect(at(64, 48)).toBe(false);
+    expect(at(64, 47)).toBe(true);
+    m.setKey(128); // left, twice
+    m.run(5000);
+    m.setKey(0);
+    m.run(5000);
+    m.setKey(128);
+    m.run(5000);
+    m.setKey(0);
+    m.run(5000);
+    expect(at(62, 47)).toBe(true);
   });
 
   it("sum stores 55 and halts", () => {

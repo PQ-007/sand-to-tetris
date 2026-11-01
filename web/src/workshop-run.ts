@@ -1,8 +1,24 @@
 // Turns the learner's TypeScript into something that runs: types are
 // stripped (sucrase, loaded only when needed), then it runs in a worker
 // with a time limit.
-import { asmAssemble, asmStages } from "./sim/core";
+import {
+  asmAssemble,
+  asmStages,
+  Machine,
+  vmBuild,
+  vmRun,
+  vmStages,
+} from "./sim/core";
 import type { AsmProgram } from "./sim/types";
+import { fromAsmErrors, type VmTranslation } from "./translator";
+import {
+  buildTranslatorTests,
+  gradeTest,
+  type Exec,
+  type TrOutcome,
+  type TrResult,
+  type TrTestCase,
+} from "./translator-tests";
 import { workshopStore } from "./workshop-store";
 import { buildTests, type TestCase, type TestResult } from "./workshop-tests";
 import type { WorkerRequest } from "./workshop-worker";
@@ -105,5 +121,121 @@ export async function assemblerChoices(): Promise<
   const mine = (await (await workshopStore()).load()).assembler;
   return mine?.passed
     ? [{ id: "yours", assemble: learnerAssembler(mine.code) }, builtin]
+    : [builtin];
+}
+
+// ---- the VM translator workshop -------------------------------------------------
+
+export type TranslateFn = (source: string) => Promise<VmTranslation>;
+
+let trTests: TrTestCase[] | undefined;
+
+/** Every translator test, with answers from the reference (needs the core). */
+export function translatorTests(): TrTestCase[] {
+  trTests ??= buildTranslatorTests({
+    parse: vmStages.parse,
+    translate: vmStages.translate,
+    start: vmStages.start,
+    run: vmRun,
+    errors: (source) => vmBuild(source).errors,
+  });
+  return trTests;
+}
+
+/** Assembles lines with the reference assembler and runs them on the CPU. */
+export const execOnCpu: Exec = (lines, sourceMap, maxSteps, globals) => {
+  const p = asmAssemble(lines.join("\n"));
+  const bad = p.errors[0];
+  if (bad) {
+    const e = fromAsmErrors([bad], sourceMap)[0];
+    const text = lines[bad.line - 1]?.trim() ?? "";
+    return {
+      error: e?.code ?? "asm",
+      message: `${bad.message}: ${text}`,
+      line: e?.line ?? 0,
+    };
+  }
+  const m = new Machine(Uint16Array.from(p.code), Uint16Array.from(p.data));
+  try {
+    m.run(maxSteps);
+    const screen = Array.from(m.screen());
+    return {
+      halted: m.halted(),
+      result: m.ram(0x3fff, 1)[0] ?? 0,
+      sp: m.regs()[6] ?? 0,
+      globals: Array.from(m.ram(0, globals)),
+      screen: screen.flatMap((v, i) => (v ? [[i, v] as [number, number]] : [])),
+    };
+  } finally {
+    m.free();
+  }
+};
+
+/** Runs every translator test on the learner's code. */
+export async function runTranslatorTests(
+  code: string,
+): Promise<{ results: TrResult[] } | { error: RunError }> {
+  const t = await transpile(code);
+  if ("error" in t) return t;
+  const tests = translatorTests();
+  const r = await inWorker<{ outcomes: TrOutcome[] }>({
+    kind: "translator-test",
+    js: t.js,
+    tests,
+  });
+  if ("error" in r) return r;
+  return {
+    results: tests.map((test, i) => {
+      const o = r.outcomes[i];
+      return o
+        ? gradeTest(test, o, execOnCpu)
+        : gradeTest(
+            test,
+            { kind: "value", got: { error: "crash", message: "" } },
+            execOnCpu,
+          );
+    }),
+  };
+}
+
+/** The built-in translator: s2t-vm's translation, before assembling. */
+export const builtinTranslate: TranslateFn = async (source) => {
+  const b = vmBuild(source);
+  // Errors with lines are the assembler's: the page assembles again with
+  // its chosen assembler and reports them itself.
+  return {
+    lines: b.lines,
+    sourceMap: b.sourceMap,
+    errors: b.lines.length ? [] : b.errors,
+  };
+};
+
+/** The learner's translator as a TranslateFn. */
+export function learnerTranslator(code: string): TranslateFn {
+  return async (source) => {
+    const fail = (e: RunError): VmTranslation => ({
+      lines: [],
+      sourceMap: [],
+      errors: [{ line: 0, code: e.code, args: {}, message: e.message }],
+    });
+    const t = await transpile(code);
+    if ("error" in t) return fail(t.error);
+    const r = await inWorker<{ translation: VmTranslation }>({
+      kind: "translate",
+      js: t.js,
+      source,
+    });
+    return "error" in r ? fail(r.error) : r.translation;
+  };
+}
+
+/** Built-in first; the learner's own once every test passes. */
+export async function translatorChoices(): Promise<
+  { id: "builtin" | "yours"; translate: TranslateFn }[]
+> {
+  const builtin = { id: "builtin" as const, translate: builtinTranslate };
+  const mine = (await (await workshopStore()).load()).translator;
+  return mine?.passed
+    ? [{ id: "yours", translate: learnerTranslator(mine.code) }, builtin]
     : [builtin];
 }

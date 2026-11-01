@@ -8,6 +8,7 @@ export type Route =
   | { page: "play"; level: string }
   | { page: "machine" }
   | { page: "assembler" }
+  | { page: "translator" }
   | { page: "not-found"; hash: string };
 
 export function parseRoute(hash: string): Route {
@@ -30,6 +31,7 @@ export function parseRoute(hash: string): Route {
   if (/^\/levels\/?$/.test(path)) return { page: "levels" };
   if (/^\/machine\/?$/.test(path)) return { page: "machine" };
   if (/^\/assembler\/?$/.test(path)) return { page: "assembler" };
+  if (/^\/translator\/?$/.test(path)) return { page: "translator" };
   const play = /^\/play\/([\w-]+)\/?$/.exec(path);
   if (play?.[1]) return { page: "play", level: play[1] };
   return { page: "not-found", hash };

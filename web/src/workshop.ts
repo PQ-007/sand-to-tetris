@@ -1,22 +1,64 @@
-// The assembler workshop: the learner writes their assembler in TypeScript,
-// stage by stage, and runs the tests. Passing every test lets the Machine
-// page use it.
-import { getLang, t, type Key } from "./i18n";
+// A toolchain workshop: the learner writes a stage of the toolchain (the
+// assembler, the VM translator) in TypeScript, part by part, and runs the
+// tests. Passing every test lets the Machine page use it.
+import { getLang, t, type Key, type Lang } from "./i18n";
 import { chapterHref } from "./router";
 import { loadCore } from "./sim/core";
+import { TR_STAGES } from "./translator-tests";
+import { TRANSLATOR_STARTERS } from "./translator-starter";
 import { STARTERS } from "./workshop-starter";
 import { workshopStore, type WorkshopEntry } from "./workshop-store";
-import { runWorkshopTests, workshopTests } from "./workshop-run";
-import type { StageName, TestResult } from "./workshop-tests";
+import {
+  runTranslatorTests,
+  runWorkshopTests,
+  translatorTests,
+  workshopTests,
+  type RunError,
+} from "./workshop-run";
 
-const ID = "assembler";
-const STAGES: StageName[] = [
-  "tokenize",
-  "parse",
-  "layout",
-  "encode",
-  "program",
-];
+/** One test's result, as both workshops report it. */
+interface Result {
+  stage: string;
+  name: string;
+  ok: boolean;
+  args: unknown[];
+  expected: { ok: unknown } | { error: string; line?: number };
+  got: { ok: unknown } | { error: string; message: string; line?: number };
+  /** The learner's output, when it helps to see it (a failed run). */
+  detail?: string;
+}
+
+interface WorkshopDef {
+  id: "assembler" | "translator";
+  /** Key prefix for the title, lead, how and stage names. */
+  keys: "workshop" | "translator";
+  stages: string[];
+  chapter: number;
+  starters: Record<Lang, string>;
+  count(): number;
+  run(code: string): Promise<{ results: Result[] } | { error: RunError }>;
+}
+
+const WORKSHOPS: Record<WorkshopDef["id"], WorkshopDef> = {
+  assembler: {
+    id: "assembler",
+    keys: "workshop",
+    stages: ["tokenize", "parse", "layout", "encode", "program"],
+    chapter: 5,
+    starters: STARTERS,
+    count: () => workshopTests().length,
+    run: runWorkshopTests,
+  },
+  translator: {
+    id: "translator",
+    keys: "translator",
+    stages: TR_STAGES,
+    chapter: 6,
+    starters: TRANSLATOR_STARTERS,
+    count: () => translatorTests().length,
+    run: runTranslatorTests,
+  },
+};
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -27,12 +69,23 @@ function show(v: unknown): string {
   return s && s.length > 400 ? `${s.slice(0, 400)}…` : (s ?? "undefined");
 }
 
-export async function mountWorkshop(root: HTMLElement): Promise<void> {
+/** A test's input: text as it is (a program keeps its lines), else JSON. */
+function input(args: unknown[]): string {
+  const [only] = args;
+  return args.length === 1 && typeof only === "string" && only.includes("\n")
+    ? `<pre>${esc(only)}</pre>`
+    : `<code>${esc(show(args))}</code>`;
+}
+
+export async function mountWorkshop(
+  root: HTMLElement,
+  id: WorkshopDef["id"],
+): Promise<void> {
   root.innerHTML = `<p class="loading">${esc(t("page.loading"))}</p>`;
   await loadCore();
   const store = await workshopStore();
-  const saved = (await store.load())[ID];
-  new WorkshopPage(root, saved);
+  const def = WORKSHOPS[id];
+  new WorkshopPage(root, def, (await store.load())[def.id]);
 }
 
 class WorkshopPage {
@@ -45,16 +98,21 @@ class WorkshopPage {
   /** The code that last passed every test. */
   private passedCode: string | null;
 
-  constructor(root: HTMLElement, saved: WorkshopEntry | undefined) {
+  constructor(
+    root: HTMLElement,
+    private def: WorkshopDef,
+    saved: WorkshopEntry | undefined,
+  ) {
     this.passedCode = saved?.passed ? saved.code : null;
-    const total = workshopTests().length;
+    const total = def.count();
+    const k = (name: string) => `${def.keys}.${name}` as Key;
     root.innerHTML = `
       <div class="page-head workshop-head">
         <div>
-          <h1 tabindex="-1">${esc(t("workshop.title"))}</h1>
-          <p class="lead">${esc(t("workshop.lead"))}</p>
-          <p class="help">${esc(t("workshop.how", { n: total }))}
-            <a href="${chapterHref(5)}">${esc(t("workshop.chapter"))}</a></p>
+          <h1 tabindex="-1">${esc(t(k("title")))}</h1>
+          <p class="lead">${esc(t(k("lead")))}</p>
+          <p class="help">${esc(t(k("how"), { n: total }))}
+            <a href="${chapterHref(def.chapter)}">${esc(t(k("chapter")))}</a></p>
         </div>
       </div>
       <div class="workshop-grid">
@@ -68,7 +126,7 @@ class WorkshopPage {
           <div class="asm-editor tall">
             <pre class="asm-gutter" aria-hidden="true"></pre>
             <textarea spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off"
-              aria-label="${esc(t("workshop.source"))}"></textarea>
+              aria-label="${esc(t(k("source")))}"></textarea>
           </div>
         </section>
         <section class="workshop-results" aria-live="polite"></section>
@@ -79,7 +137,7 @@ class WorkshopPage {
     this.results = q(".workshop-results");
     this.saveState = q(".save-state");
     this.runBtn = q("[data-run]");
-    this.editor.value = saved?.code ?? STARTERS[getLang()];
+    this.editor.value = saved?.code ?? def.starters[getLang()];
     this.editor.addEventListener("input", () => {
       this.renderGutter();
       clearTimeout(this.timer);
@@ -106,12 +164,12 @@ class WorkshopPage {
     this.runBtn.addEventListener("click", () => void this.run());
     q("[data-starter]").addEventListener("click", () => {
       if (!confirm(t("workshop.confirmStarter"))) return;
-      this.editor.value = STARTERS[getLang()];
+      this.editor.value = this.def.starters[getLang()];
       this.renderGutter();
       void this.save();
     });
     this.renderGutter();
-    this.results.innerHTML = `<p class="muted">${esc(t(this.passedCode === this.editor.value ? "workshop.passedBefore" : "workshop.notRun"))}</p>`;
+    this.results.innerHTML = `<p class="muted">${esc(t(this.passedCode === this.editor.value ? "workshop.passedBefore" : k("notRun")))}</p>`;
   }
 
   private renderGutter(): void {
@@ -126,7 +184,7 @@ class WorkshopPage {
     const code = this.editor.value;
     await (
       await workshopStore()
-    ).save(ID, {
+    ).save(this.def.id, {
       code,
       passed: code === this.passedCode,
       updated: Date.now(),
@@ -138,7 +196,7 @@ class WorkshopPage {
     const code = this.editor.value;
     this.runBtn.disabled = true;
     this.results.innerHTML = `<p class="muted">${esc(t("workshop.running"))}</p>`;
-    const r = await runWorkshopTests(code);
+    const r = await this.def.run(code);
     this.runBtn.disabled = false;
     if ("error" in r) {
       this.results.innerHTML = `<div class="workshop-problem"><h2>${esc(t(`workshop.err.${r.error.code}` as Key))}</h2>
@@ -151,37 +209,39 @@ class WorkshopPage {
     this.renderResults(r.results, all);
   }
 
-  private renderResults(results: TestResult[], all: boolean): void {
-    const groups = STAGES.map((stage) => {
-      const mine = results.filter((x) => x.stage === stage);
-      const passed = mine.filter((x) => x.ok).length;
-      const failed = mine.filter((x) => !x.ok);
-      const done = passed === mine.length;
-      const items = failed
-        .slice(0, 12)
-        .map(
-          (
-            f,
-          ) => `<li><details><summary><code>${esc(f.name || t("workshop.emptyLine"))}</code></summary>
+  private renderResults(results: Result[], all: boolean): void {
+    const groups = this.def.stages
+      .map((stage) => {
+        const mine = results.filter((x) => x.stage === stage);
+        const passed = mine.filter((x) => x.ok).length;
+        const failed = mine.filter((x) => !x.ok);
+        const done = passed === mine.length;
+        const items = failed
+          .slice(0, 12)
+          .map(
+            (
+              f,
+            ) => `<li><details><summary><code>${esc(f.name || t("workshop.emptyLine"))}</code></summary>
             <dl>
-              <dt>${esc(t("workshop.input"))}</dt><dd><code>${esc(show(f.args))}</code></dd>
+              <dt>${esc(t("workshop.input"))}</dt><dd>${input(f.args)}</dd>
               <dt>${esc(t("workshop.expected"))}</dt><dd><code>${esc("ok" in f.expected ? show(f.expected.ok) : t("workshop.throws", { code: f.expected.error }))}</code></dd>
               <dt>${esc(t("workshop.got"))}</dt><dd><code>${esc("ok" in f.got ? show(f.got.ok) : t("workshop.threw", { code: f.got.error, message: f.got.message }))}</code></dd>
-            </dl></details></li>`,
-        )
-        .join("");
-      const more =
-        failed.length > 12
-          ? `<li class="muted">${esc(t("workshop.more", { n: failed.length - 12 }))}</li>`
-          : "";
-      return `<section class="stage" data-done="${done}">
-        <h2><span class="stage-name">${esc(t(`workshop.stage.${stage}` as Key))}</span>
+            </dl>${f.detail ? `<details class="detail"><summary>${esc(t("workshop.yourAsm"))}</summary><pre>${esc(f.detail)}</pre></details>` : ""}</details></li>`,
+          )
+          .join("");
+        const more =
+          failed.length > 12
+            ? `<li class="muted">${esc(t("workshop.more", { n: failed.length - 12 }))}</li>`
+            : "";
+        return `<section class="stage" data-done="${done}">
+        <h2><span class="stage-name">${esc(t(`${this.def.keys}.stage.${stage}` as Key))}</span>
           <span class="pill ${done ? "pill-passed" : "pill-broken"}">${passed}/${mine.length}</span></h2>
         ${failed.length ? `<ul class="fails">${items}${more}</ul>` : ""}
       </section>`;
-    }).join("");
+      })
+      .join("");
     const head = all
-      ? `<div class="workshop-pass"><p><strong>${esc(t("workshop.allPassed", { n: results.length }))}</strong></p>
+      ? `<div class="workshop-pass"><p><strong>${esc(t(`${this.def.keys}.allPassed` as Key, { n: results.length }))}</strong></p>
          <p><a class="button primary" href="#/machine">${esc(t("workshop.toMachine"))}</a></p></div>`
       : "";
     this.results.innerHTML = head + groups;

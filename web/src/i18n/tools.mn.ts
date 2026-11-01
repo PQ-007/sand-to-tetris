@@ -6,16 +6,32 @@ export const toolsMn: Record<keyof typeof toolsEn, Message> = {
   "nav.machine": "Машин",
   "title.machine": "Машин",
   "title.assembler": "Таны ассемблер",
+  "title.translator": "Таны VM translator",
 
   "machine.title": "Машин",
   "machine.lead":
-    "Ассемблер хэлээр програм бичиж, хөрвүүлээд ажиллуул: таны зохиосон компьютерийн дэлгэц, гар, регистрүүд ба RAM.",
+    "Ассемблер эсвэл VM кодоор програм бичиж, хөрвүүлээд ажиллуул: таны зохиосон компьютерийн дэлгэц, гар, регистрүүд ба RAM.",
   "machine.example": "Жишээ",
   "machine.pick": "Жишээ сонгох…",
   "machine.ex.sum": "10 + 9 + … + 1-ийн нийлбэр",
   "machine.ex.pattern": "Шатрын хөлөг (.data ашиглана)",
   "machine.ex.dot": "Сумтай товчоор цэг хөдөлгөх",
   "machine.ex.count": "Үүрд тоолох",
+  "machine.ex.vm-sum": "10 + 9 + … + 1-ийн нийлбэр, давталтаар",
+  "machine.ex.vm-fact": "Факториал, рекурсээр",
+  "machine.ex.vm-stripes": "Дэлгэц дээрх судал",
+  "machine.ex.vm-dot": "Сумтай товчоор цэг хөдөлгөх",
+  "machine.language": "Хэл",
+  "machine.lang.asm": "Ассемблер",
+  "machine.lang.vm": "VM",
+  "machine.translator": "VM translator",
+  "machine.tr.builtin": "Суурилуулсан",
+  "machine.tr.yours": "Таных",
+  "machine.sourceVm": "VM эх код",
+  "machine.translating": "Хөрвүүлж байна…",
+  "machine.translation": "Болсон ассемблер код ({n} мөр)",
+  "machine.stack": "Stack, оройгоос нь",
+  "machine.stackEmpty": "Хоосон.",
   "machine.assembler": "Ассемблер",
   "machine.asm.builtin": "Суурилуулсан",
   "machine.asm.yours": "Таных",
@@ -52,6 +68,7 @@ export const toolsMn: Record<keyof typeof toolsEn, Message> = {
   "workshop.chapter": "5-р бүлэг.",
   "workshop.codeLabel": "Таны код",
   "workshop.source": "Таны ассемблер (TypeScript)",
+  "workshop.yourAsm": "Таны кодын гаргасан ассемблер",
   "workshop.run": "Шалгалтуудыг ажиллуулах",
   "workshop.starter": "Дахин эхлэх",
   "workshop.confirmStarter":
@@ -71,7 +88,7 @@ export const toolsMn: Record<keyof typeof toolsEn, Message> = {
   "workshop.input": "Оролт",
   "workshop.expected": "Хүлээгдэж буй",
   "workshop.got": "Таных",
-  "workshop.throws": "AsmError шиднэ, code нь {code}",
+  "workshop.throws": "Алдаа шиднэ, code нь {code}",
   "workshop.threw": "Шидсэн нь {code}: {message}",
   "workshop.more": "…бас {n}.",
   "workshop.allPassed":
@@ -81,8 +98,53 @@ export const toolsMn: Record<keyof typeof toolsEn, Message> = {
   "workshop.err.timeout":
     "Таны код 5 секундээс удаан ажилласан тул зогсоолоо (төгсгөлгүй давталт уу?)",
   "workshop.err.missing":
-    "Таны код tokenize, parse, layout, encode-ыг export хийх ёстой",
+    "Шалгалтын дууддаг функц бүрийг таны код export хийгээгүй байна (доор харна уу)",
   "workshop.err.crash": "Таны код унасан",
+
+  "translator.title": "Таны VM translator",
+  "translator.lead":
+    "VM translator-ыг өөрөө TypeScript-ээр бич: мөрийг уншиж, командын төрөл бүрийг ассемблер болгон хөрвүүл. Бүх шалгалт давбал Машин хуудас VM програмуудыг түүгээр ажиллуулж чадна.",
+  "translator.how":
+    "Явцдаа шалгалтуудыг ажиллуул (нийт {n}). Тухайн үе шатны командуудыг таны кодоор, бусдыг нь суурилуулсан translator-оор хөрвүүлж, төв процессор дээр ажиллуулдаг тул үе шатуудыг ямар ч дарааллаар бүтээж болно. Tab нь догол мөр хийнэ; засварлагчаас гарахын тулд Escape, дараа нь Tab дар. VM-ийн тайлбар:",
+  "translator.chapter": "6-р бүлэг.",
+  "translator.source": "Таны VM translator (TypeScript)",
+  "translator.notRun":
+    "Translator тань хэр ажиллаж байгааг харахын тулд «Шалгалтуудыг ажиллуулах»-ыг дар.",
+  "translator.allPassed":
+    "✓ Таны translator бүх {n} шалгалтыг давлаа. Машин хуудас одоо үүнийг санал болгоно.",
+  "translator.stage.parse": "1 · Parse",
+  "translator.stage.stack": "2 · push, set ба санах ой",
+  "translator.stage.arith": "3 · Арифметик ба харьцуулалт",
+  "translator.stage.jumps": "4 · Label ба үсрэлт",
+  "translator.stage.functions": "5 · Функц",
+  "translator.stage.muldiv": "6 · mul, div, mod",
+  "translator.stage.program": "Бүтэн програмууд",
+
+  "vm.bad-number": "Тоо биш: `{text}` (42, -5, 0x2A эсвэл 0b101 гэж бич)",
+  "vm.out-of-range": "{value} багтахгүй: {min}..{max} байх ёстой",
+  "vm.bad-segment": "local, arg, global-ийн аль нь ч биш: `{text}`",
+  "vm.set-constant":
+    "set-д тоо биш, хувьсагч (local, arg эсвэл global) хэрэгтэй",
+  "vm.unknown-command": "Ийм VM команд байхгүй: `{text}`",
+  "vm.operand-count": "Operand-ын тоо буруу: {command}",
+  "vm.bad-name":
+    "Нэр байж болохгүй: `{text}` (үсэг, цифр, _; цифрээр эхлэхгүй, __ агуулахгүй, r0–r7 биш)",
+  "vm.too-many-variables":
+    "Функц нийтдээ хамгийн ихдээ {max} аргумент ба local-тай байж болно",
+  "vm.outside-function": "Команд функц дотор байх ёстой: func-ээр эхэл",
+  "vm.duplicate-function": "Функц хоёр удаа тодорхойлогдсон: `{name}`",
+  "vm.duplicate-label": "Label хоёр удаа тодорхойлогдсон: `{name}` ({func})",
+  "vm.unknown-function": "Ийм функц байхгүй: `{name}`",
+  "vm.unknown-label": "Ийм label байхгүй: `{name}` ({func})",
+  "vm.no-variable":
+    "{func}: {seg} хувьсагчийн тоо {count}, тиймээс {seg} {n} байхгүй",
+  "vm.arg-count": "`{name}`: аргументын тоо {expected}, {got} биш",
+  "vm.no-main": "Програмд main функц хэрэгтэй (func main 0 k)",
+  "vm.main-args": "main аргументгүй байх ёстой",
+  "vm.no-return": "`{name}`: return эсвэл jump-аар төгсөх ёстой",
+  "vm.function-too-long":
+    "Энэ үсрэлт label-даа хүрэхгүй: функц хэт урт байна (хуваа)",
+  "vm.asm": "Ассемблер хөрвүүлэлтийг хүлээж авсангүй: {message}",
 
   "asm.what.instruction": "заавар эсвэл directive",
   "asm.what.comma": "таслал",

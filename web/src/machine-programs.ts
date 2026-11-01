@@ -1,14 +1,25 @@
-// Example programs for the Machine page (docs/ASSEMBLY.md). A test
-// assembles every one with the reference assembler and runs them.
+// Example programs for the Machine page: assembly (docs/ASSEMBLY.md) and
+// VM (docs/VM.md). A test builds every one with the reference toolchain
+// and runs them.
 
 export interface Example {
-  id: "sum" | "pattern" | "dot" | "count";
+  id:
+    | "sum"
+    | "pattern"
+    | "dot"
+    | "count"
+    | "vm-sum"
+    | "vm-fact"
+    | "vm-stripes"
+    | "vm-dot";
+  lang: "asm" | "vm";
   source: string;
 }
 
 export const EXAMPLES: Example[] = [
   {
     id: "sum",
+    lang: "asm",
     source: `; Add 10 + 9 + ... + 1 and store the total in RAM[0].
         SET   r0, 0           ; total
         SET   r1, 10          ; counter
@@ -22,6 +33,7 @@ loop:   ADD   r0, r0, r1
   },
   {
     id: "pattern",
+    lang: "asm",
     source: `; Fill the screen with a checkerboard. The two row patterns live in
 ; .data: the loader puts them in RAM before the program starts.
 .equ SCREEN 0x4000
@@ -53,6 +65,7 @@ word:   STORE r5, [r1 + 0]
   },
   {
     id: "dot",
+    lang: "asm",
     source: `; Move a dot with the arrow keys (click the screen first).
 .equ SCREEN 0x4000
 .equ KBD    0x6000
@@ -119,6 +132,7 @@ plot:   SHL   r4, r2, 3       ; the row starts at SCREEN + 8y
   },
   {
     id: "count",
+    lang: "asm",
     source: `; Count forever, showing the number in binary on the top row.
 ; It never halts: press Pause.
         SET16 r1, 0x4000
@@ -126,6 +140,194 @@ plot:   SHL   r4, r2, 3       ; the row starts at SCREEN + 8y
 loop:   INC   r0
         STORE r0, [r1 + 0]
         JMP   loop
+`,
+  },
+  {
+    id: "vm-sum",
+    lang: "vm",
+    source: `; Add 10 + 9 + ... + 1. When main returns, its result is
+; what's left on the stack (see Stack).
+func main 0 2
+        push 10
+        set local 0         ; counter
+label loop
+        push local 1
+        push local 0
+        add
+        set local 1         ; total = total + counter
+        push local 0
+        push 1
+        sub
+        dup
+        set local 0         ; counter = counter - 1
+        jumpif loop         ; until it reaches 0
+        push local 1
+        return
+`,
+  },
+  {
+    id: "vm-fact",
+    lang: "vm",
+    source: `; 7! = 7 * 6 * ... * 1, by a function that calls itself.
+; Step through it and watch the stack grow one frame per call.
+func main 0 0
+        push 7
+        call fact 1
+        return
+
+; fact(n) = 1 if n < 2, else n * fact(n - 1)
+func fact 1 0
+        push arg 0
+        push 2
+        lt
+        jumpifnot more
+        push 1
+        return
+label more
+        push arg 0
+        push arg 0
+        push 1
+        sub
+        call fact 1
+        mul
+        return
+`,
+  },
+  {
+    id: "vm-stripes",
+    lang: "vm",
+    source: `; Diagonal stripes: each row is the row above it, moved one pixel
+; right (and back every 8 rows). load and store reach the screen.
+func main 0 1
+        push 0
+        set local 0         ; i: the screen word, 0..767
+label next
+        push 0x4000
+        push local 0
+        add                 ; its address
+        push 0x8080
+        push local 0
+        push 3
+        shr                 ; its row: i / 8
+        push 7
+        and                 ; row mod 8
+        shr                 ; 0x8080 moved right by that much
+        store
+        push local 0
+        push 1
+        add
+        dup
+        set local 0
+        push 768
+        lt
+        jumpif next
+        push 0
+        return
+`,
+  },
+  {
+    id: "vm-dot",
+    lang: "vm",
+    source: `; Move a dot with the arrow keys (click the screen first).
+func main 0 3
+        push 64
+        set local 0         ; x
+        push 48
+        set local 1         ; y
+        push local 0
+        push local 1
+        call flip 2         ; draw the dot
+        pop
+label wait
+        push 0x6000
+        load
+        dup
+        set local 2         ; the key held, 0 if none
+        jumpifnot wait
+        push local 0
+        push local 1
+        call flip 2         ; erase it (flip toggles the pixel)
+        pop
+        push local 2
+        push 130            ; right
+        eq
+        jumpifnot notright
+        push local 0
+        push 1
+        add
+        set local 0
+label notright
+        push local 2
+        push 128            ; left
+        eq
+        jumpifnot notleft
+        push local 0
+        push 1
+        sub
+        set local 0
+label notleft
+        push local 2
+        push 131            ; down
+        eq
+        jumpifnot notdown
+        push local 1
+        push 1
+        add
+        set local 1
+label notdown
+        push local 2
+        push 129            ; up
+        eq
+        jumpifnot notup
+        push local 1
+        push 1
+        sub
+        set local 1
+label notup
+        push local 0
+        push 127
+        and
+        set local 0         ; x wraps around: 0..127
+        push local 1
+        push 96
+        add
+        push 96
+        mod
+        set local 1         ; y wraps around: 0..95
+        push local 0
+        push local 1
+        call flip 2         ; draw it at the new place
+        pop
+label release
+        push 0x6000
+        load
+        jumpif release      ; wait for the key to be let go
+        jump wait
+
+; flip(x, y): toggles the pixel at (x, y)
+func flip 2 1
+        push 0x4000
+        push arg 1
+        push 3
+        shl                 ; 8y
+        add
+        push arg 0
+        push 4
+        shr                 ; x / 16
+        add
+        set local 0         ; the word: 0x4000 + 8y + x / 16
+        push local 0
+        push local 0
+        load
+        push 0x8000
+        push arg 0
+        push 15
+        and
+        shr                 ; the bit: 0x8000 >> (x mod 16)
+        xor
+        store
+        push 0
+        return
 `,
   },
 ];

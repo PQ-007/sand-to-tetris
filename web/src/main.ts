@@ -24,7 +24,9 @@ function show(): void {
   const section =
     route.page === "levels" || route.page === "play"
       ? "build"
-      : route.page === "machine" || route.page === "assembler"
+      : route.page === "machine" ||
+          route.page === "assembler" ||
+          route.page === "translator"
         ? "machine"
         : route.page === "glossary"
           ? "glossary"
@@ -44,9 +46,17 @@ function show(): void {
     window.scrollTo(0, 0);
     return;
   }
-  if (route.page === "machine" || route.page === "assembler") {
-    const root = document.getElementById(`${route.page}-root`);
-    const mount = route.page === "machine" ? mountMachine : mountWorkshop;
+  if (
+    route.page === "machine" ||
+    route.page === "assembler" ||
+    route.page === "translator"
+  ) {
+    const page = route.page;
+    const root = document.getElementById(`${page}-root`);
+    const mount =
+      page === "machine"
+        ? mountMachine
+        : (r: HTMLElement) => mountWorkshop(r, page);
     if (root) void mount(root).then(done, (e) => showError(root, e));
     window.scrollTo(0, 0);
     return;

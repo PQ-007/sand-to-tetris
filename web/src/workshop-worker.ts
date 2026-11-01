@@ -1,6 +1,12 @@
 // Runs the learner's code away from the page, so a slow or endless loop in
 // it can't freeze anything: the page stops this worker after a timeout.
 import {
+  loadTranslator,
+  translateTest,
+  type TrTestCase,
+} from "./translator-tests";
+import { translateWith } from "./translator";
+import {
   assembleWith,
   loadStages,
   runTest,
@@ -9,15 +15,35 @@ import {
 
 export type WorkerRequest =
   | { kind: "test"; js: string; tests: TestCase[] }
-  | { kind: "assemble"; js: string; source: string };
+  | { kind: "assemble"; js: string; source: string }
+  | { kind: "translator-test"; js: string; tests: TrTestCase[] }
+  | { kind: "translate"; js: string; source: string };
 
 self.onmessage = (e: MessageEvent<WorkerRequest>) => {
   const req = e.data;
   try {
-    const stages = loadStages(req.js);
-    if (req.kind === "test")
-      postMessage({ results: req.tests.map((t) => runTest(stages, t)) });
-    else postMessage({ program: assembleWith(stages, req.source) });
+    switch (req.kind) {
+      case "test": {
+        const stages = loadStages(req.js);
+        postMessage({ results: req.tests.map((t) => runTest(stages, t)) });
+        break;
+      }
+      case "assemble":
+        postMessage({ program: assembleWith(loadStages(req.js), req.source) });
+        break;
+      case "translator-test": {
+        const stages = loadTranslator(req.js);
+        postMessage({
+          outcomes: req.tests.map((t) => translateTest(stages, t)),
+        });
+        break;
+      }
+      case "translate":
+        postMessage({
+          translation: translateWith(loadTranslator(req.js), req.source),
+        });
+        break;
+    }
   } catch (err) {
     const e2 = err as { code?: string; message?: string };
     postMessage({

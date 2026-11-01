@@ -40,5 +40,6 @@ describe("parseRoute", () => {
   it("knows the machine and the assembler workshop", () => {
     expect(parseRoute("#/machine")).toEqual({ page: "machine" });
     expect(parseRoute("#/assembler")).toEqual({ page: "assembler" });
+    expect(parseRoute("#/translator")).toEqual({ page: "translator" });
   });
 });

@@ -18,6 +18,11 @@ import type {
   Report,
   SimView,
   StepsView,
+  VmBuilt,
+  VmCommand,
+  VmCtx,
+  VmError,
+  VmRunResult,
 } from "./types";
 
 let ready: Promise<void> | undefined;
@@ -66,6 +71,36 @@ export const asmStages = {
       ),
     ) as StageResult<number[]>,
 };
+
+/** Translates a VM program with the reference translator and assembles it. */
+export function vmBuild(source: string): VmBuilt {
+  return JSON.parse(wasm.vmBuild(source)) as VmBuilt;
+}
+
+/** The reference VM translator's stages, for grading the learner's. */
+export const vmStages = {
+  parse: (line: string) =>
+    JSON.parse(wasm.vmParse(line)) as
+      { ok: VmCommand | null } | { error: VmError },
+  translate: (cmd: VmCommand, ctx: VmCtx) =>
+    JSON.parse(
+      wasm.vmTranslate(JSON.stringify(cmd), JSON.stringify(ctx)),
+    ) as string[],
+  start: () =>
+    JSON.parse(wasm.vmStart()) as { bootstrap: string[]; runtime: string[] },
+  check: (commands: (VmCommand | null)[]) =>
+    JSON.parse(wasm.vmCheck(JSON.stringify(commands))) as VmError[],
+};
+
+/** Runs a VM program on the reference interpreter. */
+export function vmRun(source: string, maxSteps: number): VmRunResult {
+  return JSON.parse(wasm.vmRun(source, maxSteps)) as VmRunResult;
+}
+
+/** A VM program on the interpreter, one command per step (the stack demo).
+ * Its constructor throws the program's errors as JSON. */
+export const VmRunner = wasm.VmRunner;
+export type VmRunner = wasm.VmRunner;
 
 /** A program running on the reference CPU (needs loadCore() first). */
 export const Machine = wasm.Machine;

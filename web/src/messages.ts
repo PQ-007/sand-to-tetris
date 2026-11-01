@@ -83,6 +83,13 @@ export function knownText(text: string): string {
 
 /** An assembler error in the current language: English comes from the
  * assembler itself; other languages are built from its code and values. */
+/** A VM error (docs/VM.md) in the current language; a code the site
+ * doesn't know (the learner's own, like "todo") keeps its message. */
+export function vmErrorText(e: AsmError): string {
+  if (getLang() === "en" || !(`vm.${e.code}` in en)) return e.message;
+  return t(`vm.${e.code}` as Key, e.args);
+}
+
 export function asmErrorText(e: AsmError): string {
   if (getLang() === "en" || !(`asm.${e.code}` in en)) return e.message;
   const args: Record<string, string> = { ...e.args };

@@ -223,3 +223,79 @@ export interface AsmProgram {
 }
 
 export type StageResult<T> = { ok: T } | { error: AsmError };
+
+// ---- the VM (docs/VM.md; mirrors s2t-vm's JSON) ---------------------------------
+
+export type VmSeg = "const" | "local" | "arg" | "global";
+
+/** The commands without operands. */
+export type VmSimpleOp =
+  | "pop"
+  | "dup"
+  | "load"
+  | "store"
+  | "add"
+  | "sub"
+  | "and"
+  | "or"
+  | "xor"
+  | "neg"
+  | "not"
+  | "shl"
+  | "shr"
+  | "sar"
+  | "mul"
+  | "div"
+  | "mod"
+  | "eq"
+  | "ne"
+  | "lt"
+  | "gt"
+  | "le"
+  | "ge"
+  | "return";
+
+export type VmCommand =
+  | { op: "push" | "set"; seg: VmSeg; n: number }
+  | { op: "label" | "jump" | "jumpif" | "jumpifnot"; name: string }
+  | { op: "func"; name: string; args: number; locals: number }
+  | { op: "call"; name: string; args: number }
+  | { op: VmSimpleOp };
+
+/** What translate gets besides the command. */
+export interface VmCtx {
+  func: string;
+  args: number;
+  locals: number;
+  line: number;
+}
+
+/** Same shape as the assembler's errors. */
+export type VmError = AsmError;
+
+export interface VmBuilt {
+  /** The assembly, one line each. */
+  lines: string[];
+  /** For each assembly line, its VM line (0: bootstrap, runtime, data). */
+  sourceMap: number[];
+  program: AsmProgram;
+  errors: VmError[];
+}
+
+export type VmRunResult =
+  | {
+      halted: boolean;
+      result: number;
+      steps: number;
+      /** RAM 0..63 (the globals live at the start). */
+      ram: number[];
+      screen: number[];
+    }
+  | { errors: VmError[] };
+
+export interface VmFrame {
+  func: string;
+  fp: number;
+  args: number;
+  locals: number;
+}
