@@ -3,7 +3,7 @@
 // problem's code and values, or the diagnostic's structured fields.
 import { getLang, t, type Key } from "./i18n";
 import { en } from "./i18n/en";
-import type { Diagnostic, Problem } from "./sim/types";
+import type { AsmError, Diagnostic, Problem } from "./sim/types";
 
 /** Free-text reasons the core gives for a bad part. */
 function reasonText(reason: string): string {
@@ -79,4 +79,16 @@ export function knownText(text: string): string {
   };
   const key = known[text];
   return key ? t(key) : text;
+}
+
+/** An assembler error in the current language: English comes from the
+ * assembler itself; other languages are built from its code and values. */
+export function asmErrorText(e: AsmError): string {
+  if (getLang() === "en" || !(`asm.${e.code}` in en)) return e.message;
+  const args: Record<string, string> = { ...e.args };
+  if (args.what && `asm.what.${args.what}` in en)
+    args.what = t(`asm.what.${args.what}` as Key);
+  if (args.expected && `asm.expect.${args.expected}` in en)
+    args.expected = t(`asm.expect.${args.expected}` as Key);
+  return t(`asm.${e.code}` as Key, args);
 }

@@ -161,3 +161,65 @@ export interface IsaTrace {
   states: IsaState[];
   writes: ([number, number] | null)[];
 }
+
+// ---- the assembler (docs/ASSEMBLY.md; mirrors s2t-asm's JSON) ----------------
+
+export type AsmToken =
+  | { kind: "label"; name: string }
+  | { kind: "ident"; text: string }
+  | { kind: "directive"; name: string }
+  | { kind: "number"; value: number }
+  | { kind: "comma" }
+  | { kind: "lbracket" }
+  | { kind: "rbracket" }
+  | { kind: "plus" };
+
+export type AsmOperand =
+  | { kind: "reg"; reg: number }
+  | { kind: "num"; value: number }
+  | { kind: "sym"; name: string }
+  | { kind: "mem"; reg: number; offset: AsmOperand };
+
+export type AsmBody =
+  | { kind: "instr"; mnemonic: string; args: AsmOperand[] }
+  | { kind: "dir"; name: string; args: AsmOperand[] };
+
+export interface AsmLine {
+  label: string | null;
+  body: AsmBody | null;
+}
+
+export interface AsmSymbol {
+  kind: "code" | "data" | "const";
+  value: number;
+}
+
+export interface AsmPlaced {
+  section: "code" | "data";
+  address: number;
+  size: number;
+}
+
+export interface AsmLayout {
+  symbols: Record<string, AsmSymbol>;
+  lines: (AsmPlaced | null)[];
+}
+
+export interface AsmError {
+  /** 1-based source line; 0 when a stage runs on its own. */
+  line: number;
+  code: string;
+  args: Record<string, string>;
+  message: string;
+}
+
+export interface AsmProgram {
+  code: number[];
+  data: number[];
+  symbols: Record<string, AsmSymbol>;
+  /** For each code word, its 1-based source line. */
+  sourceMap: number[];
+  errors: AsmError[];
+}
+
+export type StageResult<T> = { ok: T } | { error: AsmError };

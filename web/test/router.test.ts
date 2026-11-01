@@ -37,4 +37,8 @@ describe("parseRoute", () => {
       anchor: "latches",
     });
   });
+  it("knows the machine and the assembler workshop", () => {
+    expect(parseRoute("#/machine")).toEqual({ page: "machine" });
+    expect(parseRoute("#/assembler")).toEqual({ page: "assembler" });
+  });
 });

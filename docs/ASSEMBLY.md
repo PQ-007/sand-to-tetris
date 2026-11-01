@@ -116,5 +116,6 @@ The Machine page's keyboard puts these at 0x6000 while a key is held (0 when
 none); revisit with the OS in M11:
 
 - printable characters: their ASCII code (32–126), letters as typed;
-- Enter 13, Backspace 8, Escape 27, Tab 9;
+- Enter 13, Backspace 8, Escape 27 (Tab is not captured: it keeps moving
+  keyboard focus, so nobody gets trapped in the screen);
 - arrows: left 128, up 129, right 130, down 131.

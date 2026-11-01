@@ -2,6 +2,14 @@
 // and wraps its JSON API with types.
 import init, * as wasm from "./pkg/s2t_wasm.js";
 import type {
+  AsmLayout,
+  AsmLine,
+  AsmPlaced,
+  AsmProgram,
+  AsmSymbol,
+  AsmToken,
+  AsmBody,
+  StageResult,
   Design,
   IsaTrace,
   LevelInfo,
@@ -31,6 +39,37 @@ export async function getCoreVersion(): Promise<string> {
 export function disassemble(word: number): string {
   return wasm.disassemble(word & 0xffff);
 }
+
+/** Assembles a whole program with the reference assembler. */
+export function asmAssemble(source: string): AsmProgram {
+  return JSON.parse(wasm.asmAssemble(source)) as AsmProgram;
+}
+
+/** The reference assembler's four stages, for grading the learner's. */
+export const asmStages = {
+  tokenize: (line: string) =>
+    JSON.parse(wasm.asmTokenize(line)) as StageResult<AsmToken[]>,
+  parse: (tokens: AsmToken[]) =>
+    JSON.parse(wasm.asmParse(JSON.stringify(tokens))) as StageResult<AsmLine>,
+  layout: (lines: AsmLine[]) =>
+    JSON.parse(wasm.asmLayout(JSON.stringify(lines))) as StageResult<AsmLayout>,
+  encode: (
+    body: AsmBody,
+    symbols: Record<string, AsmSymbol>,
+    placed: AsmPlaced,
+  ) =>
+    JSON.parse(
+      wasm.asmEncode(
+        JSON.stringify(body),
+        JSON.stringify(symbols),
+        JSON.stringify(placed),
+      ),
+    ) as StageResult<number[]>,
+};
+
+/** A program running on the reference CPU (needs loadCore() first). */
+export const Machine = wasm.Machine;
+export type Machine = wasm.Machine;
 
 /** Runs `rom` on the reference CPU from reset, for `steps` instructions. */
 export function isaTrace(rom: number[], steps: number): IsaTrace {

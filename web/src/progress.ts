@@ -3,6 +3,7 @@
 // blocked site data), and says so, rather than failing.
 import { t } from "./i18n";
 import type { LevelProgress, Progress } from "./game";
+import { isWorkshop, type Workshop } from "./workshop-store";
 
 export interface ProgressStore {
   /** False when progress only lives in memory for this visit. */
@@ -104,10 +105,27 @@ export function parseProgressFile(text: string): Progress | string {
   return file.progress as Progress;
 }
 
-export function progressFile(progress: Progress): string {
-  return JSON.stringify(
-    { app: "sand-to-tetris", version: 1, progress },
-    null,
-    2,
-  );
+/** The export file: circuit progress, plus the workshop's code if any. */
+export function progressFile(
+  progress: Progress,
+  workshop: Workshop = {},
+): string {
+  const file: Record<string, unknown> = {
+    app: "sand-to-tetris",
+    version: 1,
+    progress,
+  };
+  if (Object.keys(workshop).length) file.workshop = workshop;
+  return JSON.stringify(file, null, 2);
+}
+
+/** The workshop part of an export file, or null if it has none (or a
+ * damaged one). */
+export function workshopFromFile(text: string): Workshop | null {
+  try {
+    const w = (JSON.parse(text) as { workshop?: unknown }).workshop;
+    return isWorkshop(w) && Object.keys(w).length ? w : null;
+  } catch {
+    return null;
+  }
 }

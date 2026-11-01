@@ -3125,3 +3125,308 @@ button.primary:hover:not(:disabled),
 .play-head h1 {
   font-size: 1.5rem;
 }
+
+/* ---- Machine page and the assembler workshop ------------------------------ */
+
+body[data-page="machine"] #app,
+body[data-page="assembler"] #app {
+  max-width: 96rem;
+}
+
+.machine-head,
+.workshop-head {
+  margin-bottom: 1.25rem;
+}
+
+.machine-pickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  align-items: end;
+}
+
+.machine-pickers label,
+.speed,
+.ram-start {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.speed {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.machine-pickers select,
+.speed select,
+.ram-start input {
+  font: inherit;
+  font-family: var(--font);
+  font-size: 0.9375rem;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.6rem;
+}
+
+.machine-grid,
+.workshop-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.workshop-grid {
+  grid-template-columns: minmax(0, 1.4fr) minmax(20rem, 1fr);
+}
+
+@media (max-width: 1000px) {
+  .machine-grid,
+  .workshop-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.machine-code .toolbar,
+.workshop-code .toolbar {
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+/* A code editor: line numbers beside a plain textarea, scrolled together. */
+.asm-editor {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  height: min(62vh, 40rem);
+  border: 1px solid var(--border);
+  border-top: none;
+  background: var(--surface);
+  font: 0.875rem/1.6 var(--mono);
+}
+
+.asm-editor.tall {
+  height: min(72vh, 52rem);
+}
+
+.asm-gutter {
+  margin: 0;
+  padding: 0.75rem 0.6rem;
+  overflow: hidden;
+  text-align: right;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-right: 1px solid var(--border);
+  border-left: 0;
+  border-radius: 0;
+  font: inherit;
+  user-select: none;
+}
+
+.asm-editor textarea {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border: 0;
+  resize: none;
+  outline: none;
+  font: inherit;
+  color: var(--text);
+  background: transparent;
+  white-space: pre;
+  overflow: auto;
+  tab-size: 2;
+}
+
+.asm-editor:focus-within {
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+.asm-errors {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+.asm-errors:empty {
+  display: none;
+}
+
+.asm-errors li {
+  border-top: 1px solid var(--border);
+}
+
+.asm-errors button.linkish {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--error) 8%, transparent);
+  color: var(--error);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+}
+
+.machine-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.screen-box canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  image-rendering: pixelated;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  background: var(--bg);
+}
+
+.screen-box canvas:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.screen-box .help {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+}
+
+.machine-panel {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface);
+}
+
+.machine-status {
+  margin: 0 0 0.75rem;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  color: var(--copper);
+}
+
+.machine-regs,
+.machine-ram {
+  width: 100%;
+  border-collapse: collapse;
+  font: 0.8125rem/1.5 var(--mono);
+}
+
+.machine-regs th,
+.machine-ram th {
+  width: 4.5rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.machine-regs td,
+.machine-ram td,
+.machine-regs th,
+.machine-ram th {
+  padding: 0.15rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ram-start {
+  margin-bottom: 0.5rem;
+}
+
+.ram-start input {
+  width: 7rem;
+  font-family: var(--mono);
+}
+
+/* Workshop results */
+.workshop-results .stage {
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--error);
+  border-radius: 3px;
+  background: var(--surface);
+}
+
+.workshop-results .stage[data-done="true"] {
+  border-left-color: var(--ok);
+}
+
+.workshop-results .stage h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.workshop-results .fails {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+.workshop-results .fails li + li {
+  margin-top: 0.35rem;
+}
+
+.workshop-results summary {
+  cursor: pointer;
+}
+
+.workshop-results dl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.25rem 0.75rem;
+  margin: 0.5rem 0 0.25rem 1rem;
+}
+
+.workshop-results dt {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.workshop-results dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.workshop-pass,
+.workshop-problem {
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+
+.workshop-pass {
+  border-color: color-mix(in srgb, var(--ok) 55%, var(--border));
+  background: color-mix(in srgb, var(--ok) 8%, var(--surface));
+}
+
+.workshop-problem {
+  border-color: color-mix(in srgb, var(--error) 55%, var(--border));
+  background: color-mix(in srgb, var(--error) 6%, var(--surface));
+}
+
+.workshop-problem h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}

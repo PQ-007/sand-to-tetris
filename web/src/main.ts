@@ -5,9 +5,11 @@ import { getApp } from "./app";
 import { installGlossaryPopover } from "./components/glossary-popover";
 import { getLang, setLang, t, type Key, type Lang } from "./i18n";
 import { mountLevels } from "./levels";
+import { mountMachine } from "./machine";
 import { installGlossaryFilter, renderRoute, trackSections } from "./pages";
 import { mountPlay } from "./play";
 import { parseRoute } from "./router";
+import { mountWorkshop } from "./workshop";
 
 const app = document.getElementById("app");
 
@@ -22,9 +24,11 @@ function show(): void {
   const section =
     route.page === "levels" || route.page === "play"
       ? "build"
-      : route.page === "glossary"
-        ? "glossary"
-        : "learn";
+      : route.page === "machine" || route.page === "assembler"
+        ? "machine"
+        : route.page === "glossary"
+          ? "glossary"
+          : "learn";
   document.querySelectorAll<HTMLElement>("[data-nav]").forEach((a) => {
     if (a.dataset.nav === section) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
@@ -37,6 +41,13 @@ function show(): void {
     const root = document.getElementById("play-root");
     if (root)
       void mountPlay(root, route.level).then(done, (e) => showError(root, e));
+    window.scrollTo(0, 0);
+    return;
+  }
+  if (route.page === "machine" || route.page === "assembler") {
+    const root = document.getElementById(`${route.page}-root`);
+    const mount = route.page === "machine" ? mountMachine : mountWorkshop;
+    if (root) void mount(root).then(done, (e) => showError(root, e));
     window.scrollTo(0, 0);
     return;
   }
