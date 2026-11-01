@@ -1,6 +1,9 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { CHAPTERS } from "../src/chapters";
 import { KNOWN_TAGS } from "../src/components/known-tags";
+import { en } from "../src/i18n/en";
+import { mn } from "../src/i18n/mn";
 import { loadContent, loadLevelText, loadLevels } from "../content/load";
 
 const docs = new URL("../../docs", import.meta.url).pathname;
@@ -42,6 +45,24 @@ describe("docs/ content", () => {
       if (ch.html.includes('class="cite'))
         expect(ch.html).toContain('class="sources"');
     }
+  });
+
+  // The course nav, home page and level map take titles from the outline.
+  it("the course outline lists every chapter under its own title", () => {
+    expect(CHAPTERS.map((c) => c.number)).toEqual(
+      content.en.chapters.map((c) => c.number),
+    );
+    for (const [lang, strings] of [
+      ["en", en],
+      ["mn", mn],
+    ] as const) {
+      for (const ch of content[lang].chapters) {
+        const key = `outline.${ch.number}.title` as keyof typeof en;
+        expect(strings[key], `${lang} chapter ${ch.number}`).toBe(ch.title);
+      }
+    }
+    for (const ch of content.en.chapters)
+      expect(CHAPTERS[ch.number]?.title).toBe(ch.title);
   });
 });
 

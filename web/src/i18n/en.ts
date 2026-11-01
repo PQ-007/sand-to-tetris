@@ -48,16 +48,21 @@ export const en = {
   "outline.4.title": "The CPU",
   "outline.4.summary":
     "An instruction set we design together, a datapath and a control unit.",
-  "outline.5.title": "Assembler",
-  "outline.5.summary": "Turn readable assembly into the machine's binary.",
-  "outline.6.title": "VM and a language",
+  "outline.5.title": "The assembler",
+  "outline.5.summary":
+    "Write programs with names instead of numbers, and the program that turns them into binary.",
+  "outline.6.title": "The virtual machine",
   "outline.6.summary":
-    "A virtual machine, then a small high-level language compiled to it.",
-  "outline.7.title": "Mini OS",
-  "outline.7.summary": "Screen, keyboard, timer and random numbers.",
-  "outline.8.title": "Tetris",
+    "A stack machine of our own, and the translator that turns it into assembly.",
+  "outline.7.title": "The compiler",
+  "outline.7.summary":
+    "C Shard, a language we design together, and its compiler.",
+  "outline.8.title": "The operating system",
   "outline.8.summary":
-    "Write Tetris in your language and play it on your computer.",
+    "Screen, text, keyboard, timer and random numbers, in C Shard.",
+  "outline.9.title": "Bitfall",
+  "outline.9.summary":
+    "An original falling-block game, played on the computer you built.",
 
   // ---- home ----
   "home.eyebrow": "A course in {n} chapters",
@@ -190,6 +195,11 @@ export const en = {
   "play.busHelp":
     "Type a number for each bus input: decimal, 0x… hex or 0b… binary. Press Enter to apply.",
   "play.busLabel": "{name} ({w} bits) ",
+  "play.bitsOf": "Bits of {name}",
+  "play.bitTitle": "{name} bit {i} is {v}. Click to flip it.",
+  "play.bitsHelp":
+    "Or click a bit to flip it. The most significant bit is on the left, bit 0 on the right.",
+  "play.outputs": "Outputs",
   "play.notANumber":
     "“{text}” isn't a number from 0 to {max}. You can type decimal, 0x… hex or 0b… binary.",
   "play.step": "Step",
@@ -284,6 +294,12 @@ export const en = {
   "play.repeatHelp":
     "Each copy gets its own slice of every bus pin, except shared inputs, which all copies read.",
   "play.share": " share {pin}",
+  "play.fixTry": "Try: ",
+  "play.fixRepeat": "Repeat {part} ×{n}",
+  "play.fixRepeatWhy":
+    " The bus carries {w} bits, and one copy of the part takes {b}.",
+  "play.fixShare": "Share {pin} in {part}",
+  "play.fixShareWhy": " Every copy should read the same {b}-bit `{pin}`.",
   "play.simError": "Simulation error: {error}",
   "play.showingStep1": "Showing step 1, from power-on.",
   "play.showingStep": "Showing step {n}, after replaying steps 1–{m}.",

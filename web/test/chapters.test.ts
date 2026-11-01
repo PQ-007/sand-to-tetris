@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { CHAPTERS } from "../src/chapters";
 
 describe("course outline", () => {
-  it("has one chapter per layer, numbered 0 to 8 in order", () => {
-    expect(CHAPTERS.map((c) => c.number)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+  it("has one chapter per layer, numbered 0 to 9 in order", () => {
+    expect(CHAPTERS.map((c) => c.number)).toEqual([
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+    ]);
   });
 
   it("gives every chapter a title and summary", () => {

@@ -1394,11 +1394,19 @@ svg.circuit:focus-visible {
   pointer-events: none;
 }
 
-.editor-status {
+.canvas-dock {
   position: absolute;
   left: 0.75rem;
   bottom: 0.75rem;
   max-width: calc(100% - 16rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.375rem;
+  pointer-events: none;
+}
+
+.editor-status {
   margin: 0;
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
@@ -1412,6 +1420,38 @@ svg.circuit:focus-visible {
 
 .editor-status:empty {
   display: none;
+}
+
+/* Suggested fixes (Repeat ×16, Share sel): clickable, unlike the dock. */
+.canvas-fixes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.canvas-fixes:empty {
+  display: none;
+}
+
+.canvas-fixes li {
+  max-width: 100%;
+  padding: 0.375rem 0.5rem 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  pointer-events: auto;
+}
+
+.canvas-fixes button {
+  margin-right: 0.25rem;
+  font-weight: 600;
 }
 
 .zoom {
@@ -1657,6 +1697,11 @@ svg.circuit.wiring .pin-hit {
   fill: var(--bg);
   stroke: var(--text);
   stroke-width: 2;
+}
+
+.box.copy {
+  stroke: var(--muted);
+  stroke-width: 1.5;
 }
 
 .part-label {
@@ -2040,6 +2085,58 @@ svg.circuit.read-only .pin-hit {
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 0.875rem;
   color: var(--muted);
+}
+
+/* A bus up to 16 bits wide, bit by bit (most significant first): buttons
+   for inputs, plain text for outputs. A gap after every fourth bit. */
+.bus-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  width: 100%;
+}
+
+.output-bits {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+}
+
+.bits .bit {
+  min-width: 1rem;
+  min-height: 1.5rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font: inherit;
+  color: var(--muted);
+}
+
+.bits .bit:nth-child(4n):not(:last-child) {
+  margin-right: 0.3rem;
+}
+
+.bits .bit.v1 {
+  color: var(--text);
+  font-weight: 700;
+  border-color: var(--wire-1);
+}
+
+.bits .bit.vZ,
+.bits .bit.vX {
+  color: var(--wire-x);
+  border-style: dashed;
 }
 
 .runs-as {

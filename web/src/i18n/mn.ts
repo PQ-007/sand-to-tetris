@@ -44,15 +44,18 @@ export const mn: Record<keyof typeof en, Message> = {
     "Хамтдаа зохиох instruction set, datapath ба control unit.",
   "outline.5.title": "Ассемблер",
   "outline.5.summary":
-    "Уншихад хялбар ассемблер кодыг машины хоёртын код болгох.",
-  "outline.6.title": "Виртуал машин ба хэл",
+    "Програмыг тооны оронд нэрээр бичиж, тэднийг хоёртын код болгодог програмыг бүтээнэ.",
+  "outline.6.title": "Виртуал машин",
   "outline.6.summary":
-    "Виртуал машин, дараа нь түүн рүү хөрвүүлэх жижиг өндөр түвшний хэл.",
-  "outline.7.title": "Жижиг үйлдлийн систем",
-  "outline.7.summary": "Дэлгэц, гар, цаг хэмжигч ба санамсаргүй тоо.",
-  "outline.8.title": "Тетрис",
+    "Өөрийн stack machine ба түүнийг ассемблер болгодог translator.",
+  "outline.7.title": "Хөрвүүлэгч",
+  "outline.7.summary": "Хамтдаа зохиох C Shard хэл ба түүний хөрвүүлэгч.",
+  "outline.8.title": "Үйлдлийн систем",
   "outline.8.summary":
-    "Өөрийн хэл дээр Тетрис бичээд, өөрийн компьютер дээрээ тоглоно.",
+    "C Shard-аар бичсэн дэлгэц, текст, гар, timer ба санамсаргүй тоо.",
+  "outline.9.title": "Bitfall",
+  "outline.9.summary":
+    "Өөрийн бүтээсэн компьютер дээрээ тоглох өвөрмөц унадаг блоктой тоглоом.",
 
   // ---- нүүр ----
   "home.eyebrow": "{n} бүлэгтэй хичээл",
@@ -185,6 +188,11 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.busHelp":
     "Олон битийн оролт бүрд тоо бичнэ: аравтын, 0x… арван зургаатын эсвэл 0b… хоёртын. Enter дарж хэрэглэнэ.",
   "play.busLabel": "{name} ({w} бит) ",
+  "play.bitsOf": "Битүүд: {name}",
+  "play.bitTitle": "{name}, {i}-р бит: {v}. Дарж сольно.",
+  "play.bitsHelp":
+    "Эсвэл битийг дарж сольж болно. Хамгийн их жинтэй бит зүүн талд, 0-р бит баруун талд.",
+  "play.outputs": "Гаралтууд",
   "play.notANumber":
     "“{text}” нь 0-ээс {max} хүртэлх тоо биш байна. Аравтын, 0x… арван зургаатын эсвэл 0b… хоёртын тоо бичиж болно.",
   "play.step": "Алхам",
@@ -281,6 +289,12 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.repeatHelp":
     "Хуулбар бүр олон битийн хөл бүрийн өөрийн хэсгийг авна. Харин хуваалцсан оролтыг бүх хуулбар ижил уншина.",
   "play.share": " хуваалцах: {pin}",
+  "play.fixTry": "Санал: ",
+  "play.fixRepeat": "Давтах ×{n}: {part}",
+  "play.fixRepeatWhy":
+    " Bus {w} бит дамжуулна, харин эд ангийн нэг хуулбар {b} бит авна.",
+  "play.fixShare": "Хуваалцах: {pin} ({part})",
+  "play.fixShareWhy": " Бүх хуулбар ижил {b} битийн оролтыг уншина: `{pin}`.",
   "play.simError": "Загварчлалын алдаа: {error}",
   "play.showingStep1": "1-р алхмыг асаасан үеэс эхлэн харуулж байна.",
   "play.showingStep":

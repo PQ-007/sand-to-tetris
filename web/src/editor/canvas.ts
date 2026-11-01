@@ -40,6 +40,7 @@ import {
   type Point,
   type Shape,
 } from "./geometry";
+import { formatValue, showValue } from "./values";
 import {
   addWire,
   endpointKey,
@@ -394,7 +395,9 @@ export class CircuitCanvas {
       const b = this.point(w.to);
       if (!a || !b) return;
       const v = this.value(w.from) ?? "X";
-      const bus = this.width(w.from) > 1;
+      const bits = this.width(w.from);
+      const bus = bits > 1;
+      const shown = showValue(v, bits);
       const pts = route(a, b);
       const selected =
         this.selection?.kind === "wire" && this.selection.index === i;
@@ -409,7 +412,7 @@ export class CircuitCanvas {
       svg("path", { d: pathData(pts), class: "wire-hit" }, wg);
       svg("path", { d: pathData(pts), class: "wire-line" }, wg);
       const [lx, ly] = labelPoint(pts);
-      const tagWidth = Math.max(16, v.length * 7 + 8);
+      const tagWidth = Math.max(16, shown.length * 7 + 8);
       svg(
         "rect",
         {
@@ -426,7 +429,7 @@ export class CircuitCanvas {
         "text",
         { x: lx, y: ly + 3, "text-anchor": "middle", class: "wire-value" },
         wg,
-        v,
+        shown,
       );
     });
   }
@@ -446,6 +449,8 @@ export class CircuitCanvas {
     const base = NAMES[kind] ?? this.props.componentPorts[kind]?.name ?? kind;
     const name =
       part.repeat && part.repeat > 1 ? `${base} ×${part.repeat}` : base;
+    // How far a repeated part's stack of copies reaches up and right.
+    const stack = (part.repeat ?? 1) > 1 ? 8 : 0;
     const g = svg(
       "g",
       {
@@ -462,9 +467,9 @@ export class CircuitCanvas {
       "rect",
       {
         x: -shape.width / 2 - 6,
-        y: -shape.height / 2 - 6,
-        width: shape.width + 12,
-        height: shape.height + 12,
+        y: -shape.height / 2 - 6 - stack,
+        width: shape.width + 12 + stack,
+        height: shape.height + 12 + stack,
         rx: 8,
         class: "part-hit",
       },
@@ -521,7 +526,7 @@ export class CircuitCanvas {
           "text",
           {
             x: 0,
-            y: -shape.height / 2 - 6,
+            y: -shape.height / 2 - 12,
             "text-anchor": "middle",
             class: "part-label",
           },
@@ -548,23 +553,26 @@ export class CircuitCanvas {
         break;
       }
       default: {
-        svg(
-          "rect",
-          {
-            x: -shape.width / 2,
-            y: -shape.height / 2,
-            width: shape.width,
-            height: shape.height,
-            rx: 6,
-            class: "box",
-          },
-          g,
-        );
+        // A repeated component is drawn as a stack of copies.
+        const copies = stack ? [stack, stack / 2, 0] : [0];
+        for (const d of copies)
+          svg(
+            "rect",
+            {
+              x: -shape.width / 2 + d,
+              y: -shape.height / 2 - d,
+              width: shape.width,
+              height: shape.height,
+              rx: 6,
+              class: d ? "box copy" : "box",
+            },
+            g,
+          );
         svg(
           "text",
           {
             x: 0,
-            y: -shape.height / 2 - 6,
+            y: -shape.height / 2 - 12 - stack,
             "text-anchor": "middle",
             class: "part-label",
           },
@@ -625,7 +633,7 @@ export class CircuitCanvas {
         t("canvas.pinTitle", {
           pin: `${id}.${pin.pin}`,
           bits: bits > 1 ? t("canvas.pinBits", { n: bits }) : "",
-          value: v ?? "–",
+          value: v === undefined ? "–" : showValue(v, bits),
         }),
       );
       svg(
@@ -653,7 +661,11 @@ export class CircuitCanvas {
         ? String(inputValues[name] ?? 0)
         : (view?.outputs.find(([n]) => n === name)?.[1] ?? "–");
       const flagged = this.props.highlightPorts.has(name);
-      const bus = (this.props.portWidths?.[name] ?? 1) > 1;
+      const bits = this.props.portWidths?.[name] ?? 1;
+      const bus = bits > 1;
+      const shown = isIn
+        ? formatValue(inputValues[name] ?? 0, bits)
+        : showValue(value, bits);
       const selected =
         this.selection?.kind === "port" && this.selection.name === name;
       const g = svg(
@@ -671,7 +683,7 @@ export class CircuitCanvas {
                   isIn ? "canvas.portLabelIn" : "canvas.portLabelOut",
                   {
                     name,
-                    value,
+                    value: shown,
                     wired: this.wiredText({ port: name }),
                     bus: bus ? 1 : 0,
                   },
@@ -680,7 +692,7 @@ export class CircuitCanvas {
         },
         this.el,
       );
-      const label = `${name} = ${value}`;
+      const label = `${name} = ${shown}`;
       const boxW = Math.max(50, label.length * 7.5 + 12);
       const x = isIn ? -boxW - 8 : 8;
       svg(
