@@ -1,0 +1,75 @@
+id = "decode"
+name = "Control unit"
+layer = 4
+goal = """
+Turn an instruction into the signals that steer the CPU (see docs/ISA.md, or Chapter 4, for the formats). op = bits 15–13; rd = bits 12–10, ra = 9–7, rb = 6–4.
+- wa: rd, but 7 for CALL and CALLR (bits 15–12 = 1110, or 1111 with bit 11 = 1). we = 1 for ALU (op 0), IMM (2), SHIFT (3), LOAD (4), CALL and CALLR.
+- ra: rd for IMM, bits 10–8 for JR/CALLR (op 7, bit 12 = 1), else bits 9–7. rb: bits 12–10 for STORE (5), bits 2–0 for SHIFT, else bits 6–4.
+- f, invb, cin: bits 3–2, 1, 0 for ALU and CMP (op 0, 1); SUB (f 0, invb 1, cin 1) for SUBI (op 2, bits 9–8 = 11); otherwise ADD (all 0).
+- useimm = 1 for IMM, LOAD, STORE. imm: bits 7–0 for IMM, bits 6–0 for everything else, zero-extended.
+- rsel picks what's written: 0 ALU, 1 shifter (op 3), 2 SET (op 2, k 0), 3 SETH (k 1), 4 memory (LOAD), 5 PC + 1 (CALL, CALLR); 0 otherwise.
+- setflags = 1 for ALU, CMP, ADDI, SUBI. writeM = 1 for STORE.
+- jump = 1 for op 7, and for op 6 when its condition (bits 12–10) holds: 0 always, 1 z, 2 not z, 3 n, 4 not n, 5 c, 6 not c, 7 c and not z. jr = 1 for op 7 with bit 12 = 1.
+- off: bits 9–0 sign-extended for op 6, else bits 11–0 sign-extended.
+Tip: a DMUX8WAY with in = 1 and sel = op gives one wire per instruction group.
+"""
+inputs = ["instr", "z", "n", "c"]
+outputs = ["wa", "we", "ra", "rb", "f", "invb", "cin", "useimm", "imm", "rsel", "setflags", "writeM", "jump", "jr", "off"]
+requires = ["dmux8way", "mux", "and", "or", "not", "one", "zero"]
+widths = { instr = 16, wa = 3, ra = 3, rb = 3, f = 2, imm = 16, rsel = 3, off = 16 }
+model = "decode"
+random_tests = 1000
+truth_table = """
+instr z n c | wa we ra rb f invb cin useimm imm rsel setflags writeM jump jr off
+# SUB r1, r2, r3
+0x0533 0 0 0 | 1 1 2 3 0 1 1 0 51 0 1 0 0 0 1331
+# XORN r7, r6, r5
+0x1f5e 0 0 0 | 7 1 6 5 3 1 0 0 94 0 1 0 0 0 65374
+# CMP r4, r5
+0x2253 0 0 0 | 0 0 4 5 0 1 1 0 83 0 1 0 0 0 595
+# SET r3, 200
+0x4cc8 0 0 0 | 3 1 3 4 0 0 0 1 200 2 0 0 0 0 64712
+# SETH r6, 64
+0x5940 0 0 0 | 6 1 6 4 0 0 0 1 64 3 0 0 0 0 63808
+# ADDI r2, 1
+0x4a01 0 0 0 | 2 1 2 0 0 0 0 1 1 0 1 0 0 0 64001
+# SUBI r2, 129
+0x4b81 0 0 0 | 2 1 2 0 0 1 1 1 129 0 1 0 0 0 64385
+# SHL r1, r2, 3
+0x6503 0 0 0 | 1 1 2 3 0 0 0 0 3 1 0 0 0 0 1283
+# SAR r1, r2, r5
+0x6575 0 0 0 | 1 1 2 5 0 0 0 0 117 1 0 0 0 0 1397
+# LOAD r4, [r6 + 127]
+0x937f 0 0 0 | 4 1 6 7 0 0 0 1 127 4 0 0 0 0 895
+# STORE r3, [r6 + 5]
+0xaf05 0 0 0 | 3 0 6 3 0 0 0 1 5 0 0 1 0 0 65285
+# JMP -2
+0xc3fe 0 0 0 | 0 0 7 7 0 0 0 0 126 0 0 0 1 0 65534
+# JZ 100
+0xc464 0 0 0 | 1 0 0 6 0 0 0 0 100 0 0 0 0 0 100
+# JZ 100
+0xc464 1 0 0 | 1 0 0 6 0 0 0 0 100 0 0 0 1 0 100
+# JNZ 100
+0xc864 1 0 0 | 2 0 0 6 0 0 0 0 100 0 0 0 0 0 100
+# JN -300
+0xced4 0 1 0 | 3 0 5 5 0 0 0 0 84 0 0 0 1 0 65236
+# JNN -300
+0xd2d4 0 1 0 | 4 0 5 5 0 0 0 0 84 0 0 0 0 0 65236
+# JC 7
+0xd407 0 0 1 | 5 0 0 0 0 0 0 0 7 0 0 0 1 0 7
+# JNC 7
+0xd807 0 0 1 | 6 0 0 0 0 0 0 0 7 0 0 0 0 0 7
+# JHI 7
+0xdc07 1 0 1 | 7 0 0 0 0 0 0 0 7 0 0 0 0 0 7
+# JHI 7
+0xdc07 0 0 1 | 7 0 0 0 0 0 0 0 7 0 0 0 1 0 7
+# CALL -1000
+0xec18 0 0 0 | 7 1 0 1 0 0 0 0 24 5 0 0 1 0 64536
+# RET
+0xf700 0 0 0 | 5 0 7 0 0 0 0 0 0 0 0 0 1 1 1792
+# CALLR r2
+0xfa00 0 0 0 | 7 1 2 0 0 0 0 0 0 5 0 0 1 1 64000
+"""
+
+[hints]
+wrong = "Find the instruction group in the failing row (op = bits 15–13) and check the signals for that group one at a time. A 3-bit choice between register fields is a MUX repeated ×3 with sel shared."

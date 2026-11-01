@@ -1,0 +1,30 @@
+id = "shifter"
+name = "Barrel shifter"
+layer = 2
+goal = """
+Slide the bits of in by n places (0 to 15) in one go. right = 0 shifts left (toward bit 15), filling with zeros. right = 1 shifts right, filling with zeros, or with copies of bit 15 when arith = 1 (so a negative number stays negative). arith doesn't matter for left shifts.
+Build it in stages: a MUX16 that shifts by 1 or not (n bit 0), then one that shifts by 2 or not (bit 1), then by 4, then by 8. Shifting by 5 is stages 1 and 3 together. The shifts themselves are only wiring: split the bus and join the bits back one place over. Build a left chain and a right chain, and let a last MUX16 pick with right.
+"""
+inputs = ["in", "n", "right", "arith"]
+outputs = ["out"]
+requires = ["mux16", "and", "zero"]
+widths = { in = 16, n = 4, out = 16 }
+model = "shifter"
+random_tests = 500
+truth_table = """
+in n right arith | out
+0x8421 0 0 0 | 0x8421
+0x8421 4 0 0 | 0x4210
+0x8421 4 0 1 | 0x4210
+0x8421 4 1 0 | 0x0842
+0x8421 4 1 1 | 0xf842
+0x0001 15 0 0 | 0x8000
+0x8000 15 1 0 | 0x0001
+0x8000 15 1 1 | 0xffff
+0x00ff 8 0 0 | 0xff00
+0x7fff 5 1 1 | 0x03ff
+0xffff 1 0 0 | 0xfffe
+"""
+
+[hints]
+wrong = "Check one stage at a time: with n = 1, 2, 4 or 8 only one stage shifts. In a stage that shifts left by k, bit i of the shifted bus comes from bit i − k (or 0 for the lowest k bits); shifting right, from bit i + k (or the fill for the top k bits)."

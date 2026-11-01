@@ -1,0 +1,534 @@
+{
+  "format": 1,
+  "component": "regfile",
+  "parts": [
+    {
+      "id": "sel",
+      "kind": "dmux8way",
+      "pos": [
+        140,
+        70
+      ]
+    },
+    {
+      "id": "r0",
+      "kind": "register",
+      "pos": [
+        140,
+        160
+      ]
+    },
+    {
+      "id": "r1",
+      "kind": "register",
+      "pos": [
+        140,
+        250
+      ]
+    },
+    {
+      "id": "r2",
+      "kind": "register",
+      "pos": [
+        140,
+        340
+      ]
+    },
+    {
+      "id": "r3",
+      "kind": "register",
+      "pos": [
+        140,
+        430
+      ]
+    },
+    {
+      "id": "r4",
+      "kind": "register",
+      "pos": [
+        140,
+        520
+      ]
+    },
+    {
+      "id": "r5",
+      "kind": "register",
+      "pos": [
+        140,
+        610
+      ]
+    },
+    {
+      "id": "r6",
+      "kind": "register",
+      "pos": [
+        140,
+        700
+      ]
+    },
+    {
+      "id": "r7",
+      "kind": "register",
+      "pos": [
+        330,
+        70
+      ]
+    },
+    {
+      "id": "A",
+      "kind": "mux8way16",
+      "pos": [
+        330,
+        160
+      ]
+    },
+    {
+      "id": "B",
+      "kind": "mux8way16",
+      "pos": [
+        330,
+        250
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "we"
+      },
+      "to": {
+        "part": "sel",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "port": "wa"
+      },
+      "to": {
+        "part": "sel",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "r0",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "sel",
+        "pin": "a"
+      },
+      "to": {
+        "part": "r0",
+        "pin": "load"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "r0",
+        "pin": "clk"
+      }
+    },
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "r1",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "sel",
+        "pin": "b"
+      },
+      "to": {
+        "part": "r1",
+        "pin": "load"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "r1",
+        "pin": "clk"
+      }
+    },
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "r2",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "sel",
+        "pin": "c"
+      },
+      "to": {
+        "part": "r2",
+        "pin": "load"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "r2",
+        "pin": "clk"
+      }
+    },
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "r3",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "sel",
+        "pin": "d"
+      },
+      "to": {
+        "part": "r3",
+        "pin": "load"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "r3",
+        "pin": "clk"
+      }
+    },
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "r4",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "sel",
+        "pin": "e"
+      },
+      "to": {
+        "part": "r4",
+        "pin": "load"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "r4",
+        "pin": "clk"
+      }
+    },
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "r5",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "sel",
+        "pin": "f"
+      },
+      "to": {
+        "part": "r5",
+        "pin": "load"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "r5",
+        "pin": "clk"
+      }
+    },
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "r6",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "sel",
+        "pin": "g"
+      },
+      "to": {
+        "part": "r6",
+        "pin": "load"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "r6",
+        "pin": "clk"
+      }
+    },
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "r7",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "sel",
+        "pin": "h"
+      },
+      "to": {
+        "part": "r7",
+        "pin": "load"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "r7",
+        "pin": "clk"
+      }
+    },
+    {
+      "from": {
+        "part": "r0",
+        "pin": "q"
+      },
+      "to": {
+        "part": "A",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "r1",
+        "pin": "q"
+      },
+      "to": {
+        "part": "A",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "r2",
+        "pin": "q"
+      },
+      "to": {
+        "part": "A",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "r3",
+        "pin": "q"
+      },
+      "to": {
+        "part": "A",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "r4",
+        "pin": "q"
+      },
+      "to": {
+        "part": "A",
+        "pin": "e"
+      }
+    },
+    {
+      "from": {
+        "part": "r5",
+        "pin": "q"
+      },
+      "to": {
+        "part": "A",
+        "pin": "f"
+      }
+    },
+    {
+      "from": {
+        "part": "r6",
+        "pin": "q"
+      },
+      "to": {
+        "part": "A",
+        "pin": "g"
+      }
+    },
+    {
+      "from": {
+        "part": "r7",
+        "pin": "q"
+      },
+      "to": {
+        "part": "A",
+        "pin": "h"
+      }
+    },
+    {
+      "from": {
+        "port": "ra"
+      },
+      "to": {
+        "part": "A",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "A",
+        "pin": "out"
+      },
+      "to": {
+        "port": "qa"
+      }
+    },
+    {
+      "from": {
+        "part": "r0",
+        "pin": "q"
+      },
+      "to": {
+        "part": "B",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "r1",
+        "pin": "q"
+      },
+      "to": {
+        "part": "B",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "r2",
+        "pin": "q"
+      },
+      "to": {
+        "part": "B",
+        "pin": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "r3",
+        "pin": "q"
+      },
+      "to": {
+        "part": "B",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "r4",
+        "pin": "q"
+      },
+      "to": {
+        "part": "B",
+        "pin": "e"
+      }
+    },
+    {
+      "from": {
+        "part": "r5",
+        "pin": "q"
+      },
+      "to": {
+        "part": "B",
+        "pin": "f"
+      }
+    },
+    {
+      "from": {
+        "part": "r6",
+        "pin": "q"
+      },
+      "to": {
+        "part": "B",
+        "pin": "g"
+      }
+    },
+    {
+      "from": {
+        "part": "r7",
+        "pin": "q"
+      },
+      "to": {
+        "part": "B",
+        "pin": "h"
+      }
+    },
+    {
+      "from": {
+        "port": "rb"
+      },
+      "to": {
+        "part": "B",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "B",
+        "pin": "out"
+      },
+      "to": {
+        "port": "qb"
+      }
+    }
+  ]
+}
