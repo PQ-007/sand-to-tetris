@@ -190,14 +190,25 @@ Address bits 15–13 choose the device:
 | 000, 001 | 0x0000–0x3FFF | RAM16K (16,384 words) |
 | 010 | 0x4000–0x42FF | screen, 768 words (0x4300–0x5FFF unused) |
 | 011 | 0x6000 | keyboard: code of the key held, 0 if none (read-only) |
-| 011 | 0x6001–0x7FFF | reserved for devices: timer, random numbers (M11) |
+| 011 | 0x6001 | timer: frames since the program started, 60 a second, wrapping at 16 bits (read-only; agreed 2026-11-01) |
+| 011 | 0x6002–0x7FFF | unused (reserved for more devices) |
 | 1xx | 0x8000–0xFFFF | unused |
 
 Unused addresses read as 0 and ignore writes. **Screen:** 128 × 96 pixels,
 1 = pixel on. Row y (0–95) is the 8 words at 0x4000 + 8y. Pixel x (0–127) is
 in word x ÷ 16 of the row, and the **most significant bit is the leftmost
 pixel** (bit 15 − (x mod 16)), so a word written in binary looks like its
-16 pixels, left to right, and `SHR` moves a pattern right on screen. Key codes are defined with the OS in M11.
+16 pixels, left to right, and `SHR` moves a pattern right on screen.
+
+**Keyboard codes** (agreed 2026-11-01, keeping M8's provisional set):
+printable keys give their ASCII code (32–126, letters as typed), Enter 13,
+Backspace 8, Escape 27, and the arrows left 128, up 129, right 130, down
+131. Tab is never captured, so keyboard users can't get stuck in the screen.
+
+**Timer** (agreed 2026-11-01): whoever runs the computer feeds the frame
+count in, like the keyboard, so a game runs at the same speed however fast
+the simulation is. Random numbers are made in software by the OS (M11), not
+by a device.
 
 ### Example: sum 10 + 9 + … + 1
 

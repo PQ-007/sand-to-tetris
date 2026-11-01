@@ -264,6 +264,14 @@
         710,
         700
       ]
+    },
+    {
+      "id": "mt",
+      "kind": "mux16",
+      "pos": [
+        900,
+        520
+      ]
     }
   ],
   "wires": [
@@ -488,8 +496,8 @@
     },
     {
       "from": {
-        "part": "sa",
-        "pin": "0"
+        "part": "zero",
+        "pin": "out"
       },
       "to": {
         "part": "lo8",
@@ -1262,7 +1270,8 @@
     },
     {
       "from": {
-        "port": "key"
+        "part": "mt",
+        "pin": "out"
       },
       "to": {
         "part": "mk",
@@ -1346,6 +1355,34 @@
       },
       "to": {
         "port": "q"
+      }
+    },
+    {
+      "from": {
+        "port": "key"
+      },
+      "to": {
+        "part": "mt",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "timer"
+      },
+      "to": {
+        "part": "mt",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "sa",
+        "pin": "0"
+      },
+      "to": {
+        "part": "mt",
+        "pin": "sel"
       }
     }
   ]

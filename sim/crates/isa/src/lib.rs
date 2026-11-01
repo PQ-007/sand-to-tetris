@@ -11,7 +11,7 @@ use std::fmt;
 mod machine;
 pub use machine::{
     alu, shift, trace, Bus, Cpu, Flags, Memory, KEYBOARD, RAM_WORDS, SCREEN, SCREEN_HEIGHT,
-    SCREEN_WIDTH, SCREEN_WORDS,
+    SCREEN_WIDTH, SCREEN_WORDS, TIMER,
 };
 
 /// The ALU's control inputs, straight from bits 3–0 of an ALU or CMP word.

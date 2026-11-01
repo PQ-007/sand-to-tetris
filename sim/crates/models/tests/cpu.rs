@@ -156,7 +156,7 @@ fn regfile_writes_one_register_and_reads_two() {
 #[test]
 fn memory_map_matches_the_spec() {
     let mut m = Driven::new("memory");
-    // d, addr, load, key, clk
+    // d, addr, load, key, timer, clk
     for (addr, v) in [
         (0x0000, 1),
         (0x3fff, 2),
@@ -164,17 +164,20 @@ fn memory_map_matches_the_spec() {
         (0x42ff, 4),
         (0x4300, 5),
         (KEYBOARD as u64, 6),
+        (0x6001, 8),
         (0x9000, 7),
     ] {
-        m.tick(&[v, addr, 1, 0, 1]);
+        m.tick(&[v, addr, 1, 0, 0, 1]);
     }
-    let q = |m: &Driven, addr: u64| m.read(&[0, addr, 0, 65, 0])[0];
+    let q = |m: &Driven, addr: u64| m.read(&[0, addr, 0, 65, 1234, 0])[0];
     assert_eq!(q(&m, 0x0000), Some(1));
     assert_eq!(q(&m, 0x3fff), Some(2));
     assert_eq!(q(&m, 0x4000), Some(3));
     assert_eq!(q(&m, 0x42ff), Some(4));
     assert_eq!(q(&m, 0x4300), Some(0), "past the screen");
     assert_eq!(q(&m, 0x6000), Some(65), "the keyboard");
+    assert_eq!(q(&m, 0x6001), Some(1234), "the timer");
+    assert_eq!(q(&m, 0x6002), Some(0));
     assert_eq!(q(&m, 0x9000), Some(0));
     assert_eq!(q(&m, 0x0001), None, "never written");
 }
@@ -324,10 +327,10 @@ fn computer_runs_a_program_with_its_own_memory() {
     let rom: Vec<u64> = program.iter().map(|&i| word(i)).collect();
     let mut c = Driven::new("computer");
     let at = |c: &Driven| c.mem[8].expect("pc") as usize;
-    c.tick(&[rom[0], 0, 1, 1]); // reset
+    c.tick(&[rom[0], 0, 0, 1, 1]); // reset
     for _ in 0..60 {
         let instr = rom[at(&c)];
-        c.tick(&[instr, 0, 0, 1]);
+        c.tick(&[instr, 0, 0, 0, 1]);
     }
     assert_eq!(at(&c), 11, "halted");
     assert_eq!(c.mem[0], Some(55));
@@ -335,5 +338,5 @@ fn computer_runs_a_program_with_its_own_memory() {
     assert_eq!(c.mem[12 + 100], Some(55), "RAM[100]");
     assert_eq!(c.mem[12 + 16384 + 1], Some(55), "screen word 1");
     // While halted the bus shows the halting jump: no write.
-    assert_eq!(c.read(&[rom[11], 0, 0, 0])[3], Some(0));
+    assert_eq!(c.read(&[rom[11], 0, 0, 0, 0])[3], Some(0));
 }

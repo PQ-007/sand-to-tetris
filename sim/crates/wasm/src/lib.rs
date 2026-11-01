@@ -391,6 +391,13 @@ impl Machine {
         self.halted = false;
     }
 
+    /// The frame counter at 0x6001 (docs/ISA.md): frames since the program
+    /// started, 60 a second.
+    #[wasm_bindgen(js_name = setTimer)]
+    pub fn set_timer(&mut self, frames: u16) {
+        self.mem.timer = frames;
+    }
+
     /// `len` RAM words from `start`.
     pub fn ram(&self, start: u16, len: u16) -> Vec<u16> {
         let s = (start as usize).min(self.mem.ram.len());
@@ -457,6 +464,16 @@ mod tests {
         let bad = lang_check(r#"{"items":[]}"#).unwrap();
         assert!(bad.contains("no-main"), "{bad}");
         assert!(lang_tokenize("x = #").unwrap().contains("bad-char"));
+    }
+
+    #[test]
+    fn the_machine_reads_the_timer() {
+        // LOAD r1, [r0 + 1] with r0 = 0x6000: SET r0, 0; SETH r0, 0x60; LOAD; HALT.
+        let p = s2t_asm::assemble("SET16 r0, 0x6000\nLOAD r1, [r0 + 1]\nHALT");
+        let mut m = Machine::new(p.code, vec![]);
+        m.set_timer(321);
+        m.run(100);
+        assert_eq!(m.regs()[1], 321);
     }
 
     #[test]

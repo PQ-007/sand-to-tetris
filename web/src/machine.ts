@@ -108,6 +108,9 @@ class MachinePage {
   private machine: Machine | null = null;
   private running = false;
   private frame = 0;
+  /** Milliseconds this program has run: the timer at 0x6001 counts them in
+   * frames (60 a second), and stops while paused. */
+  private runMs = 0;
   private speed: (typeof SPEEDS)[number] = SPEEDS[2];
   private assemble: AssembleFn = async (s) => asmAssemble(s);
   private translate: TranslateFn = builtinTranslate;
@@ -511,6 +514,7 @@ class MachinePage {
       Uint16Array.from(this.program.code),
       Uint16Array.from(this.program.data),
     );
+    this.runMs = 0;
   }
 
   private async toggleRun(): Promise<void> {
@@ -523,8 +527,13 @@ class MachinePage {
     this.running = true;
     this.runBtn.textContent = t("machine.pause");
     this.canvas.focus({ preventScroll: true });
-    const tick = () => {
+    let last = performance.now();
+    const tick = (now: number) => {
       if (!this.running || !this.machine) return;
+      // A long gap (a background tab) counts as one frame, not a jump.
+      this.runMs += Math.min(Math.max(now - last, 0), 100);
+      last = now;
+      this.machine.setTimer(Math.floor((this.runMs * 60) / 1000) & 0xffff);
       this.machine.run(this.speed.perFrame);
       this.draw();
       this.renderState();

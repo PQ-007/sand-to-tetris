@@ -110,12 +110,10 @@ expected, e.g. a `]`), `unknown-mnemonic`, `unknown-directive`,
 `unknown-symbol`, `duplicate-symbol`, `data-in-code`, `code-in-data`,
 `jump-to-data`, `jump-too-far`.
 
-## Keyboard codes (provisional)
+## Keyboard and timer
 
-The Machine page's keyboard puts these at 0x6000 while a key is held (0 when
-none); revisit with the OS in M11:
-
-- printable characters: their ASCII code (32–126), letters as typed;
-- Enter 13, Backspace 8, Escape 27 (Tab is not captured: it keeps moving
-  keyboard focus, so nobody gets trapped in the screen);
-- arrows: left 128, up 129, right 130, down 131.
+The Machine page puts the code of the key held at 0x6000 (0 when none), and
+the frames since the program started (60 a second) at 0x6001. The codes,
+agreed with the user in M11, are in `docs/ISA.md` ("Keyboard codes"):
+ASCII for printable keys, Enter 13, Backspace 8, Escape 27, arrows
+128–131 (left, up, right, down); Tab is never captured.

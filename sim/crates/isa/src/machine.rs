@@ -8,6 +8,8 @@ pub const SCREEN_HEIGHT: usize = 96;
 /// 128 × 96 pixels, 16 per word.
 pub const SCREEN_WORDS: usize = SCREEN_WIDTH * SCREEN_HEIGHT / 16;
 pub const KEYBOARD: u16 = 0x6000;
+/// Frames since the program started, 60 a second (read-only; wraps).
+pub const TIMER: u16 = 0x6001;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Flags {
@@ -56,7 +58,8 @@ pub trait Bus {
     fn write(&mut self, addr: u16, value: u16);
 }
 
-/// RAM16K, the screen and the keyboard at the addresses in docs/ISA.md.
+/// RAM16K, the screen, the keyboard and the timer at the addresses in
+/// docs/ISA.md.
 /// Unused addresses read as 0 and ignore writes.
 #[derive(Clone, Debug)]
 pub struct Memory {
@@ -64,6 +67,8 @@ pub struct Memory {
     pub screen: Vec<u16>,
     /// The code of the key held now, 0 if none.
     pub keyboard: u16,
+    /// The frame counter at TIMER, set by whoever runs the machine.
+    pub timer: u16,
 }
 
 impl Default for Memory {
@@ -72,6 +77,7 @@ impl Default for Memory {
             ram: vec![0; RAM_WORDS],
             screen: vec![0; SCREEN_WORDS],
             keyboard: 0,
+            timer: 0,
         }
     }
 }
@@ -95,6 +101,7 @@ impl Bus for Memory {
             0b000 | 0b001 => self.ram[addr as usize],
             0b010 => Memory::screen_index(addr).map_or(0, |i| self.screen[i]),
             0b011 if addr == KEYBOARD => self.keyboard,
+            0b011 if addr == TIMER => self.timer,
             _ => 0,
         }
     }
