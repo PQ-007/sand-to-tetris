@@ -1,0 +1,35 @@
+id = "ram512"
+name = "RAM512"
+layer = 3
+goal = """
+512 words of memory from eight RAM64s. The address is 9 bits: the top 3 bits choose which RAM64, the bottom 6 bits are the address inside it.
+Split addr, join the low bits back into one 6-bit address for every RAM64, and use the top 3 bits with a DMUX8WAY (for load) and a MUX8WAY16 (for q), just as in RAM8.
+"""
+sequential = true
+inputs = ["d", "addr", "load", "clk"]
+outputs = ["q"]
+requires = ["ram64", "dmux8way", "mux8way16"]
+widths = { d = 16, addr = 9, q = 16 }
+model = "ram512"
+random_tests = 200
+truth_table = """
+d addr load clk | q
+100 0 1 0 | -
+100 0 1 1 | 100
+200 9 1 0 | -
+200 9 1 1 | 200
+300 511 1 0 | -
+300 511 1 1 | 300
+0 0 0 0 | 100
+0 9 0 0 | 200
+0 1 0 0 | -
+400 1 1 0 | -
+400 1 1 1 | 400
+0 9 0 0 | 200
+0 511 0 0 | 300
+0 511 0 1 | 300
+"""
+
+[hints]
+wrong = "The top 3 bits of addr pick the RAM64; the bottom 6 go to every RAM64 as its own address. Check which split bits feed which joiner."
+unknown = "A word reads as unknown until something is stored in it. Writing to one RAM64 must not disturb the others."

@@ -1,4 +1,5 @@
 // Shared helpers for demo components (shadow DOM + constructable styles).
+import { t } from "../i18n";
 const NS = "http://www.w3.org/2000/svg";
 
 export function svg<K extends keyof SVGElementTagNameMap>(
@@ -41,7 +42,7 @@ export const BASE = sheet(`
   button, select { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 0.375rem; padding: 0.3rem 0.7rem; cursor: pointer; }
   button[aria-pressed=true], .chip input:checked + span { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
   :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-  a { color: var(--accent); }
+  a { color: var(--link); }
   .chips { display: flex; flex-wrap: wrap; gap: 0.375rem; border: 0; padding: 0; margin: 0 0 0.75rem; }
   .chips legend { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.375rem; }
   .chip { position: relative; }
@@ -135,9 +136,20 @@ export function wide(el: SVGSVGElement): HTMLDivElement {
   div.className = "wide";
   div.tabIndex = 0;
   div.setAttribute("role", "group");
-  div.setAttribute("aria-label", "Diagram (scroll sideways on small screens)");
+  div.setAttribute("aria-label", t("kit.wide"));
   div.append(el);
   return div;
+}
+
+/** A demo's caption: bold title, then text (`html` may hold <em> from the dictionaries). */
+export function figcaption(title: string, html: string): HTMLElement {
+  const cap = document.createElement("figcaption");
+  const strong = document.createElement("strong");
+  strong.textContent = title;
+  const rest = document.createElement("span");
+  rest.innerHTML = html;
+  cap.append(strong, " ", rest);
+  return cap;
 }
 
 /** Base class: opens a shadow root with the shared styles plus extra CSS. */

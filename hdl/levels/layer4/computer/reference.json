@@ -1,0 +1,145 @@
+{
+  "format": 1,
+  "component": "computer",
+  "parts": [
+    {
+      "id": "cpu",
+      "kind": "cpu",
+      "pos": [
+        140,
+        70
+      ]
+    },
+    {
+      "id": "mem",
+      "kind": "memory",
+      "pos": [
+        140,
+        160
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "instr"
+      },
+      "to": {
+        "part": "cpu",
+        "pin": "instr"
+      }
+    },
+    {
+      "from": {
+        "part": "mem",
+        "pin": "q"
+      },
+      "to": {
+        "part": "cpu",
+        "pin": "inM"
+      }
+    },
+    {
+      "from": {
+        "port": "reset"
+      },
+      "to": {
+        "part": "cpu",
+        "pin": "reset"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "cpu",
+        "pin": "clk"
+      }
+    },
+    {
+      "from": {
+        "part": "cpu",
+        "pin": "outM"
+      },
+      "to": {
+        "part": "mem",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "cpu",
+        "pin": "addrM"
+      },
+      "to": {
+        "part": "mem",
+        "pin": "addr"
+      }
+    },
+    {
+      "from": {
+        "part": "cpu",
+        "pin": "writeM"
+      },
+      "to": {
+        "part": "mem",
+        "pin": "load"
+      }
+    },
+    {
+      "from": {
+        "port": "key"
+      },
+      "to": {
+        "part": "mem",
+        "pin": "key"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "mem",
+        "pin": "clk"
+      }
+    },
+    {
+      "from": {
+        "part": "cpu",
+        "pin": "pc"
+      },
+      "to": {
+        "port": "pc"
+      }
+    },
+    {
+      "from": {
+        "part": "cpu",
+        "pin": "addrM"
+      },
+      "to": {
+        "port": "addrM"
+      }
+    },
+    {
+      "from": {
+        "part": "cpu",
+        "pin": "outM"
+      },
+      "to": {
+        "port": "outM"
+      }
+    },
+    {
+      "from": {
+        "part": "cpu",
+        "pin": "writeM"
+      },
+      "to": {
+        "port": "writeM"
+      }
+    }
+  ]
+}

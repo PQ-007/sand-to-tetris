@@ -1,10 +1,11 @@
 import { LOGIC, lampOn, type Arrangement } from "../demos/network";
-import { Demo, sheet, svg, wide } from "./kit";
+import { t } from "../i18n";
+import { Demo, figcaption, sheet, svg, wide } from "./kit";
 
 const CSS = sheet(`
   .row { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
   .wire { stroke: var(--muted); stroke-width: 3; fill: none; }
-  .wire.live { stroke: var(--accent); }
+  .wire.live { stroke: var(--wire-1); }
   .lamp { fill: var(--bg); stroke: var(--text); stroke-width: 2; }
   .lamp.on { fill: var(--channel); }
   .switch-btn { display: flex; gap: 0.5rem; margin: 0.5rem 0 0.75rem; }
@@ -28,9 +29,7 @@ export class SwitchNetwork extends Demo {
 
   protected build(): void {
     const fig = document.createElement("figure");
-    fig.innerHTML = `<figcaption><strong>Switches that compute</strong>
-      Flip the two switches. In <em>series</em> (one after the other) current reaches the lamp only if
-      both are closed. In <em>parallel</em> (side by side) either one is enough.</figcaption>`;
+    fig.append(figcaption(t("net.caption"), t("net.captionHtml")));
     const buttons = document.createElement("div");
     buttons.className = "switch-btn";
     const mk = (name: "a" | "b") => {
@@ -50,7 +49,7 @@ export class SwitchNetwork extends Demo {
     const panels = (["series", "parallel"] as Arrangement[]).map((arr) => {
       const box = document.createElement("div");
       const h = document.createElement("h3");
-      h.textContent = `${arr === "series" ? "Series" : "Parallel"}: ${LOGIC[arr]}`;
+      h.textContent = `${t(`net.${arr}`)}: ${LOGIC[arr]}`;
       const pic = svg("svg", { viewBox: "0 0 300 130", role: "img" });
       const out = document.createElement("p");
       out.setAttribute("aria-live", "polite");
@@ -63,8 +62,10 @@ export class SwitchNetwork extends Demo {
     this.root.append(fig);
 
     this.draw = () => {
-      ba.textContent = `Switch A: ${this.a ? "closed (1)" : "open (0)"}`;
-      bb.textContent = `Switch B: ${this.b ? "closed (1)" : "open (0)"}`;
+      const state = (closed: boolean) =>
+        t(closed ? "net.closed1" : "net.open0");
+      ba.textContent = t("net.switch", { name: "A", state: state(this.a) });
+      bb.textContent = t("net.switch", { name: "B", state: state(this.b) });
       ba.setAttribute("aria-pressed", String(this.a));
       bb.setAttribute("aria-pressed", String(this.b));
       for (const { arr, pic, out, table } of panels) {
@@ -72,7 +73,10 @@ export class SwitchNetwork extends Demo {
         pic.replaceChildren();
         pic.setAttribute(
           "aria-label",
-          `${arr} circuit: lamp ${on ? "on" : "off"}`,
+          t("net.picLabel", {
+            arr: t(`net.${arr}`),
+            state: t(on ? "net.on" : "net.off"),
+          }),
         );
         // Battery on the left, lamp on the right.
         svg("text", { x: 14, y: 70, "font-weight": 600 }, pic, "+");
@@ -99,7 +103,7 @@ export class SwitchNetwork extends Demo {
             "text",
             { x: x + 20, y: y - 22, "text-anchor": "middle" },
             pic,
-            `${label}: ${closed ? "closed" : "open"}`,
+            `${label}: ${t(closed ? "net.closed" : "net.open")}`,
           );
         };
         if (arr === "series") {
@@ -160,9 +164,13 @@ export class SwitchNetwork extends Demo {
           "text",
           { x: 250, y: 108, "text-anchor": "middle" },
           pic,
-          on ? "lamp ON" : "lamp off",
+          t(on ? "net.lampOn" : "net.lampOff"),
         );
-        out.textContent = `A=${Number(this.a)}, B=${Number(this.b)} → lamp ${on ? "on (1)" : "off (0)"}`;
+        out.textContent = t("net.result", {
+          a: Number(this.a),
+          b: Number(this.b),
+          state: t(on ? "net.on1" : "net.off0"),
+        });
         const rows = [
           [0, 0],
           [0, 1],
@@ -170,7 +178,7 @@ export class SwitchNetwork extends Demo {
           [1, 1],
         ];
         table.innerHTML =
-          `<caption class="muted">Truth table (${LOGIC[arr]})</caption><tr><th>A</th><th>B</th><th>lamp</th></tr>` +
+          `<caption class="muted">${t("net.table", { logic: LOGIC[arr] })}</caption><tr><th>A</th><th>B</th><th>${t("net.lamp")}</th></tr>` +
           rows
             .map(([a, b]) => {
               const cur = a === Number(this.a) && b === Number(this.b);

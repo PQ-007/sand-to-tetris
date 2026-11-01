@@ -44,9 +44,143 @@ fn every_reference_solution_passes_its_level() {
         "xor16",
         "addc16",
         "alu",
+        "srlatch",
+        "dlatch",
+        "dff",
+        "bit",
+        "register",
+        "dmux4way",
+        "dmux8way",
+        "mux8way16",
+        "ram8",
+        "ram64",
+        "ram512",
+        "ram4k",
+        "pc",
     ] {
         assert!(text.contains(&format!("✓ {id} ")), "{text}");
     }
+}
+
+/// Checks a design (as JSON) against a real level; the CLI's output text.
+fn check_design(level: &str, json: &str) -> String {
+    let file = std::env::temp_dir().join(format!(
+        "s2t-{}-{}-{:?}.json",
+        level.replace('/', "-"),
+        std::process::id(),
+        std::thread::current().id()
+    ));
+    std::fs::write(&file, json).unwrap_or_default();
+    let dir = format!("{}/{level}", levels());
+    let out = run(&args(&["check", &dir, &file.to_string_lossy()])).unwrap_or_else(|e| e);
+    let _ = std::fs::remove_file(&file);
+    out
+}
+
+#[test]
+fn sequential_levels_count_steps() {
+    let dir = format!("{}/layer3/dff", levels());
+    let out = run(&args(&["check", &dir])).unwrap_or_else(|e| e);
+    assert_eq!(
+        out,
+        "✓ dff (Layer 3): all 12 steps pass, 15 gates, 6 gate delays deep"
+    );
+}
+
+#[test]
+fn a_d_latch_is_not_a_flip_flop() {
+    // One D latch enabled by clk: transparent while clk is 1.
+    let out = check_design(
+        "layer3/dff",
+        r#"{"format":1,"component":"dff","parts":[{"id":"l","kind":"dlatch"}],"wires":[
+            {"from":{"port":"d"},"to":{"part":"l","pin":"d"}},
+            {"from":{"port":"clk"},"to":{"part":"l","pin":"en"}},
+            {"from":{"part":"l","pin":"q"},"to":{"port":"q"}}]}"#,
+    );
+    assert!(out.starts_with("✗ dff (Layer 3): "), "{out}");
+    assert!(out.contains("steps fail"), "{out}");
+    assert!(
+        out.contains("Step 3 (after steps 1–2): d=0 clk=1 → expected q=1, got q=0."),
+        "{out}"
+    );
+    assert!(
+        out.contains("hint: If q changes while clk stays 1"),
+        "{out}"
+    );
+}
+
+#[test]
+fn a_bit_must_keep_its_value_without_load() {
+    // A flip-flop straight from d: it loads on every edge.
+    let out = check_design(
+        "layer3/bit",
+        r#"{"format":1,"component":"bit","parts":[{"id":"f","kind":"dff"}],"wires":[
+            {"from":{"port":"d"},"to":{"part":"f","pin":"d"}},
+            {"from":{"port":"clk"},"to":{"part":"f","pin":"clk"}},
+            {"from":{"part":"f","pin":"q"},"to":{"port":"q"}}]}"#,
+    );
+    assert!(
+        out.contains("Step 4 (after steps 1–3): d=0 load=0 clk=1 → expected q=1, got q=0."),
+        "{out}"
+    );
+}
+
+#[test]
+fn ram_must_use_every_address_bit() {
+    // One RAM8 on the low 3 address bits: addresses 1 and 9 land on the
+    // same word, so writing 1 overwrites what was stored at 9.
+    let out = check_design(
+        "layer3/ram64",
+        r#"{"format":1,"component":"ram64","parts":[
+            {"id":"s","kind":"split","width":6},{"id":"lo","kind":"join","width":3},
+            {"id":"m","kind":"ram8"}],"wires":[
+            {"from":{"port":"addr"},"to":{"part":"s","pin":"in"}},
+            {"from":{"part":"s","pin":"0"},"to":{"part":"lo","pin":"0"}},
+            {"from":{"part":"s","pin":"1"},"to":{"part":"lo","pin":"1"}},
+            {"from":{"part":"s","pin":"2"},"to":{"part":"lo","pin":"2"}},
+            {"from":{"part":"lo","pin":"out"},"to":{"part":"m","pin":"addr"}},
+            {"from":{"port":"d"},"to":{"part":"m","pin":"d"}},
+            {"from":{"port":"load"},"to":{"part":"m","pin":"load"}},
+            {"from":{"port":"clk"},"to":{"part":"m","pin":"clk"}},
+            {"from":{"part":"m","pin":"q"},"to":{"port":"q"}}]}"#,
+    );
+    assert!(out.starts_with("✗ ram64 (Layer 3): "), "{out}");
+    assert!(out.contains("Step 12 (after steps 1–11): "), "{out}");
+    assert!(out.contains("random steps fail"), "{out}");
+}
+
+#[test]
+fn the_program_counter_obeys_reset_first() {
+    // Reset's multiplexer before load's: count → clear → jump → register,
+    // so a load beats a reset.
+    let text = std::fs::read_to_string(format!("{}/layer3/pc/reference.json", levels()))
+        .unwrap_or_default();
+    let mut design: serde_json::Value = serde_json::from_str(&text).unwrap_or_default();
+    let rewire = |from: (&str, &str), to: (&str, &str)| serde_json::json!({"from": {"part": from.0, "pin": from.1}, "to": {"part": to.0, "pin": to.1}});
+    if let Some(wires) = design["wires"].as_array_mut() {
+        wires.retain(|w| {
+            let f = (&w["from"]["part"], &w["to"]["part"]);
+            !matches!(
+                (f.0.as_str(), f.1.as_str()),
+                (Some("count"), Some("jump"))
+                    | (Some("jump"), Some("clear"))
+                    | (Some("clear"), Some("reg"))
+            )
+        });
+        wires.push(rewire(("count", "out"), ("clear", "a")));
+        wires.push(rewire(("clear", "out"), ("jump", "a")));
+        wires.push(rewire(("jump", "out"), ("reg", "d")));
+    }
+    let reference = design.to_string();
+    let out = check_design("layer3/pc", &reference);
+    assert!(
+        out.contains("Step 14 (after steps 1–13): d=0x0005 load=1 inc=0 reset=1 clk=1 → expected q=0x0000, got q=0x0005."),
+        "{out}"
+    );
+    assert!(
+        out.contains("hint: The priority is reset, then load, then inc."),
+        "{out}"
+    );
 }
 
 #[test]

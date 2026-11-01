@@ -1,0 +1,31 @@
+id = "dff"
+name = "D flip-flop"
+layer = 3
+goal = """
+A flip-flop changes at one instant only: when clk rises from 0 to 1, q takes the value of d. The rest of the time q holds, whatever d does. A clock ticking every flip-flop at once is what makes a computer move in steps.
+Chain two D latches. The first (the master) is open while clk is 0; the second (the slave) is open while clk is 1. At no moment are both open.
+"""
+sequential = true
+inputs = ["d", "clk"]
+outputs = ["q"]
+requires = ["dlatch", "not"]
+truth_table = """
+# d is always steady when clk rises, as in real hardware.
+clk d | q
+0 1 | -
+1 1 | 1
+1 0 | 1
+0 0 | 1
+0 1 | 1
+1 1 | 1
+0 1 | 1
+0 0 | 1
+1 0 | 0
+1 1 | 0
+0 1 | 0
+1 1 | 1
+"""
+
+[hints]
+wrong = "If q changes while clk stays 1, you built a latch, not a flip-flop. The second latch must only be open while the first one is closed: give them opposite enables, clk and NOT clk."
+unknown = "Nothing is stored until the first rising edge. If q stays unknown after it, check that the master's output feeds the slave's d."

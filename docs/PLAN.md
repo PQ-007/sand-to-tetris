@@ -117,9 +117,36 @@ sand-to-tetris/
 | **M2** ✓ | Switch-level core: netlist format, engine, checker, CLI, Layer 1 levels with reference solutions (NOT, NAND, NOR, optional AND) | `cargo test` passes NOT, NAND and NOR checks |
 | **M3** ✓ | Layer 1 in the browser: WASM bridge, editor, toolbox, level map, live truth table, look-inside, keyboard mode, Chapter 1 | You can build a CMOS NAND by dragging, pass Check and unlock it |
 | M4 ✓ | Layer 2: gate-level engine, buses, splitters, Repeat ×N, fast-model swap; mux, decoder, adders, 16-bit ALU | |
-| M5 | Layer 3: latches → flip-flops → registers → RAM → PC, plus a waveform view | |
-| M6 | **ISA designed together with the user** → written spec in `docs/ISA.md` (word size and ALU already agreed) | |
-| M7 | CPU, Computer, CPU test programs, fast CPU model | |
+| M5 ✓ | Layer 3: latches → flip-flops → registers → RAM → PC, plus a waveform view | Every memory level passes from its reference; RAM runs fast via clocked models; Chapter 3 is live |
+
+### M5 decisions (2026-11-01)
+- **Everything is built from gates; no memory primitive.** SR latch (two cross-coupled NORs) → D latch → master–slave D flip-flop (two D latches, opposite enables) → Bit (flip-flop + MUX: keep or load) → Register (Bit ×16) → RAM8 → RAM64 → RAM512 → RAM4K → PC.
+- **Sequential levels** (`sequential = true`): the table's rows are steps run in order on one circuit, so state carries over; `-` means "any value" (e.g. before anything is stored). Rising-edge steps change only `clk`, so d is steady at the edge (setup time).
+- **Power-on is unknown (X)**, as in real hardware; tests store before they read.
+- **RAM stops at 4K words for now**; the full memory size comes with the memory map, designed together in M6.
+- **Live memory in the editor:** `simulate` takes the previous state and returns the new one, keyed by gate path (not net number), so stored bits survive unrelated edits. Clicking a test step replays the test up to it; "Tick clk" pulses the clock; "Reset memory" returns to power-on.
+- **Big memories run as fast models.** Fully flattened, RAM64 is ~32,000 gates and RAM4K ~2 million. The editor says so when a circuit passes 5,000 gates and names the parts that could swap; `check-all` and the background status re-check run lower memory components as their models (each already matched that model).
+- Order of work: core (sequential checking) ✓ → latch…register levels ✓ → stateful editor ✓ → RAM, PC, Layer 2 helpers, stateful fast models and sequential match check ✓ → waveform view ✓ (Test steps: click a column to replay; Live: the learner's own clicks and ticks) → Chapter 3 ✓.
+| M6 ✓ | **ISA designed together with the user** → written spec in `docs/ISA.md` (word size and ALU already agreed) | The spec is agreed and `s2t-isa` runs it, with a test per rule |
+
+### M6 decisions (2026-11-01)
+Agreed with the user in three rounds; the reasons are in `docs/ISA.md`.
+- 8 general-purpose registers r0–r7 (all real; CMP has its own opcode); r7 holds CALL's return address.
+- Separate program ROM (Harvard); every instruction is one 16-bit word and takes one clock, so the CPU needs no control state machine.
+- 16-bit constants in two halves (SET low byte, SETH high byte).
+- Conditional jumps test saved flags Z N C (8 conditions); jumps and calls are PC-relative; JR / CALLR / RET jump through a register.
+- A barrel shifter (SHL / SHR / SAR by 0–15), to be built from 4 stages of MUX16.
+- Memory-mapped I/O: RAM16K at 0x0000, a 128 × 96 black-and-white screen (768 words) at 0x4000 with the leftmost pixel in bit 15, keyboard at 0x6000; timer and random numbers reserved at 0x6001+ for M11.
+- New levels this implies for M7: RAM16K, the barrel shifter, the register file (8 Registers, DMUX8WAY, two MUX8WAY16), then the CPU and the Computer.
+| M7 ✓ | CPU, Computer, CPU test programs, fast CPU model | Every new level passes from its reference; CPU and Computer run program traces; Chapter 4 is live |
+
+### M7 decisions (2026-11-01)
+- **Levels:** shifter (Layer 2); ram16k, regfile (Layer 3); new Layer 4: decode (the control unit), cpu, memory (the memory map), computer. The cpu and decode levels prescribe the datapath pin for pin (addrM = the ALU's output, outM = register port B, rsel codes, ...), so a fast model can match any correct design exactly.
+- **The program ROM is outside the computer:** tests (and later the site) feed `instr` from ROM[pc], like a ROM chip. No ROM primitive, so Layer 1's base parts stay transistors only.
+- **Reset only zeroes the PC;** the instruction on `instr` still runs during the reset cycle.
+- **CPU and Computer tests are program traces** printed by the models (two steps per instruction, assembly on a `#` line), so they can't drift from the spec.
+- **Check runs passed memory components as models,** like the status re-check (a learner-built RAM16K is ~8 million gates); the live editor still runs the learner's choice. Flattening stops past 100,000 gates with a translated "too big" problem that points at the fast-model switch.
+- **Chapter 4** with a `<cpu-demo>` that runs `s2t-isa` through WASM (`isaTrace`), and cited history (Harvard Mark I and the contested "Harvard architecture" name, IBM 801 and Berkeley RISC, ARM's link register, AVR's separate buses).
 | M8 | Assembler | |
 | M9 | VM + translator | |
 | M10 | High-level language (designed together) + compiler | |
@@ -136,4 +163,4 @@ The first vertical slice is M0–M3.
 4. **Clock:** a visible `clk` wire the learner routes.
 5. **Device support:** desktop-first editor. Chapters and demos also work on mobile.
 6. **Math depth:** qualitative first, with optional "go deeper" boxes for equations.
-7. **Hosting, license, language:** GitHub Pages, MIT for code, CC BY-SA for text, English only (structured so translations can be added later).
+7. **Hosting, license, language:** GitHub Pages, MIT for code, CC BY-SA for text. **English and Mongolian** (added 2026-11, the user's request): everything learners see is translated (interface, chapters, glossary, source notes, demos, level names/goals/hints, checker messages), using a Mongolian term only where one is already established and the English term otherwise, not coined words (the user's rule, `docs/mn/TERMS.md`). English is the original; a new chapter, level or message must get its Mongolian text in the same change (the build and tests fail otherwise). Source titles and quotes stay in their original language.

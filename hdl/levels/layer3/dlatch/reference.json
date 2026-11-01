@@ -1,0 +1,115 @@
+{
+  "format": 1,
+  "component": "dlatch",
+  "parts": [
+    {
+      "id": "inv",
+      "kind": "not",
+      "pos": [
+        240,
+        300
+      ]
+    },
+    {
+      "id": "set",
+      "kind": "and",
+      "pos": [
+        360,
+        160
+      ]
+    },
+    {
+      "id": "reset",
+      "kind": "and",
+      "pos": [
+        360,
+        300
+      ]
+    },
+    {
+      "id": "latch",
+      "kind": "srlatch",
+      "pos": [
+        520,
+        230
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "set",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "en"
+      },
+      "to": {
+        "part": "set",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "inv",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "inv",
+        "pin": "out"
+      },
+      "to": {
+        "part": "reset",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "en"
+      },
+      "to": {
+        "part": "reset",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "set",
+        "pin": "out"
+      },
+      "to": {
+        "part": "latch",
+        "pin": "s"
+      }
+    },
+    {
+      "from": {
+        "part": "reset",
+        "pin": "out"
+      },
+      "to": {
+        "part": "latch",
+        "pin": "r"
+      }
+    },
+    {
+      "from": {
+        "part": "latch",
+        "pin": "q"
+      },
+      "to": {
+        "port": "q"
+      }
+    }
+  ]
+}

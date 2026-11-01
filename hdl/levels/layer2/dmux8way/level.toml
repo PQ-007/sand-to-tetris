@@ -1,0 +1,33 @@
+id = "dmux8way"
+name = "8-way demultiplexer"
+layer = 2
+goal = """
+Send the input to one of eight outputs, a to h, chosen by the 3-bit sel. RAM8 will use this to send "load" to exactly one of its eight registers.
+Let sel's top bit (bit 2) choose between two 4-way demultiplexers, and give both of them sel's bottom two bits.
+"""
+inputs = ["in", "sel"]
+outputs = ["a", "b", "c", "d", "e", "f", "g", "h"]
+requires = ["dmux", "dmux4way"]
+widths = { sel = 3 }
+truth_table = """
+in sel | a b c d e f g h
+0 0 | 0 0 0 0 0 0 0 0
+0 1 | 0 0 0 0 0 0 0 0
+0 2 | 0 0 0 0 0 0 0 0
+0 3 | 0 0 0 0 0 0 0 0
+0 4 | 0 0 0 0 0 0 0 0
+0 5 | 0 0 0 0 0 0 0 0
+0 6 | 0 0 0 0 0 0 0 0
+0 7 | 0 0 0 0 0 0 0 0
+1 0 | 1 0 0 0 0 0 0 0
+1 1 | 0 1 0 0 0 0 0 0
+1 2 | 0 0 1 0 0 0 0 0
+1 3 | 0 0 0 1 0 0 0 0
+1 4 | 0 0 0 0 1 0 0 0
+1 5 | 0 0 0 0 0 1 0 0
+1 6 | 0 0 0 0 0 0 1 0
+1 7 | 0 0 0 0 0 0 0 1
+"""
+
+[hints]
+wrong = "Bit 2 of sel picks the half (a–d or e–h); bits 0 and 1, joined into a 2-bit number, pick within the half."

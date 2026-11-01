@@ -373,3 +373,170 @@
   term: "Flags"
   short: "Single-bit facts about an ALU result (is it zero? negative? was there a carry?) that the CPU uses to decide what to do next."
   see: [alu]
+
+# ---- Chapter 3: memory -------------------------------------------------------------
+
+- id: sequential-circuit
+  term: "Sequential circuit"
+  short: "A circuit whose outputs depend on what happened before, not just on its inputs right now: it has memory."
+  long: "The opposite of a combinational circuit. Sequential circuits are built with [[feedback]], and most are driven by a [[clock]]."
+  see: [feedback, latch, flip-flop]
+
+- id: feedback
+  term: "Feedback"
+  short: "Wiring a circuit's output back into its own input, so what it does next depends on what it is doing now."
+  long: "Feedback is what lets a [[latch]] remember. It can also make a circuit oscillate, flipping forever."
+  see: [latch]
+
+- id: latch
+  term: "Latch"
+  short: "The simplest memory: two gates feeding each other, which hold one bit after the signal that set it has gone."
+  long: "An SR latch has set and reset inputs. A D latch has one data input that it copies while its enable is 1 and holds while enable is 0."
+  see: [feedback, flip-flop]
+
+- id: flip-flop
+  term: "Flip-flop"
+  short: "A one-bit memory that changes only at the moment its clock rises from 0 to 1."
+  long: "Built from two [[latches|latch]] that are never open at the same time (master–slave). Because it ignores its input between clock edges, a whole computer of flip-flops moves in lockstep."
+  see: [latch, clock, clock-edge]
+
+- id: clock
+  term: "Clock"
+  short: "A signal that switches between 0 and 1 over and over, telling every flip-flop when to take its next value."
+  long: "Each 0-to-1 transition is a tick. A processor's clock speed (say, 3 GHz) is how many ticks it gets per second."
+  see: [clock-edge, flip-flop]
+
+- id: clock-edge
+  term: "Clock edge"
+  short: "The instant the clock changes. A rising edge is 0 to 1, the moment flip-flops store."
+  see: [clock, setup-time]
+
+- id: setup-time
+  term: "Setup time"
+  short: "How long a flip-flop's input must stay steady before the clock edge so the right value is stored."
+  long: "If the input changes too close to the edge, the flip-flop may store the old value, the new one, or briefly neither. The tests in this course keep inputs steady at every rising edge."
+  see: [clock-edge]
+
+- id: register
+  term: "Register"
+  short: "A small memory holding one number (here, 16 bits), loaded all at once on a clock edge when its load input is 1."
+  see: [flip-flop, ram]
+
+- id: address
+  term: "Address"
+  short: "A number saying which word of memory to read or write, like a house number on a street."
+  see: [ram]
+
+- id: ram
+  term: "RAM"
+  short: "Random-access memory: many registers, each with an address, where any word can be read or written as quickly as any other."
+  long: '"Random access" means you can jump straight to any address, unlike a tape that must be wound to the right place.'
+  see: [address, register, sram, dram]
+
+- id: program-counter
+  term: "Program counter"
+  short: "The register holding the address of the next instruction. It counts up by one, or jumps when told to."
+  see: [register]
+
+- id: waveform
+  term: "Waveform"
+  short: "A picture of signals over time: one row per signal, time running left to right. Also called a timing diagram."
+
+- id: magnetic-core-memory
+  term: "Magnetic-core memory"
+  short: "Memory made of tiny magnetic rings threaded on wires, each ring storing one bit in the direction it's magnetized."
+  long: "The main memory of most computers from the mid-1950s to the 1970s. Unlike transistor memory, it kept its contents with the power off."
+  see: [ram, dram]
+
+- id: sram
+  term: "SRAM"
+  short: "Static RAM: each bit is a latch, usually six transistors, which holds its value as long as there is power."
+  long: "Fast but large. Processors use it for their caches. The RAM you build in this course is static too, made of flip-flops."
+  see: [dram, latch]
+
+- id: dram
+  term: "DRAM"
+  short: "Dynamic RAM: each bit is a charge on a tiny capacitor, guarded by one transistor. It must be refreshed constantly because the charge leaks away."
+  long: "Much smaller per bit than [[SRAM|sram]], so it's used for a computer's main memory."
+  see: [sram, capacitor]
+
+- id: capacitor
+  term: "Capacitor"
+  short: "Two conductors separated by an insulator, which hold electric charge, like a tiny rechargeable bucket."
+  see: [dram]
+
+- id: instruction
+  term: "Instruction"
+  short: 'One step of a program: a single command the processor can carry out, like "add these two registers" or "jump back if not zero".'
+  long: "In our computer every instruction is one 16-bit word; its bits say what to do and with which [[registers|register]]."
+  see: [instruction-set, machine-code]
+
+- id: instruction-set
+  term: "Instruction set (ISA)"
+  short: "The full list of instructions a processor understands, and exactly how each is written in bits and what it does."
+  long: "It is the contract between hardware and software: the [[CPU|processor]] must do what it promises, and every program is written in it. Ours is in docs/ISA.md."
+  see: [instruction, assembly-language]
+
+- id: machine-code
+  term: "Machine code"
+  short: "A program as the processor reads it: the instruction words as plain numbers."
+  see: [assembly-language]
+
+- id: assembly-language
+  term: "Assembly language"
+  short: "Machine code written with short names instead of numbers, one line per instruction, like SET r1, 5."
+  long: "An assembler turns it into [[machine code|machine-code]]; you'll write one in the next chapter."
+  see: [machine-code, instruction]
+
+- id: instruction-cycle
+  term: "Fetch–decode–execute cycle"
+  short: "What a processor does over and over: read the instruction at the program counter, work out what it means, and carry it out."
+  long: "Our CPU does all three in a single clock cycle."
+  see: [program-counter, control-unit]
+
+- id: control-unit
+  term: "Control unit"
+  short: "The part of a CPU that reads an instruction and sets every control signal: which registers to read, what the ALU does, where the result goes."
+  see: [datapath, instruction]
+
+- id: datapath
+  term: "Datapath"
+  short: "The parts of a CPU that hold and move the data: registers, ALU, shifter and the wires and multiplexers between them."
+  see: [control-unit, register-file]
+
+- id: register-file
+  term: "Register file"
+  short: "A CPU's set of general-purpose registers, with ports to read two of them and write one in the same clock cycle."
+  see: [register]
+
+- id: barrel-shifter
+  term: "Barrel shifter"
+  short: "A circuit that slides a word's bits left or right by any number of places in one step, using a stage per power of two."
+  see: [multiplexer]
+
+- id: subroutine
+  term: "Subroutine"
+  short: "A piece of a program that can be called from anywhere and returns to where it was called from."
+  long: "Our CALL saves the return address in r7 (a [[link register|link-register]]); RET jumps back to it."
+  see: [link-register]
+
+- id: link-register
+  term: "Link register"
+  short: "A register where a call instruction saves the address to come back to. In our CPU it is r7."
+  see: [subroutine]
+
+- id: harvard-architecture
+  term: "Harvard architecture"
+  short: "A computer that keeps its program in a separate memory from its data, so it can fetch the next instruction and read or write data at the same time."
+  long: "The opposite of the [[stored-program|stored-program]] design, where program and data share one memory."
+  see: [stored-program]
+
+- id: risc
+  term: "RISC"
+  short: "Reduced instruction set computer: a design style with many registers and simple, same-size instructions, where only loads and stores touch memory."
+  see: [instruction-set]
+
+- id: memory-mapped-io
+  term: "Memory-mapped I/O"
+  short: "Reaching devices like the screen and keyboard through ordinary memory addresses: storing to the screen's addresses draws, loading from the keyboard's address reads a key."
+  see: [address]

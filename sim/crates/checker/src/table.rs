@@ -11,6 +11,9 @@ pub struct TableRow {
     pub inputs: Vec<(String, u64)>,
     /// Expected output values in the level's port order.
     pub outputs: Vec<(String, u64)>,
+    /// Outputs written `-` ("don't care", sequential levels only): their
+    /// value in `outputs` is a placeholder and isn't checked.
+    pub skip: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -123,12 +126,31 @@ impl Table {
                     message: shape(hin.len(), hout.len()),
                 });
             }
-            let pick = |ports: &[String], cols: &[usize], vals: &[String]| {
+            let mut skip = Vec::new();
+            let mut pick = |ports: &[String], cols: &[usize], vals: &[String], outputs: bool| {
                 ports
                     .iter()
                     .zip(cols)
                     .map(|(p, &c)| {
                         let raw = &vals[c];
+                        if raw == "-" {
+                            if !outputs {
+                                return Err(TableError {
+                                    line,
+                                    message: format!("input `{p}` needs a value, not `-`"),
+                                });
+                            }
+                            if !level.sequential {
+                                return Err(TableError {
+                                    line,
+                                    message:
+                                        "`-` (don't care) is only allowed in sequential levels"
+                                            .into(),
+                                });
+                            }
+                            skip.push(p.clone());
+                            return Ok((p.clone(), 0));
+                        }
                         let width = level.width(p);
                         let v = parse_number(raw).ok_or_else(|| TableError {
                             line,
@@ -152,9 +174,12 @@ impl Table {
                     })
                     .collect::<Result<Vec<_>, TableError>>()
             };
+            let inputs = pick(&level.inputs, &in_cols, &vin, false)?;
+            let outputs = pick(&level.outputs, &out_cols, &vout, true)?;
             rows.push(TableRow {
-                inputs: pick(&level.inputs, &in_cols, &vin)?,
-                outputs: pick(&level.outputs, &out_cols, &vout)?,
+                inputs,
+                outputs,
+                skip,
             });
         }
         Ok(Table { rows })

@@ -1,5 +1,6 @@
 import { rippleAt, settleSteps } from "../demos/ripple";
-import { Demo, reducedMotion, sheet } from "./kit";
+import { t } from "../i18n";
+import { Demo, figcaption, reducedMotion, sheet } from "./kit";
 
 const CSS = sheet(`
   .grid { display: grid; grid-template-columns: 6.5rem repeat(9, 2.4rem); gap: 0.25rem; align-items: center; font-variant-numeric: tabular-nums; overflow-x: auto; }
@@ -36,10 +37,7 @@ export class RippleAdder extends Demo {
 
   protected build(): void {
     const fig = document.createElement("figure");
-    fig.innerHTML = `<figcaption><strong>A carry that ripples</strong>
-      Each column is a full adder. A column whose two bits are equal knows its carry out
-      straight away. Otherwise it must wait for the carry from the column to its right.
-      <span class="muted">?</span> means "not known yet".</figcaption>`;
+    fig.append(figcaption(t("ripple.caption"), t("ripple.captionHtml")));
     const controls = document.createElement("div");
     controls.className = "controls";
     const num = (
@@ -79,9 +77,9 @@ export class RippleAdder extends Demo {
       x.addEventListener("click", onClick);
       return x;
     };
-    const stepBtn = btn("Step", () => this.advance());
-    const playBtn = btn("Play", () => this.play());
-    const resetBtn = btn("Reset", () => this.reset());
+    const stepBtn = btn(t("ripple.step"), () => this.advance());
+    const playBtn = btn(t("ripple.play"), () => this.play());
+    const resetBtn = btn(t("ripple.reset"), () => this.reset());
     controls.append(A.l, B.l, stepBtn, playBtn, resetBtn);
     const presets = document.createElement("div");
     presets.className = "presets";
@@ -94,9 +92,9 @@ export class RippleAdder extends Demo {
         this.reset();
       });
     presets.append(
-      preset("255 + 1 (long carry)", 255, 1),
-      preset("255 + 0 (no carry, still waits)", 255, 0),
-      preset("12 + 12 (no waiting)", 12, 12),
+      preset(t("ripple.longCarry"), 255, 1),
+      preset(t("ripple.noCarry"), 255, 0),
+      preset(t("ripple.noWait"), 12, 12),
       preset("100 + 27", 100, 27),
     );
     this.grid = document.createElement("div");
@@ -146,11 +144,14 @@ export class RippleAdder extends Demo {
     const cell = (v: number | null, cls = "", fresh = false) =>
       `<span class="cell${v === null ? " unknown" : ""}${cls}${fresh ? " new" : ""}" role="cell">${v === null ? "?" : v}</span>`;
     const bitOf = (x: number, i: number) => (x >> i) & 1;
-    let html = `<span class="h" role="columnheader"></span><span class="h" role="columnheader">carry out</span>`;
+    let html = `<span class="h" role="columnheader"></span><span class="h" role="columnheader">${t("ripple.carryOut")}</span>`;
     html += cols
-      .map((i) => `<span class="h" role="columnheader">bit ${i}</span>`)
+      .map(
+        (i) =>
+          `<span class="h" role="columnheader">${t("ripple.bit", { n: i })}</span>`,
+      )
       .join("");
-    html += `<span class="k" role="rowheader">carry in</span>${cell(s.carries[N] ?? null, s.carries[N] === 1 ? " carry1" : "", prev?.carries[N] === null && s.carries[N] !== null)}`;
+    html += `<span class="k" role="rowheader">${t("ripple.carryIn")}</span>${cell(s.carries[N] ?? null, s.carries[N] === 1 ? " carry1" : "", prev?.carries[N] === null && s.carries[N] !== null)}`;
     html += cols
       .map((i) =>
         cell(
@@ -163,13 +164,22 @@ export class RippleAdder extends Demo {
     html += `<span class="k" role="rowheader">a = ${this.a}</span><span></span>${cols.map((i) => cell(bitOf(this.a, i))).join("")}`;
     html += `<span class="k" role="rowheader">b = ${this.b}</span><span></span>${cols.map((i) => cell(bitOf(this.b, i))).join("")}`;
     html += `<span class="row-sep"></span>`;
-    html += `<span class="k" role="rowheader">sum</span><span></span>${cols.map((i) => cell(s.sums[i] ?? null, "", prev?.sums[i] === null && s.sums[i] !== null)).join("")}`;
+    html += `<span class="k" role="rowheader">${t("ripple.sum")}</span><span></span>${cols.map((i) => cell(s.sums[i] ?? null, "", prev?.sums[i] === null && s.sums[i] !== null)).join("")}`;
     this.grid.innerHTML = html;
     const total = settleSteps(this.a, this.b, N);
     const sum = (this.a + this.b) & 255;
     this.status.textContent = s.done
-      ? `Done after ${total} step${total === 1 ? "" : "s"}: ${this.a} + ${this.b} = ${sum}${this.a + this.b > 255 ? " (the carry out is dropped: 8 bits can't hold " + (this.a + this.b) + ")" : ""}.`
-      : `Step ${this.step} of ${total}: still waiting for the carry to ripple.`;
+      ? t("ripple.done", {
+          n: total,
+          a: this.a,
+          b: this.b,
+          sum,
+          dropped:
+            this.a + this.b > 255
+              ? t("ripple.dropped", { total: this.a + this.b })
+              : "",
+        })
+      : t("ripple.waiting", { step: this.step, total });
   }
 }
 

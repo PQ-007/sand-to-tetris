@@ -1,0 +1,39 @@
+id = "pc"
+name = "Program counter"
+layer = 3
+goal = """
+The program counter holds the address of the next instruction. On each rising clk edge: if reset is 1 it becomes 0; else if load is 1 it becomes d (a jump); else if inc is 1 it goes up by one; otherwise it keeps its value.
+Use a Register that loads on every edge, and choose what it loads with a chain of three MUX16s: keep or q+1 (inc), then d (load), then 0 (reset). The last one wins, so reset goes last.
+"""
+sequential = true
+inputs = ["d", "load", "inc", "reset", "clk"]
+outputs = ["q"]
+requires = ["register", "inc16", "mux16", "zero", "one"]
+widths = { d = 16, q = 16 }
+model = "pc"
+random_tests = 300
+truth_table = """
+d load inc reset clk | q
+0 0 0 1 0 | -
+0 0 0 1 1 | 0
+0 0 1 0 0 | 0
+0 0 1 0 1 | 1
+0 0 1 0 0 | 1
+0 0 1 0 1 | 2
+1000 1 1 0 0 | 2
+1000 1 1 0 1 | 1000
+0 0 0 0 0 | 1000
+0 0 0 0 1 | 1000
+0 0 1 0 0 | 1000
+0 0 1 0 1 | 1001
+5 1 0 1 0 | 1001
+5 1 0 1 1 | 0
+0xffff 1 0 0 0 | 0
+0xffff 1 0 0 1 | 0xffff
+0 0 1 0 0 | 0xffff
+0 0 1 0 1 | 0
+"""
+
+[hints]
+wrong = "The priority is reset, then load, then inc. In a chain of multiplexers the last one decides, so put reset's multiplexer at the end, right before the register."
+unknown = "The counter is unknown until its first reset or load. If it stays unknown after a reset, check that the register loads on every edge (load = 1)."

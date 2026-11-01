@@ -3,22 +3,36 @@
 // Mouse/touch: drag parts from the toolbox, drag parts to move them, drag
 // from one pin to another (or click one pin, then another) to wire them,
 // click a wire or part to select it, Delete removes, Escape cancels.
-// Keyboard: Tab to a part, arrow keys move it, Delete removes it. Wiring by
-// keyboard happens in the play page's connections panel.
+// Ports (the component's own inputs and outputs) drag the same way by their
+// box; a short click on an input box flips it.
+// Drag empty canvas to pan; Ctrl+wheel (or +, -, 0) zooms.
+// Keyboard: Tab to a part or port, arrow keys move it, Delete removes a
+// part, Enter flips an input. Wiring by keyboard goes through the actions
+// menu (menu key or Shift+F10): Connect… and Disconnect….
+//
+// Right-click (or the ContextMenu key / Shift+F10) selects what's under the
+// pointer and asks the page for a menu of actions on it.
 //
 // Every wire shows its value as text (0, 1, Z, X), not just colour, and
 // every transistor says "on" or "off".
 import { svg } from "../components/kit";
+import { t, type Key } from "../i18n";
+import { connectionSummary, type MenuTarget } from "./actions";
 import type { Design, Endpoint, Part, SimView, Value } from "../sim/types";
 import {
   CANVAS,
+  clampPort,
   clampToCanvas,
+  clampZoom,
+  fitZoom,
+  pinWidth,
   labelPoint,
   pathData,
   pinPoint,
   portPoint,
   route,
   canvasSize,
+  zoomStep,
   shapeOfPart,
   type ComponentPorts,
   type Size,
@@ -30,6 +44,7 @@ import {
   addWire,
   endpointKey,
   movePart,
+  movePort,
   removePart,
   removeWire,
   sameEndpoint,
@@ -58,10 +73,18 @@ export interface CanvasEvents {
   message(text: string): void;
   /** The selected part changed (null: nothing selected). */
   select?(partId: string | null): void;
+  /** Right-click or menu key on something: show actions for it at a
+   * screen position. */
+  menu?(target: MenuTarget, at: { x: number; y: number }): void;
+  /** The zoom level changed (1 = 100%). */
+  zoomed?(zoom: number): void;
 }
 
 type Selection =
-  { kind: "part"; id: string } | { kind: "wire"; index: number } | null;
+  | { kind: "part"; id: string }
+  | { kind: "wire"; index: number }
+  | { kind: "port"; name: string }
+  | null;
 
 type Mode =
   | { kind: "idle" }
@@ -73,7 +96,25 @@ type Mode =
       moved: boolean;
       base: Design;
     }
-  | { kind: "wire"; from: Endpoint; start: Point; moved: boolean };
+  | {
+      kind: "port";
+      name: string;
+      isInput: boolean;
+      offset: Point;
+      start: Point;
+      moved: boolean;
+      base: Design;
+    }
+  | { kind: "wire"; from: Endpoint; start: Point; moved: boolean }
+  | {
+      kind: "pan";
+      client: Point;
+      scroll: Point;
+      moved: boolean;
+    };
+
+/** Room a port's label box takes, for sizing the canvas around it. */
+const PORT_SHAPE: Shape = { width: 120, height: 30, pins: [] };
 
 const NAMES: Record<string, string> = {
   pmos: "PMOS",
@@ -91,7 +132,16 @@ export class CircuitCanvas {
   private pending: Endpoint | null = null;
   private pointer: Point = [0, 0];
   private focusPart: string | null = null;
+  private focusPort: string | null = null;
   private size: Size = CANVAS;
+  /** The circuit's own extent: default port spots follow this, not the
+   * window, so ports stay put when the window resizes. */
+  private layout: Size = CANVAS;
+  /** The visible area to fill, if the canvas sits in a resizable pane. */
+  private fill?: Size;
+  /** The scrolling pane around the canvas, once `fillContainer` is called. */
+  private container?: HTMLElement;
+  private zoom = 1;
   /** For double-click detection: the canvas re-renders between clicks, so
    * the browser's own dblclick event doesn't reliably fire. */
   private lastPress: { id: string; time: number } | null = null;
@@ -101,13 +151,14 @@ export class CircuitCanvas {
       viewBox: `0 0 ${CANVAS.width} ${CANVAS.height}`,
       class: "circuit",
       role: "application",
-      "aria-label": "Circuit canvas",
+      "aria-label": t("canvas.label"),
       tabindex: 0,
     });
     this.el.addEventListener("pointerdown", (e) => this.onDown(e));
     this.el.addEventListener("pointermove", (e) => this.onMove(e));
     this.el.addEventListener("pointerup", (e) => this.onUp(e));
     this.el.addEventListener("keydown", (e) => this.onKey(e));
+    this.el.addEventListener("contextmenu", (e) => this.onContextMenu(e));
   }
 
   render(props: CanvasProps): void {
@@ -115,30 +166,154 @@ export class CircuitCanvas {
     const active = document.activeElement;
     const focused =
       active instanceof SVGElement ? active.dataset.part : undefined;
+    const focusedPort =
+      active instanceof SVGElement ? active.dataset.port : undefined;
     this.el.replaceChildren();
     this.el.classList.toggle("read-only", Boolean(props.readOnly));
     // Grow with the circuit: real pixels, scrolled by the wrapper, so text
     // never shrinks on big designs.
+    const items = [
+      ...props.design.parts.map((p) => ({ pos: p.pos, shape: this.shape(p) })),
+      ...Object.values(props.design.port_pos ?? {}).map((pos) => ({
+        pos,
+        shape: PORT_SHAPE,
+      })),
+    ];
+    this.layout = canvasSize(items);
+    // Zoomed out, the same pane shows more canvas.
     this.size = canvasSize(
-      props.design.parts.map((p) => ({ pos: p.pos, shape: this.shape(p) })),
+      items,
+      this.fill && {
+        width: this.fill.width / this.zoom,
+        height: this.fill.height / this.zoom,
+      },
     );
     this.el.setAttribute(
       "viewBox",
       `0 0 ${this.size.width} ${this.size.height}`,
     );
-    this.el.style.width = `${this.size.width}px`;
+    this.el.style.width = `${this.size.width * this.zoom}px`;
+    this.el.style.height = `${this.size.height * this.zoom}px`;
+    this.el.classList.toggle(
+      "wiring",
+      Boolean(this.pending) || this.mode.kind === "wire",
+    );
     this.drawGrid();
     this.drawWires();
     for (const part of props.design.parts) this.drawPart(part);
     this.drawPorts();
     this.drawPendingWire();
-    // Keep keyboard focus on the part being moved.
+    // Keep keyboard focus on the part or port being moved.
     const keep = focused ?? this.focusPart;
+    const keepPort = focusedPort ?? this.focusPort;
     if (keep)
       this.el
         .querySelector<SVGGElement>(`[data-part="${CSS.escape(keep)}"]`)
         ?.focus();
+    else if (keepPort)
+      this.el
+        .querySelector<SVGGElement>(`[data-port="${CSS.escape(keepPort)}"]`)
+        ?.focus();
     this.focusPart = null;
+    this.focusPort = null;
+  }
+
+  /**
+   * Makes the canvas at least as big as its scrolling container, and keeps
+   * it so when the container resizes (window resize, side panel changes).
+   */
+  fillContainer(container: HTMLElement): void {
+    this.container = container;
+    // Ctrl/⌘ + wheel (and trackpad pinch) zooms around the pointer.
+    container.addEventListener(
+      "wheel",
+      (e) => {
+        if (!e.ctrlKey && !e.metaKey) return;
+        e.preventDefault();
+        this.setZoom(this.zoom * Math.exp(-e.deltaY * 0.002), {
+          x: e.clientX,
+          y: e.clientY,
+        });
+      },
+      { passive: false },
+    );
+    new ResizeObserver(() => {
+      const fill = {
+        width: container.clientWidth,
+        height: container.clientHeight,
+      };
+      if (fill.width === this.fill?.width && fill.height === this.fill?.height)
+        return;
+      this.fill = fill;
+      if (this.props) this.render(this.props);
+    }).observe(container);
+  }
+
+  getZoom(): number {
+    return this.zoom;
+  }
+
+  /**
+   * Zooms to `z`, keeping the canvas point under `anchor` (a screen
+   * position; default: the middle of the pane) where it is.
+   */
+  setZoom(z: number, anchor?: { x: number; y: number }): void {
+    const next = clampZoom(Math.round(z * 100) / 100);
+    if (next === this.zoom || !this.props) return;
+    const pane = this.container?.getBoundingClientRect();
+    const at =
+      anchor ??
+      (pane
+        ? { x: pane.left + pane.width / 2, y: pane.top + pane.height / 2 }
+        : { x: 0, y: 0 });
+    const point = this.toCanvas(at.x, at.y);
+    this.zoom = next;
+    this.render(this.props);
+    if (this.container && pane) {
+      this.container.scrollLeft = point[0] * next - (at.x - pane.left);
+      this.container.scrollTop = point[1] * next - (at.y - pane.top);
+    }
+    this.events.zoomed?.(next);
+  }
+
+  /** Zooms and scrolls so the whole circuit is in view. */
+  fit(): void {
+    if (!this.props || !this.container) return;
+    const pts: [number, number, number, number][] = [];
+    for (const p of this.props.design.parts) {
+      if (!p.pos) continue;
+      const s = this.shape(p);
+      pts.push([
+        p.pos[0] - s.width / 2 - 20,
+        p.pos[1] - s.height / 2 - 30,
+        p.pos[0] + s.width / 2 + 20,
+        p.pos[1] + s.height / 2 + 10,
+      ]);
+    }
+    for (const name of [...this.props.inputs, ...this.props.outputs]) {
+      const at = this.portAt(name);
+      if (at) pts.push([at[0] - 130, at[1] - 20, at[0] + 130, at[1] + 20]);
+    }
+    if (!pts.length) return;
+    const x = Math.max(0, Math.min(...pts.map((p) => p[0])));
+    const y = Math.max(0, Math.min(...pts.map((p) => p[1])));
+    const box = {
+      x,
+      y,
+      width: Math.max(...pts.map((p) => p[2])) - x,
+      height: Math.max(...pts.map((p) => p[3])) - y,
+    };
+    const pane = {
+      width: this.container.clientWidth,
+      height: this.container.clientHeight,
+    };
+    this.zoom = fitZoom(box, pane);
+    this.render(this.props);
+    this.container.scrollLeft =
+      (box.x + box.width / 2) * this.zoom - pane.width / 2;
+    this.container.scrollTop =
+      (box.y + box.height / 2) * this.zoom - pane.height / 2;
+    this.events.zoomed?.(this.zoom);
   }
 
   /** Converts a client (screen) position to canvas coordinates. */
@@ -156,16 +331,26 @@ export class CircuitCanvas {
   }
 
   private point(e: Endpoint): Point | undefined {
-    if ("port" in e)
-      return portPoint(
-        e.port,
-        this.props.inputs,
-        this.props.outputs,
-        this.size,
-      );
+    if ("port" in e) return this.portAt(e.port);
     const part = this.props.design.parts.find((p) => p.id === e.part);
     if (!part?.pos) return undefined;
     return pinPoint(part.pos, this.shape(part), e.pin);
+  }
+
+  private portAt(name: string): Point | undefined {
+    return portPoint(
+      name,
+      this.props.inputs,
+      this.props.outputs,
+      this.layout,
+      this.props.design.port_pos,
+    );
+  }
+
+  /** "Wired: gate: input a. " for screen readers, or "Not wired. ". */
+  private wiredText(owner: { part: string } | { port: string }): string {
+    const s = connectionSummary(this.props.design, owner, this.props.inputs);
+    return s ? t("canvas.wired", { list: s }) : t("canvas.notWired");
   }
 
   private value(e: Endpoint): Value | undefined {
@@ -269,7 +454,7 @@ export class CircuitCanvas {
         "data-part": id,
         tabindex: 0,
         role: "button",
-        "aria-label": `${name} ${id}${state ? `, ${state}` : ""}${shorted ? ", part of a short circuit" : ""}. Arrow keys move it, Delete removes it.`,
+        "aria-label": `${name} ${id}${state ? `, ${stateText(state)}` : ""}${shorted ? t("canvas.partShort") : ""}. ${this.wiredText({ part: id })}${t("canvas.partKeys")}`,
       },
       this.el,
     );
@@ -297,7 +482,12 @@ export class CircuitCanvas {
         line("M-4,-16 H10 V-30");
         line("M-4,16 H10 V30");
         svg("text", { x: 16, y: -3, class: "part-label" }, g, id);
-        svg("text", { x: 16, y: 12, class: "part-state" }, g, state ?? "");
+        svg(
+          "text",
+          { x: 16, y: 12, class: "part-state" },
+          g,
+          state ? stateText(state) : "",
+        );
         break;
       }
       case "vdd":
@@ -336,7 +526,9 @@ export class CircuitCanvas {
             class: "part-label",
           },
           g,
-          `${kind === "split" ? "Split" : "Join"} ${part.width ?? ""}`,
+          t(kind === "split" ? "canvas.split" : "canvas.join", {
+            w: part.width ?? "",
+          }),
         );
         for (const pin of shape.pins) {
           if (pin.pin === "in" || pin.pin === "out") continue;
@@ -390,7 +582,9 @@ export class CircuitCanvas {
               class: "pin-label",
             },
             g,
-            part.shared?.includes(pin.pin) ? `${pin.pin} (shared)` : pin.pin,
+            part.shared?.includes(pin.pin)
+              ? t("canvas.shared", { pin: pin.pin })
+              : pin.pin,
           );
         }
       }
@@ -411,7 +605,7 @@ export class CircuitCanvas {
       const end: Endpoint = { part: id, pin: pin.pin };
       const pending = this.pending && sameEndpoint(this.pending, end);
       const v = this.value(end);
-      svg(
+      const hit = svg(
         "circle",
         {
           cx: pin.at[0],
@@ -422,6 +616,17 @@ export class CircuitCanvas {
           "data-owner": id,
         },
         g,
+      );
+      const bits = pinWidth(part, pin.pin, this.props.componentPorts);
+      svg(
+        "title",
+        {},
+        hit,
+        t("canvas.pinTitle", {
+          pin: `${id}.${pin.pin}`,
+          bits: bits > 1 ? t("canvas.pinBits", { n: bits }) : "",
+          value: v ?? "–",
+        }),
       );
       svg(
         "circle",
@@ -441,7 +646,7 @@ export class CircuitCanvas {
   private drawPorts(): void {
     const { inputs, outputs, inputValues, view } = this.props;
     for (const name of [...inputs, ...outputs]) {
-      const at = portPoint(name, inputs, outputs, this.size);
+      const at = this.portAt(name);
       if (!at) continue;
       const isIn = inputs.includes(name);
       const value = isIn
@@ -449,12 +654,29 @@ export class CircuitCanvas {
         : (view?.outputs.find(([n]) => n === name)?.[1] ?? "–");
       const flagged = this.props.highlightPorts.has(name);
       const bus = (this.props.portWidths?.[name] ?? 1) > 1;
+      const selected =
+        this.selection?.kind === "port" && this.selection.name === name;
       const g = svg(
         "g",
         {
-          class: `port ${isIn ? "in" : "out"} ${valueClass(value)}${bus ? " bus" : ""}${flagged ? " flagged" : ""}`,
+          class: `port ${isIn ? "in" : "out"} ${valueClass(value)}${bus ? " bus" : ""}${flagged ? " flagged" : ""}${selected ? " selected" : ""}`,
           transform: `translate(${at[0]},${at[1]})`,
           "data-port": name,
+          ...(this.props.readOnly
+            ? {}
+            : {
+                tabindex: 0,
+                role: "button",
+                "aria-label": t(
+                  isIn ? "canvas.portLabelIn" : "canvas.portLabelOut",
+                  {
+                    name,
+                    value,
+                    wired: this.wiredText({ port: name }),
+                    bus: bus ? 1 : 0,
+                  },
+                ),
+              }),
         },
         this.el,
       );
@@ -472,14 +694,15 @@ export class CircuitCanvas {
         g,
         label,
       );
+      if (!isIn) svg("title", {}, g, t("canvas.outTitle", { name }));
       if (isIn)
         svg(
           "title",
           {},
           g,
           bus
-            ? `Input ${name}: click to type a number`
-            : `Input ${name}: click to flip between 0 and 1`,
+            ? t("canvas.inTitleBus", { name })
+            : t("canvas.inTitle", { name }),
         );
       const pending =
         this.pending && "port" in this.pending && this.pending.port === name;
@@ -536,6 +759,8 @@ export class CircuitCanvas {
   }
 
   private onDown(e: PointerEvent): void {
+    // Right and middle buttons don't edit; right-click opens the menu.
+    if (e.button !== 0) return;
     if (this.props.readOnly) {
       const id =
         e.target instanceof Element
@@ -565,9 +790,21 @@ export class CircuitCanvas {
     }
     this.pending = null;
     const target = e.target instanceof Element ? e.target : null;
-    const port = target?.closest<SVGElement>(".port.in");
-    if (port?.dataset.port) {
-      this.events.toggleInput(port.dataset.port);
+    const port = target?.closest<SVGGElement>(".port");
+    const portName = port?.dataset.port;
+    const portAt = portName ? this.portAt(portName) : undefined;
+    if (port && portName && portAt) {
+      // Press on a port's box: drag moves it; a click on an input flips it.
+      this.el.setPointerCapture(e.pointerId);
+      this.mode = {
+        kind: "port",
+        name: portName,
+        isInput: port.classList.contains("in"),
+        offset: [portAt[0] - this.pointer[0], portAt[1] - this.pointer[1]],
+        start: this.pointer,
+        moved: false,
+        base: this.props.design,
+      };
       return;
     }
     const partEl = target?.closest<SVGGElement>("[data-part]");
@@ -596,12 +833,34 @@ export class CircuitCanvas {
     this.selection = wireEl
       ? { kind: "wire", index: Number(wireEl.dataset.wire) }
       : null;
+    if (!wireEl && this.container) {
+      // Empty canvas: drag to pan.
+      this.el.setPointerCapture(e.pointerId);
+      this.mode = {
+        kind: "pan",
+        client: [e.clientX, e.clientY],
+        scroll: [this.container.scrollLeft, this.container.scrollTop],
+        moved: false,
+      };
+    }
     this.render(this.props);
   }
 
   private onMove(e: PointerEvent): void {
     this.pointer = this.toCanvas(e.clientX, e.clientY);
     const m = this.mode;
+    if (m.kind === "pan") {
+      const dx = e.clientX - m.client[0];
+      const dy = e.clientY - m.client[1];
+      if (!m.moved && Math.hypot(dx, dy) < 3) return;
+      m.moved = true;
+      this.el.classList.add("panning");
+      if (this.container) {
+        this.container.scrollLeft = m.scroll[0] - dx;
+        this.container.scrollTop = m.scroll[1] - dy;
+      }
+      return;
+    }
     if (m.kind === "drag") {
       const dist = Math.hypot(
         this.pointer[0] - m.start[0],
@@ -613,6 +872,18 @@ export class CircuitCanvas {
         snap([this.pointer[0] + m.offset[0], this.pointer[1] + m.offset[1]]),
       );
       this.events.change(movePart(m.base, m.id, pos), false);
+    } else if (m.kind === "port") {
+      const dist = Math.hypot(
+        this.pointer[0] - m.start[0],
+        this.pointer[1] - m.start[1],
+      );
+      if (!m.moved && dist < 3) return;
+      m.moved = true;
+      const pos = clampPort(
+        snap([this.pointer[0] + m.offset[0], this.pointer[1] + m.offset[1]]),
+        m.isInput,
+      );
+      this.events.change(movePort(m.base, m.name, pos), false);
     } else if (m.kind === "wire" || this.pending) {
       if (
         m.kind === "wire" &&
@@ -627,8 +898,17 @@ export class CircuitCanvas {
   private onUp(e: PointerEvent): void {
     const m = this.mode;
     this.mode = { kind: "idle" };
+    if (m.kind === "pan") {
+      this.el.classList.remove("panning");
+      return;
+    }
     if (m.kind === "drag") {
       if (m.moved) this.events.change(this.props.design, true);
+      return;
+    }
+    if (m.kind === "port") {
+      if (m.moved) this.events.change(this.props.design, true);
+      else if (m.isInput) this.events.toggleInput(m.name);
       return;
     }
     if (m.kind === "wire") {
@@ -648,6 +928,71 @@ export class CircuitCanvas {
         this.render(this.props);
       }
     }
+  }
+
+  /** What a right-click or menu key refers to. */
+  private targetAt(el: EventTarget | null, at: Point): MenuTarget {
+    const t = el instanceof Element ? el : null;
+    const part = t?.closest<SVGElement>("[data-part]")?.dataset.part;
+    if (part) return { kind: "part", id: part };
+    const port = t?.closest<SVGElement>("[data-port]")?.dataset.port;
+    if (port) return { kind: "port", name: port };
+    const wire = t?.closest<SVGElement>("[data-wire]")?.dataset.wire;
+    if (wire !== undefined) return { kind: "wire", index: Number(wire) };
+    return { kind: "canvas", at: clampToCanvas(snap(at)) };
+  }
+
+  /** Selects the menu's target so it's visibly what the menu acts on. */
+  private showMenu(target: MenuTarget, screen: { x: number; y: number }): void {
+    this.mode = { kind: "idle" };
+    this.pending = null;
+    this.selection =
+      target.kind === "canvas"
+        ? null
+        : target.kind === "part"
+          ? { kind: "part", id: target.id }
+          : target.kind === "wire"
+            ? { kind: "wire", index: target.index }
+            : { kind: "port", name: target.name };
+    this.events.select?.(target.kind === "part" ? target.id : null);
+    this.render(this.props);
+    this.events.menu?.(target, screen);
+  }
+
+  private onContextMenu(e: MouseEvent): void {
+    if (this.props.readOnly || !this.events.menu) return;
+    e.preventDefault();
+    const at = this.toCanvas(e.clientX, e.clientY);
+    this.showMenu(this.targetAt(e.target, at), { x: e.clientX, y: e.clientY });
+  }
+
+  /** The menu key on the canvas: the focused part or port, the selected
+   * wire, or the canvas itself (adding parts in its visible corner). */
+  private menuFromKeyboard(e: KeyboardEvent): void {
+    if (!this.events.menu) return;
+    e.preventDefault();
+    const focused = e.target instanceof SVGGElement ? e.target : null;
+    if (focused && (focused.dataset.part || focused.dataset.port)) {
+      const r = focused.getBoundingClientRect();
+      this.showMenu(this.targetAt(focused, [0, 0]), {
+        x: r.left + r.width / 2,
+        y: r.bottom,
+      });
+      return;
+    }
+    const view = (this.el.parentElement ?? this.el).getBoundingClientRect();
+    const corner = { x: view.left + 60, y: view.top + 60 };
+    if (this.selection?.kind === "wire") {
+      this.showMenu({ kind: "wire", index: this.selection.index }, corner);
+      return;
+    }
+    this.showMenu(
+      {
+        kind: "canvas",
+        at: clampToCanvas(snap(this.toCanvas(corner.x + 100, corner.y + 60))),
+      },
+      corner,
+    );
   }
 
   /** True (and opens the part) if this press is the second of a double-click. */
@@ -677,7 +1022,32 @@ export class CircuitCanvas {
         this.events.openPart(focused);
       return;
     }
+    if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+      const zoomKey: Record<string, () => void> = {
+        "+": () => this.setZoom(zoomStepUp(this.zoom)),
+        "=": () => this.setZoom(zoomStepUp(this.zoom)),
+        "-": () => this.setZoom(zoomStepDown(this.zoom)),
+        "0": () => this.setZoom(1),
+      };
+      const act = zoomKey[e.key];
+      if (act) {
+        e.preventDefault();
+        act();
+        return;
+      }
+    }
+    if (e.key === "ContextMenu" || (e.key === "F10" && e.shiftKey)) {
+      this.menuFromKeyboard(e);
+      return;
+    }
+    const port =
+      e.target instanceof SVGElement ? e.target.dataset.port : undefined;
+    if (port && e.key !== "Escape") {
+      this.onPortKey(e, port);
+      return;
+    }
     if (e.key === "Escape") {
+      if (this.pending) this.events.message("");
       this.pending = null;
       this.selection = null;
       this.render(this.props);
@@ -725,13 +1095,50 @@ export class CircuitCanvas {
     }
   }
 
+  /** Keys on a focused port: arrows move it, Enter/Space flips an input. */
+  private onPortKey(e: KeyboardEvent, name: string): void {
+    const isInput = this.props.inputs.includes(name);
+    if ((e.key === "Enter" || e.key === " ") && isInput) {
+      e.preventDefault();
+      this.focusPort = name;
+      this.events.toggleInput(name);
+      return;
+    }
+    const step = e.shiftKey ? 50 : 10;
+    const delta: Record<string, Point> = {
+      ArrowLeft: [-step, 0],
+      ArrowRight: [step, 0],
+      ArrowUp: [0, -step],
+      ArrowDown: [0, step],
+    };
+    const d = delta[e.key];
+    const at = this.portAt(name);
+    if (!d || !at) return;
+    e.preventDefault();
+    this.focusPort = name;
+    this.events.change(
+      movePort(
+        this.props.design,
+        name,
+        clampPort([at[0] + d[0], at[1] + d[1]], isInput),
+      ),
+      true,
+    );
+  }
+
   /** Used by the keyboard panel: highlight what's selected there. */
   select(sel: Selection): void {
     this.selection = sel;
     this.render(this.props);
   }
 
-  /** Key of every endpoint currently drawn, for the connections panel. */
+  /** A part's pin names, in the order they're drawn. */
+  pinsOf(id: string): string[] {
+    const part = this.props.design.parts.find((p) => p.id === id);
+    return part ? this.shape(part).pins.map((p) => p.pin) : [];
+  }
+
+  /** Every endpoint currently drawn (for the Connect… menu). */
   endpoints(): Endpoint[] {
     const out: Endpoint[] = [];
     for (const p of [...this.props.inputs, ...this.props.outputs])
@@ -751,4 +1158,12 @@ export function valueClass(v: string): string {
   if (v.includes("X")) return "vX";
   if (v.includes("Z")) return "vZ";
   return "vbus";
+}
+
+const zoomStepUp = (z: number) => zoomStep(z, 1);
+const zoomStepDown = (z: number) => zoomStep(z, -1);
+
+/** A transistor's state ("on", "off", "maybe") in the current language. */
+function stateText(state: string): string {
+  return t(`state.${state}` as Key);
 }

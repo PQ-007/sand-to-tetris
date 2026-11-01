@@ -1,0 +1,145 @@
+{
+  "format": 1,
+  "component": "dmux4way",
+  "parts": [
+    {
+      "id": "s",
+      "kind": "split",
+      "pos": [
+        170,
+        330
+      ],
+      "width": 2
+    },
+    {
+      "id": "hi",
+      "kind": "dmux",
+      "pos": [
+        300,
+        230
+      ]
+    },
+    {
+      "id": "ab",
+      "kind": "dmux",
+      "pos": [
+        460,
+        160
+      ]
+    },
+    {
+      "id": "cd",
+      "kind": "dmux",
+      "pos": [
+        460,
+        320
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "sel"
+      },
+      "to": {
+        "part": "s",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "port": "in"
+      },
+      "to": {
+        "part": "hi",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "1"
+      },
+      "to": {
+        "part": "hi",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "hi",
+        "pin": "a"
+      },
+      "to": {
+        "part": "ab",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "hi",
+        "pin": "b"
+      },
+      "to": {
+        "part": "cd",
+        "pin": "in"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "0"
+      },
+      "to": {
+        "part": "ab",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "s",
+        "pin": "0"
+      },
+      "to": {
+        "part": "cd",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "ab",
+        "pin": "a"
+      },
+      "to": {
+        "port": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "ab",
+        "pin": "b"
+      },
+      "to": {
+        "port": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "cd",
+        "pin": "a"
+      },
+      "to": {
+        "port": "c"
+      }
+    },
+    {
+      "from": {
+        "part": "cd",
+        "pin": "b"
+      },
+      "to": {
+        "port": "d"
+      }
+    }
+  ]
+}

@@ -1,7 +1,13 @@
 // App-wide state: the core, the levels and the learner's progress.
 import { levelFiles } from "virtual:s2t-content";
 import { activeFast, loadFast, saveFast, type FastSet } from "./fast";
-import { statuses, type LevelEntry, type Progress, type Status } from "./game";
+import {
+  needsRecheck,
+  statuses,
+  type LevelEntry,
+  type Progress,
+  type Status,
+} from "./game";
 import { openStore, type ProgressStore } from "./progress";
 import { check, levelInfo, loadCore } from "./sim/core";
 import type { Design } from "./sim/types";
@@ -41,6 +47,12 @@ export function recompute(a: App): void {
   a.status = statuses(a.levels, a.progress, check);
 }
 
+/** Tells the page chrome (the header's levels meter) to refresh. */
+function progressChanged(): void {
+  if (typeof document !== "undefined")
+    document.dispatchEvent(new CustomEvent("s2t-progress"));
+}
+
 export async function saveDesign(
   a: App,
   id: string,
@@ -48,13 +60,15 @@ export async function saveDesign(
   passed?: boolean,
 ): Promise<void> {
   const prev = a.progress[id];
+  const recheck = needsRecheck(a.progress, id, passed);
   a.progress[id] = {
     design,
     passed: passed ?? prev?.passed ?? false,
     updated: Date.now(),
   };
-  recompute(a);
+  if (recheck) recompute(a);
   await a.store.save(id, a.progress[id]);
+  progressChanged();
 }
 
 export async function replaceProgress(
@@ -64,6 +78,7 @@ export async function replaceProgress(
   a.progress = progress;
   recompute(a);
   await a.store.replaceAll(progress);
+  progressChanged();
 }
 
 export function levelEntry(a: App, id: string): LevelEntry | undefined {

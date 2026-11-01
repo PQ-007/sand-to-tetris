@@ -1,0 +1,116 @@
+id = "computer"
+name = "Computer"
+layer = 4
+goal = """
+Put it together: your CPU with the memory map as its data memory. The CPU's addrM, outM and writeM drive memory's addr, d and load; memory's q comes back as the CPU's inM; key goes to the memory. Show the CPU's four pins as the computer's outputs.
+The program ROM is plugged in from outside: the tests feed instr with the instruction at pc, like a real ROM chip would.
+"""
+sequential = true
+inputs = ["instr", "key", "reset", "clk"]
+outputs = ["pc", "addrM", "outM", "writeM"]
+requires = ["cpu", "memory"]
+widths = { instr = 16, key = 16, pc = 16, addrM = 16, outM = 16 }
+model = "computer"
+random_tests = 100
+truth_table = """
+instr key reset clk | pc addrM outM writeM
+# reset
+0x4000 65 1 0 | - - - 0
+0x4000 65 1 1 | 0 0 0 0
+# SET r0, 0
+0x4000 65 0 0 | 0 0 0 0
+0x4000 65 0 1 | 1 0 0 0
+# SET r1, 4
+0x4404 65 0 0 | 1 - 0 0
+0x4404 65 0 1 | 2 8 0 0
+# ADD r0, r0, r1
+0x0010 65 0 0 | 2 4 4 0
+0x0010 65 0 1 | 3 8 4 0
+# SUBI r1, 1
+0x4701 65 0 0 | 3 3 4 0
+0x4701 65 0 1 | 4 2 4 0
+# JNZ -2
+0xcbfe 65 0 0 | 4 - - 0
+0xcbfe 65 0 1 | 2 - - 0
+# ADD r0, r0, r1
+0x0010 65 0 0 | 2 7 3 0
+0x0010 65 0 1 | 3 10 3 0
+# SUBI r1, 1
+0x4701 65 0 0 | 3 2 7 0
+0x4701 65 0 1 | 4 1 7 0
+# JNZ -2
+0xcbfe 65 0 0 | 4 - - 0
+0xcbfe 65 0 1 | 2 - - 0
+# ADD r0, r0, r1
+0x0010 65 0 0 | 2 9 2 0
+0x0010 65 0 1 | 3 11 2 0
+# SUBI r1, 1
+0x4701 65 0 0 | 3 1 9 0
+0x4701 65 0 1 | 4 0 9 0
+# JNZ -2
+0xcbfe 65 0 0 | 4 - - 0
+0xcbfe 65 0 1 | 2 - - 0
+# ADD r0, r0, r1
+0x0010 65 0 0 | 2 10 1 0
+0x0010 65 0 1 | 3 11 1 0
+# SUBI r1, 1
+0x4701 65 0 0 | 3 0 10 0
+0x4701 65 0 1 | 4 65535 10 0
+# JNZ -2
+0xcbfe 65 0 0 | 4 - - 0
+0xcbfe 65 0 1 | 5 - - 0
+# SET r2, 100
+0x4864 65 0 0 | 5 - - 0
+0x4864 65 0 1 | 6 200 - 0
+# STORE r0, [r2 + 0]
+0xa100 65 0 0 | 6 100 10 1
+0xa100 65 0 1 | 7 100 10 1
+# LOAD r3, [r2 + 0]
+0x8d00 65 0 0 | 7 100 10 0
+0x8d00 65 0 1 | 8 100 10 0
+# SET r4, 0
+0x5000 65 0 0 | 8 - 10 0
+0x5000 65 0 1 | 9 0 10 0
+# SETH r4, 64
+0x5140 65 0 0 | 9 64 0 0
+0x5140 65 0 1 | 10 16448 16384 0
+# STORE r3, [r4 + 1]
+0xae01 65 0 0 | 10 16385 10 1
+0xae01 65 0 1 | 11 16385 10 1
+# LOAD r5, [r4 + 1]
+0x9601 65 0 0 | 11 16385 10 0
+0x9601 65 0 1 | 12 16385 10 0
+# STORE r5, [r2 + 1]
+0xb501 65 0 0 | 12 101 10 1
+0xb501 65 0 1 | 13 101 10 1
+# SET r6, 0
+0x5800 65 0 0 | 13 - 10 0
+0x5800 65 0 1 | 14 0 10 0
+# SETH r6, 96
+0x5960 65 0 0 | 14 96 0 0
+0x5960 65 0 1 | 15 24672 24576 0
+# LOAD r6, [r6 + 0]
+0x9b00 65 0 0 | 15 24576 10 0
+0x9b00 65 0 1 | 16 65 10 0
+# STORE r6, [r2 + 2]
+0xb902 65 0 0 | 16 102 65 1
+0xb902 65 0 1 | 17 102 65 1
+# SETH r4, 67
+0x5143 65 0 0 | 17 16451 16384 0
+0x5143 65 0 1 | 18 17219 17152 0
+# LOAD r5, [r4 + 0]
+0x9600 65 0 0 | 18 17152 10 0
+0x9600 65 0 1 | 19 17152 10 0
+# STORE r5, [r2 + 3]
+0xb503 65 0 0 | 19 103 0 1
+0xb503 65 0 1 | 20 103 0 1
+# JMP 0
+0xc000 65 0 0 | 20 20 10 0
+0xc000 65 0 1 | 20 20 10 0
+# JMP 0
+0xc000 65 0 0 | 20 20 10 0
+0xc000 65 0 1 | 20 20 10 0
+"""
+
+[hints]
+wrong = "The trace stores values and loads them back: if a LOAD shows the wrong value on outM a step later, check that memory's q reaches the CPU's inM and that writeM reaches memory's load."

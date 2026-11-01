@@ -1,0 +1,80 @@
+{
+  "format": 1,
+  "component": "bit",
+  "parts": [
+    {
+      "id": "choose",
+      "kind": "mux",
+      "pos": [
+        320,
+        220
+      ]
+    },
+    {
+      "id": "ff",
+      "kind": "dff",
+      "pos": [
+        500,
+        220
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "part": "ff",
+        "pin": "q"
+      },
+      "to": {
+        "part": "choose",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "choose",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "load"
+      },
+      "to": {
+        "part": "choose",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "choose",
+        "pin": "out"
+      },
+      "to": {
+        "part": "ff",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "ff",
+        "pin": "clk"
+      }
+    },
+    {
+      "from": {
+        "part": "ff",
+        "pin": "q"
+      },
+      "to": {
+        "port": "q"
+      }
+    }
+  ]
+}

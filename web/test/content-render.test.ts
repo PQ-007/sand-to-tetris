@@ -42,6 +42,48 @@ describe("glossary links", () => {
     expect(chapter?.html).toContain('data-term="p-n-junction">junction</a>');
   });
 
+  it("keeps emphasis around and next to links", () => {
+    const { chapter } = renderChapter(
+      `${front}Bold **[[transistor]]** and *plain* and **in series**.\n`,
+      "c.md",
+    );
+    expect(chapter?.html).toContain('<strong><a class="term"');
+    expect(chapter?.html).toContain("<em>plain</em>");
+    expect(chapter?.html).toContain("<strong>in series</strong>");
+    expect(chapter?.html).not.toContain("**");
+  });
+
+  it("allows a [[shown\\|id]] link inside a table cell", () => {
+    const { chapter, errors } = renderChapter(
+      `${front}| a | b |\n|---|---|\n| 1 | **[[junction\\|p-n-junction]]** |\n`,
+      "c.md",
+    );
+    expect(errors).toEqual([]);
+    expect(chapter?.html).toContain(
+      '<strong><a class="term" href="#/glossary/p-n-junction" data-term="p-n-junction">junction</a></strong>',
+    );
+  });
+
+  it("reports a glossary link that a table cut in half", () => {
+    const { errors } = renderChapter(
+      `${front}| a | b |\n|---|---|\n| 1 | [[junction|p-n-junction]] |\n`,
+      "c.md",
+    );
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(
+      /^c\.md:8: .*\[\[junction.*wasn't rendered.*\\\|/,
+    );
+  });
+
+  it("wraps tables so they can scroll on narrow screens", () => {
+    const { chapter } = renderChapter(
+      `${front}| a | b |\n|---|---|\n| 1 | 2 |\n`,
+      "c.md",
+    );
+    expect(chapter?.html).toMatch(/^<div class="table-scroll"><table>/);
+    expect(chapter?.html).toContain("</table></div>");
+  });
+
   it("reports an unknown term with file and line", () => {
     const { errors } = renderChapter(
       `${front}\nFine line.\n\nA [[flux capacitor]].\n`,
@@ -142,5 +184,49 @@ describe("data files", () => {
   it("slugifies headings and terms", () => {
     expect(slugify("p-n Junction!")).toBe("p-n-junction");
     expect(slugify("What is a computer?")).toBe("what-is-a-computer");
+  });
+});
+
+describe("translated chapters", () => {
+  const mn = createRenderer({
+    glossary,
+    sources,
+    knownTags: ["mosfet-demo"],
+    labels: {
+      sources: "Эх сурвалж",
+      contested: "Маргаантай:",
+      checked: "Шалгасан:",
+      estimate: "Тооцоолол:",
+    },
+  });
+
+  it("take their heading ids from the original, so links work in both", () => {
+    const { chapter, errors } = mn.renderChapter(
+      `${front}## Нэгдүгээр\n\nТекст[@shaky].\n\n### Дэд\n\n## Хоёрдугаар\n`,
+      "mn.md",
+      { ids: ["first", "sub", "second"] },
+    );
+    expect(errors).toEqual([]);
+    expect(chapter?.toc).toEqual([
+      { id: "first", text: "Нэгдүгээр" },
+      { id: "second", text: "Хоёрдугаар" },
+    ]);
+    expect(chapter?.html).toContain('<h3 id="sub">Дэд</h3>');
+    expect(chapter?.html).toContain('<h2 id="sources">Эх сурвалж</h2>');
+    expect(chapter?.html).toContain("<strong>Маргаантай:</strong>");
+  });
+
+  it("must have the same headings as the original", () => {
+    const { errors } = mn.renderChapter(`${front}## Ганц\n`, "mn.md", {
+      ids: ["first", "second"],
+    });
+    expect(errors).toEqual([
+      "mn.md: has 1 heading but the original has 2; translate every heading, in order",
+    ]);
+  });
+
+  it("lists every heading id, for translations to follow", () => {
+    const { chapter } = renderChapter(`${front}## One\n\n### Two\n`, "c.md");
+    expect(chapter?.headingIds).toEqual(["one", "two"]);
   });
 });

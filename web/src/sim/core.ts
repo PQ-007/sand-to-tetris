@@ -3,11 +3,13 @@
 import init, * as wasm from "./pkg/s2t_wasm.js";
 import type {
   Design,
+  IsaTrace,
   LevelInfo,
   LibraryInput,
   MatchReport,
   Report,
   SimView,
+  StepsView,
 } from "./types";
 
 let ready: Promise<void> | undefined;
@@ -25,6 +27,16 @@ export async function getCoreVersion(): Promise<string> {
 
 // The functions below need loadCore() to have finished.
 
+/** An instruction word as assembly, e.g. "SET r1, 5" (docs/ISA.md). */
+export function disassemble(word: number): string {
+  return wasm.disassemble(word & 0xffff);
+}
+
+/** Runs `rom` on the reference CPU from reset, for `steps` instructions. */
+export function isaTrace(rom: number[], steps: number): IsaTrace {
+  return JSON.parse(wasm.isaTrace(JSON.stringify(rom), steps)) as IsaTrace;
+}
+
 export function levelInfo(toml: string): LevelInfo {
   return JSON.parse(wasm.levelInfo(toml)) as LevelInfo;
 }
@@ -39,11 +51,38 @@ export function check(
   ) as Report;
 }
 
+/**
+ * Runs input steps in order on one circuit (built once), continuing from
+ * `state`: the view after the last step, and each step's outputs.
+ */
+export function simulateSteps(
+  library: LibraryInput,
+  level: string,
+  design: Design,
+  steps: Record<string, number>[],
+  state: Record<string, string> = {},
+): StepsView {
+  return JSON.parse(
+    wasm.simulateSteps(
+      JSON.stringify(library),
+      level,
+      JSON.stringify(design),
+      JSON.stringify(steps),
+      JSON.stringify(state),
+    ),
+  ) as StepsView;
+}
+
+/**
+ * Simulates a design. Pass the previous view's `state` to continue from
+ * it, so latches and flip-flops remember; omit it to start from power-on.
+ */
 export function simulate(
   library: LibraryInput,
   level: string,
   design: Design,
   inputs: Record<string, number>,
+  state: Record<string, string> = {},
 ): SimView {
   return JSON.parse(
     wasm.simulate(
@@ -51,6 +90,7 @@ export function simulate(
       level,
       JSON.stringify(design),
       JSON.stringify(inputs),
+      JSON.stringify(state),
     ),
   ) as SimView;
 }

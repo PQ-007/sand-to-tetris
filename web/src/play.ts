@@ -1,25 +1,59 @@
-// A level page: goal, toolbox, canvas, inputs, live truth table, Check,
-// and a keyboard/screen-reader panel listing every part and connection.
+// A level page: goal, toolbox, canvas, inputs, live truth table and Check.
+// Keyboard and screen-reader users work on the canvas itself: parts and
+// ports are focusable, say what they're wired to, and the actions menu
+// (menu key / Shift+F10) connects and disconnects them.
 import { fastIds, getApp, levelEntry, saveDesign, type App } from "./app";
+import {
+  connectMenu,
+  disconnectMenu,
+  menuFor,
+  pinMenu,
+  type MenuContext,
+  type MenuTarget,
+} from "./editor/actions";
 import { CircuitCanvas, type CanvasProps } from "./editor/canvas";
-import { clampToCanvas, freeSpot, snap, type Point } from "./editor/geometry";
+import {
+  clampToCanvas,
+  freeSpot,
+  snap,
+  zoomStep,
+  type Point,
+} from "./editor/geometry";
+import { openMenu } from "./editor/menu";
+import { drawWaveform } from "./editor/waveform-view";
+import type { Signal } from "./editor/waveform";
 import {
   addPart,
   addWire,
+  disconnect,
+  duplicatePart,
   emptyDesign,
   endpointKey,
   endpointLabel,
   History,
   removePart,
   removeWire,
+  resetPort,
   updatePart,
 } from "./editor/model";
-import { orderLevels, playLibrary, toolbox, type ToolboxItem } from "./game";
+import {
+  memoryParts,
+  orderLevels,
+  playLibrary,
+  toolbox,
+  type ToolboxItem,
+} from "./game";
+import { t, type Key } from "./i18n";
+import { diagnosticText, knownText, problemText } from "./messages";
 import { playHref } from "./router";
-import { check, simulate } from "./sim/core";
+import { levelGoal, levelHint, levelName } from "./text";
+import { check, disassemble, simulate, simulateSteps } from "./sim/core";
 import type {
   Design,
   Diagnostic,
+  Endpoint,
+  LevelInfo,
+  StepsView,
   Level,
   LibraryInput,
   Report,
@@ -44,6 +78,16 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return e;
 }
 
+/** Message text with `backticked` names shown as code. */
+function rich(text: string): Node[] {
+  return text.split("`").map((part, i) => {
+    if (i % 2 === 0) return document.createTextNode(part);
+    const code = document.createElement("code");
+    code.textContent = part;
+    return code;
+  });
+}
+
 /** Ports of every component kind, for drawing component boxes. */
 function componentPorts(a: App): CanvasProps["componentPorts"] {
   const out: CanvasProps["componentPorts"] = {};
@@ -51,7 +95,7 @@ function componentPorts(a: App): CanvasProps["componentPorts"] {
     out[l.info.level.id] = {
       inputs: l.info.level.inputs,
       outputs: l.info.level.outputs,
-      name: l.info.level.name,
+      name: levelName(l.info.level),
       widths: l.info.level.widths,
     };
   }
@@ -103,20 +147,26 @@ export async function mountPlay(
   root: HTMLElement,
   levelId: string,
 ): Promise<void> {
-  root.innerHTML = `<p class="loading">Loading the simulator…</p>`;
+  root.innerHTML = `<p class="loading">${esc(t("play.loading"))}</p>`;
   const a = await getApp();
   const entry = levelEntry(a, levelId);
   if (!entry) {
-    root.innerHTML = `<h1 tabindex="-1">No such level</h1><p><a href="#/levels">Back to the level map</a></p>`;
+    root.innerHTML = `<div class="narrow-page"><h1 tabindex="-1">${esc(t("play.noLevel"))}</h1><p><a href="#/levels">${esc(t("play.backToMap"))}</a></p></div>`;
     return;
   }
   const level = entry.info.level;
   const status = a.status[levelId];
   if (status === "locked") {
     const need = level.requires.filter((r) => a.status[r] !== "passed");
-    root.innerHTML = `<h1 tabindex="-1">${esc(level.name)} is locked</h1>
-      <p>Pass ${need.map((r) => `<a href="${playHref(r)}">${esc(levelEntry(a, r)?.info.level.name ?? r)}</a>`).join(" and ")} first.</p>
-      <p><a href="#/levels">Back to the level map</a></p>`;
+    const links = need
+      .map((r) => {
+        const req = levelEntry(a, r)?.info.level;
+        return `<a href="${playHref(r)}">${esc(req ? levelName(req) : r)}</a>`;
+      })
+      .join(esc(t("levels.and")));
+    root.innerHTML = `<div class="narrow-page"><h1 tabindex="-1">${esc(t("play.locked", { name: levelName(level) }))}</h1>
+      <p>${t("play.passFirst", { names: links })}</p>
+      <p><a href="#/levels">${esc(t("play.backToMap"))}</a></p></div>`;
     return;
   }
   new PlayPage(root, a, level, entry.info.table);
@@ -140,18 +190,41 @@ class PlayPage {
     class: "editor-status",
     "aria-live": "polite",
   });
-  private undoBtn = el("button", { type: "button" }, "Undo");
-  private redoBtn = el("button", { type: "button" }, "Redo");
+  private statusTimer = 0;
+  private emptyHint = el("p", { class: "canvas-empty" });
+  private zoomLabel = el(
+    "button",
+    { type: "button", title: t("play.zoomReset") },
+    "100%",
+  );
+  private undoBtn = el("button", { type: "button" }, t("play.undo"));
+  private redoBtn = el("button", { type: "button" }, t("play.redo"));
   private inputBox = el("div", { class: "input-toggles" });
   private tableBody = el("tbody");
+  /** What the live circuit holds (sequential levels): fed back into every
+   * simulation so latches and flip-flops remember. */
+  private memory: Record<string, string> = {};
+  /** For sequential levels: the test step the canvas is showing (null
+   * once the learner changes something). */
+  private currentStep: number | null = null;
+  /** The test run shown in the waveform: each step's outputs, and which
+   * steps fail. */
+  private testRun: { outputs: [string, string][][]; failed: Set<number> } = {
+    outputs: [],
+    failed: new Set(),
+  };
+  /** Live history for the waveform: inputs and outputs after each change. */
+  private liveLog: {
+    inputs: Record<string, number>;
+    outputs: [string, string][];
+  }[] = [];
+  private wave = el("div", { class: "wave-panel" });
+  private waveTab: "test" | "live" = "test";
   private result = el("div", { class: "check-result", "aria-live": "polite" });
   private problemList = el("ul", { class: "problems" });
-  private partsList = el("ul", { class: "kbd-list" });
-  private wiresList = el("ul", { class: "kbd-list" });
-  private fromSelect = el("select", { "aria-label": "Connect from" });
-  private toSelect = el("select", { "aria-label": "Connect to" });
   private inside = el("div", { class: "inside", hidden: "" });
   private stats = el("p", { class: "sim-stats", "aria-live": "polite" });
+  private slowNote = el("p", { class: "slow-note" });
   private propsBox = el("div", { class: "props" });
   private runsAs = el("ul", { class: "runs-as" });
   private selected: string | null = null;
@@ -160,10 +233,7 @@ class PlayPage {
     private root: HTMLElement,
     private app: App,
     private level: Level,
-    private table: {
-      inputs: [string, number][];
-      outputs: [string, number][];
-    }[],
+    private table: LevelInfo["table"],
   ) {
     const saved = app.progress[level.id]?.design;
     this.history = new History(saved ?? emptyDesign(level.id));
@@ -188,7 +258,11 @@ class PlayPage {
         this.openInside([
           { id, design: this.design, inputs: this.inputs, view: this.view },
         ]),
-      message: (t) => this.say(t),
+      message: (text) => this.say(text),
+      menu: (target, at) => this.showMenu(target, at),
+      zoomed: (z) => {
+        this.zoomLabel.textContent = `${Math.round(z * 100)}%`;
+      },
     });
     this.build();
     this.refresh(true);
@@ -205,188 +279,295 @@ class PlayPage {
     const ordered = orderLevels(this.app.levels).map((e) => e.info.level.id);
     const next = ordered[ordered.indexOf(l.id) + 1];
     this.root.innerHTML = `
-      <nav class="crumbs" aria-label="Breadcrumb"><a href="#/levels">Levels</a> › Layer ${l.layer} › ${esc(l.name)}</nav>
-      <h1 tabindex="-1">${esc(l.name)}${l.optional ? ' <span class="badge">side quest</span>' : ""}</h1>
-      <p class="goal">${esc(l.goal.trim())}</p>`;
+      <div class="play-head">
+        <nav class="crumbs" aria-label="${esc(t("play.crumbs"))}"><a href="#/levels">${esc(t("title.levels"))}</a> <span aria-hidden="true">/</span> ${esc(t("play.layerN", { n: l.layer }))} <span aria-hidden="true">/</span></nav>
+        <h1 tabindex="-1">${esc(levelName(l))}${l.optional ? ` <span class="badge">${esc(t("levels.sideQuest"))}</span>` : ""}</h1>
+        ${next && this.app.status[next] !== "locked" ? `<a class="play-next" href="${playHref(next)}">${esc(t("play.nextLevel"))}</a>` : ""}
+      </div>`;
     this.root.dataset.next = next ?? "";
-    if (!this.app.store.persistent) {
-      this.root.append(
-        el(
-          "p",
-          { class: "notice" },
-          "Your browser isn't letting this site save data, so progress lasts only until you close this tab. Use Export on the level map to keep it.",
-        ),
-      );
-    }
 
     const grid = el("div", { class: "play-grid" });
-    const bench = el("section", { class: "bench", "aria-label": "Workbench" });
+    const bench = el("section", {
+      class: "bench",
+      "aria-label": t("play.workbench"),
+    });
     const toolbar = el("div", {
       class: "toolbar",
       role: "toolbar",
-      "aria-label": "Toolbox",
+      "aria-label": t("play.toolbox"),
     });
-    for (const t of this.tools) {
+    toolbar.append(el("span", { class: "toolbar-label" }, t("play.parts")));
+    for (const tool of this.tools) {
+      const label = this.toolLabel(tool);
       const b = el(
         "button",
         {
           type: "button",
-          class: `tool${t.primitive ? "" : " component"}`,
-          "data-kind": t.kind,
-          title: `Add ${t.label} (or drag it onto the canvas)`,
+          class: `tool${tool.primitive ? "" : " component"}`,
+          "data-kind": tool.kind,
+          title: t("play.addTool", { name: label }),
         },
-        t.label,
+        label,
       );
-      b.addEventListener("pointerdown", (e) => this.startPlacing(t, e));
+      b.addEventListener("pointerdown", (e) => this.startPlacing(tool, e));
       // A click (mouse or keyboard) adds the part at a free spot, unless
       // this press was a drag that already dropped it on the canvas.
       b.addEventListener("click", () => {
         if (this.dropped) this.dropped = false;
-        else this.addAtFreeSpot(t.kind);
+        else this.addAtFreeSpot(tool.kind);
       });
       toolbar.append(b);
     }
     toolbar.append(el("span", { class: "spacer" }));
     this.undoBtn.addEventListener("click", () => this.undo());
     this.redoBtn.addEventListener("click", () => this.redo());
-    toolbar.append(this.undoBtn, this.redoBtn);
+    this.undoBtn.title = t("play.undoTitle");
+    this.redoBtn.title = t("play.redoTitle");
+    toolbar.append(this.undoBtn, this.redoBtn, this.shortcutsButton());
+
+    // The canvas scrolls inside a frame that also holds overlays: the
+    // status pill, the empty-canvas hint and the zoom controls.
+    const frame = el("div", { class: "canvas-frame" });
     const wrap = el("div", { class: "canvas-wrap" });
     wrap.append(this.canvas.el);
+    this.canvas.fillContainer(wrap);
+    frame.append(wrap, this.emptyHint, this.statusLine, this.zoomControls());
+    const footer = el("div", { class: "bench-footer" });
+    footer.append(this.stats, this.slowNote);
     bench.append(
+      el("p", { class: "narrow-note" }, t("play.narrow")),
       toolbar,
-      el(
-        "p",
-        { class: "narrow-note" },
-        "The editor works best on a larger screen. On a phone, scroll the canvas sideways, or use the parts and connections panel below.",
-      ),
-      wrap,
-      this.stats,
-      this.statusLine,
+      frame,
+      footer,
+      ...(l.sequential ? [this.wavePanel()] : []),
       this.propsBox,
-      this.inside,
-    );
-    bench.append(
-      el(
-        "p",
-        { class: "help" },
-        "Drag parts from the toolbox. Drag from one pin to another (or click both) to wire them. Click an input on the left to flip it. Double-click a component to look inside. Delete removes the selection; Ctrl+Z undoes.",
-      ),
     );
 
     const side = el("aside", {
       class: "side",
-      "aria-label": "Inputs and tests",
+      "aria-label": t("play.sideLabel"),
     });
-    side.append(el("h2", {}, "Inputs"), this.inputBox);
+    const goal = el("section", { class: "side-section goal-box" });
+    goal.append(
+      el("h2", {}, t("play.goal")),
+      el("p", { class: "goal" }, levelGoal(l)),
+    );
+    side.append(goal);
+    if (!this.app.store.persistent) {
+      side.append(el("p", { class: "notice" }, t("play.notSaving")));
+    }
+    const inputs = el("section", { class: "side-section" });
+    inputs.append(el("h2", {}, t("play.inputs")), this.inputBox);
+    if (l.sequential) inputs.append(this.memoryControls());
+    side.append(inputs);
     if (l.inputs.some((p) => this.width(p) > 1)) {
-      side.append(
-        el(
-          "p",
-          { class: "help", id: "bus-help" },
-          "Type a number for each bus input: decimal, 0x… hex or 0b… binary. Press Enter to apply.",
-        ),
+      inputs.append(
+        el("p", { class: "help", id: "bus-help" }, t("play.busHelp")),
       );
     }
     const table = el("table", { class: "truth" });
     const head = el("thead");
-    head.innerHTML = `<tr>${l.inputs.map((i) => `<th scope="col">${esc(i)}</th>`).join("")}${l.outputs.map((o) => `<th scope="col">${esc(o)} (want)</th><th scope="col">${esc(o)} (yours)</th>`).join("")}<th scope="col"><span class="visually-hidden">Result</span></th></tr>`;
+    head.innerHTML = `<tr>${l.sequential ? `<th scope="col">${esc(t("play.step"))}</th>` : ""}${l.inputs.map((i) => `<th scope="col">${esc(i)}</th>`).join("")}${l.outputs.map((o) => `<th scope="col">${esc(t("play.want", { name: o }))}</th><th scope="col">${esc(t("play.yours", { name: o }))}</th>`).join("")}<th scope="col"><span class="visually-hidden">${esc(t("play.result"))}</span></th></tr>`;
     table.append(head, this.tableBody);
     const checkBtn = el(
       "button",
       { type: "button", class: "primary" },
-      "Check",
+      t("play.check"),
     );
     checkBtn.addEventListener("click", () => {
       // Big circuits take a moment: say so, and let the message paint first.
       checkBtn.disabled = true;
-      this.result.replaceChildren(el("p", { class: "help" }, "Checking…"));
+      this.result.replaceChildren(
+        el("p", { class: "help" }, t("play.checking")),
+      );
       setTimeout(() => {
         this.runCheck();
         checkBtn.disabled = false;
       }, 20);
     });
-    side.append(
-      el("h2", {}, "Truth table"),
+    const tests = el("section", { class: "side-section" });
+    const tableWrap = el("div", { class: "table-wrap" });
+    tableWrap.append(table);
+    tests.append(
+      el("h2", {}, t(l.sequential ? "play.testSteps" : "play.truthTable")),
       el(
         "p",
         { class: "help" },
-        "Updates live as you wire. Click a row to set those inputs.",
+        t(l.sequential ? "play.stepsHelp" : "play.tableHelp"),
       ),
-      table,
-      checkBtn,
-      this.result,
+      tableWrap,
       this.problemList,
+      this.result,
     );
+    side.append(tests);
     if (l.layer >= 2) {
-      side.append(
-        el("h2", {}, "How parts run"),
-        el(
-          "p",
-          { class: "help" },
-          "Change which parts run as fast models on the level map.",
-        ),
+      const runs = el("section", { class: "side-section" });
+      runs.append(
+        el("h2", {}, t("play.howPartsRun")),
+        el("p", { class: "help" }, t("play.howPartsRunHelp")),
         this.runsAs,
       );
+      side.append(runs);
     }
+    // Check stays in view at the bottom of the panel while it scrolls.
+    const actions = el("div", { class: "side-actions" });
+    actions.append(checkBtn);
+    side.append(actions);
 
     grid.append(bench, side);
-    this.root.append(grid);
-    this.root.append(this.keyboardPanel());
+    this.root.append(grid, this.inside);
 
     document.addEventListener("keydown", this.onKeys);
-    window.addEventListener(
-      "hashchange",
-      () => document.removeEventListener("keydown", this.onKeys),
-      { once: true },
-    );
+    // Leaving the page (or re-rendering it in another language) drops the
+    // page-wide shortcut.
+    const leave = () => document.removeEventListener("keydown", this.onKeys);
+    window.addEventListener("hashchange", leave, { once: true });
+    document.addEventListener("s2t-lang", leave, { once: true });
   }
 
-  private keyboardPanel(): HTMLElement {
-    const details = el("details", { class: "kbd-panel" });
-    details.append(
-      el(
-        "summary",
-        {},
-        "Parts and connections (keyboard and screen-reader view)",
-      ),
-    );
-    const form = el("form", { class: "connect" });
-    const btn = el("button", { type: "submit" }, "Connect");
-    form.append(
-      el("label", {}, "From "),
-      this.fromSelect,
-      el("label", {}, " to "),
-      this.toSelect,
-      btn,
-    );
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const all = this.canvas.endpoints();
-      const a = all.find((x) => endpointKey(x) === this.fromSelect.value);
-      const b = all.find((x) => endpointKey(x) === this.toSelect.value);
-      if (!a || !b) return;
-      const next = addWire(this.design, a, b);
-      if (typeof next === "string") this.say(next);
-      else {
-        this.onChange(next, true);
-        this.say(
-          `Connected ${endpointLabel(a, this.level.inputs)} to ${endpointLabel(b, this.level.inputs)}.`,
+  /** Tick (pulse clk) and power-cycle buttons for circuits with memory. */
+  private memoryControls(): HTMLElement {
+    const box = el("div", { class: "memory-controls" });
+    if (this.level.inputs.includes("clk")) {
+      const tick = el(
+        "button",
+        { type: "button", title: t("play.tickTitle") },
+        t("play.tick"),
+      );
+      tick.addEventListener("click", () => {
+        this.currentStep = null;
+        // Both edges in one run: the circuit is built once.
+        // 0 → 1 → 0 from wherever clk is, so a tick always has a rising
+        // edge.
+        const run = this.runSteps(
+          [
+            { ...this.inputs, clk: 0 },
+            { ...this.inputs, clk: 1 },
+            { ...this.inputs, clk: 0 },
+          ],
+          this.memory,
         );
+        if (run) {
+          // Record each half of the tick, not just where it ends.
+          this.inputs.clk = 0;
+          this.record({ ...run.view, outputs: run.outputs[0] ?? [] });
+          this.inputs.clk = 1;
+          this.record({ ...run.view, outputs: run.outputs[1] ?? [] });
+          this.memory = run.view.state;
+        }
+        this.inputs.clk = 0;
+        this.refresh(false, run?.view);
+        this.say(t("play.ticked"));
+      });
+      box.append(tick);
+    }
+    const reset = el(
+      "button",
+      {
+        type: "button",
+        title: t("play.resetMemoryTitle"),
+      },
+      t("play.resetMemory"),
+    );
+    reset.addEventListener("click", () => {
+      this.memory = {};
+      this.currentStep = null;
+      this.refresh(false);
+      this.say(t("play.memoryCleared"));
+    });
+    box.append(reset);
+    return box;
+  }
+
+  private zoomControls(): HTMLElement {
+    const box = el("div", {
+      class: "zoom",
+      role: "group",
+      "aria-label": t("play.zoom"),
+    });
+    const out = el(
+      "button",
+      { type: "button", title: t("play.zoomOutTitle") },
+      "−",
+    );
+    const into = el(
+      "button",
+      { type: "button", title: t("play.zoomInTitle") },
+      "+",
+    );
+    const fit = el(
+      "button",
+      { type: "button", title: t("play.fitTitle") },
+      t("play.fit"),
+    );
+    out.setAttribute("aria-label", t("play.zoomOut"));
+    into.setAttribute("aria-label", t("play.zoomIn"));
+    this.zoomLabel.setAttribute("aria-label", t("play.zoomLevel"));
+    out.addEventListener("click", () =>
+      this.canvas.setZoom(zoomStep(this.canvas.getZoom(), -1)),
+    );
+    into.addEventListener("click", () =>
+      this.canvas.setZoom(zoomStep(this.canvas.getZoom(), 1)),
+    );
+    this.zoomLabel.addEventListener("click", () => this.canvas.setZoom(1));
+    fit.addEventListener("click", () => this.canvas.fit());
+    box.append(out, this.zoomLabel, into, fit);
+    return box;
+  }
+
+  /** A "Shortcuts" button that shows every mouse and keyboard control. */
+  private shortcutsButton(): HTMLElement {
+    const wrap = el("div", { class: "shortcuts" });
+    const btn = el(
+      "button",
+      {
+        type: "button",
+        "aria-expanded": "false",
+        "aria-controls": "shortcuts",
+      },
+      t("play.shortcuts"),
+    );
+    const panel = el("div", {
+      class: "shortcuts-panel",
+      id: "shortcuts",
+      hidden: "",
+    });
+    const rows = [
+      "add",
+      "wire",
+      "move",
+      "flip",
+      "more",
+      "inside",
+      "delete",
+      "undo",
+      "pan",
+      "zoom",
+      "cancel",
+    ];
+    const dl = el("dl");
+    for (const row of rows)
+      dl.append(
+        el("dt", {}, t(`keys.${row}` as Key)),
+        el("dd", {}, t(`keys.${row}How` as Key)),
+      );
+    panel.append(dl);
+    const set = (open: boolean) => {
+      panel.hidden = !open;
+      btn.setAttribute("aria-expanded", String(open));
+    };
+    btn.addEventListener("click", () => set(panel.hidden));
+    wrap.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !panel.hidden) {
+        set(false);
+        btn.focus();
       }
     });
-    details.append(
-      el(
-        "p",
-        { class: "help" },
-        "Add parts with the toolbox buttons. On the canvas, Tab to a part and use the arrow keys to move it (Shift for bigger steps).",
-      ),
-      el("h3", {}, "Parts"),
-      this.partsList,
-      el("h3", {}, "Connections"),
-      form,
-      this.wiresList,
-    );
-    return details;
+    document.addEventListener("pointerdown", (e) => {
+      if (e.target instanceof Node && !wrap.contains(e.target)) set(false);
+    });
+    wrap.append(btn, panel);
+    return wrap;
   }
 
   // ---- editing --------------------------------------------------------------
@@ -412,13 +593,10 @@ class PlayPage {
     if (commit && this.result.childElementCount) {
       // Don't leave an old verdict next to a changed circuit.
       this.result.replaceChildren(
-        el(
-          "p",
-          { class: "help" },
-          "Changed since the last check. Press Check again.",
-        ),
+        el("p", { class: "help" }, t("play.changed")),
       );
     }
+    if (commit) this.say("");
     this.refresh(commit);
     if (commit) this.scheduleSave();
   }
@@ -435,19 +613,190 @@ class PlayPage {
     this.scheduleSave();
   }
 
+  // ---- right-click menu -------------------------------------------------------
+
+  private showMenu(target: MenuTarget, at: { x: number; y: number }): void {
+    const part = (id: string) => this.design.parts.find((p) => p.id === id);
+    const ctx: MenuContext = {
+      design: this.design,
+      inputs: this.level.inputs,
+      outputs: this.level.outputs,
+      components: new Set(Object.keys(this.ports)),
+      canLookInside: (id) => {
+        const kind = part(id)?.kind;
+        return kind !== undefined && Boolean(this.app.progress[kind]?.design);
+      },
+      hasOptions: (id) => {
+        const kind = part(id)?.kind ?? "";
+        return (
+          this.level.layer >= 2 &&
+          (kind === "split" || kind === "join" || Boolean(this.ports[kind]))
+        );
+      },
+      tools: this.tools.map((tool) => ({
+        kind: tool.kind,
+        label: this.toolLabel(tool),
+      })),
+      widths: this.level.widths,
+      canUndo: this.history.canUndo(),
+      canRedo: this.history.canRedo(),
+    };
+    const { title, entries } = menuFor(target, ctx);
+    this.menuAt = at;
+    const active = document.activeElement;
+    openMenu(
+      title,
+      entries,
+      at,
+      (id) => this.runMenu(target, id),
+      active && this.canvas.el.contains(active) ? active : this.canvas.el,
+    );
+  }
+
+  /** Where the last menu opened; follow-up menus open in the same spot. */
+  private menuAt = { x: 0, y: 0 };
+
+  /** Second step of Connect…: pick what to wire `from` to. */
+  private chooseTarget(from: Endpoint): void {
+    const all = this.canvas.endpoints();
+    const m = connectMenu(this.design, from, all, this.level.inputs);
+    openMenu(
+      m.title,
+      m.entries,
+      this.menuAt,
+      (pick) => {
+        const to = all.find((e) => `to:${endpointKey(e)}` === pick);
+        if (!to) return;
+        const next = addWire(this.design, from, to);
+        if (typeof next === "string") this.say(next);
+        else {
+          this.onChange(next, true);
+          this.say(
+            t("play.connected", {
+              from: endpointLabel(from, this.level.inputs),
+              to: endpointLabel(to, this.level.inputs),
+            }),
+          );
+        }
+        this.canvas.el.focus({ preventScroll: true });
+      },
+      this.canvas.el,
+    );
+  }
+
+  /** Disconnect…: pick one wire of a part or port, or all of them. */
+  private chooseWire(owner: { part: string } | { port: string }): void {
+    const m = disconnectMenu(this.design, owner, this.level.inputs);
+    const name = "part" in owner ? owner.part : owner.port;
+    openMenu(
+      m.title,
+      m.entries,
+      this.menuAt,
+      (pick) => {
+        if (pick === "all") {
+          this.onChange(disconnect(this.design, owner), true);
+          this.say(t("play.disconnectedAll", { name }));
+        } else {
+          this.onChange(removeWire(this.design, Number(pick.slice(5))), true);
+          this.say(t("play.disconnectedOne", { name }));
+        }
+        this.canvas.el.focus({ preventScroll: true });
+      },
+      this.canvas.el,
+    );
+  }
+
+  private runMenu(target: MenuTarget, action: string): void {
+    const d = this.design;
+    // Keyboard users land back on the canvas after an edit.
+    const back = () => this.canvas.el.focus({ preventScroll: true });
+    if (target.kind === "part") {
+      const id = target.id;
+      if (action === "look-inside") {
+        this.openInside([
+          { id, design: d, inputs: this.inputs, view: this.view },
+        ]);
+      } else if (action === "options") {
+        this.selected = id;
+        this.renderProps();
+        const first = this.propsBox.querySelector<HTMLElement>("select, input");
+        first?.scrollIntoView({ block: "nearest" });
+        first?.focus();
+      } else if (action === "duplicate") {
+        const dup = duplicatePart(d, id);
+        if (dup) {
+          this.onChange(dup.design, true);
+          this.say(t("play.duplicated", { id: dup.id, from: id }));
+        }
+        back();
+      } else if (action === "connect") {
+        const pins = this.canvas.pinsOf(id);
+        const m = pinMenu(id, pins, d);
+        openMenu(m.title, m.entries, this.menuAt, (pick) =>
+          this.chooseTarget({ part: id, pin: pick.slice(4) }),
+        );
+      } else if (action === "disconnect") {
+        this.chooseWire({ part: id });
+      } else if (action === "delete") {
+        this.canvas.select(null);
+        this.onChange(removePart(d, id), true);
+        this.say(t("play.deleted", { id }));
+        back();
+      }
+    } else if (target.kind === "wire" && action === "delete") {
+      this.canvas.select(null);
+      this.onChange(removeWire(d, target.index), true);
+      this.say(t("play.deletedWire"));
+      back();
+    } else if (target.kind === "port") {
+      const name = target.name;
+      if (action === "flip") {
+        this.toggle(name);
+        if (this.width(name) === 1) back();
+      } else if (action === "connect") {
+        this.chooseTarget({ port: name });
+      } else if (action === "disconnect") {
+        this.chooseWire({ port: name });
+      } else if (action === "reset-port") {
+        this.onChange(resetPort(d, name), true);
+        this.say(t("play.movedBack", { name }));
+        back();
+      }
+    } else if (target.kind === "canvas") {
+      if (action.startsWith("add:")) {
+        const { design, id } = addPart(d, action.slice(4), target.at);
+        this.onChange(design, true);
+        this.say(t("play.added", { id }));
+      } else if (action === "undo") this.undo();
+      else if (action === "redo") this.redo();
+      back();
+    }
+  }
+
   private addAtFreeSpot(kind: string): void {
     const taken = this.design.parts.map((p) => p.pos ?? ([0, 0] as Point));
     const { design, id } = addPart(this.design, kind, freeSpot(taken));
     this.onChange(design, true);
-    this.say(
-      `Added ${id}. Tab to it on the canvas to move it with the arrow keys.`,
-    );
+    this.say(t("play.addedFree", { id }));
   }
 
-  private startPlacing(t: ToolboxItem, e: PointerEvent): void {
+  /** A toolbox item's name in the current language. */
+  private toolLabel(tool: ToolboxItem): string {
+    if (tool.kind === "split") return t("tool.split");
+    if (tool.kind === "join") return t("tool.join");
+    if (tool.primitive) return tool.label;
+    const lv = levelEntry(this.app, tool.kind)?.info.level;
+    return lv ? levelName(lv) : tool.label;
+  }
+
+  private startPlacing(tool: ToolboxItem, e: PointerEvent): void {
     if (e.button !== 0) return;
     this.dropped = false;
-    const ghost = el("div", { class: "ghost", "aria-hidden": "true" }, t.label);
+    const ghost = el(
+      "div",
+      { class: "ghost", "aria-hidden": "true" },
+      this.toolLabel(tool),
+    );
     const move = (ev: PointerEvent) => {
       if (!ghost.isConnected) document.body.append(ghost);
       ghost.style.left = `${ev.clientX + 8}px`;
@@ -461,9 +810,9 @@ class PlayPage {
         const pos = clampToCanvas(
           snap(this.canvas.toCanvas(ev.clientX, ev.clientY)),
         );
-        const { design, id } = addPart(this.design, t.kind, pos);
+        const { design, id } = addPart(this.design, tool.kind, pos);
         this.onChange(design, true);
-        this.say(`Added ${id}.`);
+        this.say(t("play.added", { id }));
         this.dropped = true;
       }
     };
@@ -479,12 +828,33 @@ class PlayPage {
       return;
     }
     this.stats.textContent = v.settled
-      ? `Settled after ${v.depth} gate delay${v.depth === 1 ? "" : "s"}${
-          this.library.fast?.length
-            ? " (each fast model counts as one step, so real hardware would take longer)"
-            : ""
-        }.`
-      : "Still changing: this circuit oscillates and never settles.";
+      ? t("play.settled", {
+          depth: v.depth,
+          fast: this.library.fast?.length ? 1 : 0,
+        })
+      : t("play.oscillates");
+    this.renderSlowNote(v.cells);
+  }
+
+  /** Big circuits are slow: point at the parts that could run fast. */
+  private renderSlowNote(cells: number): void {
+    const fast = new Set(this.library.fast ?? []);
+    const swappable = [...new Set(this.design.parts.map((p) => p.kind))]
+      .filter((k) => !fast.has(k) && this.app.status[k] === "passed")
+      .map((k) => levelEntry(this.app, k)?.info.level)
+      .filter((l) => l?.model)
+      .map((l) => (l ? levelName(l) : ""));
+    this.slowNote.replaceChildren();
+    if (cells < 5000 || !swappable.length) return;
+    this.slowNote.append(
+      t("play.slow", {
+        cells: cells.toLocaleString("en-US"),
+        names: swappable.join(", "),
+        count: swappable.length,
+      }),
+      el("a", { href: "#/levels" }, t("play.slowLink")),
+      t("play.slowEnd"),
+    );
   }
 
   /** Which component kinds this design uses, and how each one runs. */
@@ -497,16 +867,21 @@ class PlayPage {
     this.runsAs.replaceChildren(
       ...kinds.map((k) => {
         const lv = levelEntry(this.app, k)?.info.level;
-        const how =
+        const how = t(
           lv?.layer === 1
-            ? "its truth table (your transistors passed every row)"
+            ? "play.runsTable"
             : fast.has(k)
-              ? "fast model (matched your design)"
-              : "your design";
-        return el("li", {}, `${lv?.name ?? k}: ${how}`);
+              ? "play.runsFast"
+              : "play.runsYours",
+        );
+        return el(
+          "li",
+          {},
+          t("play.runsItem", { name: lv ? levelName(lv) : k, how }),
+        );
       }),
     );
-    if (!kinds.length) this.runsAs.append(el("li", {}, "No components yet."));
+    if (!kinds.length) this.runsAs.append(el("li", {}, t("play.noComponents")));
   }
 
   /** Options for the selected part: bus width, or repeat and shared pins. */
@@ -518,12 +893,12 @@ class PlayPage {
     const comp = this.ports[part.kind];
     if (!wiring && !comp) return;
     const box = el("fieldset");
-    box.append(el("legend", {}, `Options for ${part.id}`));
+    box.append(el("legend", {}, t("play.optionsFor", { id: part.id })));
     if (wiring) {
-      const label = el("label", {}, "Bus width ");
+      const label = el("label", {}, t("play.busWidth"));
       const select = el("select");
-      for (const w of [2, 4, 8, 16]) {
-        const o = el("option", { value: String(w) }, `${w} bits`);
+      for (let w = 2; w <= 16; w++) {
+        const o = el("option", { value: String(w) }, t("play.bits", { n: w }));
         if (w === (part.width ?? 16)) o.selected = true;
         select.append(o);
       }
@@ -536,7 +911,7 @@ class PlayPage {
       label.append(select);
       box.append(label);
     } else if (comp) {
-      const label = el("label", {}, "Repeat × ");
+      const label = el("label", {}, t("play.repeat"));
       const input = el("input", {
         type: "number",
         min: "1",
@@ -553,13 +928,7 @@ class PlayPage {
       label.append(input);
       box.append(label);
       if ((part.repeat ?? 1) > 1) {
-        box.append(
-          el(
-            "p",
-            { class: "help" },
-            "Each copy gets its own slice of every bus pin, except shared inputs, which all copies read.",
-          ),
-        );
+        box.append(el("p", { class: "help" }, t("play.repeatHelp")));
         for (const pin of comp.inputs) {
           const lab = el("label", { class: "check" });
           const cb = el("input", { type: "checkbox" });
@@ -573,7 +942,7 @@ class PlayPage {
               true,
             );
           });
-          lab.append(cb, ` share ${pin}`);
+          lab.append(cb, t("play.share", { pin }));
           box.append(lab);
         }
       }
@@ -594,6 +963,7 @@ class PlayPage {
       return;
     }
     this.inputs[name] = this.inputs[name] ? 0 : 1;
+    this.currentStep = null;
     this.refresh(false);
   }
 
@@ -601,8 +971,14 @@ class PlayPage {
     for (const [k, v] of values) this.inputs[k] = Number(v);
   }
 
+  /** A short message in the canvas's status pill; it fades after a while. */
   private say(text: string): void {
-    this.statusLine.textContent = text;
+    this.statusLine.textContent = knownText(text);
+    clearTimeout(this.statusTimer);
+    if (text)
+      this.statusTimer = window.setTimeout(() => {
+        this.statusLine.textContent = "";
+      }, 7000);
   }
 
   private scheduleSave(): void {
@@ -614,18 +990,48 @@ class PlayPage {
 
   // ---- simulation and checking ------------------------------------------------
 
-  private simulateWith(inputs: Record<string, number>): SimView | null {
+  private simulateWith(
+    inputs: Record<string, number>,
+    state: Record<string, string> = {},
+  ): SimView | null {
     try {
-      return simulate(this.library, this.level.id, this.design, inputs);
+      return simulate(this.library, this.level.id, this.design, inputs, state);
     } catch (e) {
-      this.say(`Simulation error: ${String(e)}`);
+      this.say(t("play.simError", { error: String(e) }));
       return null;
     }
   }
 
-  /** Re-simulates; `full` also refreshes the truth table and lists. */
-  private refresh(full: boolean): void {
-    this.view = this.simulateWith(this.inputs);
+  /** Runs input steps in order on one circuit (sequential levels). */
+  private runSteps(
+    steps: Record<string, number>[],
+    state: Record<string, string>,
+  ): StepsView | null {
+    try {
+      return simulateSteps(
+        this.library,
+        this.level.id,
+        this.design,
+        steps,
+        state,
+      );
+    } catch (e) {
+      this.say(t("play.simError", { error: String(e) }));
+      return null;
+    }
+  }
+
+  /** Re-simulates (or draws `view`, already simulated); `full` also
+   * refreshes the truth table and lists. */
+  private refresh(full: boolean, view?: SimView): void {
+    // Combinational levels always start fresh, exactly like the checker.
+    this.view =
+      view ??
+      this.simulateWith(this.inputs, this.level.sequential ? this.memory : {});
+    if (this.level.sequential && this.view) this.memory = this.view.state;
+    // Live history is what the learner did; a replayed test step isn't.
+    if (this.currentStep === null) this.record(this.view);
+    else this.renderWave();
     this.undoBtn.disabled = !this.history.canUndo();
     this.redoBtn.disabled = !this.history.canRedo();
     this.canvas.render({
@@ -639,13 +1045,14 @@ class PlayPage {
       highlightParts: this.highlightParts,
       highlightPorts: this.highlightPorts,
     });
+    this.emptyHint.hidden = this.design.parts.length > 0;
+    this.emptyHint.textContent = t("play.emptyHint");
     this.renderInputs();
     this.renderStats();
     if (full) {
       this.renderProps();
       this.renderRunsAs();
       this.renderTable();
-      this.renderLists();
     } else {
       this.markCurrentRow();
     }
@@ -667,7 +1074,7 @@ class PlayPage {
           const label = el(
             "label",
             { class: "bus-input" },
-            `${name} (${w} bits) `,
+            t("play.busLabel", { name, w }),
           );
           const input = el("input", {
             type: "text",
@@ -676,19 +1083,27 @@ class PlayPage {
             value: formatValue(v, w),
             "aria-describedby": "bus-help",
           });
+          // For an instruction, its assembly next to the number.
+          const describe = this.describer(name);
+          const asm = describe
+            ? el("span", { class: "asm" }, describe(String(v)))
+            : null;
           input.addEventListener("change", () => {
             const n = parseNumber(input.value);
             if (n === undefined || n >= 2 ** w || n < 0) {
               this.say(
-                `"${input.value}" isn't a number from 0 to ${2 ** w - 1}. You can type decimal, 0x… hex or 0b… binary.`,
+                t("play.notANumber", { text: input.value, max: 2 ** w - 1 }),
               );
               input.value = formatValue(v, w);
               return;
             }
             this.inputs[name] = n;
+            this.currentStep = null;
+            if (asm) asm.textContent = describe?.(String(n)) ?? "";
             this.refresh(false);
           });
           label.append(input);
+          if (asm) label.append(asm);
           return label;
         }
         const b = el(
@@ -707,31 +1122,50 @@ class PlayPage {
   }
 
   private renderTable(): void {
+    // A sequential level's steps run in order on one circuit, in a single
+    // run from power-on; combinational rows each start fresh.
+    const steps = this.table.map((row) => Object.fromEntries(row.inputs));
+    const run = this.level.sequential ? this.runSteps(steps, {}) : null;
+    const failed = new Set<number>();
     this.tableBody.replaceChildren(
       ...this.table.map((row, i) => {
-        const inputs = Object.fromEntries(row.inputs);
-        const view = this.simulateWith(inputs);
+        const inputs = steps[i] ?? {};
+        const view: Pick<SimView, "blocked" | "outputs"> | null = run
+          ? { blocked: run.view.blocked, outputs: run.outputs[i] ?? [] }
+          : this.simulateWith(inputs);
         const tr = el("tr", { tabindex: "0", "data-row": String(i) });
         let ok = Boolean(view && !view.blocked);
-        let cells = row.inputs
-          .map(([n, v]) => `<td>${formatValue(v, this.width(n))}</td>`)
+        let cells = this.level.sequential
+          ? `<td class="step">${i + 1}</td>`
+          : "";
+        cells += row.inputs
+          .map(([n, v]) => {
+            const asm = this.describer(n)?.(String(v));
+            const title = asm ? ` title="${esc(asm)}"` : "";
+            return `<td${title}>${formatValue(v, this.width(n))}</td>`;
+          })
           .join("");
         for (const [name, want] of row.outputs) {
           const got = view?.blocked
             ? "–"
             : (view?.outputs.find(([n]) => n === name)?.[1] ?? "–");
-          if (got !== String(want)) ok = false;
+          const any = row.skip.includes(name);
+          if (!any && got !== String(want)) ok = false;
           const shown = /^\d+$/.test(got)
             ? formatValue(Number(got), this.width(name))
             : got;
-          cells += `<td>${formatValue(want, this.width(name))}</td><td class="got">${shown}</td>`;
+          cells += `<td>${any ? `<span class="any">${esc(t("play.any"))}</span>` : formatValue(want, this.width(name))}</td><td class="got">${shown}</td>`;
         }
-        cells += `<td class="mark">${ok ? '<span class="ok">✓ match</span>' : '<span class="bad">✗ differs</span>'}</td>`;
+        cells += `<td class="mark">${ok ? `<span class="ok">${esc(t("play.match"))}</span>` : `<span class="bad">${esc(t("play.differs"))}</span>`}</td>`;
         tr.innerHTML = cells;
         tr.classList.toggle("row-ok", ok);
+        if (!ok) failed.add(i);
         const pick = () => {
-          this.setInputs(row.inputs);
-          this.refresh(false);
+          if (this.level.sequential) this.replayStep(i);
+          else {
+            this.setInputs(row.inputs);
+            this.refresh(false);
+          }
         };
         tr.addEventListener("click", pick);
         tr.addEventListener("keydown", (e) => {
@@ -743,12 +1177,155 @@ class PlayPage {
         return tr;
       }),
     );
+    this.testRun = { outputs: run?.outputs ?? [], failed };
     this.markCurrentRow();
+    this.renderWave();
+  }
+
+  /** Replays the test up to step `i`: the canvas shows that moment. */
+  private replayStep(i: number): void {
+    const row = this.table[i];
+    if (!row) return;
+    const steps = this.table
+      .slice(0, i + 1)
+      .map((r) => Object.fromEntries(r.inputs));
+    this.setInputs(row.inputs);
+    const run = this.runSteps(steps, {});
+    this.memory = run?.view.state ?? {};
+    this.currentStep = i;
+    this.say(
+      i === 0
+        ? t("play.showingStep1")
+        : t("play.showingStep", { n: i + 1, m: i }),
+    );
+    this.refresh(false, run?.view);
+  }
+
+  // ---- waveform ---------------------------------------------------------------
+
+  private wavePanel(): HTMLElement {
+    const box = el("section", { class: "wave-box", "aria-label": "Waveform" });
+    const head = el("div", { class: "wave-head" });
+    const toggle = el(
+      "button",
+      { type: "button", "aria-expanded": "true", class: "wave-toggle" },
+      t("play.waveform"),
+    );
+    const tabs = el("div", { class: "wave-tabs", role: "group" });
+    const tab = (id: "test" | "live", label: string) => {
+      const b = el(
+        "button",
+        { type: "button", "aria-pressed": String(this.waveTab === id) },
+        label,
+      );
+      b.addEventListener("click", () => {
+        this.waveTab = id;
+        tabs
+          .querySelectorAll("button")
+          .forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+        this.renderWave();
+      });
+      return b;
+    };
+    tabs.append(
+      tab("test", t("play.waveTest")),
+      tab("live", t("play.waveLive")),
+    );
+    const clear = el(
+      "button",
+      { type: "button", class: "wave-clear" },
+      t("play.waveClear"),
+    );
+    clear.addEventListener("click", () => {
+      this.liveLog = [];
+      this.renderWave();
+    });
+    toggle.addEventListener("click", () => {
+      const open = this.wave.hidden;
+      this.wave.hidden = !open;
+      tabs.hidden = !open;
+      clear.hidden = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+    });
+    head.append(toggle, tabs, clear);
+    box.append(head, this.wave);
+    return box;
+  }
+
+  /** Remembers a live moment for the waveform (sequential levels). */
+  private record(view: SimView | null): void {
+    if (!this.level.sequential || !view || view.blocked) return;
+    const sample = { inputs: { ...this.inputs }, outputs: view.outputs };
+    const last = this.liveLog[this.liveLog.length - 1];
+    if (last && JSON.stringify(last) === JSON.stringify(sample)) return;
+    this.liveLog.push(sample);
+    if (this.liveLog.length > 40) this.liveLog.shift();
+    this.renderWave();
+  }
+
+  /** For a 16-bit `instr` port: its value as assembly ("SET r1, 5"). */
+  private describer(name: string): ((value: string) => string) | undefined {
+    if (name !== "instr" || this.width(name) !== 16) return undefined;
+    return (value) => (/^\d+$/.test(value) ? disassemble(Number(value)) : "");
+  }
+
+  private renderWave(): void {
+    if (!this.level.sequential || this.wave.hidden) return;
+    const l = this.level;
+    const live = this.waveTab === "live";
+    const count = live ? this.liveLog.length : this.table.length;
+    const input = (name: string): Signal => ({
+      name,
+      width: this.width(name),
+      describe: this.describer(name),
+      values: live
+        ? this.liveLog.map((h) => String(h.inputs[name] ?? 0))
+        : this.table.map((r) =>
+            String(r.inputs.find(([n]) => n === name)?.[1] ?? ""),
+          ),
+    });
+    const output = (name: string): Signal => ({
+      name,
+      width: this.width(name),
+      output: true,
+      values: (live
+        ? this.liveLog.map((h) => h.outputs)
+        : this.testRun.outputs
+      ).map((outs) => outs.find(([n]) => n === name)?.[1] ?? ""),
+    });
+    const signals = [...l.inputs.map(input), ...l.outputs.map(output)];
+    if (!count) {
+      this.wave.replaceChildren(
+        el(
+          "p",
+          { class: "help" },
+          live ? t("play.waveLiveEmpty") : t("play.waveEmpty"),
+        ),
+      );
+      return;
+    }
+    this.wave.replaceChildren(
+      drawWaveform(
+        signals,
+        count,
+        live
+          ? { first: 1 }
+          : {
+              failed: this.testRun.failed,
+              current: this.currentStep,
+              pick: (i) => this.replayStep(i),
+            },
+      ),
+    );
   }
 
   private markCurrentRow(): void {
     this.table.forEach((row, i) => {
-      const current = row.inputs.every(([k, v]) => (this.inputs[k] ?? 0) === v);
+      // Steps repeat the same inputs, so a sequential level marks the step
+      // that was replayed, not every row with matching inputs.
+      const current = this.level.sequential
+        ? this.currentStep === i
+        : row.inputs.every(([k, v]) => (this.inputs[k] ?? 0) === v);
       const tr = this.tableBody.querySelector(`[data-row="${i}"]`);
       tr?.classList.toggle("current", current);
       if (current) tr?.setAttribute("aria-current", "true");
@@ -759,76 +1336,51 @@ class PlayPage {
   private renderProblems(): void {
     const problems = this.view?.problems ?? [];
     this.problemList.replaceChildren(
-      ...problems.map((p) =>
-        el(
-          "li",
-          { class: p.severity },
-          `${p.severity === "error" ? "Error" : "Note"}: ${p.message}`,
-        ),
-      ),
+      ...problems.map((p) => {
+        const li = el("li", { class: p.severity });
+        li.append(
+          el(
+            "strong",
+            {},
+            t(p.severity === "error" ? "play.error" : "play.note"),
+          ),
+          ...rich(problemText(p)),
+        );
+        return li;
+      }),
     );
     if (this.view?.shorts.length) {
       this.problemList.prepend(
         el(
           "li",
           { class: "error" },
-          `Short circuit right now: VDD and GND are connected through ${this.view.shorts[0]?.join(", ")}.`,
+          t("play.shortNow", { parts: this.view.shorts[0]?.join(", ") ?? "" }),
         ),
       );
     }
   }
 
-  private renderLists(): void {
-    const ins = this.level.inputs;
-    this.partsList.replaceChildren(
-      ...this.design.parts.map((p) => {
-        const li = el("li");
-        li.append(
-          `${p.id} (${this.ports[p.kind]?.name ?? p.kind.toUpperCase()}) `,
-        );
-        const del = el("button", { type: "button" }, `Remove ${p.id}`);
-        del.addEventListener("click", () =>
-          this.onChange(removePart(this.design, p.id), true),
-        );
-        li.append(del);
-        return li;
-      }),
+  /**
+   * Check runs passed memory components as their models, like the level
+   * map's re-check; the live editor keeps the learner's own choice.
+   */
+  private checkLibrary(): LibraryInput {
+    const memory = memoryParts(
+      this.app.levels,
+      this.library.unlocked.map((d) => d.component),
     );
-    if (!this.design.parts.length)
-      this.partsList.append(el("li", {}, "No parts yet."));
-    this.wiresList.replaceChildren(
-      ...this.design.wires.map((w, i) => {
-        const li = el("li");
-        li.append(
-          `${endpointLabel(w.from, ins)} — ${endpointLabel(w.to, ins)} `,
-        );
-        const del = el("button", { type: "button" }, "Disconnect");
-        del.addEventListener("click", () =>
-          this.onChange(removeWire(this.design, i), true),
-        );
-        li.append(del);
-        return li;
-      }),
-    );
-    if (!this.design.wires.length)
-      this.wiresList.append(el("li", {}, "No connections yet."));
-    const options = this.canvas.endpoints().map((e) => {
-      const o = el("option", { value: endpointKey(e) }, endpointLabel(e, ins));
-      return o;
-    });
-    const keep = [this.fromSelect.value, this.toSelect.value];
-    this.fromSelect.replaceChildren(...options.map((o) => o.cloneNode(true)));
-    this.toSelect.replaceChildren(...options);
-    if (keep[0]) this.fromSelect.value = keep[0];
-    if (keep[1]) this.toSelect.value = keep[1];
+    return {
+      ...this.library,
+      fast: [...new Set([...(this.library.fast ?? []), ...memory])],
+    };
   }
 
   private runCheck(): void {
     let report: Report;
     try {
-      report = check(this.library, this.level.id, this.design);
+      report = check(this.checkLibrary(), this.level.id, this.design);
     } catch (e) {
-      this.result.textContent = `Couldn't check: ${String(e)}`;
+      this.result.textContent = t("play.couldntCheck", { error: String(e) });
       return;
     }
     this.result.replaceChildren();
@@ -836,16 +1388,19 @@ class PlayPage {
       void saveDesign(this.app, this.level.id, this.design, true);
       const next = this.root.dataset.next;
       const box = el("div", { class: "passed" });
-      const tested = report.random
-        ? `All ${report.rows.length} rows and ${report.random.run.toLocaleString("en-US")} random tests match`
-        : `All ${report.rows.length} rows match`;
+      const seq = this.level.sequential ? 1 : 0;
+      const tested = t("play.passedRows", {
+        rows: report.rows.length,
+        random: report.random ? report.random.run.toLocaleString("en-US") : 0,
+        seq,
+      });
       const stats =
         this.level.layer === 1
-          ? `using ${report.transistors} transistors`
-          : `using ${report.cells} gates, ${report.depth} gate delay${report.depth === 1 ? "" : "s"} deep`;
-      box.innerHTML = `<p><strong>✓ Passed!</strong> ${tested}, ${stats}.
-        ${esc(this.level.name)} is now in your toolbox.</p>
-        <p>${next ? `<a href="${playHref(next)}">Next level →</a> · ` : ""}<a href="#/levels">Level map</a></p>`;
+          ? t("play.usingTransistors", { n: report.transistors })
+          : t("play.usingGates", { cells: report.cells, depth: report.depth });
+      box.innerHTML = `<p><strong>${esc(t("play.passed"))}</strong> ${esc(tested)}, ${esc(stats)}.
+        ${esc(t("play.nowInToolbox", { name: levelName(this.level) }))}</p>
+        <p>${next ? `<a href="${playHref(next)}">${esc(t("play.nextLevel"))}</a> · ` : ""}<a href="#/levels">${esc(t("play.levelMap"))}</a></p>`;
       this.result.append(box);
       this.highlightParts.clear();
       this.highlightPorts.clear();
@@ -853,17 +1408,25 @@ class PlayPage {
       return;
     }
     const failed = report.rows.filter((r) => !r.passed).length;
+    const seq = this.level.sequential ? 1 : 0;
     const randomNote =
       report.random && report.random.failed > 0
-        ? ` ${report.random.failed.toLocaleString("en-US")} of ${report.random.run.toLocaleString("en-US")} random tests fail too.`
+        ? t("play.failedRandom", {
+            failed: report.random.failed.toLocaleString("en-US"),
+            run: report.random.run.toLocaleString("en-US"),
+            seq,
+          })
         : "";
     const head = report.rows.length
-      ? `✗ ${failed} of ${report.rows.length} rows don't match yet.${randomNote}`
-      : "✗ The design has errors (see below).";
+      ? t("play.failedRows", { failed, rows: report.rows.length, seq }) +
+        randomNote
+      : t("play.designErrors");
     this.result.append(el("p", { class: "failed" }, head));
     const list = el("ul", { class: "diagnostics" });
     for (const p of report.problems.filter((x) => x.severity === "error")) {
-      list.append(el("li", {}, p.message));
+      const li = el("li");
+      li.append(...rich(problemText(p)));
+      list.append(li);
     }
     for (const d of report.diagnostics) list.append(this.diagnosticItem(d));
     this.result.append(list);
@@ -871,16 +1434,29 @@ class PlayPage {
 
   private diagnosticItem(d: Diagnostic): HTMLElement {
     const li = el("li");
-    const b = el("button", { type: "button", class: "diag" }, d.message);
+    const b = el("button", { type: "button", class: "diag" });
+    b.append(
+      ...rich(
+        diagnosticText(d, {
+          sequential: this.level.sequential,
+          rows: this.table.length,
+        }),
+      ),
+    );
     b.addEventListener("click", () => {
       this.setInputs(d.inputs);
       this.highlightParts = new Set(d.parts);
       this.highlightPorts = new Set(d.ports);
       this.refresh(false);
-      this.say(`Showing row ${d.row}. Highlighted parts are marked with "!".`);
+      this.say(t("play.showingRow", { n: d.row }));
     });
     li.append(b);
-    if (d.hint) li.append(el("p", { class: "hint" }, `Hint: ${d.hint}`));
+    const hintText = levelHint(this.level, d.kind, d.hint);
+    if (hintText) {
+      const hint = el("p", { class: "hint" }, t("play.hint"));
+      hint.append(...rich(hintText));
+      li.append(hint);
+    }
     return li;
   }
 
@@ -922,18 +1498,20 @@ class PlayPage {
     this.inside.hidden = false;
     this.inside.replaceChildren();
     const crumbs = [
-      this.level.name,
+      levelName(this.level),
       ...stack.map((s) => {
         const p = s.design.parts.find((x) => x.id === s.id);
         return `${s.id} (${this.ports[p?.kind ?? ""]?.name ?? p?.kind})`;
       }),
     ].join(" › ");
     const head = el("div", { class: "inside-head" });
-    head.append(el("h2", { tabindex: "-1" }, `Inside: ${crumbs}`));
+    head.append(
+      el("h2", { tabindex: "-1" }, t("play.inside", { path: crumbs })),
+    );
     const back = el(
       "button",
       { type: "button" },
-      stack.length > 1 ? "Up one level" : "Close",
+      t(stack.length > 1 ? "play.upOne" : "play.close"),
     );
     back.addEventListener("click", () => {
       if (stack.length > 1) this.openInside(stack.slice(0, -1));
@@ -946,7 +1524,10 @@ class PlayPage {
     const note = el(
       "p",
       { class: "help" },
-      `Your ${comp.name} design, running with the values it gets inside ${this.level.name}. Read-only here: edit it on its own level page.`,
+      t("play.insideNote", {
+        name: levelName(comp),
+        parent: levelName(this.level),
+      }),
     );
     const c = new CircuitCanvas({
       change: () => {},
@@ -966,7 +1547,11 @@ class PlayPage {
       highlightPorts: new Set(),
       readOnly: true,
     });
-    const edit = el("a", { href: playHref(comp.id) }, `Edit ${comp.name}`);
+    const edit = el(
+      "a",
+      { href: playHref(comp.id) },
+      t("play.editIt", { name: levelName(comp) }),
+    );
     this.inside.append(head, note, c.el, edit);
     this.inside.querySelector<HTMLElement>("h2")?.focus();
   }

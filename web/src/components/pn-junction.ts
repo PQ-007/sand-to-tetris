@@ -5,7 +5,16 @@ import {
   formatAmps,
   junctionState,
 } from "../demos/semiconductor";
-import { Demo, reducedMotion, sheet, slider, svg, wide } from "./kit";
+import { t } from "../i18n";
+import {
+  Demo,
+  figcaption,
+  reducedMotion,
+  sheet,
+  slider,
+  svg,
+  wide,
+} from "./kit";
 
 const CSS = sheet(`
   .p { fill: var(--p-type); }
@@ -27,17 +36,6 @@ const TOP = 30;
 const BOT = 170;
 const BASE_W = 90; // depletion width (px) at zero bias
 
-const STATE_TEXT = {
-  reverse:
-    "Reverse bias: the depletion region widens. Almost no current flows. The junction blocks.",
-  unbiased:
-    "No voltage applied: the depletion region sits at its natural width, held there by the electric field of the charged atoms inside it. No current flows.",
-  "weak-forward":
-    "Small forward bias: the depletion region shrinks, but the barrier is still high. Only a trickle flows.",
-  conducting:
-    "Forward bias past ≈ 0.6 V: the barrier collapses, and electrons and holes stream across. Current rises steeply.",
-};
-
 /** <pn-junction>: drag the bias and watch the depletion region and current. */
 export class PnJunction extends Demo {
   constructor() {
@@ -46,10 +44,7 @@ export class PnJunction extends Demo {
 
   protected build(): void {
     const fig = document.createElement("figure");
-    fig.innerHTML = `<figcaption><strong>Inside a p-n junction</strong>
-      p-type silicon (left) has spare <em>holes</em> (+); n-type (right) has spare
-      <em>electrons</em> (−). Where they meet, they cancel out and leave a thin
-      <em>depletion region</em> with no free carriers. Change the voltage across the junction.</figcaption>`;
+    fig.append(figcaption(t("pn.caption"), t("pn.captionHtml")));
     const pic = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
     const ivPlot = svg("svg", {
       viewBox: "0 0 300 185",
@@ -57,7 +52,7 @@ export class PnJunction extends Demo {
       style: "max-width: 320px",
     });
     const { label, input } = slider(
-      "Voltage across junction",
+      t("pn.slider"),
       { min: -2, max: 0.8, step: 0.01, value: 0 },
       () => this.draw(),
     );
@@ -66,9 +61,9 @@ export class PnJunction extends Demo {
     controls.append(label);
     const readout = document.createElement("ul");
     readout.className = "readout";
-    readout.innerHTML = `<li><b>Voltage</b><output data-v></output></li>
-      <li><b>Depletion width</b><output data-w></output></li>
-      <li><b>Current</b><output data-i></output></li>`;
+    readout.innerHTML = `<li><b>${t("pn.voltage")}</b><output data-v></output></li>
+      <li><b>${t("pn.width")}</b><output data-w></output></li>
+      <li><b>${t("pn.current")}</b><output data-i></output></li>`;
     const note = document.createElement("p");
     note.className = "note";
     note.setAttribute("aria-live", "polite");
@@ -96,7 +91,11 @@ export class PnJunction extends Demo {
     p.replaceChildren();
     p.setAttribute(
       "aria-label",
-      `Junction at ${v.toFixed(2)} volts. Depletion region ${depletionWidth(v).toFixed(2)} times its resting width. ${STATE_TEXT[state]}`,
+      t("pn.label", {
+        v: v.toFixed(2),
+        w: depletionWidth(v).toFixed(2),
+        state: t(`pn.${state}`),
+      }),
     );
     svg(
       "rect",
@@ -113,23 +112,18 @@ export class PnJunction extends Demo {
       { x: MID - w / 2, y: TOP, width: w, height: BOT - TOP, class: "depl" },
       p,
     );
-    svg(
-      "text",
-      { x: 20, y: TOP - 10, "font-weight": 600 },
-      p,
-      "p-type (holes +)",
-    );
+    svg("text", { x: 20, y: TOP - 10, "font-weight": 600 }, p, t("pn.pSide"));
     svg(
       "text",
       { x: W - 20, y: TOP - 10, "text-anchor": "end", "font-weight": 600 },
       p,
-      "n-type (electrons −)",
+      t("pn.nSide"),
     );
     svg(
       "text",
       { x: MID, y: BOT + 20, "text-anchor": "middle", class: "muted" },
       p,
-      "depletion region",
+      t("pn.depletion"),
     );
 
     // Fixed ions left behind inside the depletion region.
@@ -161,19 +155,18 @@ export class PnJunction extends Demo {
     const out = (sel: string) =>
       this.readout.querySelector(`[${sel}]`) as HTMLOutputElement;
     out("data-v").value = `${v.toFixed(2)} V`;
-    out("data-w").value = `${depletionWidth(v).toFixed(2)}× resting`;
+    out("data-w").value = t("pn.resting", {
+      n: depletionWidth(v).toFixed(2),
+    });
     out("data-i").value = formatAmps(i);
-    this.note.textContent = STATE_TEXT[state];
+    this.note.textContent = t(`pn.${state}`);
     this.drawIV(v);
   }
 
   private drawIV(v: number): void {
     const p = this.ivPlot;
     p.replaceChildren();
-    p.setAttribute(
-      "aria-label",
-      "Graph of current against voltage: flat near zero, then rising sharply above about 0.6 volts.",
-    );
+    p.setAttribute("aria-label", t("pn.ivLabel"));
     const x = (volts: number) => 40 + ((volts + 2) / 2.8) * 240;
     const imax = 0.01;
     const y = (amps: number) => 140 - Math.min(amps / imax, 1.05) * 120;
@@ -184,13 +177,13 @@ export class PnJunction extends Demo {
       "text",
       { x: 280, y: 178, "text-anchor": "end", class: "muted" },
       p,
-      "voltage →",
+      t("pn.vAxis"),
     );
     svg(
       "text",
       { x: x(0) - 6, y: 18, "text-anchor": "end", class: "muted" },
       p,
-      "current ↑ (to 10 mA)",
+      t("pn.iAxis"),
     );
     svg("text", { x: x(-2), y: 158, class: "muted" }, p, "−2 V");
     svg(

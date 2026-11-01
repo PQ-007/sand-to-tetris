@@ -1,0 +1,33 @@
+id = "register"
+name = "Register"
+layer = 3
+goal = """
+A 16-bit register: sixteen Bits side by side that load together. On a rising clk edge with load=1 it stores the 16-bit number d; otherwise it keeps its number.
+Use Repeat ×16 on your Bit, and share load and clk so every copy gets the same ones.
+"""
+sequential = true
+inputs = ["d", "load", "clk"]
+outputs = ["q"]
+requires = ["bit"]
+widths = { d = 16, q = 16 }
+model = "register"
+random_tests = 300
+truth_table = """
+d load clk | q
+0x1234 1 0 | -
+0x1234 1 1 | 0x1234
+0xffff 0 0 | 0x1234
+0xffff 0 1 | 0x1234
+0xffff 1 0 | 0x1234
+0xffff 1 1 | 0xffff
+0 1 0 | 0xffff
+0 1 1 | 0
+0xabcd 0 0 | 0
+0xabcd 1 0 | 0
+0xabcd 1 1 | 0xabcd
+0x8001 0 0 | 0xabcd
+0x8001 0 1 | 0xabcd
+"""
+
+[hints]
+wrong = "Every copy of Bit needs the same load and clk: tick share for both. d and q are split bit by bit."

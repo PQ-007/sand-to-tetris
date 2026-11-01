@@ -7,9 +7,11 @@ use std::collections::BTreeSet;
 use serde::Serialize;
 
 use s2t_gate::bits_to_number;
-use s2t_netlist::{Design, Level, Library, Value};
+use s2t_netlist::{Design, Level, Library};
 
-use crate::gatecheck::{format_value, leaf_model, prepare, Rng};
+use crate::gatecheck::{
+    bits_of, clocked_model, format_value, leaf_model, prepare, random_steps, words_of, Rng,
+};
 
 /// Inputs up to this many bits are compared exhaustively.
 pub const EXHAUSTIVE_BITS: u32 = 16;
@@ -35,27 +37,6 @@ pub struct MatchReport {
     pub mismatches: Vec<Mismatch>,
 }
 
-fn bits_of(level: &Level, values: &[(String, u64)]) -> Vec<Value> {
-    let mut bits = Vec::new();
-    for (p, v) in values {
-        for i in 0..level.width(p) {
-            bits.push(Value::from_bit(v >> i & 1 == 1));
-        }
-    }
-    bits
-}
-
-fn words_of(level: &Level, ports: &[String], bits: &[Value]) -> Vec<Option<u64>> {
-    let mut out = Vec::new();
-    let mut i = 0usize;
-    for p in ports {
-        let w = level.width(p) as usize;
-        out.push(bits.get(i..i + w).and_then(bits_to_number));
-        i += w;
-    }
-    out
-}
-
 fn show(level: &Level, port: &str, v: Option<u64>) -> String {
     v.map_or_else(|| "X".to_string(), |n| format_value(n, level.width(port)))
 }
@@ -74,18 +55,27 @@ pub fn match_check(
         );
     }
     let model = leaf_model(level).ok_or_else(|| format!("`{}` has no fast model", level.id))?;
-    let prepared =
-        prepare(level, design, library, &BTreeSet::new(), false).map_err(|problems| {
-            let first = problems
-                .first()
-                .map(|p| p.message.clone())
-                .unwrap_or_default();
-            format!(
-                "your `{}` design doesn't pass validation: {first}",
-                level.id
-            )
-        })?;
+    // Lower memory components (registers, RAM, ...) run as their models, as
+    // in Check: each one was already compared with its model.
+    let memory: BTreeSet<String> = library
+        .levels()
+        .filter(|l| l.id != level.id && l.sequential && l.model.is_some())
+        .map(|l| l.id.clone())
+        .collect();
+    let prepared = prepare(level, design, library, &memory, false).map_err(|problems| {
+        let first = problems
+            .first()
+            .map(|p| p.message.clone())
+            .unwrap_or_default();
+        format!(
+            "your `{}` design doesn't pass validation: {first}",
+            level.id
+        )
+    })?;
     let mut sim = prepared.sim()?;
+    if level.sequential {
+        return match_clocked(level, &mut sim);
+    }
     let bits = level.input_bits();
     let exhaustive = bits <= EXHAUSTIVE_BITS;
     let mut rng = Rng::new(&format!("match:{}", level.id));
@@ -146,6 +136,76 @@ pub fn match_check(
                     actual: pair(&got),
                 });
             }
+        }
+    }
+    Ok(report)
+}
+
+/// The match check for a component with memory: 10,000 random clock cycles
+/// from power-on, comparing outputs wherever the model knows its value.
+fn match_clocked(level: &Level, sim: &mut s2t_gate::GateSim) -> Result<MatchReport, String> {
+    let m = level
+        .model
+        .as_deref()
+        .and_then(s2t_models::clocked)
+        .ok_or_else(|| format!("`{}` has no fast model", level.id))?;
+    let model = clocked_model(m);
+    let mut mem = model.power_on();
+    let mut rng = Rng::new(&format!("match:{}", level.id));
+    let steps = random_steps(level, m.clk, &mut rng, RANDOM_VECTORS);
+    let mut report = MatchReport {
+        component: level.id.clone(),
+        ok: true,
+        exhaustive: false,
+        compared: RANDOM_VECTORS,
+        failed: 0,
+        mismatches: vec![],
+    };
+    // Each cycle is two steps (clock low, clock high); a cycle fails if
+    // either step's outputs differ wherever the model knows them.
+    for cycle in steps.chunks(2) {
+        let mut cycle_failed = false;
+        for inputs in cycle {
+            for (p, v) in inputs {
+                sim.set_input(p, *v)?;
+            }
+            sim.settle();
+            let want = words_of(
+                level,
+                &level.outputs,
+                &model.eval(&bits_of(level, inputs), &mut mem),
+            );
+            let got: Vec<Option<u64>> = level
+                .outputs
+                .iter()
+                .map(|p| sim.output(p).as_deref().and_then(bits_to_number))
+                .collect();
+            if !want.iter().zip(&got).any(|(w, g)| w.is_some() && w != g) {
+                continue;
+            }
+            cycle_failed = true;
+            if report.mismatches.len() < MAX_EXAMPLES {
+                let pair = |vals: &[Option<u64>]| {
+                    level
+                        .outputs
+                        .iter()
+                        .zip(vals)
+                        .map(|(p, v)| (p.clone(), show(level, p, *v)))
+                        .collect()
+                };
+                report.mismatches.push(Mismatch {
+                    inputs: inputs
+                        .iter()
+                        .map(|(p, v)| (p.clone(), format_value(*v, level.width(p))))
+                        .collect(),
+                    expected: pair(&want),
+                    actual: pair(&got),
+                });
+            }
+        }
+        if cycle_failed {
+            report.ok = false;
+            report.failed += 1;
         }
     }
     Ok(report)

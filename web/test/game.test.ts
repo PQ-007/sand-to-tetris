@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  memoryParts,
+  needsRecheck,
   orderLevels,
   playLibrary,
   statuses,
@@ -7,13 +9,14 @@ import {
   type LevelEntry,
   type Progress,
 } from "../src/game";
-import type { Design, LevelInfo, Report } from "../src/sim/types";
+import type { Design, LevelInfo, LibraryInput, Report } from "../src/sim/types";
 
 function entry(
   id: string,
   layer = 1,
   requires: string[] = [],
   optional = false,
+  memory?: string,
 ): LevelEntry {
   const level = {
     id,
@@ -24,6 +27,8 @@ function entry(
     outputs: ["out"],
     requires,
     optional,
+    sequential: Boolean(memory),
+    model: memory,
     truth_table: "",
     hints: {},
   };
@@ -107,6 +112,51 @@ describe("level order and status", () => {
     expect(s.nand).toBe("broken");
     expect(s.and).toBe("broken");
     expect(s.not).toBe("passed");
+  });
+});
+
+describe("re-checking passed memory", () => {
+  it("runs passed memory components as their fast models", () => {
+    const levels = [
+      entry("not"),
+      entry("ram8", 3, ["not"], false, "ram8"),
+      entry("ram64", 3, ["ram8"], false, "ram64"),
+    ];
+    const seen: Record<string, string[] | undefined> = {};
+    const check = (lib: LibraryInput, level: string, d: Design): Report => {
+      seen[level] = lib.fast;
+      return fakeCheck(new Set())(lib, level, d);
+    };
+    const progress: Progress = {
+      not: passed(design("not")),
+      ram8: passed(design("ram8", ["not"])),
+      ram64: passed(design("ram64", ["ram8"])),
+    };
+    expect(statuses(levels, progress, check).ram64).toBe("passed");
+    // RAM8 itself is checked as built; RAM64 uses RAM8's fast model.
+    expect(seen.ram8).toEqual([]);
+    expect(seen.ram64).toEqual(["ram8"]);
+    expect(seen.not).toEqual([]);
+  });
+
+  it("knows which components are memory (sequential, with a model)", () => {
+    const levels = [
+      entry("not"),
+      entry("alu", 2, [], false),
+      entry("ram8", 3, ["not"], false, "ram8"),
+      entry("cpu", 4, ["ram8"], false, "cpu"),
+    ];
+    expect(memoryParts(levels, ["not", "alu", "ram8", "cpu", "nope"])).toEqual([
+      "ram8",
+      "cpu",
+    ]);
+  });
+
+  it("only a passed level's edits can change other statuses", () => {
+    const progress: Progress = { not: passed(design("not")) };
+    expect(needsRecheck(progress, "nand", undefined)).toBe(false);
+    expect(needsRecheck(progress, "nand", true)).toBe(true);
+    expect(needsRecheck(progress, "not", undefined)).toBe(true);
   });
 });
 

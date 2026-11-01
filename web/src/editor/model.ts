@@ -1,5 +1,6 @@
 // Pure editing operations on a design. Every operation returns a new
 // design (or an error message), which makes undo/redo trivial.
+import { t } from "../i18n";
 import type { Design, Endpoint, Part } from "../sim/types";
 
 export const PRIMITIVES = ["pmos", "nmos", "vdd", "gnd"] as const;
@@ -22,7 +23,9 @@ export function endpointLabel(
   inputs: readonly string[] = [],
 ): string {
   if ("port" in e)
-    return `${inputs.includes(e.port) ? "input" : "output"} ${e.port}`;
+    return t(inputs.includes(e.port) ? "endpoint.input" : "endpoint.output", {
+      name: e.port,
+    });
   return `${e.part}.${e.pin}`;
 }
 
@@ -96,7 +99,73 @@ export function movePart(
   };
 }
 
+/** Puts one of the design's own input/output ports somewhere else. */
+export function movePort(
+  design: Design,
+  name: string,
+  pos: [number, number],
+): Design {
+  return { ...design, port_pos: { ...design.port_pos, [name]: pos } };
+}
+
+/** Sends a moved port back to its default spot. */
+export function resetPort(design: Design, name: string): Design {
+  const rest = Object.fromEntries(
+    Object.entries(design.port_pos ?? {}).filter(([k]) => k !== name),
+  );
+  const next: Design = { ...design, port_pos: rest };
+  if (Object.keys(rest).length === 0) delete next.port_pos;
+  return next;
+}
+
+/** A copy of a part (same kind and options) just below-right of it, unwired. */
+export function duplicatePart(
+  design: Design,
+  id: string,
+): { design: Design; id: string } | undefined {
+  const part = design.parts.find((p) => p.id === id);
+  if (!part) return undefined;
+  const [x, y] = part.pos ?? [200, 200];
+  const copy: Part = {
+    ...part,
+    id: nextId(design, part.kind),
+    pos: [x + 40, y + 40],
+  };
+  if (part.shared) copy.shared = [...part.shared];
+  return { design: { ...design, parts: [...design.parts, copy] }, id: copy.id };
+}
+
 const touches = (e: Endpoint, id: string) => "part" in e && e.part === id;
+
+/** Endpoint belongs to a part, or is a port, of the given target. */
+const touchesTarget = (e: Endpoint, t: { part: string } | { port: string }) =>
+  "part" in t ? touches(e, t.part) : "port" in e && e.port === t.port;
+
+/** Number of wires attached to a part or a port. */
+/** Number of wires attached to a part (or one of its pins) or a port. */
+export function wireCount(
+  design: Design,
+  target: { part: string } | { port: string },
+  pin?: string,
+): number {
+  const at = (e: Endpoint) =>
+    touchesTarget(e, target) &&
+    (pin === undefined || ("pin" in e && e.pin === pin));
+  return design.wires.filter((w) => at(w.from) || at(w.to)).length;
+}
+
+/** Removes every wire attached to a part or a port. */
+export function disconnect(
+  design: Design,
+  target: { part: string } | { port: string },
+): Design {
+  return {
+    ...design,
+    wires: design.wires.filter(
+      (w) => !touchesTarget(w.from, target) && !touchesTarget(w.to, target),
+    ),
+  };
+}
 
 export function removePart(design: Design, id: string): Design {
   return {

@@ -1,0 +1,199 @@
+{
+  "format": 1,
+  "component": "pc",
+  "parts": [
+    {
+      "id": "reg",
+      "kind": "register",
+      "pos": [
+        620,
+        250
+      ]
+    },
+    {
+      "id": "plus",
+      "kind": "inc16",
+      "pos": [
+        220,
+        120
+      ]
+    },
+    {
+      "id": "count",
+      "kind": "mux16",
+      "pos": [
+        360,
+        200
+      ]
+    },
+    {
+      "id": "jump",
+      "kind": "mux16",
+      "pos": [
+        460,
+        260
+      ]
+    },
+    {
+      "id": "clear",
+      "kind": "mux16",
+      "pos": [
+        540,
+        320
+      ]
+    },
+    {
+      "id": "zeros",
+      "kind": "zero",
+      "pos": [
+        440,
+        420
+      ],
+      "repeat": 16
+    },
+    {
+      "id": "always",
+      "kind": "one",
+      "pos": [
+        500,
+        160
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "part": "reg",
+        "pin": "q"
+      },
+      "to": {
+        "part": "plus",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "reg",
+        "pin": "q"
+      },
+      "to": {
+        "part": "count",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "plus",
+        "pin": "out"
+      },
+      "to": {
+        "part": "count",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "inc"
+      },
+      "to": {
+        "part": "count",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "count",
+        "pin": "out"
+      },
+      "to": {
+        "part": "jump",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "port": "d"
+      },
+      "to": {
+        "part": "jump",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "load"
+      },
+      "to": {
+        "part": "jump",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "jump",
+        "pin": "out"
+      },
+      "to": {
+        "part": "clear",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "zeros",
+        "pin": "out"
+      },
+      "to": {
+        "part": "clear",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "reset"
+      },
+      "to": {
+        "part": "clear",
+        "pin": "sel"
+      }
+    },
+    {
+      "from": {
+        "part": "clear",
+        "pin": "out"
+      },
+      "to": {
+        "part": "reg",
+        "pin": "d"
+      }
+    },
+    {
+      "from": {
+        "part": "always",
+        "pin": "out"
+      },
+      "to": {
+        "part": "reg",
+        "pin": "load"
+      }
+    },
+    {
+      "from": {
+        "port": "clk"
+      },
+      "to": {
+        "part": "reg",
+        "pin": "clk"
+      }
+    },
+    {
+      "from": {
+        "part": "reg",
+        "pin": "q"
+      },
+      "to": {
+        "port": "q"
+      }
+    }
+  ]
+}

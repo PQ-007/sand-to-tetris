@@ -1,0 +1,32 @@
+id = "regfile"
+name = "Register file"
+layer = 3
+goal = """
+The CPU's eight registers, r0 to r7, with one write port and two read ports. qa shows the register numbered ra and qb the one numbered rb, at the same time. On a rising clk edge, if we (write enable) is 1, register wa stores d.
+Eight Registers share d and clk; a DMUX8WAY sends we to the one chosen by wa, and two MUX8WAY16s read with ra and rb.
+"""
+sequential = true
+inputs = ["d", "we", "wa", "ra", "rb", "clk"]
+outputs = ["qa", "qb"]
+requires = ["register", "dmux8way", "mux8way16"]
+widths = { d = 16, wa = 3, ra = 3, rb = 3, qa = 16, qb = 16 }
+model = "regfile"
+random_tests = 300
+truth_table = """
+d we wa ra rb clk | qa qb
+11 1 3 3 0 0 | - -
+11 1 3 3 0 1 | 11 -
+22 1 5 3 5 0 | 11 -
+22 1 5 3 5 1 | 11 22
+99 0 3 3 5 0 | 11 22
+99 0 3 3 5 1 | 11 22
+7 1 0 0 3 0 | - 11
+7 1 0 0 3 1 | 7 11
+0xffff 1 7 7 7 0 | - -
+0xffff 1 7 7 7 1 | 0xffff 0xffff
+0 0 0 5 0 0 | 22 7
+"""
+
+[hints]
+wrong = "Every register gets the same d and clk; only the one picked by wa may load, and only when we is 1. The two read ports are independent: ra drives one MUX8WAY16, rb the other."
+unknown = "A register reads as unknown until it's written. If a written register stays unknown, check that its load comes from the DMUX8WAY output for its number."

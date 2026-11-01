@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "component": "srlatch",
+  "parts": [
+    {
+      "id": "top",
+      "kind": "nor",
+      "pos": [
+        360,
+        160
+      ]
+    },
+    {
+      "id": "bottom",
+      "kind": "nor",
+      "pos": [
+        360,
+        300
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": {
+        "port": "s"
+      },
+      "to": {
+        "part": "top",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "bottom",
+        "pin": "out"
+      },
+      "to": {
+        "part": "top",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "port": "r"
+      },
+      "to": {
+        "part": "bottom",
+        "pin": "b"
+      }
+    },
+    {
+      "from": {
+        "part": "top",
+        "pin": "out"
+      },
+      "to": {
+        "part": "bottom",
+        "pin": "a"
+      }
+    },
+    {
+      "from": {
+        "part": "bottom",
+        "pin": "out"
+      },
+      "to": {
+        "port": "q"
+      }
+    }
+  ]
+}

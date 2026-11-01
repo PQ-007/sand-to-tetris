@@ -1,4 +1,5 @@
-import { WAFER_STEPS } from "../demos/wafer";
+import { WAFER_STEPS, type WaferStep } from "../demos/wafer";
+import { t, type Key } from "../i18n";
 import { Demo, sheet } from "./kit";
 
 const CSS = sheet(`
@@ -22,7 +23,14 @@ function purityText(impurity: number): string {
   const nines = Math.round(-Math.log10(impurity));
   const pct = (100 - impurity * 100).toFixed(Math.max(0, nines - 2));
   const ratio = Math.round(1 / impurity).toLocaleString("en-US");
-  return `≈ ${pct}% silicon: about 1 stray atom in ${ratio}`;
+  return t("wafer.purityText", { pct, ratio });
+}
+
+function text(
+  s: WaferStep,
+  field: "title" | "what" | "detail" | "temperature",
+): string {
+  return t(`wafer.${s.id}.${field}` as Key);
 }
 
 /** <wafer-flow>: step through the journey from quartz sand to a polished wafer. */
@@ -35,15 +43,18 @@ export class WaferFlow extends Demo {
 
   protected build(): void {
     const fig = document.createElement("figure");
-    fig.innerHTML = `<figcaption><strong>From sand to wafer</strong>
-      Six steps turn quartz into a disc of nearly perfect crystal. Select a step.</figcaption>`;
+    const caption = document.createElement("figcaption");
+    const strong = document.createElement("strong");
+    strong.textContent = t("wafer.caption");
+    caption.append(strong, " ", t("wafer.captionText"));
+    fig.append(caption);
     const list = document.createElement("ol");
     list.className = "flow";
     const buttons = WAFER_STEPS.map((step, i) => {
       const li = document.createElement("li");
       const b = document.createElement("button");
       b.type = "button";
-      b.textContent = step.title;
+      b.textContent = text(step, "title");
       b.addEventListener("click", () => this.go(i));
       li.append(b);
       list.append(li);
@@ -56,11 +67,11 @@ export class WaferFlow extends Demo {
     nav.className = "nav";
     const prev = document.createElement("button");
     prev.type = "button";
-    prev.textContent = "← Previous step";
+    prev.textContent = t("wafer.prev");
     prev.addEventListener("click", () => this.go(this.index - 1));
     const next = document.createElement("button");
     next.type = "button";
-    next.textContent = "Next step →";
+    next.textContent = t("wafer.next");
     next.addEventListener("click", () => this.go(this.index + 1));
     nav.append(prev, next);
     fig.append(list, panel, nav);
@@ -76,24 +87,29 @@ export class WaferFlow extends Demo {
       next.disabled = this.index === WAFER_STEPS.length - 1;
       panel.innerHTML = "";
       const h = document.createElement("h3");
-      h.textContent = `Step ${this.index + 1}: ${s.title}`;
+      h.textContent = t("wafer.step", {
+        n: this.index + 1,
+        title: text(s, "title"),
+      });
       const what = document.createElement("p");
       what.innerHTML = `<strong></strong>`;
-      what.firstElementChild!.textContent = s.what;
+      what.firstElementChild!.textContent = text(s, "what");
       const detail = document.createElement("p");
-      detail.textContent = s.detail;
+      detail.textContent = text(s, "detail");
       panel.append(h, what, detail);
-      if (s.temperature) {
-        const t = document.createElement("p");
-        t.className = "muted";
-        t.textContent = `Temperature: ${s.temperature}`;
-        panel.append(t);
+      if (s.heated) {
+        const temp = document.createElement("p");
+        temp.className = "muted";
+        temp.textContent = t("wafer.temperature", {
+          t: text(s, "temperature"),
+        });
+        panel.append(temp);
       }
       if (s.impurity !== undefined) {
         const m = document.createElement("div");
         m.className = "meter";
         const nines = -Math.log10(s.impurity);
-        m.innerHTML = `<span>Purity</span><span class="bar" role="img"><span style="width:${Math.min(100, (nines / 9) * 100)}%"></span></span>`;
+        m.innerHTML = `<span>${t("wafer.purity")}</span><span class="bar" role="img"><span style="width:${Math.min(100, (nines / 9) * 100)}%"></span></span>`;
         const text = document.createElement("span");
         text.textContent = purityText(s.impurity);
         m.querySelector(".bar")?.setAttribute("aria-label", text.textContent);
@@ -103,7 +119,7 @@ export class WaferFlow extends Demo {
       for (const id of s.sources) {
         const a = document.createElement("a");
         a.href = `#/chapter/0/s/src-${id}`;
-        a.textContent = "Source";
+        a.textContent = t("wafer.source");
         const p = document.createElement("p");
         p.className = "muted";
         p.append(a);

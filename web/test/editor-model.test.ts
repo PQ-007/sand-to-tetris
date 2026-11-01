@@ -16,6 +16,7 @@ import {
   endpointLabel,
   History,
   movePart,
+  movePort,
   nextId,
   removePart,
   removeWire,
@@ -67,6 +68,18 @@ describe("editing a design", () => {
     expect(h.canRedo()).toBe(false);
   });
 
+  it("moves a port without touching the rest of the design", () => {
+    const d = addPart(emptyDesign("not"), "nmos", [100, 100]).design;
+    const moved = movePort(d, "out", [400, 200]);
+    expect(moved.port_pos).toEqual({ out: [400, 200] });
+    expect(moved.parts).toBe(d.parts);
+    expect(d.port_pos).toBeUndefined();
+    expect(movePort(moved, "a", [100, 50]).port_pos).toEqual({
+      out: [400, 200],
+      a: [100, 50],
+    });
+  });
+
   it("labels endpoints for people", () => {
     expect(endpointKey({ part: "p1", pin: "gate" })).toBe("pin:p1.gate");
     expect(endpointLabel({ port: "a" }, ["a"])).toBe("input a");
@@ -101,6 +114,31 @@ describe("layout", () => {
     expect(ax).toBeLessThan(CANVAS.width / 2);
     expect(ox).toBeGreaterThan(CANVAS.width / 2);
     expect(portPoint("zz", ["a"], ["out"])).toBeUndefined();
+  });
+
+  it("leaves room left of an input pin for its label box", () => {
+    // "a = 65535" is about 80px wide; the box sits left of the pin.
+    const [ax] = portPoint("a", ["a"], ["out"]) ?? [0];
+    expect(ax).toBeGreaterThanOrEqual(100);
+  });
+
+  it("draws a moved port where the learner put it", () => {
+    const moved = { out: [300, 120] as [number, number] };
+    expect(portPoint("out", ["a"], ["out"], CANVAS, moved)).toEqual([300, 120]);
+    // Other ports keep their default spot.
+    expect(portPoint("a", ["a"], ["out"], CANVAS, moved)).toEqual(
+      portPoint("a", ["a"], ["out"]),
+    );
+  });
+
+  it("keeps a dragged port's label box on the canvas", async () => {
+    const { clampPort, MAX_CANVAS } = await import("../src/editor/geometry");
+    expect(clampPort([0, 0], true)).toEqual([100, 20]);
+    expect(clampPort([99999, 99999], false)).toEqual([
+      MAX_CANVAS.width - 130,
+      MAX_CANVAS.height - 20,
+    ]);
+    expect(clampPort([400, 300], true)).toEqual([400, 300]);
   });
 
   it("routes wires at right angles and snaps to the grid", () => {
@@ -222,5 +260,22 @@ describe("canvas size", () => {
     expect(big.width).toBeGreaterThanOrEqual(1500 + 200);
     expect(big.height).toBeGreaterThanOrEqual(900 + 80);
     expect(canvasSize([{ pos: [99999, 99999], shape: s }])).toEqual(MAX_CANVAS);
+  });
+
+  it("fills the visible area it is given, on the grid, up to the maximum", async () => {
+    const { canvasSize, MAX_CANVAS, GRID } =
+      await import("../src/editor/geometry");
+    const fill = canvasSize([], { width: 1234, height: 777 });
+    expect(fill).toEqual({ width: 1230, height: 770 });
+    expect(fill.width % GRID).toBe(0);
+    expect(canvasSize([], { width: 9999, height: 9999 })).toEqual(MAX_CANVAS);
+  });
+
+  it("keeps output port boxes inside the canvas", async () => {
+    const { portPoint, CANVAS } = await import("../src/editor/geometry");
+    const [x] = portPoint("out", ["a"], ["out"]) ?? [0];
+    // The box starts 8px right of the pin and is at least 100px wide for
+    // labels like "out = 0x00ff".
+    expect(x + 8 + 100).toBeLessThanOrEqual(CANVAS.width);
   });
 });

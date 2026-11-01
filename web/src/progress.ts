@@ -1,6 +1,7 @@
 // Saves the learner's designs and passes in the browser (IndexedDB).
 // Falls back to memory when storage is unavailable (private windows,
 // blocked site data), and says so, rather than failing.
+import { t } from "./i18n";
 import type { LevelProgress, Progress } from "./game";
 
 export interface ProgressStore {
@@ -78,7 +79,7 @@ export function parseProgressFile(text: string): Progress | string {
   try {
     data = JSON.parse(text);
   } catch {
-    return "That file isn't valid JSON.";
+    return t("progress.badJson");
   }
   const file = data as { app?: unknown; progress?: unknown };
   if (
@@ -86,7 +87,7 @@ export function parseProgressFile(text: string): Progress | string {
     typeof file.progress !== "object" ||
     !file.progress
   ) {
-    return "That file isn't a Sand to Tetris progress file.";
+    return t("progress.notOurs");
   }
   for (const [id, p] of Object.entries(
     file.progress as Record<string, LevelProgress>,
@@ -97,7 +98,7 @@ export function parseProgressFile(text: string): Progress | string {
       p.design?.format !== 1 ||
       p.design.component !== id
     ) {
-      return `The entry for "${id}" is damaged.`;
+      return t("progress.damaged", { id });
     }
   }
   return file.progress as Progress;

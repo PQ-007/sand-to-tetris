@@ -15,7 +15,7 @@ mod matching;
 mod table;
 
 pub use gatecheck::{format_value, leaf_model};
-pub use matching::{MatchReport, Mismatch};
+pub use matching::{match_check, MatchReport, Mismatch, RANDOM_VECTORS};
 pub use table::{parse_number, Table, TableError, TableRow};
 
 // ---- reports -------------------------------------------------------------------
@@ -74,8 +74,33 @@ pub struct ReportProblem {
     /// `"error"` or `"warning"`.
     pub severity: &'static str,
     pub message: String,
+    /// What kind of problem (e.g. `output-unconnected`), and the values its
+    /// message mentions, so the website can say it in the learner's
+    /// language. `engine` for problems found while simulating.
+    pub code: &'static str,
+    pub args: std::collections::BTreeMap<String, String>,
     pub parts: Vec<String>,
     pub ports: Vec<String>,
+}
+
+impl ReportProblem {
+    /// An error found while flattening or simulating (not by the
+    /// validator): `inner-broken` when a component used inside is broken,
+    /// else `engine`. The detail is the engine's own (English) message.
+    pub(crate) fn engine(code: &'static str, message: String, parts: Vec<String>) -> ReportProblem {
+        let detail = message
+            .strip_prefix("a component inside this design is broken: ")
+            .unwrap_or(&message)
+            .to_string();
+        ReportProblem {
+            severity: "error",
+            args: [("detail".to_string(), detail)].into(),
+            message,
+            code,
+            parts,
+            ports: vec![],
+        }
+    }
 }
 
 impl From<&Problem> for ReportProblem {
@@ -83,6 +108,8 @@ impl From<&Problem> for ReportProblem {
         ReportProblem {
             severity: if p.is_error() { "error" } else { "warning" },
             message: p.to_string(),
+            code: p.code(),
+            args: p.args(),
             parts: p.parts(),
             ports: p.ports(),
         }
@@ -167,17 +194,17 @@ pub fn check_with(
     let circuit = match flatten(level, design, library) {
         Ok(c) => c,
         Err(e) => {
-            report.problems.push(ReportProblem {
-                severity: "error",
-                message: match &e {
-                    FlattenError::Invalid { component, .. } if component != &level.id => {
-                        format!("a component inside this design is broken: {e}")
-                    }
-                    _ => e.to_string(),
+            let inner =
+                matches!(&e, FlattenError::Invalid { component, .. } if component != &level.id);
+            report.problems.push(ReportProblem::engine(
+                if inner { "inner-broken" } else { "engine" },
+                if inner {
+                    format!("a component inside this design is broken: {e}")
+                } else {
+                    e.to_string()
                 },
-                parts: vec![],
-                ports: vec![],
-            });
+                vec![],
+            ));
             return Ok(report);
         }
     };

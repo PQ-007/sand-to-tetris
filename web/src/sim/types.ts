@@ -24,6 +24,8 @@ export interface Design {
   component: string;
   parts: Part[];
   wires: Wire[];
+  /** Editor-only: where moved ports are drawn, by port name. */
+  port_pos?: Record<string, [number, number]>;
 }
 
 export interface Level {
@@ -35,6 +37,8 @@ export interface Level {
   outputs: string[];
   requires: string[];
   optional: boolean;
+  /** Rows are steps run in order on one circuit (it has memory). */
+  sequential: boolean;
   /** Bits per port, for multi-bit ports only. */
   widths?: Record<string, number>;
   model?: string;
@@ -45,12 +49,21 @@ export interface Level {
 
 export interface LevelInfo {
   level: Level;
-  table: { inputs: [string, number][]; outputs: [string, number][] }[];
+  table: {
+    inputs: [string, number][];
+    outputs: [string, number][];
+    /** Outputs written `-`: any value is fine (sequential levels). */
+    skip: string[];
+  }[];
 }
 
 export interface Problem {
   severity: "error" | "warning";
   message: string;
+  /** Kind of problem (e.g. `output-unconnected`) and the values its message
+   * mentions, for showing it in the learner's language. */
+  code: string;
+  args: Record<string, string>;
   parts: string[];
   ports: string[];
 }
@@ -69,6 +82,18 @@ export interface SimView {
   settled: boolean;
   /** Gate delays until settled (Layer 2 and up). */
   depth: number;
+  /** Gates simulated (Layer 2 and up). */
+  cells: number;
+  /** What every gate holds now, by gate path; pass it to the next
+   * simulate call so memory carries over. */
+  state: Record<string, string>;
+}
+
+export interface StepsView {
+  /** The circuit after the last step (with its state). */
+  view: SimView;
+  /** Output values after each step. */
+  outputs: [string, Value][][];
 }
 
 export interface Diagnostic {
@@ -119,4 +144,20 @@ export interface MatchReport {
     expected: [string, string][];
     actual: [string, string][];
   }[];
+}
+
+/** The reference CPU's state (s2t-isa), as `isaTrace` reports it. */
+export interface IsaState {
+  pc: number;
+  regs: number[];
+  z: boolean;
+  n: boolean;
+  c: boolean;
+}
+
+/** A program run from reset: `states[0]` is the start, `states[i + 1]`
+ * follows instruction i; `writes[i]` is what it stored, if anything. */
+export interface IsaTrace {
+  states: IsaState[];
+  writes: ([number, number] | null)[];
 }

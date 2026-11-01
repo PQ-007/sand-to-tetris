@@ -8,21 +8,50 @@
       content="Build a computer from sand to Tetris: transistors, gates, a CPU, a compiler and a game, all in your browser."
     />
     <title>Sand to Tetris</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+    />
   </head>
   <body>
-    <a class="skip-link" href="#app">Skip to content</a>
+    <a class="skip-link" href="#app" data-text="site.skip">Skip to content</a>
     <header class="site-header">
-      <a class="brand" href="#/">Sand to Tetris</a>
-      <nav aria-label="Site">
-        <a href="#/">Chapters</a>
-        <a href="#/levels">Build</a>
-        <a href="#/glossary">Glossary</a>
+      <a class="brand" href="#/">
+        <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            class="pins"
+            d="M7 2v3M12 2v3M17 2v3M7 19v3M12 19v3M17 19v3M2 7h3M2 12h3M2 17h3M19 7h3M19 12h3M19 17h3"
+          />
+          <rect class="die" x="5" y="5" width="14" height="14" rx="2" />
+          <rect class="core" x="9" y="9" width="6" height="6" rx="1" />
+        </svg>
+        <span data-text="site.name">Sand to Tetris</span>
+      </a>
+      <nav aria-label="Site" class="site-nav">
+        <a href="#/" data-nav="learn" data-text="nav.learn">Learn</a>
+        <a href="#/levels" data-nav="build" data-text="nav.build">Build</a>
+        <a href="#/glossary" data-nav="glossary" data-text="nav.glossary"
+          >Glossary</a
+        >
       </nav>
+      <a class="hud-xp" href="#/levels" hidden>
+        <span class="hud-xp-label" data-text="hud.levels">Levels</span>
+        <span class="hud-xp-count"></span>
+        <span class="hud-xp-bar" aria-hidden="true"><span></span></span>
+      </a>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" data-lang="en" lang="en" title="English">
+          EN
+        </button>
+        <button type="button" data-lang="mn" lang="mn" title="Монгол">
+          МН
+        </button>
+      </div>
+      <s2t-core-status class="core-status"></s2t-core-status>
     </header>
     <main id="app"></main>
-    <footer class="site-footer">
-      <s2t-core-status></s2t-core-status>
-    </footer>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

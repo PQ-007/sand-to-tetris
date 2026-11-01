@@ -168,11 +168,15 @@ export interface Size {
 export const MAX_CANVAS: Size = { width: 2400, height: 1600 };
 
 /**
- * Canvas size for a set of parts: at least the default, and big enough
+ * Canvas size for a set of parts: at least the default (or the visible
+ * area `fill`, so the canvas uses the whole editor pane), and big enough
  * to leave room around the furthest part (so dragging toward an edge
  * makes the canvas grow).
  */
-export function canvasSize(parts: { pos?: Point; shape: Shape }[]): Size {
+export function canvasSize(
+  parts: { pos?: Point; shape: Shape }[],
+  fill?: Size,
+): Size {
   let right = 0;
   let bottom = 0;
   for (const { pos, shape } of parts) {
@@ -180,37 +184,91 @@ export function canvasSize(parts: { pos?: Point; shape: Shape }[]): Size {
     right = Math.max(right, pos[0] + shape.width / 2);
     bottom = Math.max(bottom, pos[1] + shape.height / 2);
   }
+  // Floor the visible area to the grid so ports stay on it and the canvas
+  // never overflows its pane by a few pixels (which would add scrollbars).
+  const floor = (v: number | undefined, min: number) =>
+    Math.max(min, Math.floor((v ?? 0) / GRID) * GRID);
   const fit = (v: number, min: number, max: number) =>
     Math.min(max, Math.max(min, Math.ceil(v / 40) * 40));
   return {
-    width: fit(right + 200, CANVAS.width, MAX_CANVAS.width),
-    height: fit(bottom + 80, CANVAS.height, MAX_CANVAS.height),
+    width: fit(right + 200, floor(fill?.width, CANVAS.width), MAX_CANVAS.width),
+    height: fit(
+      bottom + 80,
+      floor(fill?.height, CANVAS.height),
+      MAX_CANVAS.height,
+    ),
   };
 }
 
+/**
+ * Where a port is drawn: where the learner moved it, or by default down the
+ * left edge (inputs) or the right edge (outputs) of `size`.
+ */
 export function portPoint(
   name: string,
   inputs: string[],
   outputs: string[],
   size: Size = CANVAS,
+  moved?: Record<string, Point>,
 ): Point | undefined {
+  const at = moved?.[name];
+  if (at && (inputs.includes(name) || outputs.includes(name))) return at;
   const place = (list: string[], x: number): Point | undefined => {
     const i = list.indexOf(name);
     if (i < 0) return undefined;
     const gap = size.height / (list.length + 1);
     return [x, Math.round((gap * (i + 1)) / GRID) * GRID];
   };
-  return place(inputs, 60) ?? place(outputs, size.width - 60);
+  // Port labels sit outside their pin (left of inputs, right of outputs),
+  // so leave room for them.
+  return place(inputs, 100) ?? place(outputs, size.width - 120);
+}
+
+/** Keeps a dragged port, and its label box, on the largest canvas. */
+export function clampPort(p: Point, isInput: boolean): Point {
+  return [
+    Math.min(MAX_CANVAS.width - 130, Math.max(isInput ? 100 : 20, p[0])),
+    Math.min(MAX_CANVAS.height - 20, Math.max(20, p[1])),
+  ];
+}
+
+/** Zoom range of the editor canvas (1 = real pixels). */
+export const ZOOM = { min: 0.25, max: 2 };
+const ZOOM_STEPS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.9, 1, 1.25, 1.5, 1.75, 2];
+
+export function clampZoom(z: number): number {
+  return Math.min(ZOOM.max, Math.max(ZOOM.min, z));
+}
+
+/** The next zoom level up (`dir` 1) or down (-1) from `z`. */
+export function zoomStep(z: number, dir: 1 | -1): number {
+  const next =
+    dir > 0
+      ? ZOOM_STEPS.find((s) => s > z + 1e-6)
+      : [...ZOOM_STEPS].reverse().find((s) => s < z - 1e-6);
+  return next ?? (dir > 0 ? ZOOM.max : ZOOM.min);
+}
+
+/** Zoom that shows all of `box` in `pane` (with a margin), at most 150%. */
+export function fitZoom(
+  box: { x: number; y: number; width: number; height: number },
+  pane: Size,
+): number {
+  const z = Math.min(
+    (pane.width - 40) / Math.max(1, box.width),
+    (pane.height - 40) / Math.max(1, box.height),
+  );
+  return Math.max(ZOOM.min, Math.min(1.5, Math.floor(z * 100) / 100));
 }
 
 export function snap(p: Point): Point {
   return [Math.round(p[0] / GRID) * GRID, Math.round(p[1] / GRID) * GRID];
 }
 
-/** Keeps a part inside the largest canvas (and clear of the ports). */
+/** Keeps a part inside the largest canvas. */
 export function clampToCanvas(p: Point): Point {
   return [
-    Math.min(MAX_CANVAS.width - 130, Math.max(130, p[0])),
+    Math.min(MAX_CANVAS.width - 130, Math.max(40, p[0])),
     Math.min(MAX_CANVAS.height - 40, Math.max(40, p[1])),
   ];
 }

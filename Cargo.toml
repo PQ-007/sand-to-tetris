@@ -14,6 +14,7 @@ s2t-switch = { path = "sim/crates/switch" }
 s2t-gate = { path = "sim/crates/gate" }
 s2t-models = { path = "sim/crates/models" }
 s2t-checker = { path = "sim/crates/checker" }
+s2t-isa = { path = "sim/crates/isa" }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 toml = "1.1.8"
