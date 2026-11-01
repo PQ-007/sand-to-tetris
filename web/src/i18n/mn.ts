@@ -32,10 +32,9 @@ export const mn: Record<keyof typeof en, Message> = {
   "outline.1.summary":
     "NMOS, PMOS транзисторуудыг холбож NOT, NAND, NOR хаалга бүтээнэ.",
   "outline.2.title": "Хослолын логик",
-  "outline.2.summary": "Сонгогч, хуваарилагч, нэмэгч ба 16 битийн АЛН.",
+  "outline.2.summary": "MUX, DMUX, нэмэгч ба 16 битийн ALU.",
   "outline.3.title": "Санах ой",
-  "outline.3.summary":
-    "Түгжээ, сэлгүүр, хадгалуур, шууд хандалтат санах ой ба програмын тоолуур.",
+  "outline.3.summary": "Latch, flip-flop, регистр, RAM ба програмын тоолуур.",
   "outline.4.title": "Төв процессор",
   "outline.4.summary":
     "Хамтдаа зохиох зааврын систем, өгөгдлийн зам ба удирдлагын нэгж.",
@@ -202,7 +201,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.tick": "Цагийн цохилт ⎍",
   "play.tickTitle": "clk-ийг 1 болгоод буцааж 0 болгоно",
   "play.ticked":
-    "Цохилт: clk 1 болж (сэлгүүрүүд хадгалах агшин) буцаад 0 боллоо.",
+    "Цохилт: clk 1 болж (flip-flop-ууд хадгалах агшин) буцаад 0 боллоо.",
   "play.resetMemory": "Санах ойг цэвэрлэх",
   "play.resetMemoryTitle":
     "Хадгалсан бүхнээ мартана: унтраагаад асаасантай адил",
@@ -263,7 +262,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.slowLink": "түвшнүүдийн хуудсан",
   "play.slowEnd": " дээр хийнэ.",
   "play.optionsFor": "Тохиргоо: {id}",
-  "play.busWidth": "Шугамын өргөн ",
+  "play.busWidth": "Bus-ын өргөн ",
   "play.bits": "{n} бит",
   "play.repeat": "Давтах × ",
   "play.repeatHelp":
@@ -275,7 +274,7 @@ export const mn: Record<keyof typeof en, Message> = {
     "{n}-р алхмыг харуулж байна (1–{m}-р алхмыг дахин явуулсны дараа).",
   "play.showingRow":
     "{n}-р мөрийг харуулж байна. Тодруулсан эд анги «!» тэмдэгтэй.",
-  "play.waveform": "Долгионы зураглал",
+  "play.waveform": "Waveform",
   "play.waveTest": "Шалгалтын алхмууд",
   "play.waveLive": "Шууд",
   "play.waveClear": "Арилгах",
@@ -285,7 +284,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.error": "Алдаа: ",
   "play.note": "Тэмдэглэл: ",
   "play.shortNow":
-    "Яг одоо богино холбоо үүссэн: VDD ба GND дараахаар дамжин холбогдсон: {parts}.",
+    "Яг одоо богино холболт үүссэн: VDD ба GND дараахаар дамжин холбогдсон: {parts}.",
   "play.couldntCheck": "Шалгаж чадсангүй: {error}",
   "play.passed": "✓ Давлаа!",
   "play.passedRows": (v) =>
@@ -312,11 +311,11 @@ export const mn: Record<keyof typeof en, Message> = {
   "canvas.label": "Хэлхээний зотон",
   "canvas.wired": "Холболт: {list}. ",
   "canvas.notWired": "Холбогдоогүй. ",
-  "canvas.partShort": ", богино холбоонд оролцож байна",
+  "canvas.partShort": ", богино холболтод оролцож байна",
   "canvas.partKeys":
     "Сумтай товч зөөнө, Delete устгана, цэсний товч бусад үйлдлийг харуулна.",
-  "canvas.split": "Салаалагч {w}",
-  "canvas.join": "Нийлүүлэгч {w}",
+  "canvas.split": "Splitter {w}",
+  "canvas.join": "Joiner {w}",
   "canvas.shared": "{pin} (хуваалцсан)",
   "canvas.pinTitle": "{pin}{bits} = {value}. Өөр хөл рүү чирж холбоно.",
   "canvas.pinBits": " ({n} бит)",
@@ -332,8 +331,8 @@ export const mn: Record<keyof typeof en, Message> = {
   "model.sameEnd": "Утас хоёр өөр үзүүртэй байх ёстой.",
   "model.alreadyConnected": "Энэ хоёр аль хэдийн холбогдсон байна.",
   "canvas.pendingWire": "Одоо холбох хөл дээрээ дарна уу (Escape цуцална).",
-  "state.on": "нээлттэй",
-  "state.off": "хаалттай",
+  "state.on": "асаалттай",
+  "state.off": "унтраалттай",
   "state.maybe": "тодорхойгүй",
   "endpoint.input": "оролт {name}",
   "endpoint.output": "гаралт {name}",
@@ -363,14 +362,13 @@ export const mn: Record<keyof typeof en, Message> = {
   "menu.allWires": "Бүх утас",
   "menu.wireCount": "{n} утас",
 
-  // ---- долгионы зураглал ----
-  "wave.label":
-    "{n} алхмын долгионы зураглал: {names}. Ижил утгууд хүснэгтэд бас бий.",
+  // ---- waveform ----
+  "wave.label": "{n} алхмын waveform: {names}. Ижил утгууд хүснэгтэд бас бий.",
   "wave.replay": "{n}-р алхам хүртэл дахин явуулах",
 
   // ---- багажийн нэрс ----
-  "tool.split": "Салаалагч",
-  "tool.join": "Нийлүүлэгч",
+  "tool.split": "Splitter",
+  "tool.join": "Joiner",
   // ---- шалгагчийн мессеж ----
   "problem.component-mismatch":
     "Энэ бүтээл `{design}`-д зориулагдсан, гэтэл түвшин нь `{level}` байна",
@@ -403,16 +401,16 @@ export const mn: Record<keyof typeof en, Message> = {
   "problem.inner-broken":
     "Энэ бүтээл доторх нэг бүрэлдэхүүн эвдэрсэн байна: {detail}",
   "problem.engine": "Загварчлах үед алдаа гарлаа: {detail}",
-  "reason.widthOnlyWiring": "зөвхөн салаалагч ба нийлүүлэгч өргөнтэй байдаг",
+  "reason.widthOnlyWiring": "зөвхөн splitter ба joiner өргөнтэй байдаг",
   "reason.repeatOnlyComponents": "зөвхөн бүрэлдэхүүнийг давтаж болно",
   "reason.sharedNeedsRepeat":
     "хуваалцсан хөл зөвхөн давтсан бүрэлдэхүүнд утгатай",
-  "reason.needsWidth": "салаалагч, нийлүүлэгчид өргөн заах хэрэгтэй",
+  "reason.needsWidth": "splitter, joiner-т өргөн заах хэрэгтэй",
   "reason.badWidth": "{n} өргөн зөвшөөрөгдөхгүй; 2-оос 64 хүртэл байна",
   "reason.badRepeat": "{n} удаа давтах боломжгүй; 1-ээс 64 хүртэл байна",
   "reason.tooWide": "давтахад хөл 64 битээс өргөн болж байна",
   "reason.wiringLayer2":
-    "салаалагч ба нийлүүлэгч 2-р давхаргад олон битийн шугамтай хамт гарч ирнэ",
+    "splitter ба joiner 2-р давхаргад олон битийн bus-тай хамт гарч ирнэ",
   "diag.row": "{n}-р мөр",
   "diag.step1": "1-р алхам",
   "diag.step2": "2-р алхам (1-р алхмын дараа)",
@@ -425,10 +423,10 @@ export const mn: Record<keyof typeof en, Message> = {
   "diag.wrong":
     "{label}: {inputs} → {port}={expected} байх ёстой, гэтэл {port}={actual} гарлаа.",
   "diag.floating":
-    "{label}: {inputs} → {port}={expected} байх ёстой, гэтэл {actual} гарлаа: `{port}` гаралт хөвөгч байна, түүнийг юу ч жолоодохгүй байна.",
+    "{label}: {inputs} → {port}={expected} байх ёстой, гэтэл {actual} гарлаа: `{port}` гаралт floating байна, түүнийг юу ч жолоодохгүй байна.",
   "diag.unknown":
     "{label}: {inputs} → {port}={expected} байх ёстой, гэтэл {actual} гарлаа: `{port}` гаралтын утгыг тодорхойлох боломжгүй. Холбогдоогүй оролт эсвэл гогцоо байгаа эсэхийг шалгаарай.",
   "diag.short":
-    "{label}: {inputs} → богино холбоо: VDD ба GND холбогдсон байна. {port}={expected} байх ёстой, гэтэл X гарлаа.",
+    "{label}: {inputs} → богино холболт: VDD ба GND холбогдсон байна. {port}={expected} байх ёстой, гэтэл X гарлаа.",
   ...demosMn,
 };

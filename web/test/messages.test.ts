@@ -85,7 +85,7 @@ describe("checker messages in the learner's language", () => {
         sequential: false,
         rows: 4,
       }),
-    ).toMatch(/^2-р мөр: .* хөвөгч байна/);
+    ).toMatch(/^2-р мөр: .* floating байна/);
     setLang("en");
   });
 });
