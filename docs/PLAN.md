@@ -138,7 +138,15 @@ Agreed with the user in three rounds; the reasons are in `docs/ISA.md`.
 - A barrel shifter (SHL / SHR / SAR by 0–15), to be built from 4 stages of MUX16.
 - Memory-mapped I/O: RAM16K at 0x0000, a 128 × 96 black-and-white screen (768 words) at 0x4000 with the leftmost pixel in bit 15, keyboard at 0x6000; timer and random numbers reserved at 0x6001+ for M11.
 - New levels this implies for M7: RAM16K, the barrel shifter, the register file (8 Registers, DMUX8WAY, two MUX8WAY16), then the CPU and the Computer.
-| M7 | CPU, Computer, CPU test programs, fast CPU model | |
+| M7 ✓ | CPU, Computer, CPU test programs, fast CPU model | Every new level passes from its reference; CPU and Computer run program traces; Chapter 4 is live |
+
+### M7 decisions (2026-11-01)
+- **Levels:** shifter (Layer 2); ram16k, regfile (Layer 3); new Layer 4: decode (the control unit), cpu, memory (the memory map), computer. The cpu and decode levels prescribe the datapath pin for pin (addrM = the ALU's output, outM = register port B, rsel codes, ...), so a fast model can match any correct design exactly.
+- **The program ROM is outside the computer:** tests (and later the site) feed `instr` from ROM[pc], like a ROM chip. No ROM primitive, so Layer 1's base parts stay transistors only.
+- **Reset only zeroes the PC;** the instruction on `instr` still runs during the reset cycle.
+- **CPU and Computer tests are program traces** printed by the models (two steps per instruction, assembly on a `#` line), so they can't drift from the spec.
+- **Check runs passed memory components as models,** like the status re-check (a learner-built RAM16K is ~8 million gates); the live editor still runs the learner's choice. Flattening stops past 100,000 gates with a translated "too big" problem that points at the fast-model switch.
+- **Chapter 4** with a `<cpu-demo>` that runs `s2t-isa` through WASM (`isaTrace`), and cited history (Harvard Mark I and the contested "Harvard architecture" name, IBM 801 and Berkeley RISC, ARM's link register, AVR's separate buses).
 | M8 | Assembler | |
 | M9 | VM + translator | |
 | M10 | High-level language (designed together) + compiler | |

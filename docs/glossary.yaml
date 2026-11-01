@@ -464,3 +464,79 @@
   term: "Capacitor"
   short: "Two conductors separated by an insulator, which hold electric charge, like a tiny rechargeable bucket."
   see: [dram]
+
+- id: instruction
+  term: "Instruction"
+  short: 'One step of a program: a single command the processor can carry out, like "add these two registers" or "jump back if not zero".'
+  long: "In our computer every instruction is one 16-bit word; its bits say what to do and with which [[registers|register]]."
+  see: [instruction-set, machine-code]
+
+- id: instruction-set
+  term: "Instruction set (ISA)"
+  short: "The full list of instructions a processor understands, and exactly how each is written in bits and what it does."
+  long: "It is the contract between hardware and software: the [[CPU|processor]] must do what it promises, and every program is written in it. Ours is in docs/ISA.md."
+  see: [instruction, assembly-language]
+
+- id: machine-code
+  term: "Machine code"
+  short: "A program as the processor reads it: the instruction words as plain numbers."
+  see: [assembly-language]
+
+- id: assembly-language
+  term: "Assembly language"
+  short: "Machine code written with short names instead of numbers, one line per instruction, like SET r1, 5."
+  long: "An assembler turns it into [[machine code|machine-code]]; you'll write one in the next chapter."
+  see: [machine-code, instruction]
+
+- id: instruction-cycle
+  term: "Fetch–decode–execute cycle"
+  short: "What a processor does over and over: read the instruction at the program counter, work out what it means, and carry it out."
+  long: "Our CPU does all three in a single clock cycle."
+  see: [program-counter, control-unit]
+
+- id: control-unit
+  term: "Control unit"
+  short: "The part of a CPU that reads an instruction and sets every control signal: which registers to read, what the ALU does, where the result goes."
+  see: [datapath, instruction]
+
+- id: datapath
+  term: "Datapath"
+  short: "The parts of a CPU that hold and move the data: registers, ALU, shifter and the wires and multiplexers between them."
+  see: [control-unit, register-file]
+
+- id: register-file
+  term: "Register file"
+  short: "A CPU's set of general-purpose registers, with ports to read two of them and write one in the same clock cycle."
+  see: [register]
+
+- id: barrel-shifter
+  term: "Barrel shifter"
+  short: "A circuit that slides a word's bits left or right by any number of places in one step, using a stage per power of two."
+  see: [multiplexer]
+
+- id: subroutine
+  term: "Subroutine"
+  short: "A piece of a program that can be called from anywhere and returns to where it was called from."
+  long: "Our CALL saves the return address in r7 (a [[link register|link-register]]); RET jumps back to it."
+  see: [link-register]
+
+- id: link-register
+  term: "Link register"
+  short: "A register where a call instruction saves the address to come back to. In our CPU it is r7."
+  see: [subroutine]
+
+- id: harvard-architecture
+  term: "Harvard architecture"
+  short: "A computer that keeps its program in a separate memory from its data, so it can fetch the next instruction and read or write data at the same time."
+  long: "The opposite of the [[stored-program|stored-program]] design, where program and data share one memory."
+  see: [stored-program]
+
+- id: risc
+  term: "RISC"
+  short: "Reduced instruction set computer: a design style with many registers and simple, same-size instructions, where only loads and stores touch memory."
+  see: [instruction-set]
+
+- id: memory-mapped-io
+  term: "Memory-mapped I/O"
+  short: "Reaching devices like the screen and keyboard through ordinary memory addresses: storing to the screen's addresses draws, loading from the keyboard's address reads a key."
+  see: [address]

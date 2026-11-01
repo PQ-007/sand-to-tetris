@@ -117,3 +117,17 @@ and `web/src/i18n/demos.mn.ts`.
 | SRAM | SRAM |
 | DRAM | DRAM |
 | Capacitor | Конденсатор |
+| Instruction | Заавар |
+| Instruction set (ISA) | Instruction set (ISA) |
+| Machine code | Машины код |
+| Assembly language | Ассемблер хэл |
+| Fetch–decode–execute cycle | Fetch–decode–execute cycle |
+| Control unit | Control unit |
+| Datapath | Datapath |
+| Register file | Register file |
+| Barrel shifter | Barrel shifter |
+| Subroutine | Дэд програм |
+| Link register | Link register |
+| Harvard architecture | Harvard architecture |
+| RISC | RISC |
+| Memory-mapped I/O | Memory-mapped I/O |

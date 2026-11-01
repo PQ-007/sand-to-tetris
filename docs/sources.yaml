@@ -521,3 +521,57 @@
     - title: "Thanks for the Memories (IEEE Spectrum)"
       url: https://spectrum.ieee.org/semiconductors/memory/thanks-for-the-memories
   checked: web search and both pages read, 2026-11-01
+
+- id: harvard-architecture
+  claim: >-
+    The Harvard Mark I read its instructions from punched paper tape and kept
+    its numbers in separate electromechanical counters. Computers that keep
+    instructions and data in separate memories are often called "Harvard
+    architecture" after it.
+  sources:
+    - title: "Harvard Mark I (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Harvard_Mark_I
+    - title: "Modified Harvard architecture (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Modified_Harvard_architecture
+  checked: web search, 2026-11-01
+  uncertain: >-
+    Where the name comes from is disputed: an article in the IEEE Annals of
+    the History of Computing, "The Myth of the Harvard Architecture", argues
+    the term was coined decades later, in microcontroller design, and doesn't
+    come from work at Harvard. (Reported by Wikipedia; the article itself was
+    not checked.)
+
+- id: risc
+  claim: >-
+    A team under John Cocke at IBM began the 801 around 1975, the first
+    computer built fully in the RISC style. In 1980 David Patterson and David
+    Ditzel published "The Case for the Reduced Instruction Set Computer", and
+    Berkeley's RISC-I microprocessor project ran from 1980 to 1982.
+  sources:
+    - title: "Milestones: First RISC (Reduced Instruction-Set Computing) Microprocessor, 1980-1982 (ETHW / IEEE)"
+      url: https://ethw.org/Milestones:First_RISC_(Reduced_Instruction-Set_Computing)_Microprocessor_1980-1982
+    - title: "The First RISC: John Cocke and the IBM 801 (The Chip Letter)"
+      url: https://thechipletter.substack.com/p/the-first-risc-john-cocke-and-the
+  checked: web search, 2026-11-01
+
+- id: arm-link-register
+  claim: >-
+    ARM processors call subroutines with "branch with link", which saves the
+    return address in register r14, the link register. The first ARM chip,
+    Acorn's ARM1, ran in April 1985.
+  sources:
+    - title: "ARM architecture family (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/ARM_architecture_family
+    - title: "First ARM processor powered up (Centre for Computing History)"
+      url: https://www.computinghistory.org.uk/det/5440/First-ARM-Processor-Powered-Up/
+  checked: web search, 2026-11-01
+
+- id: avr-harvard
+  claim: >-
+    Microchip's AVR microcontrollers use separate buses for program and data:
+    the next instruction is fetched while the current one runs, so most
+    instructions take one clock cycle.
+  sources:
+    - title: "AVR CPU: Architecture (Microchip documentation)"
+      url: https://onlinedocs.microchip.com/oxy/GUID-8109B192-2AF1-4902-BA7D-C3C6DA7BDC69-en-US-3/GUID-F9B6741C-7F50-477E-81A8-5423F10CD41A.html
+  checked: web search, 2026-11-01
