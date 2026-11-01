@@ -46,6 +46,10 @@ pub enum GateError {
         component: String,
     },
     TooDeep,
+    /// More than `limit` gates once fully expanded: too big to simulate.
+    TooBig {
+        limit: usize,
+    },
     /// Two outputs (or an input and an output) drive the same wire.
     MultipleDrivers {
         drivers: Vec<String>,
@@ -68,6 +72,12 @@ impl std::fmt::Display for GateError {
             }
             GateError::Missing { component } => write!(f, "no unlocked design for `{component}`"),
             GateError::TooDeep => write!(f, "components are nested too deeply"),
+            GateError::TooBig { limit } => write!(
+                f,
+                "this circuit is over {} gates once every part is expanded: too big to \
+                 simulate. Switch big parts (memories, the CPU) to their fast models",
+                group_thousands(*limit)
+            ),
             GateError::MultipleDrivers { drivers, .. } => write!(
                 f,
                 "one wire is driven by {}: two outputs fighting over one wire. \
@@ -81,6 +91,21 @@ impl std::fmt::Display for GateError {
 impl std::error::Error for GateError {}
 
 const MAX_DEPTH: usize = 32;
+/// Flattening stops past this many gates (a RAM16K built from gates is
+/// about 8 million); the caller then needs fast models for big parts.
+pub const MAX_CELLS: usize = 100_000;
+
+fn group_thousands(n: usize) -> String {
+    let s = n.to_string();
+    let mut out = String::new();
+    for (i, c) in s.chars().enumerate() {
+        if i > 0 && (s.len() - i).is_multiple_of(3) {
+            out.push(',');
+        }
+        out.push(c);
+    }
+    out
+}
 
 type Key = (Vec<String>, String, u32);
 
@@ -262,12 +287,47 @@ impl Builder {
                         let outs = bits(self, &kind_level.outputs);
                         self.cells
                             .push((part.kind.clone(), inst.clone(), ins, outs));
+                        if self.cells.len() > MAX_CELLS {
+                            return Err(GateError::TooBig { limit: MAX_CELLS });
+                        }
                     }
                 }
             }
         }
         Ok(())
     }
+}
+
+/// How many leaf cells `design` expands to (saturating; components that
+/// are missing or nested too deeply count as 0, flattening reports them).
+fn count_cells(
+    design: &Design,
+    library: &Library,
+    is_leaf: &dyn Fn(&str) -> bool,
+    memo: &mut HashMap<String, usize>,
+    depth: usize,
+) -> usize {
+    let mut total = 0usize;
+    for part in &design.parts {
+        if WIRING.contains(&part.kind.as_str()) {
+            continue;
+        }
+        let each = if is_leaf(&part.kind) {
+            1
+        } else if let Some(&n) = memo.get(&part.kind) {
+            n
+        } else if depth >= MAX_DEPTH {
+            0
+        } else {
+            let n = library
+                .design(&part.kind)
+                .map_or(0, |d| count_cells(d, library, is_leaf, memo, depth + 1));
+            memo.insert(part.kind.clone(), n);
+            n
+        };
+        total = total.saturating_add(each.saturating_mul(part.repeat.unwrap_or(1) as usize));
+    }
+    total
 }
 
 /// Flattens `design` into leaf cells. `is_leaf(kind)` decides which
@@ -295,6 +355,11 @@ pub fn flatten_gates(
             component: level.id.clone(),
             problems: errors,
         });
+    }
+    // Count first (cheap: each component once) so a design far too big to
+    // simulate fails at once instead of after building 100,000 gates.
+    if count_cells(design, library, is_leaf, &mut HashMap::new(), 0) > MAX_CELLS {
+        return Err(GateError::TooBig { limit: MAX_CELLS });
     }
     let ctx = Ctx { library, is_leaf };
     let mut b = Builder::default();
@@ -469,6 +534,30 @@ mod tests {
 
     fn leaf_layer1(lib: &Library) -> impl Fn(&str) -> bool + '_ {
         |k: &str| lib.level(k).is_some_and(|l| l.layer == 1)
+    }
+
+    #[test]
+    fn too_many_cells_stop_flattening_early() {
+        // n64 = 64 NOTs sharing one input; each level up repeats the one
+        // below 64 times: 64³ = 262,144 cells, over the limit.
+        let mut lib = lib();
+        let mut below = "not".to_string();
+        for id in ["n64", "n4k", "n256k"] {
+            let lvl = wide(id, &[("a", 1)], &[]);
+            let mut d = design(id, &[], &[(port("a"), pin("r", "a"))]);
+            d.parts.push(part_with("r", &below, None, Some(64), &["a"]));
+            lib.add_level(lvl);
+            lib.unlock(d);
+            below = id.to_string();
+        }
+        let top = lib.level("n256k").unwrap().clone();
+        let d = lib.design("n256k").unwrap().clone();
+        match flatten_gates(&top, &d, &lib, &leaf_layer1(&lib), true) {
+            Err(GateError::TooBig { limit }) => assert_eq!(limit, MAX_CELLS),
+            other => panic!("expected TooBig, got {:?}", other.map(|c| c.cells.len())),
+        }
+        let e = GateError::TooBig { limit: MAX_CELLS };
+        assert!(e.to_string().contains("100,000"), "{e}");
     }
 
     #[test]

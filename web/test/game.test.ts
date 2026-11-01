@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  memoryParts,
   needsRecheck,
   orderLevels,
   playLibrary,
@@ -136,6 +137,19 @@ describe("re-checking passed memory", () => {
     expect(seen.ram8).toEqual([]);
     expect(seen.ram64).toEqual(["ram8"]);
     expect(seen.not).toEqual([]);
+  });
+
+  it("knows which components are memory (sequential, with a model)", () => {
+    const levels = [
+      entry("not"),
+      entry("alu", 2, [], false),
+      entry("ram8", 3, ["not"], false, "ram8"),
+      entry("cpu", 4, ["ram8"], false, "cpu"),
+    ];
+    expect(memoryParts(levels, ["not", "alu", "ram8", "cpu", "nope"])).toEqual([
+      "ram8",
+      "cpu",
+    ]);
   });
 
   it("only a passed level's edits can change other statuses", () => {

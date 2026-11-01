@@ -81,10 +81,7 @@ export function statuses(
     const id = l.info.level.id;
     const p = progress[id];
     if (p?.passed) {
-      const fast = Object.keys(working).filter((k) => {
-        const l = levels.find((e) => e.info.level.id === k)?.info.level;
-        return Boolean(l?.sequential && l.model);
-      });
+      const fast = memoryParts(levels, Object.keys(working));
       const report = check(
         { ...libraryFor(levels, working, id), fast },
         id,
@@ -105,6 +102,19 @@ export function statuses(
     out[id] = open ? "open" : "locked";
   }
   return out;
+}
+
+/**
+ * The memory components (sequential, with a model: registers, RAM, the
+ * CPU, the memory map) among `ids`. Checks run these as their models: each
+ * one's own check compared it with that model on random clock cycles, and
+ * fully flattened they are far too big (a RAM16K is millions of gates).
+ */
+export function memoryParts(levels: LevelEntry[], ids: string[]): string[] {
+  return ids.filter((k) => {
+    const l = levels.find((e) => e.info.level.id === k)?.info.level;
+    return Boolean(l?.sequential && l.model);
+  });
 }
 
 /**

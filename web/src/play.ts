@@ -36,7 +36,13 @@ import {
   resetPort,
   updatePart,
 } from "./editor/model";
-import { orderLevels, playLibrary, toolbox, type ToolboxItem } from "./game";
+import {
+  memoryParts,
+  orderLevels,
+  playLibrary,
+  toolbox,
+  type ToolboxItem,
+} from "./game";
 import { t, type Key } from "./i18n";
 import { diagnosticText, knownText, problemText } from "./messages";
 import { playHref } from "./router";
@@ -1336,10 +1342,25 @@ class PlayPage {
     }
   }
 
+  /**
+   * Check runs passed memory components as their models, like the level
+   * map's re-check; the live editor keeps the learner's own choice.
+   */
+  private checkLibrary(): LibraryInput {
+    const memory = memoryParts(
+      this.app.levels,
+      this.library.unlocked.map((d) => d.component),
+    );
+    return {
+      ...this.library,
+      fast: [...new Set([...(this.library.fast ?? []), ...memory])],
+    };
+  }
+
   private runCheck(): void {
     let report: Report;
     try {
-      report = check(this.library, this.level.id, this.design);
+      report = check(this.checkLibrary(), this.level.id, this.design);
     } catch (e) {
       this.result.textContent = t("play.couldntCheck", { error: String(e) });
       return;

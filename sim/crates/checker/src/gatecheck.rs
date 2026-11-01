@@ -190,6 +190,14 @@ pub(crate) fn prepare(
             component,
             problems,
         }) if component == level.id => Err(problems.iter().map(ReportProblem::from).collect()),
+        Err(GateError::TooBig { limit }) => Err(vec![ReportProblem {
+            severity: "error",
+            message: GateError::TooBig { limit }.to_string(),
+            code: "too-big",
+            args: [("limit".to_string(), limit.to_string())].into(),
+            parts: vec![],
+            ports: vec![],
+        }]),
         Err(e) => {
             let parts = match &e {
                 GateError::MultipleDrivers { parts, .. } => parts.clone(),

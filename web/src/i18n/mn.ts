@@ -143,6 +143,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "progress.badJson": "Энэ файл зөв JSON биш байна.",
   "progress.notOurs":
     "Энэ файл «Элснээс Тетрис хүртэл»-ийн ахицын файл биш байна.",
+  "progress.damaged": "Гэмтсэн бичлэг: «{id}».",
 
   // ---- түвшний хуудас ----
   "play.loading": "Загварчлагчийг ачаалж байна…",
@@ -401,6 +402,8 @@ export const mn: Record<keyof typeof en, Message> = {
   "problem.inner-broken":
     "Энэ бүтээл доторх нэг бүрэлдэхүүн эвдэрсэн байна: {detail}",
   "problem.engine": "Загварчлах үед алдаа гарлаа: {detail}",
+  "problem.too-big":
+    "Бүх хэсгийг нь задлахад энэ хэлхээ {limit}-аас олон хаалгатай болох тул загварчлахад хэт том. Түвшнүүдийн хуудсан дээр том хэсгүүдийг (санах ой, төв процессор) хурдан загвар руу шилжүүл",
   "reason.widthOnlyWiring": "зөвхөн splitter ба joiner өргөнтэй байдаг",
   "reason.repeatOnlyComponents": "зөвхөн бүрэлдэхүүнийг давтаж болно",
   "reason.sharedNeedsRepeat":

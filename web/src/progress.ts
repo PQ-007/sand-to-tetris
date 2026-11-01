@@ -98,7 +98,7 @@ export function parseProgressFile(text: string): Progress | string {
       p.design?.format !== 1 ||
       p.design.component !== id
     ) {
-      return `The entry for "${id}" is damaged.`;
+      return t("progress.damaged", { id });
     }
   }
   return file.progress as Progress;
