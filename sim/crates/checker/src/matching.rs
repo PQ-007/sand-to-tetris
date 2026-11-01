@@ -62,17 +62,16 @@ pub fn match_check(
         .filter(|l| l.id != level.id && l.sequential && l.model.is_some())
         .map(|l| l.id.clone())
         .collect();
-    let prepared =
-        prepare(level, design, library, &memory, false).map_err(|problems| {
-            let first = problems
-                .first()
-                .map(|p| p.message.clone())
-                .unwrap_or_default();
-            format!(
-                "your `{}` design doesn't pass validation: {first}",
-                level.id
-            )
-        })?;
+    let prepared = prepare(level, design, library, &memory, false).map_err(|problems| {
+        let first = problems
+            .first()
+            .map(|p| p.message.clone())
+            .unwrap_or_default();
+        format!(
+            "your `{}` design doesn't pass validation: {first}",
+            level.id
+        )
+    })?;
     let mut sim = prepared.sim()?;
     if level.sequential {
         return match_clocked(level, &mut sim);
