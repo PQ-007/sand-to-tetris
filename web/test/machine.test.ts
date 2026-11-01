@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
 import { EXAMPLES } from "../src/machine-programs";
 import { keyCode } from "../src/machine";
+import { BUILTIN_OS, withOs } from "../src/os";
 import type { AsmProgram, LangCompiled, VmBuilt } from "../src/sim/types";
 import * as wasm from "../src/sim/pkg/s2t_wasm.js";
 
@@ -28,11 +29,11 @@ describe("Machine page examples", () => {
     return b.program;
   };
 
-  /** A C Shard example, compiled, translated and assembled. */
+  /** A C Shard example with the OS in front (as the page does), compiled,
+   * translated and assembled. */
   const shard = (id: string) => {
-    const c = JSON.parse(
-      wasm.langCompile(EXAMPLES.find((e) => e.id === id)!.source),
-    ) as LangCompiled;
+    const src = withOs(BUILTIN_OS, EXAMPLES.find((e) => e.id === id)!.source);
+    const c = JSON.parse(wasm.langCompile(src.source)) as LangCompiled;
     expect(c.errors, id).toEqual([]);
     const b = JSON.parse(wasm.vmBuild(c.vm.join("\n"))) as VmBuilt;
     expect(b.errors, id).toEqual([]);
@@ -45,6 +46,20 @@ describe("Machine page examples", () => {
         expect(assemble(ex.source).errors, ex.id).toEqual([]);
       else if (ex.lang === "vm") build(ex.id);
       else shard(ex.id);
+  });
+
+  it("the OS example writes text, waits for a key, rolls a dice", () => {
+    const m = machine(shard("shard-hello"));
+    m.run(3_000_000);
+    const word = (x: number, y: number) =>
+      ((m.screen()[y * 8 + (x >> 4)]! >> (15 - (x % 16))) & 1) === 1;
+    expect(word(0, 0) && word(127, 95)).toBe(true); // the frame
+    expect(word(29, 18) || word(28, 18) || word(30, 18)).toBe(true); // "H"
+    m.setKey(65);
+    m.run(200_000);
+    m.setKey(0);
+    m.run(3_000_000);
+    expect(m.halted()).toBe(true);
   });
 
   it("C Shard examples: sum, boxes, dot", () => {
@@ -61,12 +76,12 @@ describe("Machine page examples", () => {
     expect(at(b, 119, 91)).toBe(true);
     expect(at(b, 60, 50)).toBe(false);
     const d = machine(shard("shard-dot"));
-    d.run(20_000);
+    d.run(2_000_000);
     expect(at(d, 64, 48)).toBe(true);
     d.setKey(130);
-    d.run(20_000);
+    d.run(2_000_000);
     d.setKey(0);
-    d.run(20_000);
+    d.run(2_000_000);
     expect(at(d, 64, 48)).toBe(false);
     expect(at(d, 65, 48)).toBe(true);
   });

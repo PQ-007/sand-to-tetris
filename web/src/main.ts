@@ -27,7 +27,8 @@ function show(): void {
       : route.page === "machine" ||
           route.page === "assembler" ||
           route.page === "translator" ||
-          route.page === "compiler"
+          route.page === "compiler" ||
+          route.page === "os"
         ? "machine"
         : route.page === "glossary"
           ? "glossary"
@@ -51,7 +52,8 @@ function show(): void {
     route.page === "machine" ||
     route.page === "assembler" ||
     route.page === "translator" ||
-    route.page === "compiler"
+    route.page === "compiler" ||
+    route.page === "os"
   ) {
     const page = route.page;
     const root = document.getElementById(`${page}-root`);

@@ -5,11 +5,13 @@ import { EXAMPLES, type Example } from "./machine-programs";
 import { asmErrorText, langErrorText, vmErrorText } from "./messages";
 import { asmAssemble, disassemble, loadCore, Machine } from "./sim/core";
 import type { AsmError, AsmProgram, LangCompiled } from "./sim/types";
+import { BUILTIN_OS, programLines, withOs } from "./os";
 import { fromAsmErrors, type VmTranslation } from "./translator";
 import {
   assemblerChoices,
   builtinTranslate,
   compilerChoices,
+  osChoices,
   translatorChoices,
   type AssembleFn,
   type CompileFn,
@@ -115,6 +117,9 @@ class MachinePage {
   private assemble: AssembleFn = async (s) => asmAssemble(s);
   private translate: TranslateFn = builtinTranslate;
   private compile: CompileFn | null = null;
+  /** The OS put in front of C Shard programs. */
+  private os = BUILTIN_OS;
+  private hasOwnOs = false;
   private colors = { on: [77, 163, 255], off: [10, 15, 22] };
 
   private editor: HTMLTextAreaElement;
@@ -153,6 +158,8 @@ class MachinePage {
             <select data-lang>${langs}</select></label>
           <label>${esc(t("machine.example"))}
             <select data-example></select></label>
+          <label data-os-box hidden>${esc(t("machine.os"))}
+            <select data-os></select></label>
           <label data-compiler-box hidden>${esc(t("machine.compiler"))}
             <select data-compiler></select></label>
           <label data-translator-box hidden>${esc(t("machine.translator"))}
@@ -264,6 +271,7 @@ class MachinePage {
       q("[data-translator]"),
     );
     void this.offerCompilers(q("[data-compiler-box]"), q("[data-compiler]"));
+    void this.offerOses(q("[data-os-box]"), q("[data-os]"));
     this.renderLang();
     this.renderGutter();
     this.renderState();
@@ -309,12 +317,38 @@ class MachinePage {
     if (box) box.hidden = this.lang === "asm" || !this.hasOwnTranslator;
     const cbox = this.root.querySelector<HTMLElement>("[data-compiler-box]");
     if (cbox) cbox.hidden = this.lang !== "shard" || !this.compile;
+    const obox = this.root.querySelector<HTMLElement>("[data-os-box]");
+    if (obox) obox.hidden = this.lang !== "shard" || !this.hasOwnOs;
     this.stackBox.hidden = this.lang === "asm";
     this.asmBox.hidden = true;
     this.vmBox.hidden = true;
   }
 
   private hasOwnTranslator = false;
+
+  /** The learner's own OS, once it passes its tests. */
+  private async offerOses(
+    box: HTMLElement,
+    select: HTMLSelectElement,
+  ): Promise<void> {
+    const choices = await osChoices();
+    if (choices.length < 2) return;
+    select.innerHTML = choices
+      .map(
+        (c, i) =>
+          `<option value="${i}">${esc(t(`machine.os.${c.id}` as Key))}</option>`,
+      )
+      .join("");
+    this.os = choices[0]?.source ?? this.os;
+    this.hasOwnOs = true;
+    box.hidden = this.lang !== "shard";
+    select.addEventListener("change", () => {
+      const c = choices[Number(select.value)];
+      if (c) this.os = c.source;
+      this.program = null;
+      this.machine = null;
+    });
+  }
 
   /** The learner's own compiler, once it passes its tests. */
   private async offerCompilers(
@@ -422,10 +456,23 @@ class MachinePage {
       this.status.textContent = t("machine.compiling");
       const compile = this.compile ?? (await compilerChoices())[0]?.compile;
       if (!compile) return false;
-      this.compiled = await compile(source);
-      if (this.compiled.errors.length) {
+      // The OS goes in front; errors and lines come back on the program's.
+      const full = withOs(this.os, source);
+      const c = programLines(await compile(full.source), full.offset);
+      this.compiled = c;
+      if (c.errors.length) {
         this.program = null;
-        this.fail(this.compiled.errors, langErrorText);
+        this.fail(c.errors, (e) => {
+          const i = c.errors.indexOf(e);
+          return c.osErrors[i]
+            ? t("machine.osError", { line: e.line, message: langErrorText(e) })
+            : langErrorText(e);
+        });
+        // A mistake inside the OS has no line in the program.
+        this.problems = this.problems.map((p, i) =>
+          c.osErrors[i] ? { ...p, line: 0 } : p,
+        );
+        this.renderErrors();
         return false;
       }
       vm = this.compiled.vm.join("\n");

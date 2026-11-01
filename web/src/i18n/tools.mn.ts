@@ -8,6 +8,7 @@ export const toolsMn: Record<keyof typeof toolsEn, Message> = {
   "title.assembler": "Таны ассемблер",
   "title.translator": "Таны VM translator",
   "title.compiler": "Таны хөрвүүлэгч",
+  "title.os": "Таны OS",
 
   "machine.title": "Машин",
   "machine.lead":
@@ -28,6 +29,10 @@ export const toolsMn: Record<keyof typeof toolsEn, Message> = {
   "machine.lang.shard": "C Shard",
   "machine.sourceShard": "C Shard эх код",
   "machine.compiler": "Хөрвүүлэгч",
+  "machine.os": "OS",
+  "machine.os.builtin": "Суурилуулсан",
+  "machine.os.yours": "Таных",
+  "machine.osError": "OS, {line}-р мөр: {message}",
   "machine.cm.builtin": "Суурилуулсан",
   "machine.cm.yours": "Таных",
   "machine.compiling": "Хөрвүүлж байна…",
@@ -147,6 +152,23 @@ export const toolsMn: Record<keyof typeof toolsEn, Message> = {
   "compiler.stage.check": "3 · Нэр ба төрлийг шалгах",
   "compiler.stage.generate": "4 · VM код гаргах",
   "compiler.stage.program": "Бүтэн програмууд",
+
+  "osw.title": "Таны OS",
+  "osw.lead":
+    "Үйлдлийн системийг өөрөө C Shard-аар бич: пиксел, тэгш өнцөгт, бичвэр, гар, цаг ба санамсаргүй тоо. Бүх шалгалт давбал Машин хуудас таны OS-ыг C Shard програм бүрийн өмнө тавина.",
+  "osw.how":
+    "Явцдаа шалгалтуудыг ажиллуул (нийт {n}). Тус бүр жижиг програмыг таны OS болон суурилуулсан OS дээр ажиллуулж, дэлгэц ба үр дүнг харьцуулна. Бичвэр таны plot ба fill_rect-ийг ашигладаг тул үе шатуудыг дарааллаар нь бүтээ. OS-ын тайлбар:",
+  "osw.chapter": "8-р бүлэг.",
+  "osw.source": "Таны OS (C Shard)",
+  "osw.notRun":
+    "OS тань хэр ажиллаж байгааг харахын тулд «Шалгалтуудыг ажиллуулах»-ыг дар.",
+  "osw.allPassed":
+    "✓ Таны OS бүх {n} шалгалтыг давлаа. Машин хуудас одоо үүнийг санал болгоно.",
+  "osw.stage.helpers": "1 · Туслахууд",
+  "osw.stage.screen": "2 · Дэлгэц",
+  "osw.stage.text": "3 · Бичвэр",
+  "osw.stage.time": "4 · Гар ба цаг",
+  "osw.stage.random": "5 · Санамсаргүй тоо",
 
   "lang.what.name": "нэр",
   "lang.what.type": "төрөл (int, bool, [int; N] эсвэл [int])",

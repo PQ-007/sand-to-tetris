@@ -42,5 +42,6 @@ describe("parseRoute", () => {
     expect(parseRoute("#/assembler")).toEqual({ page: "assembler" });
     expect(parseRoute("#/translator")).toEqual({ page: "translator" });
     expect(parseRoute("#/compiler")).toEqual({ page: "compiler" });
+    expect(parseRoute("#/os")).toEqual({ page: "os" });
   });
 });

@@ -6,13 +6,17 @@ import { chapterHref } from "./router";
 import { loadCore } from "./sim/core";
 import { CM_STAGES } from "./compiler-tests";
 import { COMPILER_STARTERS } from "./compiler-starter";
+import { OS_STAGES } from "./os-tests";
+import { OS_STARTERS } from "./os-starter";
 import { TR_STAGES } from "./translator-tests";
 import { TRANSLATOR_STARTERS } from "./translator-starter";
 import { STARTERS } from "./workshop-starter";
 import { workshopStore, type WorkshopEntry } from "./workshop-store";
 import {
   compilerTests,
+  osTests,
   runCompilerTests,
+  runOsTests,
   runTranslatorTests,
   runWorkshopTests,
   translatorTests,
@@ -33,9 +37,9 @@ interface Result {
 }
 
 interface WorkshopDef {
-  id: "assembler" | "translator" | "compiler";
+  id: "assembler" | "translator" | "compiler" | "os";
   /** Key prefix for the title, lead, how and stage names. */
-  keys: "workshop" | "translator" | "compiler";
+  keys: "workshop" | "translator" | "compiler" | "osw";
   stages: string[];
   chapter: number;
   starters: Record<Lang, string>;
@@ -70,6 +74,15 @@ const WORKSHOPS: Record<WorkshopDef["id"], WorkshopDef> = {
     starters: COMPILER_STARTERS,
     count: () => compilerTests().length,
     run: runCompilerTests,
+  },
+  os: {
+    id: "os",
+    keys: "osw",
+    stages: OS_STAGES,
+    chapter: 8,
+    starters: OS_STARTERS,
+    count: () => osTests().length,
+    run: runOsTests,
   },
 };
 

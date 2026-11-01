@@ -102,6 +102,25 @@ export function vmRun(source: string, maxSteps: number): VmRunResult {
   return JSON.parse(wasm.vmRun(source, maxSteps)) as VmRunResult;
 }
 
+/** The timer and keyboard for a scripted run: every `stepsPerFrame`
+ * commands the timer counts a frame (0: never); keys: [frame, key held
+ * from then on]. */
+export interface VmScript {
+  stepsPerFrame: number;
+  keys: [number, number][];
+}
+
+/** vmRun with a scripted timer and keyboard. */
+export function vmRunScripted(
+  source: string,
+  maxSteps: number,
+  script: VmScript,
+): VmRunResult {
+  return JSON.parse(
+    wasm.vmRunScripted(source, maxSteps, JSON.stringify(script)),
+  ) as VmRunResult;
+}
+
 /** A VM program on the interpreter, one command per step (the stack demo).
  * Its constructor throws the program's errors as JSON. */
 export const VmRunner = wasm.VmRunner;

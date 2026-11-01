@@ -8,6 +8,7 @@ export const toolsEn = {
   "title.assembler": "Your assembler",
   "title.translator": "Your VM translator",
   "title.compiler": "Your compiler",
+  "title.os": "Your OS",
 
   // ---- Machine page ----
   "machine.title": "Machine",
@@ -29,6 +30,10 @@ export const toolsEn = {
   "machine.lang.shard": "C Shard",
   "machine.sourceShard": "C Shard source",
   "machine.compiler": "Compiler",
+  "machine.os": "OS",
+  "machine.os.builtin": "Built-in",
+  "machine.os.yours": "Yours",
+  "machine.osError": "The OS, line {line}: {message}",
   "machine.cm.builtin": "Built-in",
   "machine.cm.yours": "Yours",
   "machine.compiling": "Compiling…",
@@ -149,6 +154,23 @@ export const toolsEn = {
   "compiler.stage.check": "3 · Check names and types",
   "compiler.stage.generate": "4 · Generate VM code",
   "compiler.stage.program": "Whole programs",
+
+  // ---- OS workshop ----
+  "osw.title": "Your OS",
+  "osw.lead":
+    "Write the operating system yourself, in C Shard: pixels, rectangles, text, the keyboard, time and random numbers. When every test passes, the Machine page puts your OS in front of every C Shard program.",
+  "osw.how":
+    "Run the tests as you go ({n} in all). Each runs a small program on your OS and on the built-in one and compares the screen and the result. Text uses your plot and fill_rect, so build the stages in order. The OS is explained in",
+  "osw.chapter": "Chapter 8.",
+  "osw.source": "Your OS (C Shard)",
+  "osw.notRun": "Press Run the tests to see how your OS is doing.",
+  "osw.allPassed":
+    "✓ Your OS passes all {n} tests. The Machine page now offers it.",
+  "osw.stage.helpers": "1 · Helpers",
+  "osw.stage.screen": "2 · The screen",
+  "osw.stage.text": "3 · Text",
+  "osw.stage.time": "4 · Keyboard and time",
+  "osw.stage.random": "5 · Random numbers",
 
   // ---- C Shard errors (codes from docs/LANGUAGE.md) ----
   "lang.what.name": "a name",

@@ -14,7 +14,8 @@ export interface Example {
     | "vm-dot"
     | "shard-sum"
     | "shard-box"
-    | "shard-dot";
+    | "shard-dot"
+    | "shard-hello";
   lang: "asm" | "vm" | "shard";
   source: string;
 }
@@ -334,6 +335,24 @@ func flip 2 1
 `,
   },
   {
+    id: "shard-hello",
+    lang: "shard",
+    source: `// The OS is in front of every C Shard program: text, keys, time and
+// random numbers are ready to use (docs/OS.md). Click the screen first.
+fn main() {
+    clear();
+    draw_rect(0, 0, 128, 96);
+    draw_text("HELLO FROM C SHARD", 18, 7, 3);
+    draw_text("PRESS ANY KEY", 13, 9, 7);
+    var k = wait_key();
+    draw_text("YOU PRESSED   ", 14, 9, 7);
+    draw_int(k, 21, 7);
+    draw_text("DICE:", 5, 12, 10);
+    draw_int(1 + random_below(6), 18, 10);
+}
+`,
+  },
+  {
     id: "shard-sum",
     lang: "shard",
     source: `// Add 1 + 2 + ... + n. main's result is shown under Stack.
@@ -382,36 +401,28 @@ fn main() {
   {
     id: "shard-dot",
     lang: "shard",
-    source: `// Move a dot with the arrow keys (click the screen first).
-const SCREEN = 0x4000;
-const KEYBOARD = 0x6000;
+    source: `// Move a dot with the arrow keys (click the screen first). wait_key,
+// plot and draw_text come from the OS.
 const LEFT = 128;
 const UP = 129;
 const RIGHT = 130;
 const DOWN = 131;
 
-fn flip(x: int, y: int) {
-    var a = SCREEN + y * 8 + x / 16;
-    mem[a] = mem[a] ^ (0x8000 >> (x % 16));
-}
-
 fn main() {
+    clear();
+    draw_text("ARROW KEYS MOVE THE DOT", 23, 4, 0);
     var x = 64;
     var y = 48;
-    flip(x, y);
     while true {
-        var key = mem[KEYBOARD];
-        if key != 0 {
-            flip(x, y);
-            if key == LEFT { x = x - 1; }
-            if key == RIGHT { x = x + 1; }
-            if key == UP { y = y - 1; }
-            if key == DOWN { y = y + 1; }
-            x = x & 127;
-            y = (y + 96) % 96;
-            flip(x, y);
-            while mem[KEYBOARD] != 0 { }
-        }
+        plot(x, y, true);
+        var k = wait_key();
+        plot(x, y, false);
+        if k == LEFT { x = x - 1; }
+        if k == RIGHT { x = x + 1; }
+        if k == UP { y = y - 1; }
+        if k == DOWN { y = y + 1; }
+        x = (x + 128) % 128;
+        y = max(6, min(95, y)); // stay below the text
     }
 }
 `,

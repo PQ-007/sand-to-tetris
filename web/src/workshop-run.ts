@@ -16,9 +16,18 @@ import {
   Machine,
   vmBuild,
   vmRun,
+  vmRunScripted,
   vmStages,
 } from "./sim/core";
 import type { AsmProgram, LangCompiled } from "./sim/types";
+import { BUILTIN_OS } from "./os";
+import {
+  buildOsTests,
+  runOsTest,
+  type OsResult,
+  type OsTestCase,
+  type OsToolchain,
+} from "./os-tests";
 import { fromAsmErrors, type VmTranslation } from "./translator";
 import {
   buildTranslatorTests,
@@ -323,4 +332,37 @@ export async function compilerChoices(): Promise<
   return mine?.passed
     ? [{ id: "yours", compile: learnerCompiler(mine.code) }, builtin]
     : [builtin];
+}
+
+// ---- the OS workshop ----------------------------------------------------------------
+
+/** The learner's own OS first once it passes its tests, then the built-in. */
+export async function osChoices(): Promise<
+  { id: "builtin" | "yours"; source: string }[]
+> {
+  const builtin = { id: "builtin" as const, source: BUILTIN_OS };
+  const mine = (await (await workshopStore()).load()).os;
+  return mine?.passed
+    ? [{ id: "yours", source: mine.code }, builtin]
+    : [builtin];
+}
+
+const osToolchain: OsToolchain = { compile: langCompile, run: vmRunScripted };
+
+let osTestList: OsTestCase[] | undefined;
+
+/** Every OS test, with answers from the built-in OS (needs the core). */
+export function osTests(): OsTestCase[] {
+  osTestList ??= buildOsTests(osToolchain, BUILTIN_OS);
+  return osTestList;
+}
+
+/** Runs every OS test on the learner's OS (C Shard runs on the bounded VM
+ * interpreter, so it needs no worker). */
+export async function runOsTests(
+  code: string,
+): Promise<{ results: OsResult[] } | { error: RunError }> {
+  return {
+    results: osTests().map((t) => runOsTest(osToolchain, code, t)),
+  };
 }

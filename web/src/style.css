@@ -3131,7 +3131,8 @@ button.primary:hover:not(:disabled),
 body[data-page="machine"] #app,
 body[data-page="assembler"] #app,
 body[data-page="translator"] #app,
-body[data-page="compiler"] #app {
+body[data-page="compiler"] #app,
+body[data-page="os"] #app {
   max-width: 96rem;
 }
 

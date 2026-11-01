@@ -110,7 +110,9 @@ fn glyph(c: char) -> Vec<Vec<bool>> {
         .collect()
 }
 
-/// What draw_char draws: the glyph in its cell, the cell's spacing off.
+/// What draw_char draws: the glyph in its cell, the cell's spacing off
+/// (the loops go one past the glyph, so they index).
+#[allow(clippy::needless_range_loop)]
 fn assert_char(o: &Outcome, c: char, col: usize, row: usize) {
     let g = glyph(c);
     for r in 0..6 {

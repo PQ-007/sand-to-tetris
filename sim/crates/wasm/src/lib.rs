@@ -218,6 +218,26 @@ pub fn vm_run(source: &str, max_steps: u32) -> String {
     .to_string()
 }
 
+/// `vmRun` with the timer and keyboard driven by a script (JSON
+/// `{"stepsPerFrame": n, "keys": [[frame, key], ...]}`).
+#[wasm_bindgen(js_name = vmRunScripted)]
+pub fn vm_run_scripted(source: &str, max_steps: u32, script: &str) -> Result<String, JsError> {
+    let script: s2t_vm::Script = from_json(script)?;
+    Ok(
+        match s2t_vm::run_scripted(source, max_steps as usize, &script) {
+            Ok(o) => serde_json::json!({
+                "halted": o.halted,
+                "result": o.result,
+                "steps": o.steps,
+                "ram": &o.memory.ram[..64],
+                "screen": o.memory.screen,
+            }),
+            Err(errors) => serde_json::json!({ "errors": errors }),
+        }
+        .to_string(),
+    )
+}
+
 /// A VM program running on the interpreter, one command per step: for the
 /// chapter's stack demo.
 #[wasm_bindgen]
@@ -442,6 +462,13 @@ mod tests {
         let b = vm_build("func main 0 0\npush 6\npush 7\nmul\nreturn").unwrap();
         assert!(b.contains("\"errors\":[]"), "{b}");
         let r = vm_run("func main 0 0\npush 6\npush 7\nmul\nreturn", 100);
+        let timed = vm_run_scripted(
+            "func main 0 0\npush 0x6000\nload\nreturn",
+            100,
+            r#"{"stepsPerFrame": 0, "keys": [[0, 65]]}"#,
+        )
+        .unwrap();
+        assert!(timed.contains("\"result\":65"), "{timed}");
         assert!(r.contains("\"result\":42"), "{r}");
         let mut v = VmRunner::new("func main 0 0\npush 6\nreturn").unwrap();
         v.step();
