@@ -209,7 +209,7 @@ fn instructions_print_as_assembly() {
                     cin: true,
                 },
             },
-            "ALU r0, r1, r2, f=0 invb=0 cin=1",
+            "ALU r0, r1, r2, 0, 0, 1",
         ),
     ];
     for (i, text) in cases {

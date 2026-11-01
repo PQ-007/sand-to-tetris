@@ -251,3 +251,21 @@ fn helpful_usage_errors() {
     let err = run(&args(&["check", "/no/such/level"])).unwrap_err();
     assert!(err.contains("/no/such/level/level.toml"), "{err}");
 }
+
+#[test]
+fn assembles_a_file_into_a_listing_or_json() {
+    let dir = std::env::temp_dir().join(format!("s2t-asm-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let good = dir.join("sum.s");
+    std::fs::write(&good, "SET r0, 0\nloop: ADDI r0, 1\nJMP loop\n").unwrap();
+    let out = run(&args(&["asm", good.to_str().unwrap()])).unwrap();
+    assert!(out.contains("0000  4000  1: SET r0, 0"), "{out}");
+    assert!(out.contains("0002  c3ff  3: JMP loop"), "{out}");
+    let json = run(&args(&["asm", good.to_str().unwrap(), "--json"])).unwrap();
+    assert!(json.contains("\"code\":[16384,"), "{json}");
+    let bad = dir.join("bad.s");
+    std::fs::write(&bad, "SET r1, 300\nFOO\n").unwrap();
+    let err = run(&args(&["asm", bad.to_str().unwrap()])).unwrap_err();
+    assert!(err.contains("line 1: n = 300 doesn't fit"), "{err}");
+    assert!(err.contains("line 2: `FOO` isn't an instruction"), "{err}");
+}

@@ -359,7 +359,8 @@ impl fmt::Display for Instr {
     /// The instruction in assembly. Jump and call targets print as the
     /// offset; the assembler and disassembler turn them into labels.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let raw = |op: AluOp| format!("f={} invb={} cin={}", op.f, op.invb as u8, op.cin as u8);
+        // Unnamed ALU controls print as numbers, as the assembler reads them.
+        let raw = |op: AluOp| format!("{}, {}, {}", op.f, op.invb as u8, op.cin as u8);
         match *self {
             Instr::Alu { rd, ra, rb, op } => match op.name() {
                 Some(name) => write!(f, "{name} r{rd}, r{ra}, r{rb}"),

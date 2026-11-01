@@ -104,9 +104,174 @@ pub fn isa_trace(rom: &str, steps: usize) -> Result<String, JsError> {
     Ok(serde_json::json!({ "states": states, "writes": &writes[1..] }).to_string())
 }
 
+// ---- the assembler (docs/ASSEMBLY.md) ---------------------------------------
+
+/// A stage's result as JSON: `{"ok": value}` or `{"error": AsmError}`.
+fn stage<T: serde::Serialize>(r: Result<T, s2t_asm::AsmError>) -> Result<String, JsError> {
+    let v = match r {
+        Ok(v) => serde_json::json!({ "ok": v }),
+        Err(e) => serde_json::json!({ "error": e }),
+    };
+    Ok(v.to_string())
+}
+
+fn from_json<T: serde::de::DeserializeOwned>(s: &str) -> Result<T, JsError> {
+    serde_json::from_str(s).map_err(|e| JsError::new(&e.to_string()))
+}
+
+/// Assembles a whole program → `Program` JSON (code, data, symbols,
+/// sourceMap, errors).
+#[wasm_bindgen(js_name = asmAssemble)]
+pub fn asm_assemble(source: &str) -> Result<String, JsError> {
+    js(to_json(Ok::<_, String>(s2t_asm::assemble(source))))
+}
+
+/// Stage 1 on one line → `{"ok": [Token]}` or `{"error": ...}`.
+#[wasm_bindgen(js_name = asmTokenize)]
+pub fn asm_tokenize(line: &str) -> Result<String, JsError> {
+    stage(s2t_asm::tokenize(line))
+}
+
+/// Stage 2 on a JSON token list → `{"ok": Line}` or `{"error": ...}`.
+#[wasm_bindgen(js_name = asmParse)]
+pub fn asm_parse(tokens: &str) -> Result<String, JsError> {
+    stage(s2t_asm::parse(&from_json::<Vec<s2t_asm::Token>>(tokens)?))
+}
+
+/// Stage 3 on a JSON list of lines → `{"ok": Layout}` or `{"error": first}`.
+#[wasm_bindgen(js_name = asmLayout)]
+pub fn asm_layout(lines: &str) -> Result<String, JsError> {
+    let lines: Vec<s2t_asm::Line> = from_json(lines)?;
+    stage(s2t_asm::layout(&lines).map_err(|mut errs| errs.remove(0)))
+}
+
+/// Stage 4 on one line's body, the symbols and its placement →
+/// `{"ok": [word]}` or `{"error": ...}`.
+#[wasm_bindgen(js_name = asmEncode)]
+pub fn asm_encode(body: &str, symbols: &str, placed: &str) -> Result<String, JsError> {
+    stage(s2t_asm::encode(
+        &from_json(body)?,
+        &from_json(symbols)?,
+        &from_json(placed)?,
+    ))
+}
+
+// ---- the Machine page: a program running on the reference CPU ---------------
+
+/// A running program: the reference CPU, RAM, screen and keyboard. Kept in
+/// WASM so a frame can run thousands of instructions without JSON.
+#[wasm_bindgen]
+pub struct Machine {
+    cpu: s2t_isa::Cpu,
+    mem: s2t_isa::Memory,
+    rom: Vec<u16>,
+    steps: u64,
+    halted: bool,
+}
+
+#[wasm_bindgen]
+impl Machine {
+    /// Loads `rom`, and copies `data` into RAM from address 0 (the loader).
+    #[wasm_bindgen(constructor)]
+    pub fn new(rom: Vec<u16>, data: Vec<u16>) -> Machine {
+        let mut mem = s2t_isa::Memory::default();
+        let n = data.len().min(mem.ram.len());
+        mem.ram[..n].copy_from_slice(&data[..n]);
+        Machine {
+            cpu: s2t_isa::Cpu::default(),
+            mem,
+            rom,
+            steps: 0,
+            halted: false,
+        }
+    }
+
+    /// Runs up to `max` instructions; stops early once halted (an
+    /// instruction that leaves PC where it was, like `HALT`). Returns how
+    /// many ran.
+    pub fn run(&mut self, max: u32) -> u32 {
+        let mut done = 0;
+        while done < max && !self.halted {
+            let pc = self.cpu.pc;
+            self.cpu.step(&self.rom, &mut self.mem);
+            self.steps += 1;
+            done += 1;
+            self.halted = self.cpu.pc == pc;
+        }
+        done
+    }
+
+    pub fn halted(&self) -> bool {
+        self.halted
+    }
+
+    pub fn pc(&self) -> u16 {
+        self.cpu.pc
+    }
+
+    pub fn regs(&self) -> Vec<u16> {
+        self.cpu.regs.to_vec()
+    }
+
+    /// z, n, c as bits 2, 1, 0.
+    pub fn flags(&self) -> u8 {
+        let f = self.cpu.flags;
+        (f.z as u8) << 2 | (f.n as u8) << 1 | f.c as u8
+    }
+
+    /// Instructions run so far.
+    pub fn steps(&self) -> f64 {
+        self.steps as f64
+    }
+
+    /// The 768 screen words (row y = words 8y..8y+7, bit 15 leftmost).
+    pub fn screen(&self) -> Vec<u16> {
+        self.mem.screen.clone()
+    }
+
+    /// The key held now (docs/ASSEMBLY.md: keyboard codes), 0 for none.
+    #[wasm_bindgen(js_name = setKey)]
+    pub fn set_key(&mut self, key: u16) {
+        self.mem.keyboard = key;
+        // A halted program may be waiting on the keyboard in a loop.
+        self.halted = false;
+    }
+
+    /// `len` RAM words from `start`.
+    pub fn ram(&self, start: u16, len: u16) -> Vec<u16> {
+        let s = (start as usize).min(self.mem.ram.len());
+        let e = (s + len as usize).min(self.mem.ram.len());
+        self.mem.ram[s..e].to_vec()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn assembler_stages_round_trip_through_json() {
+        let tokens = asm_tokenize("loop: ADD r1, r2, r3").unwrap();
+        assert!(tokens.contains("\"kind\":\"label\""), "{tokens}");
+        let ok: serde_json::Value = serde_json::from_str(&tokens).unwrap();
+        let line = asm_parse(&ok["ok"].to_string()).unwrap();
+        assert!(line.contains("\"mnemonic\":\"ADD\""), "{line}");
+        let err = asm_tokenize("SET r1, #").unwrap();
+        assert!(err.contains("\"code\":\"bad-char\""), "{err}");
+        let p = asm_assemble("SET r1, 5\nHALT").unwrap();
+        assert!(p.contains("\"code\":[17413,49152]"), "{p}");
+    }
+
+    #[test]
+    fn machine_runs_until_halted() {
+        // SET r1, 5; HALT
+        let mut m = Machine::new(vec![17413, 49152], vec![7]);
+        assert_eq!(m.run(100), 2);
+        assert!(m.halted());
+        assert_eq!(m.regs()[1], 5);
+        assert_eq!(m.ram(0, 2), vec![7, 0]);
+        assert_eq!(m.run(100), 0);
+    }
 
     #[test]
     fn traces_a_program() {
