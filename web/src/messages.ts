@@ -3,7 +3,7 @@
 // problem's code and values, or the diagnostic's structured fields.
 import { getLang, t, type Key } from "./i18n";
 import { en } from "./i18n/en";
-import type { Diagnostic, Problem } from "./sim/types";
+import type { AsmError, Diagnostic, Problem } from "./sim/types";
 
 /** Free-text reasons the core gives for a bad part. */
 function reasonText(reason: string): string {
@@ -79,4 +79,38 @@ export function knownText(text: string): string {
   };
   const key = known[text];
   return key ? t(key) : text;
+}
+
+/** An assembler error in the current language: English comes from the
+ * assembler itself; other languages are built from its code and values. */
+/** A C Shard error (docs/LANGUAGE.md) in the current language; a code the
+ * site doesn't know (the learner's own) keeps its message. */
+export function langErrorText(e: AsmError): string {
+  if (!(`lang.${e.code}` in en)) return e.message;
+  // English keeps the compiler's own message, except "expected", whose
+  // short `what` codes read better spelled out.
+  if (getLang() === "en" && e.code !== "expected") return e.message;
+  // A learner's own error may not carry the values the text needs.
+  if (e.code === "expected" && !(e.args.what && e.args.found)) return e.message;
+  const args: Record<string, string> = { ...e.args };
+  if (args.what && !args.what.startsWith("`") && `lang.what.${args.what}` in en)
+    args.what = t(`lang.what.${args.what}` as Key);
+  return t(`lang.${e.code}` as Key, args);
+}
+
+/** A VM error (docs/VM.md) in the current language; a code the site
+ * doesn't know (the learner's own, like "todo") keeps its message. */
+export function vmErrorText(e: AsmError): string {
+  if (getLang() === "en" || !(`vm.${e.code}` in en)) return e.message;
+  return t(`vm.${e.code}` as Key, e.args);
+}
+
+export function asmErrorText(e: AsmError): string {
+  if (getLang() === "en" || !(`asm.${e.code}` in en)) return e.message;
+  const args: Record<string, string> = { ...e.args };
+  if (args.what && `asm.what.${args.what}` in en)
+    args.what = t(`asm.what.${args.what}` as Key);
+  if (args.expected && `asm.expect.${args.expected}` in en)
+    args.expected = t(`asm.expect.${args.expected}` as Key);
+  return t(`asm.${e.code}` as Key, args);
 }

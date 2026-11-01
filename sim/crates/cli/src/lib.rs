@@ -20,7 +20,10 @@ use s2t_netlist::{Design, Level, Library};
 const USAGE: &str = "usage:
   s2t version
   s2t check <level-dir> [design.json] [--json]
-  s2t check-all <levels-dir>";
+  s2t check-all <levels-dir>
+  s2t asm <program.s> [--json]
+  s2t vm <program.vm> [--json]
+  s2t compile <program.shard>";
 
 struct Entry {
     dir: PathBuf,
@@ -304,6 +307,74 @@ fn check_all(root: &Path) -> Result<String, String> {
     }
 }
 
+/// Assembles a program: a listing (address, word, source line), or the
+/// whole program as JSON; every error with its line otherwise.
+fn asm(path: &Path, json: bool) -> Result<String, String> {
+    let source = read(path)?;
+    let p = s2t_asm::assemble(&source);
+    if !p.errors.is_empty() {
+        let lines: Vec<String> = p.errors.iter().map(|e| e.to_string()).collect();
+        return Err(format!("{}:\n{}", path.display(), lines.join("\n")));
+    }
+    if json {
+        return serde_json::to_string(&p).map_err(|e| e.to_string());
+    }
+    let src: Vec<&str> = source.lines().collect();
+    let mut out: Vec<String> = p
+        .code
+        .iter()
+        .zip(&p.source_map)
+        .enumerate()
+        .map(|(addr, (w, line))| {
+            let text = src.get(line - 1).map_or("", |l| l.trim());
+            format!("{addr:04x}  {w:04x}  {line}: {text}")
+        })
+        .collect();
+    if !p.data.is_empty() {
+        out.push(format!("data ({} words): {:04x?}", p.data.len(), p.data));
+    }
+    Ok(out.join("\n"))
+}
+
+/// Translates a VM program: the assembly, each VM command's lines under a
+/// comment with its line, or the whole result as JSON; every error with its
+/// line otherwise.
+fn vm(path: &Path, json: bool) -> Result<String, String> {
+    let source = read(path)?;
+    let b = s2t_vm::build(&source);
+    if !b.errors.is_empty() {
+        let lines: Vec<String> = b.errors.iter().map(|e| e.to_string()).collect();
+        return Err(format!("{}:\n{}", path.display(), lines.join("\n")));
+    }
+    if json {
+        return serde_json::to_string(&b).map_err(|e| e.to_string());
+    }
+    let src: Vec<&str> = source.lines().collect();
+    let mut out = Vec::new();
+    let mut last = 0;
+    for (text, &line) in b.lines.iter().zip(&b.source_map) {
+        if line != last && line > 0 {
+            let vm_text = src.get(line - 1).map_or("", |l| l.trim());
+            out.push(format!("; {line}: {vm_text}"));
+        }
+        last = line;
+        out.push(text.clone());
+    }
+    Ok(out.join("\n"))
+}
+
+/// Compiles a C Shard program to VM code; every error with its line
+/// otherwise.
+fn compile(path: &Path) -> Result<String, String> {
+    let c = s2t_lang::compile(&read(path)?);
+    if c.errors.is_empty() {
+        Ok(c.vm.join("\n"))
+    } else {
+        let lines: Vec<String> = c.errors.iter().map(|e| e.to_string()).collect();
+        Err(format!("{}:\n{}", path.display(), lines.join("\n")))
+    }
+}
+
 /// Runs a command. `Ok` output goes to stdout with exit code 0; `Err`
 /// output goes to stderr with exit code 1.
 pub fn run(args: &[String]) -> Result<String, String> {
@@ -322,8 +393,11 @@ pub fn run(args: &[String]) -> Result<String, String> {
         ["check", dir] => check_dir(Path::new(dir), None, json),
         ["check", dir, design] => check_dir(Path::new(dir), Some(Path::new(design)), json),
         ["check-all", root] => check_all(Path::new(root)),
+        ["asm", file] => asm(Path::new(file), json),
+        ["vm", file] => vm(Path::new(file), json),
+        ["compile", file] => compile(Path::new(file)),
         [] => Err(USAGE.to_string()),
-        [cmd, ..] if !["check", "check-all", "version"].contains(cmd) => {
+        [cmd, ..] if !["check", "check-all", "asm", "vm", "compile", "version"].contains(cmd) => {
             Err(format!("unknown command `{cmd}`\n\n{USAGE}"))
         }
         _ => Err(USAGE.to_string()),

@@ -73,6 +73,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
+name = "s2t-asm"
+version = "0.1.0"
+dependencies = [
+ "s2t-isa",
+ "serde",
+]
+
+[[package]]
 name = "s2t-checker"
 version = "0.1.0"
 dependencies = [
@@ -88,9 +96,12 @@ dependencies = [
 name = "s2t-cli"
 version = "0.1.0"
 dependencies = [
+ "s2t-asm",
  "s2t-checker",
+ "s2t-lang",
  "s2t-models",
  "s2t-netlist",
+ "s2t-vm",
  "serde_json",
 ]
 
@@ -106,6 +117,16 @@ name = "s2t-isa"
 version = "0.1.0"
 dependencies = [
  "s2t-models",
+]
+
+[[package]]
+name = "s2t-lang"
+version = "0.1.0"
+dependencies = [
+ "s2t-isa",
+ "s2t-vm",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -133,12 +154,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "s2t-vm"
+version = "0.1.0"
+dependencies = [
+ "s2t-asm",
+ "s2t-isa",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "s2t-wasm"
 version = "0.1.0"
 dependencies = [
+ "s2t-asm",
  "s2t-checker",
  "s2t-isa",
+ "s2t-lang",
  "s2t-netlist",
+ "s2t-vm",
  "serde",
  "serde_json",
  "wasm-bindgen",

@@ -4,7 +4,7 @@
 //! the datapath the levels spell out (which signal comes from where), so the
 //! models match the learner's circuits pin for pin.
 
-use s2t_isa::{alu, shift, AluOp, Flags, Shift, KEYBOARD, RAM_WORDS, SCREEN, SCREEN_WORDS};
+use s2t_isa::{alu, shift, AluOp, Flags, Shift, KEYBOARD, RAM_WORDS, SCREEN, SCREEN_WORDS, TIMER};
 
 use crate::{ClockedModel, NativeModel};
 
@@ -310,10 +310,12 @@ fn cpu_read(x: &Words, mem: &Words) -> Vec<Option<u64>> {
 /// Memory words: RAM16K, then the 768 screen words.
 const MEMORY_WORDS: usize = RAM_WORDS + SCREEN_WORDS;
 
-/// Where an address lives: a word of `mem`, the keyboard, or nowhere.
+/// Where an address lives: a word of `mem`, the keyboard, the timer, or
+/// nowhere.
 enum Place {
     Word(usize),
     Keyboard,
+    Timer,
     Nowhere,
 }
 
@@ -325,6 +327,8 @@ fn place(addr: u64) -> Place {
         Place::Word(RAM_WORDS + a - SCREEN as usize)
     } else if a == KEYBOARD as usize {
         Place::Keyboard
+    } else if a == TIMER as usize {
+        Place::Timer
     } else {
         Place::Nowhere
     }
@@ -332,7 +336,7 @@ fn place(addr: u64) -> Place {
 
 fn memory_write(mem: &mut Words, d: Option<u64>, addr: Option<u64>, load: Option<u64>) {
     match (load, addr.map(place)) {
-        (Some(0), _) | (_, Some(Place::Keyboard | Place::Nowhere)) => {}
+        (Some(0), _) | (_, Some(Place::Keyboard | Place::Timer | Place::Nowhere)) => {}
         (Some(_), Some(Place::Word(i))) => mem[i] = d,
         (None, Some(Place::Word(i))) => {
             if mem[i] != d {
@@ -343,35 +347,41 @@ fn memory_write(mem: &mut Words, d: Option<u64>, addr: Option<u64>, load: Option
     }
 }
 
-fn memory_read(mem: &Words, addr: Option<u64>, key: Option<u64>) -> Option<u64> {
+fn memory_read(
+    mem: &Words,
+    addr: Option<u64>,
+    key: Option<u64>,
+    timer: Option<u64>,
+) -> Option<u64> {
     match place(addr?) {
         Place::Word(i) => mem[i],
         Place::Keyboard => key,
+        Place::Timer => timer,
         Place::Nowhere => Some(0),
     }
 }
 
-/// memory: d, addr, load, key, clk → q.
+/// memory: d, addr, load, key, timer, clk → q.
 fn memory_tick(x: &Words, mem: &mut Words) {
     memory_write(mem, opt(x, 0), opt(x, 1), opt(x, 2));
 }
 
 fn memory_read_port(x: &Words, mem: &Words) -> Vec<Option<u64>> {
-    vec![memory_read(mem, opt(x, 1), opt(x, 3))]
+    vec![memory_read(mem, opt(x, 1), opt(x, 3), opt(x, 4))]
 }
 
 // ---- the computer -------------------------------------------------------------------
 
-/// computer: instr, key, reset, clk → pc, addrM, outM, writeM. Memory: the
+/// computer: instr, key, timer, reset, clk → pc, addrM, outM, writeM. Memory: the
 /// CPU's words, then the memory map's. The program ROM is outside: whoever
 /// runs the computer feeds `instr` from the ROM at `pc`.
 fn computer_cycle(x: &Words, mem: &Words) -> Cycle {
     let (cpu, data) = mem.split_at(CPU_WORDS);
     let instr = opt(x, 0);
     // inM depends on addrM, which never depends on inM.
-    let addr = cycle(cpu, instr, None, opt(x, 2)).addr_m;
-    let in_m = memory_read(data, addr, opt(x, 1));
-    cycle(cpu, instr, in_m, opt(x, 2))
+    let addr = cycle(cpu, instr, None, opt(x, 3)).addr_m;
+    let in_m = memory_read(data, addr, opt(x, 1), opt(x, 2));
+    cycle(cpu, instr, in_m, opt(x, 3))
 }
 
 fn computer_tick(x: &Words, mem: &mut Words) {
@@ -417,18 +427,18 @@ pub(crate) static CLOCKED: &[ClockedModel] = &[
     },
     ClockedModel {
         id: "memory",
-        inputs: &[16, 16, 1, 16, 1],
+        inputs: &[16, 16, 1, 16, 16, 1],
         outputs: &[16],
-        clk: 4,
+        clk: 5,
         words: MEMORY_WORDS,
         tick: memory_tick,
         read: memory_read_port,
     },
     ClockedModel {
         id: "computer",
-        inputs: &[16, 16, 1, 1],
+        inputs: &[16, 16, 16, 1, 1],
         outputs: &[16, 16, 16, 1],
-        clk: 3,
+        clk: 4,
         words: CPU_WORDS + MEMORY_WORDS,
         tick: computer_tick,
         read: computer_read,

@@ -2,6 +2,14 @@
 // and wraps its JSON API with types.
 import init, * as wasm from "./pkg/s2t_wasm.js";
 import type {
+  AsmLayout,
+  AsmLine,
+  AsmPlaced,
+  AsmProgram,
+  AsmSymbol,
+  AsmToken,
+  AsmBody,
+  StageResult,
   Design,
   IsaTrace,
   LevelInfo,
@@ -10,6 +18,16 @@ import type {
   Report,
   SimView,
   StepsView,
+  LangCompiled,
+  LangError,
+  LangInfo,
+  LangProgram,
+  LangToken,
+  VmBuilt,
+  VmCommand,
+  VmCtx,
+  VmError,
+  VmRunResult,
 } from "./types";
 
 let ready: Promise<void> | undefined;
@@ -31,6 +49,108 @@ export async function getCoreVersion(): Promise<string> {
 export function disassemble(word: number): string {
   return wasm.disassemble(word & 0xffff);
 }
+
+/** Assembles a whole program with the reference assembler. */
+export function asmAssemble(source: string): AsmProgram {
+  return JSON.parse(wasm.asmAssemble(source)) as AsmProgram;
+}
+
+/** The reference assembler's four stages, for grading the learner's. */
+export const asmStages = {
+  tokenize: (line: string) =>
+    JSON.parse(wasm.asmTokenize(line)) as StageResult<AsmToken[]>,
+  parse: (tokens: AsmToken[]) =>
+    JSON.parse(wasm.asmParse(JSON.stringify(tokens))) as StageResult<AsmLine>,
+  layout: (lines: AsmLine[]) =>
+    JSON.parse(wasm.asmLayout(JSON.stringify(lines))) as StageResult<AsmLayout>,
+  encode: (
+    body: AsmBody,
+    symbols: Record<string, AsmSymbol>,
+    placed: AsmPlaced,
+  ) =>
+    JSON.parse(
+      wasm.asmEncode(
+        JSON.stringify(body),
+        JSON.stringify(symbols),
+        JSON.stringify(placed),
+      ),
+    ) as StageResult<number[]>,
+};
+
+/** Translates a VM program with the reference translator and assembles it. */
+export function vmBuild(source: string): VmBuilt {
+  return JSON.parse(wasm.vmBuild(source)) as VmBuilt;
+}
+
+/** The reference VM translator's stages, for grading the learner's. */
+export const vmStages = {
+  parse: (line: string) =>
+    JSON.parse(wasm.vmParse(line)) as
+      { ok: VmCommand | null } | { error: VmError },
+  translate: (cmd: VmCommand, ctx: VmCtx) =>
+    JSON.parse(
+      wasm.vmTranslate(JSON.stringify(cmd), JSON.stringify(ctx)),
+    ) as string[],
+  start: () =>
+    JSON.parse(wasm.vmStart()) as { bootstrap: string[]; runtime: string[] },
+  check: (commands: (VmCommand | null)[]) =>
+    JSON.parse(wasm.vmCheck(JSON.stringify(commands))) as VmError[],
+};
+
+/** Runs a VM program on the reference interpreter. */
+export function vmRun(source: string, maxSteps: number): VmRunResult {
+  return JSON.parse(wasm.vmRun(source, maxSteps)) as VmRunResult;
+}
+
+/** The timer and keyboard for a scripted run: every `stepsPerFrame`
+ * commands the timer counts a frame (0: never); keys: [frame, key held
+ * from then on]. */
+export interface VmScript {
+  stepsPerFrame: number;
+  keys: [number, number][];
+}
+
+/** vmRun with a scripted timer and keyboard. */
+export function vmRunScripted(
+  source: string,
+  maxSteps: number,
+  script: VmScript,
+): VmRunResult {
+  return JSON.parse(
+    wasm.vmRunScripted(source, maxSteps, JSON.stringify(script)),
+  ) as VmRunResult;
+}
+
+/** A VM program on the interpreter, one command per step (the stack demo).
+ * Its constructor throws the program's errors as JSON. */
+export const VmRunner = wasm.VmRunner;
+export type VmRunner = wasm.VmRunner;
+
+/** Compiles C Shard with the reference compiler (to VM code). */
+export function langCompile(source: string): LangCompiled {
+  return JSON.parse(wasm.langCompile(source)) as LangCompiled;
+}
+
+type Staged<T> = { ok: T } | { error: LangError };
+
+/** The reference compiler's stages, for grading the learner's. */
+export const langStages = {
+  tokenize: (source: string) =>
+    JSON.parse(wasm.langTokenize(source)) as Staged<LangToken[]>,
+  parse: (tokens: LangToken[]) =>
+    JSON.parse(wasm.langParse(JSON.stringify(tokens))) as Staged<LangProgram>,
+  check: (program: LangProgram) =>
+    JSON.parse(wasm.langCheck(JSON.stringify(program))) as
+      { ok: LangInfo } | { error: LangError; errors: LangError[] },
+  generate: (program: LangProgram, info: LangInfo) =>
+    JSON.parse(
+      wasm.langGenerate(JSON.stringify(program), JSON.stringify(info)),
+    ) as string[],
+};
+
+/** A program running on the reference CPU (needs loadCore() first). */
+export const Machine = wasm.Machine;
+export type Machine = wasm.Machine;
 
 /** Runs `rom` on the reference CPU from reset, for `steps` instructions. */
 export function isaTrace(rom: number[], steps: number): IsaTrace {

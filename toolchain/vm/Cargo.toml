@@ -1,0 +1,17 @@
+[package]
+name = "s2t-vm"
+description = "The reference VM translator and interpreter (docs/VM.md)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+s2t-asm.workspace = true
+s2t-isa.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[lints]
+workspace = true

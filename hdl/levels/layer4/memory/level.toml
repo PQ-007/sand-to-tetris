@@ -5,40 +5,43 @@ goal = """
 All the data addresses the CPU can reach, by the map in docs/ISA.md:
 - 0x0000–0x3FFF: RAM16K (address bits 15–14 = 00).
 - 0x4000–0x42FF: the screen's 768 words. Use a RAM4K at the low 12 address bits; only addresses whose bits 15–13 are 010 and that are below 0x4300 belong to it.
-- 0x6000: the keyboard: q is key. Writing there does nothing.
+- 0x6000: the keyboard: q is key. 0x6001: the timer: q is timer. Writing to either does nothing.
 - Every other address reads as 0 and ignores writes.
-A DMUX8WAY with in = 1 and sel = address bits 15–13 tells you the region; then narrow it down for the screen (bits 12, 11, 10 = 0 and not both 9 and 8) and the keyboard (bits 12–0 all 0).
+A DMUX8WAY with in = 1 and sel = address bits 15–13 tells you the region; then narrow it down for the screen (bits 12, 11, 10 = 0 and not both 9 and 8) and the keyboard and timer (bits 12–1 all 0; bit 0 picks which).
 """
 sequential = true
-inputs = ["d", "addr", "load", "key", "clk"]
+inputs = ["d", "addr", "load", "key", "timer", "clk"]
 outputs = ["q"]
 requires = ["ram16k", "ram4k", "dmux8way", "or8way", "mux16", "and", "or", "not", "one", "zero"]
-widths = { d = 16, addr = 16, key = 16, q = 16 }
+widths = { d = 16, addr = 16, key = 16, timer = 16, q = 16 }
 model = "memory"
 random_tests = 300
 truth_table = """
-d addr load key clk | q
-5 0 1 0 0 | -
-5 0 1 0 1 | 5
-6 0x3fff 1 0 0 | -
-6 0x3fff 1 0 1 | 6
-7 0x4000 1 0 0 | -
-7 0x4000 1 0 1 | 7
-8 0x42ff 1 0 0 | -
-8 0x42ff 1 0 1 | 8
-9 0x4300 1 0 0 | 0
-9 0x4300 1 0 1 | 0
-0 0x6000 0 65 0 | 65
-9 0x6000 1 66 1 | 66
-0 0x6001 0 65 0 | 0
-9 0x9000 1 0 0 | 0
-9 0x9000 1 0 1 | 0
-0 0 0 0 0 | 5
-0 0x4000 0 0 0 | 7
-0 0x5000 0 0 0 | 0
-0 0x4100 0 0 0 | -
+d addr load key timer clk | q
+5 0 1 0 0 0 | -
+5 0 1 0 0 1 | 5
+6 0x3fff 1 0 0 0 | -
+6 0x3fff 1 0 0 1 | 6
+7 0x4000 1 0 0 0 | -
+7 0x4000 1 0 0 1 | 7
+8 0x42ff 1 0 0 0 | -
+8 0x42ff 1 0 0 1 | 8
+9 0x4300 1 0 0 0 | 0
+9 0x4300 1 0 0 1 | 0
+0 0x6000 0 65 0 0 | 65
+9 0x6000 1 66 0 1 | 66
+0 0x6001 0 65 1234 0 | 1234
+9 0x6001 1 65 77 1 | 77
+0 0x6002 0 65 1234 0 | 0
+0 0x7001 0 65 1234 0 | 0
+9 0x9000 1 0 0 0 | 0
+9 0x9000 1 0 0 1 | 0
+0 0 0 0 0 0 | 5
+0 0x4000 0 0 0 0 | 7
+0 0x5000 0 0 0 0 | 0
+0 0x4100 0 0 0 0 | -
 """
 
 [hints]
-wrong = "Find the failing address's region from its top 3 bits. RAM gets load only for 000 and 001; the screen only for 010 below 0x4300; the keyboard and everything else never store anything."
+wrong = "Find the failing address's region from its top 3 bits. RAM gets load only for 000 and 001; the screen only for 010 below 0x4300; the keyboard, the timer and everything else never store anything."
 unknown = "RAM and screen words read as unknown until something is stored there. Addresses outside RAM, the screen and the keyboard must read 0, not unknown: pick a zero bus for them."

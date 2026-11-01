@@ -267,6 +267,31 @@ export function renderRoute(route: Route): {
         html: `<div id="play-root" class="play"></div>`,
         title: titled(t("title.level")),
       };
+    case "machine":
+      return {
+        html: `<div id="machine-root" class="machine"></div>`,
+        title: titled(t("title.machine")),
+      };
+    case "assembler":
+      return {
+        html: `<div id="assembler-root" class="workshop"></div>`,
+        title: titled(t("title.assembler")),
+      };
+    case "translator":
+      return {
+        html: `<div id="translator-root" class="workshop"></div>`,
+        title: titled(t("title.translator")),
+      };
+    case "compiler":
+      return {
+        html: `<div id="compiler-root" class="workshop"></div>`,
+        title: titled(t("title.compiler")),
+      };
+    case "os":
+      return {
+        html: `<div id="os-root" class="workshop"></div>`,
+        title: titled(t("title.os")),
+      };
     case "not-found":
       return { html: notFound(), title: titled(t("title.notFound")) };
   }

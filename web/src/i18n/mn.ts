@@ -2,6 +2,7 @@
 // ёстой (төрөл шалгагч үүнийг баталгаажуулна). Нэр томьёо: боломжтой бол
 // монгол үг (docs/mn/TERMS.md).
 import { demosMn } from "./demos.mn";
+import { toolsMn } from "./tools.mn";
 import type { en, Message } from "./en";
 
 export const mn: Record<keyof typeof en, Message> = {
@@ -443,4 +444,5 @@ export const mn: Record<keyof typeof en, Message> = {
   "diag.short":
     "{label}: {inputs} → богино холболт: VDD ба GND холбогдсон байна. {port}={expected} байх ёстой, гэтэл X гарлаа.",
   ...demosMn,
+  ...toolsMn,
 };

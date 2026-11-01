@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["sim/crates/*"]
+members = ["sim/crates/*", "toolchain/*"]
 
 [workspace.package]
 version = "0.1.0"
@@ -15,6 +15,9 @@ s2t-gate = { path = "sim/crates/gate" }
 s2t-models = { path = "sim/crates/models" }
 s2t-checker = { path = "sim/crates/checker" }
 s2t-isa = { path = "sim/crates/isa" }
+s2t-asm = { path = "toolchain/asm" }
+s2t-vm = { path = "toolchain/vm" }
+s2t-lang = { path = "toolchain/lang" }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 toml = "1.1.8"

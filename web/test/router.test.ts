@@ -37,4 +37,11 @@ describe("parseRoute", () => {
       anchor: "latches",
     });
   });
+  it("knows the machine and the assembler workshop", () => {
+    expect(parseRoute("#/machine")).toEqual({ page: "machine" });
+    expect(parseRoute("#/assembler")).toEqual({ page: "assembler" });
+    expect(parseRoute("#/translator")).toEqual({ page: "translator" });
+    expect(parseRoute("#/compiler")).toEqual({ page: "compiler" });
+    expect(parseRoute("#/os")).toEqual({ page: "os" });
+  });
 });

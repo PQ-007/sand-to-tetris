@@ -3,7 +3,7 @@
 #![allow(clippy::unusual_byte_groupings)]
 use s2t_isa::{
     alu, decode, encode, AluOp, Cond, Cpu, Flags, Instr, Memory, Shift, ShiftBy, KEYBOARD, SCREEN,
-    SCREEN_WORDS,
+    SCREEN_WORDS, TIMER,
 };
 
 fn run(program: &[Instr], steps: usize) -> (Cpu, Memory) {
@@ -209,7 +209,7 @@ fn instructions_print_as_assembly() {
                     cin: true,
                 },
             },
-            "ALU r0, r1, r2, f=0 invb=0 cin=1",
+            "ALU r0, r1, r2, 0, 0, 1",
         ),
     ];
     for (i, text) in cases {
@@ -399,7 +399,12 @@ fn the_memory_map_routes_screen_keyboard_and_unused_addresses() {
     assert_eq!(mem.read(KEYBOARD), 65);
     mem.write(KEYBOARD, 9);
     assert_eq!(mem.read(KEYBOARD), 65, "keyboard is read-only");
-    for unused in [0x4300, 0x5fff, 0x6001, 0x8000, 0xffff] {
+    assert_eq!(TIMER, 0x6001);
+    mem.timer = 1234;
+    assert_eq!(mem.read(TIMER), 1234);
+    mem.write(TIMER, 9);
+    assert_eq!(mem.read(TIMER), 1234, "the timer is read-only");
+    for unused in [0x4300, 0x5fff, 0x6002, 0x7fff, 0x8000, 0xffff] {
         mem.write(unused, 1);
         assert_eq!(mem.read(unused), 0, "{unused:#x}");
     }

@@ -1,0 +1,338 @@
+//! Stage 4: VM code (docs/VM.md) from the checked tree, as
+//! docs/LANGUAGE.md "Compiling to the VM" describes.
+use crate::{Expr, FuncInfo, Info, Item, Program, Stmt};
+
+/// The program as VM code, one command per line.
+pub fn generate(program: &Program, info: &Info) -> Vec<String> {
+    generate_mapped(program, info).0
+}
+
+/// The VM code, and for each of its lines the source line it came from
+/// (the statement's, or the function's for its start and end; 0 for
+/// `_init`).
+pub fn generate_mapped(program: &Program, info: &Info) -> (Vec<String>, Vec<usize>) {
+    let mut out: Vec<(String, usize)> = Vec::new();
+    // Starting values of globals and constant arrays (zeros are already 0).
+    let mut init = Vec::new();
+    for g in info.globals.values() {
+        for (j, w) in g.init.iter().enumerate() {
+            if *w != 0 {
+                init.push(format!("push {w}"));
+                init.push(format!("set global {}", g.index as usize + j));
+            }
+        }
+    }
+    for item in &program.items {
+        let Item::Fn {
+            name, body, line, ..
+        } = item
+        else {
+            continue;
+        };
+        let Some(f) = info.functions.get(name) else {
+            continue;
+        };
+        let at = |s: &str| (s.to_string(), *line);
+        out.push(at(&format!("func {name} {} {}", f.params.len(), f.count)));
+        if name == "main" && !init.is_empty() {
+            out.push(at("call _init 0"));
+            out.push(at("pop"));
+        }
+        let mut g = Gen {
+            info,
+            f,
+            out: &mut out,
+            line: *line,
+            labels: 0,
+            loops: Vec::new(),
+        };
+        for s in body {
+            g.stmt(s);
+        }
+        if out.last().map(|l| l.0.as_str()) != Some("return") {
+            out.push(at("push 0"));
+            out.push(at("return"));
+        }
+    }
+    if !init.is_empty() {
+        out.push(("func _init 0 0".into(), 0));
+        out.extend(init.into_iter().map(|l| (l, 0)));
+        out.push(("push 0".into(), 0));
+        out.push(("return".into(), 0));
+    }
+    out.into_iter().unzip()
+}
+
+fn stmt_line(s: &Stmt) -> usize {
+    match s {
+        Stmt::Var { line, .. }
+        | Stmt::Assign { line, .. }
+        | Stmt::If { line, .. }
+        | Stmt::While { line, .. }
+        | Stmt::For { line, .. }
+        | Stmt::Break { line }
+        | Stmt::Continue { line }
+        | Stmt::Return { line, .. }
+        | Stmt::Expr { line, .. } => *line,
+    }
+}
+
+struct Gen<'a> {
+    info: &'a Info,
+    f: &'a FuncInfo,
+    out: &'a mut Vec<(String, usize)>,
+    /// The source line being compiled.
+    line: usize,
+    labels: usize,
+    /// (continue label, break label) of each loop we're in.
+    loops: Vec<(String, String)>,
+}
+
+impl Gen<'_> {
+    fn emit(&mut self, s: impl Into<String>) {
+        self.out.push((s.into(), self.line));
+    }
+
+    fn label(&mut self) -> String {
+        self.labels += 1;
+        format!("L{}", self.labels)
+    }
+
+    /// Where a variable lives: "local 3", "arg 0" or "global 7".
+    fn place(&self, name: &str) -> Option<String> {
+        if let Some(i) = self.f.locals.get(name) {
+            return Some(format!("local {i}"));
+        }
+        if let Some(i) = self.f.params.iter().position(|p| p == name) {
+            return Some(format!("arg {i}"));
+        }
+        self.info
+            .globals
+            .get(name)
+            .map(|g| format!("global {}", g.index))
+    }
+
+    /// Pushes an array's address: a global array's first global, or a
+    /// `[T]` variable's value.
+    fn base(&mut self, name: &str) {
+        if self.f.locals.contains_key(name) || self.f.params.iter().any(|p| p == name) {
+            let at = self.place(name).unwrap_or_default();
+            self.emit(format!("push {at}"));
+        } else if let Some(g) = self.info.globals.get(name) {
+            self.emit(format!("push {}", g.index));
+        }
+    }
+
+    fn is_array_global(&self, name: &str) -> bool {
+        !self.f.locals.contains_key(name)
+            && !self.f.params.iter().any(|p| p == name)
+            && self.info.globals.get(name).is_some_and(|g| g.array)
+    }
+
+    fn stmt(&mut self, s: &Stmt) {
+        let outer = self.line;
+        self.line = stmt_line(s);
+        self.stmt_here(s);
+        self.line = outer;
+    }
+
+    fn stmt_here(&mut self, s: &Stmt) {
+        match s {
+            Stmt::Var { name, value, .. } => {
+                self.expr(value);
+                let at = self.place(name).unwrap_or_default();
+                self.emit(format!("set {at}"));
+            }
+            Stmt::Assign { target, value, .. } => match target {
+                Expr::Name { name, .. } => {
+                    self.expr(value);
+                    let at = self.place(name).unwrap_or_default();
+                    self.emit(format!("set {at}"));
+                }
+                Expr::Index { name, index, .. } => {
+                    self.base(name);
+                    self.expr(index);
+                    self.emit("add");
+                    self.expr(value);
+                    self.emit("store");
+                }
+                Expr::Mem { addr, .. } => {
+                    self.expr(addr);
+                    self.expr(value);
+                    self.emit("store");
+                }
+                _ => {}
+            },
+            Stmt::If {
+                cond,
+                then,
+                otherwise,
+                ..
+            } => {
+                let other = self.label();
+                self.expr(cond);
+                self.emit(format!("jumpifnot {other}"));
+                self.block(then);
+                match otherwise {
+                    Some(e) => {
+                        let end = self.label();
+                        self.emit(format!("jump {end}"));
+                        self.emit(format!("label {other}"));
+                        self.block(e);
+                        self.emit(format!("label {end}"));
+                    }
+                    None => self.emit(format!("label {other}")),
+                }
+            }
+            Stmt::While { cond, body, .. } => {
+                let (top, end) = (self.label(), self.label());
+                self.emit(format!("label {top}"));
+                self.expr(cond);
+                self.emit(format!("jumpifnot {end}"));
+                self.loops.push((top.clone(), end.clone()));
+                self.block(body);
+                self.loops.pop();
+                self.emit(format!("jump {top}"));
+                self.emit(format!("label {end}"));
+            }
+            Stmt::For {
+                var,
+                from,
+                to,
+                body,
+                ..
+            } => {
+                let i = self.f.locals.get(var).copied().unwrap_or(0);
+                let (top, next, end) = (self.label(), self.label(), self.label());
+                self.expr(from);
+                self.emit(format!("set local {i}"));
+                self.expr(to);
+                self.emit(format!("set local {}", i + 1));
+                self.emit(format!("label {top}"));
+                self.emit(format!("push local {i}"));
+                self.emit(format!("push local {}", i + 1));
+                self.emit("lt");
+                self.emit(format!("jumpifnot {end}"));
+                self.loops.push((next.clone(), end.clone()));
+                self.block(body);
+                self.loops.pop();
+                self.emit(format!("label {next}"));
+                self.emit(format!("push local {i}"));
+                self.emit("push 1");
+                self.emit("add");
+                self.emit(format!("set local {i}"));
+                self.emit(format!("jump {top}"));
+                self.emit(format!("label {end}"));
+            }
+            Stmt::Break { .. } | Stmt::Continue { .. } => {
+                if let Some((cont, brk)) = self.loops.last().cloned() {
+                    let to = if matches!(s, Stmt::Break { .. }) {
+                        brk
+                    } else {
+                        cont
+                    };
+                    self.emit(format!("jump {to}"));
+                }
+            }
+            Stmt::Return { value, .. } => {
+                match value {
+                    Some(v) => self.expr(v),
+                    None => self.emit("push 0"),
+                }
+                self.emit("return");
+            }
+            Stmt::Expr { expr, .. } => {
+                self.expr(expr);
+                self.emit("pop");
+            }
+        }
+    }
+
+    fn block(&mut self, body: &[Stmt]) {
+        for s in body {
+            self.stmt(s);
+        }
+    }
+
+    fn expr(&mut self, e: &Expr) {
+        match e {
+            Expr::Num { value, .. } => self.emit(format!("push {value}")),
+            Expr::Bool { value, .. } => self.emit(if *value { "push -1" } else { "push 0" }),
+            Expr::Str { text, .. } => {
+                let at = self.info.globals.get(&crate::check::string_key(text));
+                self.emit(format!("push {}", at.map_or(0, |g| g.index)));
+            }
+            Expr::Array { .. } => {}
+            Expr::Name { name, .. } => {
+                // A local or parameter hides a global or constant.
+                let local =
+                    self.f.locals.contains_key(name) || self.f.params.iter().any(|p| p == name);
+                if let (false, Some(v)) = (local, self.info.consts.get(name)) {
+                    self.emit(format!("push {v}"));
+                } else if self.is_array_global(name) {
+                    self.base(name);
+                } else {
+                    let at = self.place(name).unwrap_or_default();
+                    self.emit(format!("push {at}"));
+                }
+            }
+            Expr::Index { name, index, .. } => {
+                self.base(name);
+                self.expr(index);
+                self.emit("add");
+                self.emit("load");
+            }
+            Expr::Mem { addr, .. } => {
+                self.expr(addr);
+                self.emit("load");
+            }
+            Expr::Call { name, args, .. } => {
+                for a in args {
+                    self.expr(a);
+                }
+                self.emit(format!("call {name} {}", args.len()));
+            }
+            Expr::Unary { op, operand, .. } => {
+                self.expr(operand);
+                self.emit(if op == "-" { "neg" } else { "not" });
+            }
+            Expr::Binary {
+                op, left, right, ..
+            } => {
+                if op == "and" || op == "or" {
+                    let end = self.label();
+                    self.expr(left);
+                    self.emit("dup");
+                    self.emit(format!(
+                        "{} {end}",
+                        if op == "and" { "jumpifnot" } else { "jumpif" }
+                    ));
+                    self.emit("pop");
+                    self.expr(right);
+                    self.emit(format!("label {end}"));
+                    return;
+                }
+                self.expr(left);
+                self.expr(right);
+                self.emit(match op.as_str() {
+                    "+" => "add",
+                    "-" => "sub",
+                    "*" => "mul",
+                    "/" => "div",
+                    "%" => "mod",
+                    "&" => "and",
+                    "|" => "or",
+                    "^" => "xor",
+                    "<<" => "shl",
+                    ">>" => "shr",
+                    "==" => "eq",
+                    "!=" => "ne",
+                    "<" => "lt",
+                    "<=" => "le",
+                    ">" => "gt",
+                    _ => "ge",
+                });
+            }
+        }
+    }
+}

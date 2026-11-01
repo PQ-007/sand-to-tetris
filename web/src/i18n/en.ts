@@ -3,6 +3,7 @@
 // Every key must also exist in mn.ts (the type checker enforces it).
 
 import { demosEn } from "./demos.en";
+import { toolsEn } from "./tools.en";
 
 export type Vars = Record<string, string | number>;
 export type Message = string | ((v: Vars) => string);
@@ -443,4 +444,5 @@ export const en = {
   "diag.short":
     "{label}: {inputs} → short circuit: VDD and GND are connected. Expected {port}={expected}, got X.",
   ...demosEn,
+  ...toolsEn,
 } satisfies Messages;

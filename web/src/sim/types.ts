@@ -161,3 +161,258 @@ export interface IsaTrace {
   states: IsaState[];
   writes: ([number, number] | null)[];
 }
+
+// ---- the assembler (docs/ASSEMBLY.md; mirrors s2t-asm's JSON) ----------------
+
+export type AsmToken =
+  | { kind: "label"; name: string }
+  | { kind: "ident"; text: string }
+  | { kind: "directive"; name: string }
+  | { kind: "number"; value: number }
+  | { kind: "comma" }
+  | { kind: "lbracket" }
+  | { kind: "rbracket" }
+  | { kind: "plus" };
+
+export type AsmOperand =
+  | { kind: "reg"; reg: number }
+  | { kind: "num"; value: number }
+  | { kind: "sym"; name: string }
+  | { kind: "mem"; reg: number; offset: AsmOperand };
+
+export type AsmBody =
+  | { kind: "instr"; mnemonic: string; args: AsmOperand[] }
+  | { kind: "dir"; name: string; args: AsmOperand[] };
+
+export interface AsmLine {
+  label: string | null;
+  body: AsmBody | null;
+}
+
+export interface AsmSymbol {
+  kind: "code" | "data" | "const";
+  value: number;
+}
+
+export interface AsmPlaced {
+  section: "code" | "data";
+  address: number;
+  size: number;
+}
+
+export interface AsmLayout {
+  symbols: Record<string, AsmSymbol>;
+  lines: (AsmPlaced | null)[];
+}
+
+export interface AsmError {
+  /** 1-based source line; 0 when a stage runs on its own. */
+  line: number;
+  code: string;
+  args: Record<string, string>;
+  message: string;
+}
+
+export interface AsmProgram {
+  code: number[];
+  data: number[];
+  symbols: Record<string, AsmSymbol>;
+  /** For each code word, its 1-based source line. */
+  sourceMap: number[];
+  errors: AsmError[];
+}
+
+export type StageResult<T> = { ok: T } | { error: AsmError };
+
+// ---- the VM (docs/VM.md; mirrors s2t-vm's JSON) ---------------------------------
+
+export type VmSeg = "const" | "local" | "arg" | "global";
+
+/** The commands without operands. */
+export type VmSimpleOp =
+  | "pop"
+  | "dup"
+  | "load"
+  | "store"
+  | "add"
+  | "sub"
+  | "and"
+  | "or"
+  | "xor"
+  | "neg"
+  | "not"
+  | "shl"
+  | "shr"
+  | "sar"
+  | "mul"
+  | "div"
+  | "mod"
+  | "eq"
+  | "ne"
+  | "lt"
+  | "gt"
+  | "le"
+  | "ge"
+  | "return";
+
+export type VmCommand =
+  | { op: "push" | "set"; seg: VmSeg; n: number }
+  | { op: "label" | "jump" | "jumpif" | "jumpifnot"; name: string }
+  | { op: "func"; name: string; args: number; locals: number }
+  | { op: "call"; name: string; args: number }
+  | { op: VmSimpleOp };
+
+/** What translate gets besides the command. */
+export interface VmCtx {
+  func: string;
+  args: number;
+  locals: number;
+  line: number;
+}
+
+/** Same shape as the assembler's errors. */
+export type VmError = AsmError;
+
+export interface VmBuilt {
+  /** The assembly, one line each. */
+  lines: string[];
+  /** For each assembly line, its VM line (0: bootstrap, runtime, data). */
+  sourceMap: number[];
+  program: AsmProgram;
+  errors: VmError[];
+}
+
+export type VmRunResult =
+  | {
+      halted: boolean;
+      result: number;
+      steps: number;
+      /** RAM 0..63 (the globals live at the start). */
+      ram: number[];
+      screen: number[];
+    }
+  | { errors: VmError[] };
+
+export interface VmFrame {
+  func: string;
+  fp: number;
+  args: number;
+  locals: number;
+}
+
+// ---- C Shard (docs/LANGUAGE.md; mirrors s2t-lang's JSON) ------------------------
+
+export type LangToken =
+  | { kind: "num"; value: number; line: number }
+  | { kind: "str"; text: string; line: number }
+  | { kind: "name"; text: string; line: number }
+  | { kind: "kw"; text: string; line: number }
+  | { kind: "sym"; text: string; line: number };
+
+export type LangType =
+  | { kind: "int" }
+  | { kind: "bool" }
+  | { kind: "array"; elem: LangType; size: LangExpr | null };
+
+export type LangExpr =
+  | { kind: "num"; value: number; line: number }
+  | { kind: "bool"; value: boolean; line: number }
+  | { kind: "str"; text: string; line: number }
+  | { kind: "array"; items: LangExpr[]; line: number }
+  | { kind: "name"; name: string; line: number }
+  | { kind: "index"; name: string; index: LangExpr; line: number }
+  | { kind: "mem"; addr: LangExpr; line: number }
+  | { kind: "call"; name: string; args: LangExpr[]; line: number }
+  | { kind: "unary"; op: string; operand: LangExpr; line: number }
+  | {
+      kind: "binary";
+      op: string;
+      left: LangExpr;
+      right: LangExpr;
+      line: number;
+    };
+
+export type LangStmt =
+  | {
+      kind: "var";
+      name: string;
+      type: LangType | null;
+      value: LangExpr;
+      line: number;
+    }
+  | { kind: "assign"; target: LangExpr; value: LangExpr; line: number }
+  | {
+      kind: "if";
+      cond: LangExpr;
+      then: LangStmt[];
+      else: LangStmt[] | null;
+      line: number;
+    }
+  | { kind: "while"; cond: LangExpr; body: LangStmt[]; line: number }
+  | {
+      kind: "for";
+      var: string;
+      from: LangExpr;
+      to: LangExpr;
+      body: LangStmt[];
+      line: number;
+    }
+  | { kind: "break"; line: number }
+  | { kind: "continue"; line: number }
+  | { kind: "return"; value: LangExpr | null; line: number }
+  | { kind: "expr"; expr: LangExpr; line: number };
+
+export type LangItem =
+  | {
+      kind: "fn";
+      name: string;
+      params: { name: string; type: LangType }[];
+      result: LangType | null;
+      body: LangStmt[];
+      line: number;
+    }
+  | {
+      kind: "var";
+      name: string;
+      type: LangType | null;
+      value: LangExpr | null;
+      line: number;
+    }
+  | {
+      kind: "const";
+      name: string;
+      type: LangType | null;
+      value: LangExpr;
+      line: number;
+    };
+
+export interface LangProgram {
+  items: LangItem[];
+}
+
+export interface LangInfo {
+  globals: Record<
+    string,
+    { index: number; size: number; array: boolean; init: number[] }
+  >;
+  consts: Record<string, number>;
+  functions: Record<
+    string,
+    {
+      params: string[];
+      result: boolean;
+      locals: Record<string, number>;
+      count: number;
+    }
+  >;
+}
+
+/** Same shape as the assembler's errors. */
+export type LangError = AsmError;
+
+export interface LangCompiled {
+  vm: string[];
+  /** For each VM line, its source line (0: none). */
+  sourceMap: number[];
+  errors: LangError[];
+}

@@ -197,6 +197,18 @@ fn computer() {
             ra: 2,
             off: 2,
         }, // shows the key on outM
+        Set { rd: 7, imm: 1 },
+        SetHigh { rd: 7, imm: 0x60 },
+        Load {
+            rd: 7,
+            ra: 7,
+            off: 0,
+        }, // the timer
+        Store {
+            rs: 7,
+            ra: 2,
+            off: 4,
+        }, // shows the timer on outM
         SetHigh { rd: 4, imm: 0x43 },
         Load {
             rd: 5,
@@ -217,21 +229,30 @@ fn computer() {
     let m = clocked("computer").expect("computer model");
     let mut state = vec![None; m.words];
     let key = 65;
-    println!("instr key reset clk | pc addrM outM writeM");
+    let timer = 1234;
+    println!("instr key timer reset clk | pc addrM outM writeM");
     let mut first = true;
-    for _ in 0..34 {
+    for _ in 0..38 {
         let reset = u64::from(first);
         let pc = state[8].unwrap_or(0) as usize;
         let instr = rom.get(pc).copied().unwrap_or(0) as u64;
-        let ins = |clk| [Some(instr), Some(key), Some(reset), Some(clk)];
+        let ins = |clk| [Some(instr), Some(key), Some(timer), Some(reset), Some(clk)];
         let text = if first {
             "reset".to_string()
         } else {
             s2t_isa::decode(instr as u16).to_string()
         };
-        row(&[instr, key, reset, 0], &(m.read)(&ins(0), &state), &text);
+        row(
+            &[instr, key, timer, reset, 0],
+            &(m.read)(&ins(0), &state),
+            &text,
+        );
         (m.tick)(&ins(1), &mut state);
-        row(&[instr, key, reset, 1], &(m.read)(&ins(1), &state), "");
+        row(
+            &[instr, key, timer, reset, 1],
+            &(m.read)(&ins(1), &state),
+            "",
+        );
         first = false;
     }
 }

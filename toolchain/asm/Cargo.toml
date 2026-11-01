@@ -1,0 +1,13 @@
+[package]
+name = "s2t-asm"
+description = "The reference assembler (docs/ASSEMBLY.md): tokenize, parse, layout, encode"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+s2t-isa.workspace = true
+serde.workspace = true
+
+[lints]
+workspace = true

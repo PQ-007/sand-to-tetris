@@ -540,3 +540,156 @@
   term: "Memory-mapped I/O"
   short: "Reaching devices like the screen and keyboard through ordinary memory addresses: storing to the screen's addresses draws, loading from the keyboard's address reads a key."
   see: [address]
+
+- id: assembler
+  term: "Assembler"
+  short: "The program that turns assembly language into machine code: names and labels in, instruction words out."
+  long: "Ours works in two passes: the first finds where everything goes and what each [[label]] means, the second writes the words."
+  see: [assembly-language, two-pass-assembler]
+
+- id: label
+  term: "Label"
+  short: "A name for an address in a program, written as `name:` before a line, so jumps and data can refer to it by name."
+  see: [symbol-table]
+
+- id: symbol-table
+  term: "Symbol table"
+  short: "The assembler's list of every name (label or constant) and the number it stands for."
+  see: [label, two-pass-assembler]
+
+- id: two-pass-assembler
+  term: "Two-pass assembler"
+  short: "An assembler that reads the program twice: once to learn every label's address, once to write the instructions that use them."
+  long: "Two passes are needed because a jump can name a [[label]] that only appears further down."
+  see: [assembler, symbol-table]
+
+- id: pseudo-instruction
+  term: "Pseudo-instruction"
+  short: "A handy name the assembler accepts but the CPU doesn't have; it becomes one or more real instructions, like SET16 or HALT."
+  see: [assembler]
+
+- id: directive
+  term: "Directive"
+  short: "A line that tells the assembler something instead of becoming an instruction, like `.equ` (a constant) or `.word` (data)."
+  see: [assembler]
+
+- id: loader
+  term: "Loader"
+  short: "What puts a program in place before it runs: here, it copies the program's data into RAM."
+  see: [assembler]
+
+- id: virtual-machine
+  term: "Virtual machine"
+  short: "A machine that exists only as a definition: its commands are carried out by an interpreter, or translated into a real CPU's instructions."
+  long: "Ours is a [[stack machine|stack-machine]] between the high-level language and assembly (`docs/VM.md`)."
+  see: [stack-machine, interpreter]
+
+- id: stack
+  term: "Stack"
+  short: "A pile of values where you can only add on top (push) or take the top one off (pop): the last one in is the first one out."
+  see: [stack-machine, stack-pointer]
+
+- id: stack-machine
+  term: "Stack machine"
+  short: "A machine whose instructions take their operands from the top of a stack and push their result, instead of naming registers."
+  see: [stack, virtual-machine]
+
+- id: stack-pointer
+  term: "Stack pointer"
+  short: "A register holding the address of the top of the stack (SP); a push moves it one way, a pop the other."
+  see: [stack, stack-frame]
+
+- id: stack-frame
+  term: "Stack frame"
+  short: "The part of the stack that belongs to one function call: its arguments, the return address, the caller's frame pointer and its local variables."
+  see: [stack-pointer, calling-convention, recursion]
+
+- id: calling-convention
+  term: "Calling convention"
+  short: "The agreement on how a call works: where arguments and the result go, what goes in a frame, and which registers a function may change."
+  see: [stack-frame, subroutine]
+
+- id: recursion
+  term: "Recursion"
+  short: "A function calling itself, each call with its own frame, like factorial(n) = n × factorial(n − 1)."
+  see: [stack-frame]
+
+- id: interpreter
+  term: "Interpreter"
+  short: "A program that runs another program's commands one by one, instead of translating them into machine code first."
+  see: [virtual-machine]
+
+- id: high-level-language
+  term: "High-level language"
+  short: "A programming language written in terms of the problem (variables, expressions, loops, functions) rather than the machine's instructions."
+  see: [compiler]
+
+- id: compiler
+  term: "Compiler"
+  short: "A program that turns a program in one language into another, lower-level one: here, C Shard into VM code."
+  see: [high-level-language, token, syntax-tree, type-checker]
+
+- id: token
+  term: "Token"
+  short: "The smallest meaningful piece of program text: a name, a number, a keyword or a symbol like `<=`."
+  see: [compiler]
+
+- id: syntax-tree
+  term: "Syntax tree"
+  short: "A program as a tree: each operator or statement above the parts it works on, so the grouping is plain to see."
+  see: [precedence, recursive-descent]
+
+- id: precedence
+  term: "Precedence"
+  short: "Which operators group first: in 2 + 3 * 4, * binds tighter than +, so the result is 14."
+  see: [syntax-tree]
+
+- id: recursive-descent
+  term: "Recursive descent"
+  short: "A way of parsing with one function per grammar rule (or precedence level), each calling the functions for its parts."
+  see: [syntax-tree, precedence]
+
+- id: type-checker
+  term: "Type checker"
+  short: "The stage of a compiler that makes sure every value is used as its type allows, before any code is made."
+  see: [compiler]
+
+- id: short-circuit-evaluation
+  term: "Short-circuit evaluation"
+  short: "Stopping early: in `a and b`, b isn't evaluated when a is false; in `a or b`, not when a is true."
+  see: [high-level-language]
+
+- id: operating-system
+  term: "Operating system"
+  short: "The code every program shares to use the machine: here, drawing, text, the keyboard, time and random numbers. Larger systems also share the machine between programs and keep files."
+  see: [bitmap-font, pseudo-random]
+
+- id: bit-mask
+  term: "Bit mask"
+  short: "A word with 1s where you want to act: OR with it sets those bits, AND with its inverse clears them, and the other bits stay as they were."
+  see: [operating-system]
+
+- id: bitmap-font
+  term: "Bitmap font"
+  short: "A font stored as small pictures, one bit per pixel: here 3 × 5 pixels per character, one word each."
+  see: [operating-system]
+
+- id: pseudo-random
+  term: "Pseudo-random"
+  short: "Numbers from a formula that look random: the same start always gives the same sequence."
+  see: [random-seed]
+
+- id: random-seed
+  term: "Seed"
+  short: "The starting value of a pseudo-random generator; a different seed gives a different sequence."
+  see: [pseudo-random]
+
+- id: collision-detection
+  term: "Collision detection"
+  short: "Finding out whether two things in a game overlap: in Bitfall, a piece row AND the board row under it is 0 only if they don't."
+  see: [game-loop, bit-mask]
+
+- id: game-loop
+  term: "Game loop"
+  short: "The loop at the heart of a game: read the input, update the game on a timer, draw what changed, again and again."
+  see: [collision-detection]

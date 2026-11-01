@@ -575,3 +575,178 @@
     - title: "AVR CPU: Architecture (Microchip documentation)"
       url: https://onlinedocs.microchip.com/oxy/GUID-8109B192-2AF1-4902-BA7D-C3C6DA7BDC69-en-US-3/GUID-F9B6741C-7F50-477E-81A8-5423F10CD41A.html
   checked: web search, 2026-11-01
+
+- id: booth-contracted-notation
+  claim: >-
+    Kathleen Booth devised a symbolic "contracted notation" for the ARC2
+    computer at Birkbeck, writing instructions with mnemonics instead of
+    binary; it is widely credited as the first assembly language. Her 1947
+    report with Andrew Booth, "General Considerations in the Design of an
+    All-Purpose Electronic Digital Computer", is the usual reference.
+  sources:
+    - title: "Kathleen Booth (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Kathleen_Booth
+    - title: "RIP: Kathleen Booth, the inventor of assembly language (The Register)"
+      url: https://www.theregister.com/2022/10/29/kathleen_booth_obit
+  checked: web search, 2026-11-01
+  uncertain: >-
+    "First assembly language" is a later label: the term came into use in the
+    late 1950s, and one article argues the 1947 report gives a notation for the
+    machine's language rather than an assembly language as such. The primary
+    1947 document was not checked.
+
+- id: edsac-initial-orders
+  claim: >-
+    In May 1949 David Wheeler wrote the "initial orders" for the EDSAC at
+    Cambridge: a few dozen words that read a program from paper tape written
+    with letter mnemonics and put it in memory. Initial Orders 2 (September
+    1949) added a relocating loader in 41 instructions.
+  sources:
+    - title: "EDSAC (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/EDSAC
+    - title: "EDSAC initial orders (University of Cambridge Computer Laboratory)"
+      url: https://www.cl.cam.ac.uk/relics/orders.notes.html
+  checked: web search, 2026-11-01
+  uncertain: >-
+    It is often called the world's first assembler; that is a claim about
+    firsts, and other early systems (such as Booth's notation) are credited
+    with similar ideas.
+
+- id: burroughs-b5000
+  claim: >-
+    The Burroughs B5000, designed by a team led by Robert Barton and
+    described in Datamation in May 1961, was a stack machine built for
+    high-level languages (ALGOL 60) rather than assembly: all its arithmetic
+    used operands on the stack, so instructions never had to name registers
+    or temporary locations.
+  sources:
+    - title: "The Burroughs Stack Architectures (Douglas W. Jones, University of Iowa)"
+      url: https://homepage.cs.uiowa.edu/~jones/arch/notes/11burroughs.html
+    - title: "Burroughs Large Systems (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Burroughs_Large_Systems
+  checked: web search and both pages read, 2026-11-01
+
+- id: pascal-p-code
+  claim: >-
+    Niklaus Wirth's group at ETH Zurich distributed its Pascal compiler as
+    Pascal-P, a compiler producing p-code for a virtual stack machine plus an
+    interpreter for it, so moving Pascal to a new computer meant writing
+    only the interpreter. UCSD Pascal, based on Pascal-P2 and first released
+    in 1977, built a portable system (the p-System) on the same idea; it was
+    one of the operating systems IBM offered for the original IBM PC.
+  sources:
+    - title: "UCSD Pascal (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/UCSD_Pascal
+    - title: "P-code machine (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/P-code_machine
+  checked: web search and the UCSD Pascal article read, 2026-11-01
+  uncertain: >-
+    The year of the first Pascal-P compiler is given as 1973 by a single
+    reference; the chapter says only "a decade later" than the B5000.
+
+- id: jvm-operand-stack
+  claim: >-
+    In the Java Virtual Machine a new frame is created each time a method is
+    invoked, with its own local variables and operand stack; instructions
+    take their operands from the operand stack and push the result back
+    (iadd pops two ints and pushes their sum). The first edition of the
+    specification, by Tim Lindholm and Frank Yellin, appeared in 1996.
+  sources:
+    - title: "The Java Virtual Machine Specification, Java SE 21, chapter 2 (Oracle)"
+      url: https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-2.html
+    - title: "The Java Virtual Machine Specification, first edition (InformIT)"
+      url: https://www.informit.com/cseng/titles/0-201-63452-X
+  checked: the specification's sections 2.6 and 2.6.2 read, 2026-11-01
+
+- id: webassembly-stack
+  claim: >-
+    The WebAssembly Core Specification became a W3C Recommendation on
+    5 December 2019; it says "The computational model of WebAssembly is
+    based on a stack machine."
+  sources:
+    - title: "WebAssembly Core Specification (W3C Recommendation, 5 December 2019)"
+      url: https://www.w3.org/TR/wasm-core-1/
+    - title: "WebAssembly becomes a W3C Recommendation (W3C press release)"
+      url: https://www.w3.org/press-releases/2019/wasm
+  checked: the specification's overview read, 2026-11-01
+
+- id: hopper-a0
+  claim: >-
+    Grace Hopper wrote the A-0 system for the UNIVAC I in 1951 and 1952. It
+    is often called the first compiler, but it worked more as a loader or
+    linker, joining ready-made routines, than as a compiler in today's sense.
+  sources:
+    - title: "A-0 System (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/A-0_System
+  checked: the article read, 2026-11-01
+  uncertain: >-
+    "First compiler" is a contested label: the article itself calls A-0 "an
+    early compiler-related tool" that "functioned more as a loader or linker".
+
+- id: fortran-1957
+  claim: >-
+    The first FORTRAN compiler, built at IBM by a team led by John Backus, was
+    delivered for the IBM 704 in April 1957 (the first manual appeared in
+    October 1956). It produced code efficient enough that assembly-language
+    programmers accepted a high-level language in its place.
+  sources:
+    - title: "Fortran (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Fortran
+  checked: the article read, 2026-11-01
+
+- id: c-language
+  claim: >-
+    C came into being at Bell Labs between 1969 and 1973, with its most
+    creative period in 1972, growing out of B, whose only data type was the
+    machine word; adding types to variables was among the first changes
+    Dennis Ritchie made.
+  sources:
+    - title: "Dennis M. Ritchie, The Development of the C Language (HOPL II, 1993), university mirror"
+      url: https://www.cs.tufts.edu/~nr/cs257/archive/dennis-ritchie/chist.pdf
+    - title: "B (programming language) (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/B_(programming_language)
+  checked: >-
+    web search, 2026-11-01; Bell Labs' own copy of Ritchie's paper refused
+    the request (HTTP 403), so the paper's wording was checked through search
+    results and a university mirror
+
+- id: gm-naa-io
+  claim: >-
+    GM-NAA I/O was developed in 1956 by Robert L. Patrick of General Motors
+    Research and Owen Mock of North American Aviation for the IBM 704. It is
+    described as the first operating system for the IBM 704; its main job
+    was to start the next program automatically when the current one had
+    finished (batch processing).
+  sources:
+    - title: "GM-NAA I/O (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/GM-NAA_I/O
+  checked: the article read, 2026-11-01
+
+- id: marsaglia-xorshift
+  claim: >-
+    George Marsaglia described xorshift random number generators in "Xorshift
+    RNGs", Journal of Statistical Software 8(14), 2003, as "simple, extremely
+    fast random number generators".
+  sources:
+    - title: "George Marsaglia, Xorshift RNGs, Journal of Statistical Software 8(14), 2003"
+      url: https://www.jstatsoft.org/article/view/v008i14
+  checked: the journal's article page read, 2026-11-01
+  note: >-
+    The 16-bit shifts (7, 9, 8) the OS uses are not from the paper; their
+    full period of 65,535 is checked by a test in toolchain/lang/tests/os.rs.
+
+- id: tetris-origin
+  claim: >-
+    Tetris was created by Alexey Pajitnov, a software engineer at the
+    Dorodnitsyn Computing Center of the Soviet Academy of Sciences, in the
+    mid-1980s, on an Elektronika 60 (a Soviet clone of the PDP-11); it is
+    credited with establishing the market for puzzle video games.
+  sources:
+    - title: "Tetris (Wikipedia)"
+      url: https://en.wikipedia.org/wiki/Tetris
+  checked: the article read, 2026-11-01
+  uncertain: >-
+    Accounts give 1984 or 1985 for the first version (the article's
+    creation section covers 1984-1985), so the chapter says "the
+    mid-1980s"; the article calls Tetris influential in the genre rather
+    than saying it created it.

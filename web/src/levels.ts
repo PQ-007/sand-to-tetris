@@ -20,7 +20,8 @@ import {
 } from "./techtree";
 import { t, type Key } from "./i18n";
 import { matchCheck } from "./sim/core";
-import { parseProgressFile, progressFile } from "./progress";
+import { parseProgressFile, progressFile, workshopFromFile } from "./progress";
+import { workshopStore } from "./workshop-store";
 import { playHref } from "./router";
 import { levelGoal, levelName } from "./text";
 
@@ -339,8 +340,9 @@ function render(root: HTMLElement, a: App): void {
         swap(root, a, btn.dataset.swap ?? ""),
       );
     });
-  root.querySelector("[data-export]")?.addEventListener("click", () => {
-    const blob = new Blob([progressFile(a.progress)], {
+  root.querySelector("[data-export]")?.addEventListener("click", async () => {
+    const workshop = await (await workshopStore()).load();
+    const blob = new Blob([progressFile(a.progress, workshop)], {
       type: "application/json",
     });
     const link = document.createElement("a");
@@ -355,13 +357,16 @@ function render(root: HTMLElement, a: App): void {
     ?.addEventListener("change", async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
-      const parsed = parseProgressFile(await file.text());
+      const text = await file.text();
+      const parsed = parseProgressFile(text);
       if (typeof parsed === "string") {
         if (statusEl) statusEl.textContent = parsed;
         return;
       }
       if (!confirm(t("levels.confirmImport"))) return;
       await replaceProgress(a, parsed);
+      const workshop = workshopFromFile(text);
+      if (workshop) await (await workshopStore()).replaceAll(workshop);
       selected = null;
       render(root, a);
       root.querySelector(".import-status")!.textContent = t("levels.imported");

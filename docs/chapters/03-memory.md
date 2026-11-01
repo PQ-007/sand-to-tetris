@@ -122,7 +122,7 @@ Build it from a register that loads on every edge, with a chain of three 16-bit 
 
 ## Fast models for memory
 
-Your fast models from Chapter 2 compute an answer from their inputs. A memory's fast model also has to *remember*: a fast RAM8 keeps its own eight words between clock ticks. The match check is different too. There's no list of every input to try, because the output depends on the past. So the simulator runs your design and the model side by side through 10,000 random clock cycles from power-on, and compares their outputs whenever the model knows its value. Switch your RAM8 to its fast model before you build RAM64 and the circuit drops from about 32,000 gates to under a thousand.
+Your fast models from Chapter 2 compute an answer from their inputs. A memory's fast model also has to *remember*: a fast RAM8 keeps its own eight words between clock ticks. The match check is different too. There's no list of every input to try, because the output depends on the past. So the simulator runs your design and the model side by side through 10,000 random clock cycles from power-on, and compares their outputs whenever the model knows its value. Switch your RAM8 to its fast model before you build RAM64 and the circuit drops from about 32,000 gates to under a thousand. When you press **Check**, memory parts you've already passed run as their fast models anyway (each one was compared with its model when it passed); the switch decides what runs live in the editor.
 
 <aside class="summary">
 

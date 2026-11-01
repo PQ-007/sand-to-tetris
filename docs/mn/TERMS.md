@@ -137,3 +137,33 @@ and `web/src/i18n/demos.mn.ts`.
 | Harvard architecture | Harvard architecture |
 | RISC | RISC |
 | Memory-mapped I/O | Memory-mapped I/O |
+| Assembler | Ассемблер |
+| Label | Label |
+| Symbol table | Symbol table |
+| Two-pass assembler | Two-pass assembler |
+| Pseudo-instruction | Pseudo-instruction |
+| Directive | Directive |
+| Loader | Loader |
+| Virtual machine | Виртуал машин |
+| Stack | Stack |
+| Stack machine | Stack machine |
+| Stack pointer | Stack pointer |
+| Stack frame | Stack frame |
+| Calling convention | Calling convention |
+| Recursion | Рекурс |
+| Interpreter | Интерпретатор |
+| High-level language | Дээд түвшний хэл |
+| Compiler | Хөрвүүлэгч |
+| Token | Token |
+| Syntax tree | Syntax tree |
+| Precedence | Үйлдлийн дараалал |
+| Recursive descent | Recursive descent |
+| Type checker | Type checker |
+| Short-circuit evaluation | Short-circuit evaluation |
+| Operating system | Үйлдлийн систем |
+| Bit mask | Bit mask |
+| Bitmap font | Bitmap font |
+| Pseudo-random | Pseudo-random |
+| Seed | Seed |
+| Collision detection | Collision detection |
+| Game loop | Game loop |

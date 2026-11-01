@@ -251,3 +251,57 @@ fn helpful_usage_errors() {
     let err = run(&args(&["check", "/no/such/level"])).unwrap_err();
     assert!(err.contains("/no/such/level/level.toml"), "{err}");
 }
+
+#[test]
+fn assembles_a_file_into_a_listing_or_json() {
+    let dir = std::env::temp_dir().join(format!("s2t-asm-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let good = dir.join("sum.s");
+    std::fs::write(&good, "SET r0, 0\nloop: ADDI r0, 1\nJMP loop\n").unwrap();
+    let out = run(&args(&["asm", good.to_str().unwrap()])).unwrap();
+    assert!(out.contains("0000  4000  1: SET r0, 0"), "{out}");
+    assert!(out.contains("0002  c3ff  3: JMP loop"), "{out}");
+    let json = run(&args(&["asm", good.to_str().unwrap(), "--json"])).unwrap();
+    assert!(json.contains("\"code\":[16384,"), "{json}");
+    let bad = dir.join("bad.s");
+    std::fs::write(&bad, "SET r1, 300\nFOO\n").unwrap();
+    let err = run(&args(&["asm", bad.to_str().unwrap()])).unwrap_err();
+    assert!(err.contains("line 1: n = 300 doesn't fit"), "{err}");
+    assert!(err.contains("line 2: `FOO` isn't an instruction"), "{err}");
+}
+
+#[test]
+fn translates_a_vm_file_into_assembly() {
+    let dir = std::env::temp_dir().join(format!("s2t-vm-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let good = dir.join("add.vm");
+    std::fs::write(&good, "func main 0 0\npush 2\npush 3\nadd\nreturn\n").unwrap();
+    let out = run(&args(&["vm", good.to_str().unwrap()])).unwrap();
+    assert!(out.contains("; 4: add\n"), "{out}");
+    assert!(out.contains("ADD r0, r0, r1"), "{out}");
+    assert!(out.starts_with("        SET16 r6, 0x4000"), "{out}");
+    let json = run(&args(&["vm", good.to_str().unwrap(), "--json"])).unwrap();
+    assert!(json.contains("\"sourceMap\":[0,"), "{json}");
+    let bad = dir.join("bad.vm");
+    std::fs::write(&bad, "push 1\nfunc main 0 0\nfrob\n").unwrap();
+    let err = run(&args(&["vm", bad.to_str().unwrap()])).unwrap_err();
+    assert!(
+        err.contains("line 1: commands belong inside a function"),
+        "{err}"
+    );
+    assert!(err.contains("line 3: unknown command frob"), "{err}");
+}
+
+#[test]
+fn compiles_c_shard_to_vm_code() {
+    let dir = std::env::temp_dir().join(format!("s2t-lang-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let good = dir.join("sum.shard");
+    std::fs::write(&good, "fn main() -> int { return 2 + 3; }\n").unwrap();
+    let out = run(&args(&["compile", good.to_str().unwrap()])).unwrap();
+    assert_eq!(out, "func main 0 0\npush 2\npush 3\nadd\nreturn");
+    let bad = dir.join("bad.shard");
+    std::fs::write(&bad, "fn main() {\n  x = 1;\n}\n").unwrap();
+    let err = run(&args(&["compile", bad.to_str().unwrap()])).unwrap_err();
+    assert!(err.contains("line 2: x isn't declared"), "{err}");
+}

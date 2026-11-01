@@ -3,7 +3,7 @@ import { t } from "../i18n";
 import { Demo, chips, formatLength, formatTime, sheet, svg, wide } from "./kit";
 
 const CSS = sheet(`
-  .card { background: var(--bg); border-radius: 0.5rem; padding: 0.75rem 1rem; margin-top: 0.75rem; }
+  .card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 3px; padding: 0.85rem 1rem; margin-top: 0.75rem; }
   .card h3 { margin: 0 0 0.25rem; font-size: 1.0625rem; }
   .card p { margin: 0.25rem 0; }
   .compare { margin-top: 0.75rem; }

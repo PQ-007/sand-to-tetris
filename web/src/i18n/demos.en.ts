@@ -306,4 +306,92 @@ export const demosEn = {
     "No register or memory changed; PC moves to the next instruction.",
   "cpu.halted":
     "The program has stopped: JMP 0 jumps to itself, forever. Press Reset to run it again.",
+
+  // ---- one instruction, bit by bit ----
+  "asmd.caption": "One instruction, bit by bit",
+  "asmd.captionText":
+    "Type an instruction, or pick one, and see the 16 bits the assembler makes from it, field by field.",
+  "asmd.try": "Try",
+  "asmd.instruction": "Instruction",
+  "asmd.group": "group",
+  "asmd.unused": "unused",
+  "asmd.readsBack": "Read back by the disassembler:",
+
+  // ---- Bitfall rows ----
+  "brow.caption": "The board is numbers",
+  "brow.captionText":
+    "Each row of the Bitfall board is a 10-bit number. Click cells to change the rows: a row of all 1s (1023) clears, and so does a row equal to the target, for a bonus. Below, a piece row slides along the last row: where both have a 1, the AND isn't 0 and the piece is blocked.",
+  "brow.target": "Target: {bits}",
+  "brow.rowLabel": "Row {n}",
+  "brow.cellOn": "Row {row}, cell {col}: filled",
+  "brow.cellOff": "Row {row}, cell {col}: empty",
+  "brow.fate.full": "full (1023): clears, +10",
+  "brow.fate.target": "equals the target: clears, +50",
+  "brow.fate.stays": "stays",
+  "brow.pieceHead": "A piece row over the last row",
+  "brow.pieceLabel": "The piece row at column {col}: {bits}",
+  "brow.column": "Piece column",
+  "brow.fits": "piece AND row = {and}: it fits.",
+  "brow.blocked": "piece AND row = {and}: not 0, so it's blocked.",
+
+  // ---- font ----
+  "font.caption": "A font is numbers",
+  "font.captionText":
+    "Each character of the OS font is 3 × 5 pixels, stored as one word: 15 bits, the top row first. Click a pixel (or press Enter on it) to flip its bit and watch the word change.",
+  "font.try": "Try",
+  "font.char": "Character",
+  "font.gridLabel": "The pixels of {char}",
+  "font.pixelOn": "Row {row}, column {col}: on",
+  "font.pixelOff": "Row {row}, column {col}: off",
+  "font.bitsTitle": "Bit 15 (unused), then the five rows",
+  "font.note":
+    "draw_char reads this word and plots a pixel for every 1: (word >> (14 − 3·row − column)) & 1. The whole font is 64 words: 128 bytes.",
+
+  // ---- compiler ----
+  "cmp.caption": "A compiler, stage by stage",
+  "cmp.captionText":
+    "Edit the program and watch each stage: the tokens, the syntax tree (each operator above what it works on), and the VM code. A mistake shows the stage that found it, with its line.",
+  "cmp.try": "Try",
+  "cmp.ex.expr": "Precedence",
+  "cmp.ex.if": "if and a call",
+  "cmp.ex.loop": "A loop and an array",
+  "cmp.source": "C Shard source",
+  "cmp.tokens": "1 · Tokens ({n})",
+  "cmp.tree": "2 · Syntax tree",
+  "cmp.vm": "3–4 · Checked, then VM code ({n} lines)",
+  "cmp.error": "Line {line}: {message}",
+  "cmp.kind.num": "number",
+  "cmp.kind.str": "string",
+  "cmp.kind.name": "name",
+  "cmp.kind.kw": "keyword",
+  "cmp.kind.sym": "symbol",
+
+  // ---- stack machine ----
+  "stk.caption": "A stack machine, one command at a time",
+  "stk.captionText":
+    "Pick a program and step through it. The stack is shown top first, and each word says what it's for: a working value, a variable, or part of a function's frame.",
+  "stk.program": "Program",
+  "stk.expr": "x = (3 + 4) × 2",
+  "stk.call": "A call: area(5, 3)",
+  "stk.fact": "Recursion: 3!",
+  "stk.step": "Step",
+  "stk.back": "Back",
+  "stk.run": "Run",
+  "stk.reset": "Reset",
+  "stk.code": "VM code",
+  "stk.stack": "Stack, top first",
+  "stk.addr": "Address",
+  "stk.value": "Value",
+  "stk.what": "What it is",
+  "stk.operand": "working value ({func})",
+  "stk.local": "local {index} of {func}",
+  "stk.arg": "arg {index} of {func}",
+  "stk.saved-fp": "{func}: the caller's FP",
+  "stk.return": "{func}: the return address",
+  "stk.result": "main's result",
+  "stk.empty": "The stack is empty.",
+  "stk.current": "the next command",
+  "stk.start": "Press Step to run the first command.",
+  "stk.next": "Step {n}. Next: line {line}.",
+  "stk.done": "Done: main returned {value}.",
 } satisfies Messages;

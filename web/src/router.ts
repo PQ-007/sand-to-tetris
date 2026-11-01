@@ -6,6 +6,11 @@ export type Route =
   | { page: "glossary"; term?: string }
   | { page: "levels" }
   | { page: "play"; level: string }
+  | { page: "machine" }
+  | { page: "assembler" }
+  | { page: "translator" }
+  | { page: "compiler" }
+  | { page: "os" }
   | { page: "not-found"; hash: string };
 
 export function parseRoute(hash: string): Route {
@@ -26,6 +31,11 @@ export function parseRoute(hash: string): Route {
     return { page: "glossary", ...(term ? { term } : {}) };
   }
   if (/^\/levels\/?$/.test(path)) return { page: "levels" };
+  if (/^\/machine\/?$/.test(path)) return { page: "machine" };
+  if (/^\/assembler\/?$/.test(path)) return { page: "assembler" };
+  if (/^\/translator\/?$/.test(path)) return { page: "translator" };
+  if (/^\/compiler\/?$/.test(path)) return { page: "compiler" };
+  if (/^\/os\/?$/.test(path)) return { page: "os" };
   const play = /^\/play\/([\w-]+)\/?$/.exec(path);
   if (play?.[1]) return { page: "play", level: play[1] };
   return { page: "not-found", hash };

@@ -58,7 +58,8 @@ We use this build-and-unlock pattern as an interaction model only. Levels, wordi
 - **Passing a level** turns the component into a black box in the toolbox.
 - **Look inside:** double-click a box to open it and see your own design running live. A breadcrumb (`Computer › CPU › ALU`) takes you back up.
 - **Wide signals:** bus wires (16 bits in one thick wire), splitters/joiners, and a **Repeat ×N** block (build one bit slice, stamp out N copies).
-- **Keyboard and screen readers:** every action works from the keyboard (place parts with arrow keys, connect from a pin menu), and there's a readable list view of the circuit.
+- **Keyboard and screen readers:** every action works from the keyboard on the canvas itself: parts and ports are focusable and move with the arrow keys, the actions menu (menu key or Shift+F10) connects, disconnects, duplicates and deletes, and each part's label lists its wires. (An earlier separate keyboard panel was folded into this.)
+- **The level map is a tech tree:** each level sits below the levels it needs, one band per layer; selecting a level shows what it needs and unlocks. A list view stays available.
 - **Errors appear on the canvas:**
   - an unconnected pin pulses;
   - a wire with two drivers turns red;
@@ -79,7 +80,7 @@ We use this build-and-unlock pattern as an interaction model only. Levels, wordi
 - Each unlocked component has a toggle: **Your design ⇄ Fast model**.
 - A swap is allowed only after a **match check**: your design and the fast model must agree on the tests plus every input combination (for ≤16 input bits) or 10,000 random inputs/cycles. The result is shown.
 - When a component is swapped, flattening stops at its box: thousands of gates become one native element.
-- The level map shows each component's mode, with presets "As you built it" and "Playable speed", plus a meter for elements simulated and cycles per second.
+- The level map shows each component's mode (Runs as: your design / fast model). Checks always run passed memory components (registers, RAM, CPU, memory map) as their models, since each was compared with its model when it passed; the live editor runs what the learner chose. Not built yet: presets ("As you built it", "Playable speed") and a cycles-per-second meter.
 
 ## 6. Repo structure
 ```
@@ -147,11 +148,47 @@ Agreed with the user in three rounds; the reasons are in `docs/ISA.md`.
 - **CPU and Computer tests are program traces** printed by the models (two steps per instruction, assembly on a `#` line), so they can't drift from the spec.
 - **Check runs passed memory components as models,** like the status re-check (a learner-built RAM16K is ~8 million gates); the live editor still runs the learner's choice. Flattening stops past 100,000 gates with a translated "too big" problem that points at the fast-model switch.
 - **Chapter 4** with a `<cpu-demo>` that runs `s2t-isa` through WASM (`isaTrace`), and cited history (Harvard Mark I and the contested "Harvard architecture" name, IBM 801 and Berkeley RISC, ARM's link register, AVR's separate buses).
-| M8 | Assembler | |
-| M9 | VM + translator | |
-| M10 | High-level language (designed together) + compiler | |
-| M11 | Mini OS: screen, keyboard, timer, random numbers | |
-| M12 | Tetris on the learner's own computer | |
+| M8 ✓ | Assembler | The reference assembler passes its spec tests; the learner's TypeScript assembler is graded stage by stage; programs run on the Machine page; Chapter 5 is live |
+
+### M8 decisions (2026-11-01)
+Agreed with the user: constants and a few pseudo-instructions; a .data section copied into RAM by a loader; the learner's assembler in TypeScript, in four tested stages; a Machine page now.
+- The language is `docs/ASSEMBLY.md`. SET16 is one word only when its value is known in pass 1 and fits a byte; NOP is `JMP 1` (the only instruction that changes nothing); a jump's number operand is the offset (so disassembly reassembles).
+- The reference (`toolchain/asm`) and the learner's assembler share the same four stages and JSON shapes, so the reference grades each stage on its own, fed correct input from the stage before.
+- The learner's code runs in a worker (5 s limit) after sucrase strips its types; a full solution in the tests proves the workshop solvable.
+- The Machine page runs programs on the reference CPU (`s2t-isa` in WASM): fast enough for games. Keyboard codes are provisional (ASCII, Enter 13, Backspace 8, Escape 27, arrows 128–131; Tab is never captured); revisit with the OS in M11.
+| M9 ✓ | VM + translator | The reference translator matches the interpreter on edge cases and random programs; the learner's TypeScript translator is graded by running programs; VM programs run on the Machine page; Chapter 6 is live |
+
+### M9 decisions (2026-11-01)
+Agreed with the user: a stack machine; numbered locals, args and globals plus load/store; true = −1; mul/div/mod as VM commands backed by runtime routines. The rest (my choices, in `docs/VM.md`):
+- Commands: push/set (with `push n` for constants), pop, dup, load, store, add sub and or xor neg not shl shr sar, mul div mod (signed, rounding toward 0; ÷0 gives −1 and a), eq ne lt gt le ge (signed, exact even when a − b overflows), label/jump/jumpif/jumpifnot, func f n k, call f n, return. Every function returns one value; main takes no arguments; a function must end with return or jump.
+- Calling convention: SP r6 (the stack grows down from 0x4000), FP r5, r7 the return address, r0–r4 scratch; the callee saves r7 and FP and cleans up its arguments; global i = RAM[i] (a `.data` of zeros). Calls go through SET16 + CALLR so functions can sit anywhere; jumps inside a function reach ±511 words (`function-too-long` otherwise).
+- Names: function f → label `f`, label L in f → `f__L`; VM names may not contain `__`, which the translator keeps for itself.
+- The reference is `toolchain/vm` (`s2t-vm`): parse, checks, translate, bootstrap/runtime, build (assembling with `s2t-asm`), and an interpreter with the same memory layout, which the tests compare every translation with.
+- The learner's translator has three parts (parse, translate per command, bootstrap + runtime); the whole-program checks and the loop are shared code (`web/src/translator.ts`, kept identical to `s2t-vm` by a test). Tests run small programs on the CPU and compare result, SP, globals and screen with the interpreter; each stage's tests use the learner's code only for that stage's commands, so the stages are independent.
+- Machine page: a language choice (Assembly / VM); VM code shows its errors on VM lines, the assembly it became, and the stack.
+| M10 ✓ | High-level language (designed together) + compiler | The reference compiler passes its spec tests; the learner's TypeScript compiler is graded stage by stage; C Shard runs on the Machine page; Chapter 7 is live |
+
+### M10 decisions (2026-11-01)
+Agreed with the user in two rounds: braces (C-family) syntax; int, bool and arrays, type-checked; fixed-size arrays known when compiling; `mem[addr]` built in so the OS can be written in the language; `and`/`or`/`not` for bool (short-circuit) and `& | ^ ~` for bits with ordinary precedence; if/else, while, `for i in a..b`, break, continue; `'A'` chars and `"text"` as constant arrays. The user named it **C Shard** (my pick: the `.shard` extension). The rest (in `docs/LANGUAGE.md`):
+- `>>` shifts zeros in (0x8000 is negative as an int; an arithmetic shift would smear the pixel mask); bit operators bind tighter than comparisons; comparisons don't chain.
+- Arrays live only in globals and constants; functions take `[T]` (a reference: the array's address); locals must be initialised; a name can't be reused inside a function or shadow a global.
+- Globals are VM globals from 0 in declaration order; starting values are stored by a generated `_init` that `main` calls first; constant scalars are inlined.
+- The reference is `toolchain/lang` (`s2t-lang`: tokenize, parse, check → `Info`, generate, plus a source map). Its tests include 600 random expressions run as code vs folded as constants.
+- The workshop compares tokenize/parse/check JSON exactly (each fed the reference's previous stage) and grades generate by running the VM code.
+| M11 ✓ | Mini OS: screen, keyboard, timer, random numbers | The OS passes its tests on the VM; the learner's OS (in C Shard) is graded against it; C Shard programs get it automatically on the Machine page; Chapter 8 is live |
+
+### M11 decisions (2026-11-01)
+Agreed with the user: a frame-counter timer at 0x6001 (60 a second, fed from outside like the keyboard); random numbers in software (16-bit xorshift in the OS); M8's keyboard codes kept; the OS put in front of every C Shard program (no `use os;`). The rest (`docs/OS.md`):
+- Hardware: the `memory` and `computer` levels gain a `timer` input (key or timer picked by address bit 0; learners who built them before rewire one input), s2t-isa's `Memory.timer`, the models, the Machine page feeds it from running time (paused time doesn't count).
+- The OS is `os/os.shard`: clear, plot, fill_rect (a word at a time), draw_rect, a 3 × 5 font drawn for the project in 4 × 6 cells (32 × 16 text), draw_char/draw_text/draw_int, key, wait_key (the first press seeds the generator from the timer), ticks, wait, seed_random/random/random_below (shifts 7, 9, 8; full period checked), abs/min/max. It takes those names and anything starting with `OS_`/`os_`.
+- C Shard clarification: a string literal may appear inside a function (a hidden constant array), as the approved option's `draw_text("HELLO", ...)` showed.
+- The OS workshop is C Shard, graded on the VM interpreter with a scripted timer and keyboard (`s2t_vm::run_scripted`, WASM `vmRunScripted`) against the built-in OS; text uses the learner's own screen functions, so its stages build in order.
+| M12 ✓ | The game on the learner's own computer | Bitfall passes its tests on the VM and plays on the Machine page; Chapter 9 closes the course |
+
+### M12 decisions (2026-11-01)
+The user asked for classic Tetris. I can't build a recreation of a specific existing game, so we kept the user's choices (full rows clear plus a binary-target bonus; a 10 × 20 board of 4-pixel cells) and made the pieces and name our own (the user had no preference): pieces grown at random from 3 to 5 cells, and the name Bitfall. Rules and layout: `docs/GAME.md`. The site title "Sand to Tetris" is unchanged; renaming it is the user's call.
+- The board is 20 ten-bit rows and a piece five 5-bit rows: collision is AND, locking OR, clearing a comparison; rotation maps (y, x) to (x, h − 1 − y) with wall kicks of up to two cells.
+- Making the OS a prelude exposed a clash: the OS's locals (e.g. `px` in fill_rect) blocked programs' globals of the same name. C Shard now lets a local or parameter hide a global, constant or function (`docs/LANGUAGE.md`); declaring a name twice in one function is still an error.
 | M13 | (optional) Chip layout editor → extracted transistor netlist | |
 
 The first vertical slice is M0–M3.

@@ -1,0 +1,204 @@
+// The Sand to Tetris OS (docs/OS.md): screen, text, keyboard, time and
+// random numbers, in C Shard. The Machine page puts it in front of every
+// C Shard program, so these names are taken: the functions below, and
+// anything starting with OS_ or os_.
+
+const OS_SCREEN = 0x4000;
+const OS_KEYBOARD = 0x6000;
+const OS_TIMER = 0x6001;
+
+// ---- small helpers ---------------------------------------------------------
+
+fn abs(x: int) -> int {
+    if x < 0 { return -x; }
+    return x;
+}
+
+fn min(a: int, b: int) -> int {
+    if a < b { return a; }
+    return b;
+}
+
+fn max(a: int, b: int) -> int {
+    if a > b { return a; }
+    return b;
+}
+
+// ---- the screen: 128 x 96 pixels, 8 words a row, leftmost pixel in bit 15 --
+
+// Every pixel off.
+fn clear() {
+    for i in 0..768 {
+        mem[OS_SCREEN + i] = 0;
+    }
+}
+
+// One pixel on or off; outside the screen nothing happens.
+fn plot(x: int, y: int, on: bool) {
+    if x < 0 or x >= 128 or y < 0 or y >= 96 { return; }
+    var a = OS_SCREEN + (y << 3) + (x >> 4);
+    var bit = 0x8000 >> (x & 15);
+    if on {
+        mem[a] = mem[a] | bit;
+    } else {
+        mem[a] = mem[a] & ~bit;
+    }
+}
+
+// A filled rectangle, w x h pixels from (x, y), clipped to the screen. It
+// works a word at a time: each step covers the pixels up to the next word.
+fn fill_rect(x: int, y: int, w: int, h: int, on: bool) {
+    var x0 = max(x, 0);
+    var x1 = min(x + w, 128);
+    var y0 = max(y, 0);
+    var y1 = min(y + h, 96);
+    for row in y0..y1 {
+        var a = OS_SCREEN + (row << 3);
+        var px = x0;
+        while px < x1 {
+            var bit = px & 15;
+            var n = min(16 - bit, x1 - px);
+            // n ones, starting `bit` pixels from the left of the word.
+            var mask = (-1 << (16 - n)) >> bit;
+            var at = a + (px >> 4);
+            if on {
+                mem[at] = mem[at] | mask;
+            } else {
+                mem[at] = mem[at] & ~mask;
+            }
+            px = px + n;
+        }
+    }
+}
+
+// The outline of a rectangle.
+fn draw_rect(x: int, y: int, w: int, h: int) {
+    fill_rect(x, y, w, 1, true);
+    fill_rect(x, y + h - 1, w, 1, true);
+    fill_rect(x, y, 1, h, true);
+    fill_rect(x + w - 1, y, 1, h, true);
+}
+
+// ---- text: a 3 x 5 font in 4 x 6 cells, 32 columns x 16 rows --------------
+
+// One word per character from ' ' (32) to '_' (95): 5 rows of 3 bits, top
+// row in bits 14-12, the leftmost pixel of a row in its highest bit.
+const OS_FONT: [int; 64] = [
+    0x0000, 0x2482, 0x5A00, 0x5F7D, 0x3C9E, 0x42A1, 0x2AAB, 0x2400,  //  !"#$%&'
+    0x1491, 0x4494, 0x0AA8, 0x05D0, 0x0014, 0x01C0, 0x0002, 0x12A4,  // ()*+,-./
+    0x7B6F, 0x2C97, 0x62A7, 0x628E, 0x5BC9, 0x798E, 0x39EF, 0x7292,  // 01234567
+    0x7BEF, 0x7BCE, 0x0410, 0x0414, 0x1511, 0x0E38, 0x4454, 0x6282,  // 89:;<=>?
+    0x2BE3, 0x2BED, 0x6BAE, 0x3923, 0x6B6E, 0x79A7, 0x79A4, 0x396B,  // @ABCDEFG
+    0x5BED, 0x7497, 0x126A, 0x5BAD, 0x4927, 0x5FED, 0x6B6D, 0x2B6A,  // HIJKLMNO
+    0x6BA4, 0x2B73, 0x6BAD, 0x388E, 0x7492, 0x5B6F, 0x5B6A, 0x5BFD,  // PQRSTUVW
+    0x5AAD, 0x5A92, 0x72A7, 0x6926, 0x4889, 0x324B, 0x2A00, 0x0007   // XYZ[\]^_
+];
+
+// A character in text cell (col, row); lowercase is drawn as uppercase, and
+// a character the font doesn't have as '?'.
+fn draw_char(c: int, col: int, row: int) {
+    if c >= 'a' and c <= 'z' { c = c - 32; }
+    if c < 32 or c > 95 { c = '?'; }
+    var g = OS_FONT[c - 32];
+    var x = col << 2;
+    var y = row * 6;
+    fill_rect(x, y, 4, 6, false);
+    for r in 0..5 {
+        for k in 0..3 {
+            if (g >> (14 - r * 3 - k)) & 1 == 1 {
+                plot(x + k, y + r, true);
+            }
+        }
+    }
+}
+
+// n characters of s, from cell (col, row) rightwards.
+fn draw_text(s: [int], n: int, col: int, row: int) {
+    for i in 0..n {
+        draw_char(s[i], col + i, row);
+    }
+}
+
+var os_digits: [int; 5];
+
+// A number in decimal from cell (col, row); returns how many cells it took.
+fn draw_int(v: int, col: int, row: int) -> int {
+    // Work with v <= 0, so -32768 has no positive twin to overflow into.
+    var negative = v < 0;
+    if not negative { v = -v; }
+    var n = 0;
+    while true {
+        os_digits[n] = -(v % 10);
+        n = n + 1;
+        v = v / 10;
+        if v == 0 { break; }
+    }
+    var c = col;
+    if negative {
+        draw_char('-', c, row);
+        c = c + 1;
+    }
+    for i in 0..n {
+        draw_char('0' + os_digits[n - 1 - i], c, row);
+        c = c + 1;
+    }
+    return c - col;
+}
+
+// ---- the keyboard and time -------------------------------------------------
+
+// The code of the key held now, 0 if none (docs/ISA.md "Keyboard codes").
+fn key() -> int {
+    return mem[OS_KEYBOARD];
+}
+
+// Frames since the program started, 60 a second.
+fn ticks() -> int {
+    return mem[OS_TIMER];
+}
+
+// Wait this many frames (60 = one second).
+fn wait(frames: int) {
+    var start = ticks();
+    while ticks() - start < frames { }
+}
+
+var os_seeded = false;
+
+// Wait for a key to be pressed and let go; returns its code. The first key
+// press also seeds the random numbers from the time, so games differ.
+fn wait_key() -> int {
+    while key() == 0 { }
+    var k = key();
+    if not os_seeded {
+        seed_random(os_seed ^ ticks());
+        os_seeded = true;
+    }
+    while key() != 0 { }
+    return k;
+}
+
+// ---- random numbers: a 16-bit xorshift generator ---------------------------
+
+var os_seed = 1;
+
+// Start the sequence from s (0 is replaced by 1: xorshift never leaves 0).
+fn seed_random(s: int) {
+    if s == 0 { s = 1; }
+    os_seed = s;
+}
+
+// The next number, 0..32767. The shifts 7, 9, 8 visit all 65,535 nonzero
+// 16-bit values before repeating.
+fn random() -> int {
+    os_seed = os_seed ^ (os_seed << 7);
+    os_seed = os_seed ^ (os_seed >> 9);
+    os_seed = os_seed ^ (os_seed << 8);
+    return os_seed & 0x7FFF;
+}
+
+// A number from 0 to n - 1 (0 if n <= 0).
+fn random_below(n: int) -> int {
+    if n <= 0 { return 0; }
+    return random() % n;
+}
