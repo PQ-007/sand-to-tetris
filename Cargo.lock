@@ -102,6 +102,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "s2t-isa"
+version = "0.1.0"
+dependencies = [
+ "s2t-models",
+]
+
+[[package]]
 name = "s2t-models"
 version = "0.1.0"
 dependencies = [
