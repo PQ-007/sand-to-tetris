@@ -160,6 +160,7 @@ dependencies = [
  "s2t-checker",
  "s2t-isa",
  "s2t-netlist",
+ "s2t-vm",
  "serde",
  "serde_json",
  "wasm-bindgen",
