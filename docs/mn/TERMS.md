@@ -7,6 +7,12 @@ Loan words that Mongolian already uses (транзистор, процессор
 конденсатор, интеграл схем) stay in Cyrillic. Part names (NOT, NAND, MUX,
 RAM8, …), pin names and code are always in Latin letters.
 
+The same goes for interface jargon: Workbench, Toolbox, Canvas, Simulator,
+Export / Import, Tech tree, Shortcuts, Tick, side quest, Waveform, Splitter /
+Joiner stay in English (not "ажлын ширээ", "багаж", "зотон", "загварчлагч").
+Everyday words stay Mongolian: түвшин, давхарга, хөл, эд анги, утас,
+шалгах, буцаах, ахиц, томруулах.
+
 Suffixes on English words follow the pronunciation, after a hyphen: latch-ийн,
 latch-д, flip-flop-ын, carry-г, bus-ыг, gate-ийн, source-оос, drain-тэй.
 

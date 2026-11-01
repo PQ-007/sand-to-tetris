@@ -13,10 +13,10 @@ export const mn: Record<keyof typeof en, Message> = {
   "nav.build": "Бүтээх",
   "nav.glossary": "Нэр томьёо",
   "nav.language": "Хэл",
-  "core.loading": "Загварчлагчийг ачаалж байна…",
-  "core.ok": "Загварчлагч {version}",
-  "core.okTitle": "Загварчлагчийн цөм {version} ачаалагдлаа",
-  "core.failed": "Загварчлагчийн цөмийг ачаалж чадсангүй: {error}",
+  "core.loading": "Simulator-ыг ачаалж байна…",
+  "core.ok": "Simulator {version}",
+  "core.okTitle": "Simulator-ын цөм {version} ачаалагдлаа",
+  "core.failed": "Simulator-ын цөмийг ачаалж чадсангүй: {error}",
   "page.error": "Энэ хуудсыг ачаалахад алдаа гарлаа",
   "page.loading": "Ачаалж байна…",
   "title.glossary": "Нэр томьёо",
@@ -56,7 +56,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "home.tagline":
     "Элснээс эхэлнэ. Унтраалга, логик хаалга, санах ой, төв процессор, хөрвүүлэгч, үйлдлийн систем бүтээнэ. Эцэст нь өөрийн бүтээсэн компьютер дээр Тетрис тоглоно.",
   "home.start": "Уншиж эхлэх",
-  "home.workbench": "Ажлын ширээ нээх",
+  "home.workbench": "Workbench нээх",
   "home.howItWorks": "Хэрхэн ажилладаг вэ",
   "home.read": "Унш",
   "home.readText":
@@ -66,7 +66,7 @@ export const mn: Record<keyof typeof en, Message> = {
     "Өмнө бүтээсэн эд ангиасаа бүрэлдэхүүнээ засварлагч дээр өөрөө холбож бүтээ.",
   "home.unlock": "Нээ",
   "home.unlockText":
-    "Шалгалтыг давбал тэр нь дараагийн давхаргад ашиглах битүү блок болж багажинд чинь нэмэгдэнэ.",
+    "Шалгалтыг давбал тэр нь дараагийн давхаргад ашиглах битүү блок болж toolbox-д чинь нэмэгдэнэ.",
   "home.chapters": "Бүлгүүд",
   "home.readyCount": "{total}-аас {ready} нь бэлэн",
   "home.ready": "Уншихад бэлэн",
@@ -101,14 +101,14 @@ export const mn: Record<keyof typeof en, Message> = {
   // ---- түвшний зураглал ----
   "levels.title": "Компьютерээ бүтээ",
   "levels.lead":
-    "Түвшин бүр нэг бүрэлдэхүүн. Давбал дараагийн түвшнүүдэд ашиглахаар багажинд чинь нэмэгдэнэ.",
+    "Түвшин бүр нэг бүрэлдэхүүн. Давбал дараагийн түвшнүүдэд ашиглахаар toolbox-д чинь нэмэгдэнэ.",
   "levels.layer": "{n}-р давхарга: {name}",
   "levels.passedCount": "{total}-аас {passed} нь давсан",
   "status.passed": "✓ Давсан",
   "status.open": "Нээлттэй",
   "status.locked": "Хаалттай",
   "status.broken": "⚠ Эвдэрсэн",
-  "levels.sideQuest": "нэмэлт даалгавар",
+  "levels.sideQuest": "side quest",
   "levels.opensAfter": "Дараахыг давсны дараа нээгдэнэ: {names}.",
   "levels.and": ", ",
   "levels.brokenText":
@@ -131,13 +131,13 @@ export const mn: Record<keyof typeof en, Message> = {
   "levels.meterText": "түвшин давсан",
   "levels.saved": "Энэ хөтөчид автоматаар хадгалагдана.",
   "levels.notSaved":
-    "Энэ хөтөч сайтад өгөгдөл хадгалахыг зөвшөөрөхгүй байна. Цонхоо хаахаас өмнө ахицаа файл болгон гаргаж аваарай.",
+    "Энэ хөтөч сайтад өгөгдөл хадгалахыг зөвшөөрөхгүй байна. Цонхоо хаахаас өмнө ахицаа файл болгон export хийгээрэй.",
   "levels.exportHint":
-    "Нөөцлөх эсвэл өөр хөтөч рүү шилжүүлэхийн тулд файл болгон гаргаж аваарай.",
-  "levels.export": "Гаргах",
-  "levels.import": "Оруулах",
-  "levels.imported": "Оруулж дууслаа.",
-  "levels.confirmImport": "Одоогийн ахицаа оруулж буй файлаар солих уу?",
+    "Нөөцлөх эсвэл өөр хөтөч рүү шилжүүлэхийн тулд файл болгон export хийгээрэй.",
+  "levels.export": "Export",
+  "levels.import": "Import",
+  "levels.imported": "Import хийлээ.",
+  "levels.confirmImport": "Одоогийн ахицаа import хийж буй файлаар солих уу?",
   "levels.runsAs": "Ажиллах хэлбэр: {mode}",
   "levels.fastModel": "хурдан загвар",
   "levels.yourDesign": "таны бүтээл",
@@ -159,7 +159,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "progress.damaged": "Гэмтсэн бичлэг: «{id}».",
 
   // ---- түвшний хуудас ----
-  "play.loading": "Загварчлагчийг ачаалж байна…",
+  "play.loading": "Simulator-ыг ачаалж байна…",
   "play.noLevel": "Ийм түвшин алга",
   "play.backToMap": "Түвшнүүд рүү буцах",
   "play.locked": "Хаалттай түвшин: {name}",
@@ -168,20 +168,20 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.layerN": "{n}-р давхарга",
   "play.nextLevel": "Дараагийн түвшин →",
   "play.levelMap": "Түвшнүүд",
-  "play.toolbox": "Багаж",
+  "play.toolbox": "Toolbox",
   "play.parts": "Эд анги",
-  "play.addTool": "Нэмэх: {name} (эсвэл зотон дээр чирж оруулна)",
+  "play.addTool": "Нэмэх: {name} (эсвэл canvas дээр чирж оруулна)",
   "play.undo": "Буцаах",
   "play.redo": "Дахих",
   "play.undoTitle": "Буцаах (Ctrl+Z)",
   "play.redoTitle": "Дахих (Ctrl+Shift+Z)",
-  "play.workbench": "Ажлын ширээ",
+  "play.workbench": "Workbench",
   "play.narrow":
-    "Засварлагч том дэлгэц дээр хамгийн тохиромжтой. Утсан дээр зотоныг чирж гүйлгэнэ; цэсний товч эсвэл баруун товшилт эд ангийн үйлдлүүдийг харуулна.",
+    "Засварлагч том дэлгэц дээр хамгийн тохиромжтой. Утсан дээр canvas-ыг чирж гүйлгэнэ; цэсний товч эсвэл баруун товшилт эд ангийн үйлдлүүдийг харуулна.",
   "play.sideLabel": "Зорилго, оролт ба шалгалт",
   "play.goal": "Зорилго",
   "play.notSaving":
-    "Таны хөтөч энэ сайтад өгөгдөл хадгалахыг зөвшөөрөхгүй байгаа тул ахиц зөвхөн энэ цонхыг хаах хүртэл хадгалагдана. Үлдээхийн тулд түвшнүүдийн хуудсан дээрх «Гаргах»-ыг ашиглаарай.",
+    "Таны хөтөч энэ сайтад өгөгдөл хадгалахыг зөвшөөрөхгүй байгаа тул ахиц зөвхөн энэ цонхыг хаах хүртэл хадгалагдана. Үлдээхийн тулд түвшнүүдийн хуудсан дээрх «Export» товчийг ашиглаарай.",
   "play.inputs": "Оролтууд",
   "play.busHelp":
     "Олон битийн оролт бүрд тоо бичнэ: аравтын, 0x… арван зургаатын эсвэл 0b… хоёртын. Enter дарж хэрэглэнэ.",
@@ -212,10 +212,10 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.runsYours": "таны бүтээлээр",
   "play.runsItem": "{name}: {how}",
   "play.noComponents": "Бүрэлдэхүүн хараахан алга.",
-  "play.tick": "Цагийн цохилт ⎍",
+  "play.tick": "Tick ⎍",
   "play.tickTitle": "clk-ийг 1 болгоод буцааж 0 болгоно",
   "play.ticked":
-    "Цохилт: clk 1 болж (flip-flop-ууд хадгалах агшин) буцаад 0 боллоо.",
+    "Tick: clk 1 болж (flip-flop-ууд хадгалах агшин) буцаад 0 боллоо.",
   "play.resetMemory": "Санах ойг цэвэрлэх",
   "play.resetMemoryTitle":
     "Хадгалсан бүхнээ мартана: унтраагаад асаасантай адил",
@@ -230,9 +230,9 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.zoomLevel": "Томруулалтын хэмжээ; 100% болгох",
   "play.fit": "Багтаах",
   "play.fitTitle": "Хэлхээг бүхэлд нь харагдуулах",
-  "play.shortcuts": "Товчлол",
+  "play.shortcuts": "Shortcuts",
   "keys.add": "Эд анги нэмэх",
-  "keys.addHow": "Багажаас чирэх, эсвэл дарах",
+  "keys.addHow": "Toolbox-оос чирэх, эсвэл дарах",
   "keys.wire": "Хоёр хөлийг холбох",
   "keys.wireHow": "Нэг хөлөөс нөгөө рүү чирэх, эсвэл хоёуланг нь дарах",
   "keys.move": "Эд анги, оролт, гаралтыг зөөх",
@@ -248,7 +248,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "keys.undo": "Буцаах / дахих",
   "keys.undoHow": "Ctrl+Z / Ctrl+Shift+Z",
   "keys.pan": "Гүйлгэх",
-  "keys.panHow": "Хоосон зотоныг чирэх · гүйлгэх",
+  "keys.panHow": "Хоосон canvas-ыг чирэх · гүйлгэх",
   "keys.zoom": "Томруулах",
   "keys.zoomHow": "Ctrl+гүйлгэх · + ба − · 0 буцаана",
   "keys.cancel": "Холболтыг цуцлах",
@@ -256,10 +256,10 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.changed":
     "Сүүлийн шалгалтаас хойш өөрчлөгдсөн. Дахин «Шалгах»-ыг дарна уу.",
   "play.emptyHint":
-    "Багажаас эд анги энд чирж оруулах, эсвэл зотон дээр баруун товшиж нэмнэ. Дараа нь хөлөөс хөл рүү чирж холбоно.",
+    "Toolbox-оос эд анги энд чирж оруулах, эсвэл canvas дээр баруун товшиж нэмнэ. Дараа нь хөлөөс хөл рүү чирж холбоно.",
   "play.added": "Нэмэгдлээ: {id}.",
   "play.addedFree":
-    "Нэмэгдлээ: {id}. Зотон дээр Tab-аар сонгоод сумтай товчоор зөөж болно.",
+    "Нэмэгдлээ: {id}. Canvas дээр Tab-аар сонгоод сумтай товчоор зөөж болно.",
   "play.duplicated": "Хуулбар нэмэгдлээ: {id} ({from}-ийн хуулбар).",
   "play.disconnectedAll": "Бүх утсыг салгалаа: {name}.",
   "play.disconnectedOne": "Нэг утсыг салгалаа: {name}.",
@@ -293,7 +293,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.waveLive": "Шууд",
   "play.waveClear": "Арилгах",
   "play.waveLiveEmpty":
-    "Оролтуудыг сэлгэх эсвэл цагийн цохилт өгөх: өөрчлөлт бүр энд гарна.",
+    "Оролтуудыг сэлгэх эсвэл Tick дарах: өөрчлөлт бүр энд гарна.",
   "play.waveEmpty": "Харуулах зүйл хараахан алга.",
   "play.error": "Алдаа: ",
   "play.note": "Тэмдэглэл: ",
@@ -307,7 +307,7 @@ export const mn: Record<keyof typeof en, Message> = {
       : `Бүх ${v.rows} ${v.seq ? "алхам" : "мөр"} тохирлоо`,
   "play.usingTransistors": "{n} транзистор ашиглав",
   "play.usingGates": "{cells} хаалга ашиглав, гүн нь {depth} хаалганы саатал",
-  "play.nowInToolbox": "{name} одоо таны багажинд байна.",
+  "play.nowInToolbox": "{name} одоо таны toolbox-д байна.",
   "play.failedRows": (v) =>
     `✗ ${v.rows} ${v.seq ? "алхмаас" : "мөрөөс"} ${v.failed} нь хараахан тохирохгүй байна.`,
   "play.failedRandom": (v) =>
@@ -321,8 +321,8 @@ export const mn: Record<keyof typeof en, Message> = {
     "Таны {name} бүтээл {parent} дотор авч буй утгуудаараа ажиллаж байна. Энд зөвхөн харах боломжтой: өөрийн түвшний хуудсан дээр нь засна.",
   "play.editIt": "Засах: {name}",
 
-  // ---- зотон ----
-  "canvas.label": "Хэлхээний зотон",
+  // ---- canvas ----
+  "canvas.label": "Хэлхээний canvas",
   "canvas.wired": "Холболт: {list}. ",
   "canvas.notWired": "Холбогдоогүй. ",
   "canvas.partShort": ", богино холболтод оролцож байна",
@@ -362,7 +362,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "menu.setValue": "Утга оноох…",
   "menu.flip": "0 ↔ 1 сэлгэх",
   "menu.reset": "Ирмэг рүү буцаах",
-  "menu.canvas": "Зотон",
+  "menu.canvas": "Canvas",
   "menu.addHere": "Энд нэмэх: {name}",
   "menu.undo": "Буцаах",
   "menu.redo": "Дахих",
@@ -380,7 +380,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "wave.label": "{n} алхмын waveform: {names}. Ижил утгууд хүснэгтэд бас бий.",
   "wave.replay": "{n}-р алхам хүртэл дахин явуулах",
 
-  // ---- багажийн нэрс ----
+  // ---- toolbox-ын нэрс ----
   "tool.split": "Splitter",
   "tool.join": "Joiner",
   // ---- шалгагчийн мессеж ----
