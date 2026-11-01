@@ -269,3 +269,25 @@ fn assembles_a_file_into_a_listing_or_json() {
     assert!(err.contains("line 1: n = 300 doesn't fit"), "{err}");
     assert!(err.contains("line 2: `FOO` isn't an instruction"), "{err}");
 }
+
+#[test]
+fn translates_a_vm_file_into_assembly() {
+    let dir = std::env::temp_dir().join(format!("s2t-vm-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let good = dir.join("add.vm");
+    std::fs::write(&good, "func main 0 0\npush 2\npush 3\nadd\nreturn\n").unwrap();
+    let out = run(&args(&["vm", good.to_str().unwrap()])).unwrap();
+    assert!(out.contains("; 4: add\n"), "{out}");
+    assert!(out.contains("ADD r0, r0, r1"), "{out}");
+    assert!(out.starts_with("        SET16 r6, 0x4000"), "{out}");
+    let json = run(&args(&["vm", good.to_str().unwrap(), "--json"])).unwrap();
+    assert!(json.contains("\"sourceMap\":[0,"), "{json}");
+    let bad = dir.join("bad.vm");
+    std::fs::write(&bad, "push 1\nfunc main 0 0\nfrob\n").unwrap();
+    let err = run(&args(&["vm", bad.to_str().unwrap()])).unwrap_err();
+    assert!(
+        err.contains("line 1: commands belong inside a function"),
+        "{err}"
+    );
+    assert!(err.contains("line 3: unknown command frob"), "{err}");
+}

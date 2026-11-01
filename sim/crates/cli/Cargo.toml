@@ -18,6 +18,7 @@ s2t-netlist.workspace = true
 s2t-checker.workspace = true
 s2t-models.workspace = true
 s2t-asm.workspace = true
+s2t-vm.workspace = true
 serde_json.workspace = true
 
 [lints]
