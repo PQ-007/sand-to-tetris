@@ -27,4 +27,5 @@ in n right arith | out
 """
 
 [hints]
+nudge = "Shifting by n is shifting by 8, 4, 2 and 1 for each bit of n that is 1. Build one stage per bit of n, where a MUX16 picks «shifted» or «not shifted»."
 wrong = "Check one stage at a time: with n = 1, 2, 4 or 8 only one stage shifts. In a stage that shifts left by k, bit i of the shifted bus comes from bit i − k (or 0 for the lowest k bits); shifting right, from bit i + k (or the fill for the top k bits)."

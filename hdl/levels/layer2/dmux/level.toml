@@ -16,4 +16,5 @@ in sel | a b
 """
 
 [hints]
+nudge = "Each output is «in, but only when sel says so». Which gate lets a signal through only while another signal is 1?"
 wrong = "Output a should be 'in AND NOT sel'; output b 'in AND sel'."

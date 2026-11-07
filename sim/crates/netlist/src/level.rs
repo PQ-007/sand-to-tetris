@@ -42,7 +42,9 @@ pub struct Level {
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub widths: BTreeMap<String, u32>,
     /// Authored hints keyed by failure kind: `floating`, `short`, `wrong`,
-    /// `unknown`. Shown with the matching diagnostic.
+    /// `unknown`, shown with the matching diagnostic. Plus `nudge`, a
+    /// gentle first hint: the level page's Hint button shows `nudge`, then
+    /// `wrong` (the approach). check-all requires both on every level.
     #[serde(default)]
     pub hints: BTreeMap<String, String>,
 }

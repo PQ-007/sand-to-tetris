@@ -18,4 +18,5 @@ a | out
 """
 
 [hints]
+nudge = "a + 1 is an addition. Which 16-bit number do you add, and how do you build it from constants?"
 wrong = "The number 1 in binary is bit 0 = 1 and every other bit 0."

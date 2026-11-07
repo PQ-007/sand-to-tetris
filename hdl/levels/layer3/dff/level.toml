@@ -27,5 +27,6 @@ clk d | q
 """
 
 [hints]
+nudge = "Two D latches in a row, like a room with two doors that are never open at the same time."
 wrong = "If q changes while clk stays 1, you built a latch, not a flip-flop. The second latch must only be open while the first one is closed: give them opposite enables, clk and NOT clk."
 unknown = "Nothing is stored until the first rising edge. If q stays unknown after it, check that the master's output feeds the slave's d."

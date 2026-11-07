@@ -19,4 +19,5 @@ a b | out
 """
 
 [hints]
+nudge = "Don't place 16 ANDs: select one AND and set Repeat ×16 in its options. Then a, b and out each take one bus wire."
 wrong = "Use Repeat: one gate, repeated 16 times, works on all 16 bits at once."

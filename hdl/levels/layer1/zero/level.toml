@@ -14,5 +14,6 @@ truth_table = """
 """
 
 [hints]
+nudge = "The same idea as Constant 1, with the other supply rail."
 wrong = "Which supply rail is always 0?"
 floating = "Connect out to a supply rail."

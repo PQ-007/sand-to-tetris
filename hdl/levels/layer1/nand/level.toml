@@ -17,6 +17,7 @@ a b | out
 """
 
 [hints]
+nudge = "out must be 0 only when a and b are both 1. Which transistors must both be on to connect out to GND then?"
 floating = "Every input combination must connect out to VDD or to GND. The output should be pulled to GND only when a AND b are both 1: which arrangement of two NMOS transistors conducts only when both are on?"
 short = "The pull-up (PMOS) and pull-down (NMOS) networks must never be on at the same time. NMOS in series pull down only when both inputs are 1; the PMOS network should be the mirror image: in parallel."
 wrong = "Compare with your NOT: one PMOS and one NMOS per input. Two NMOS in series to GND, two PMOS in parallel to VDD."

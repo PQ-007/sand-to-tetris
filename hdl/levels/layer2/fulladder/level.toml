@@ -20,4 +20,5 @@ a b c | sum carry
 """
 
 [hints]
+nudge = "A full adder adds three bits. You can add three numbers two at a time."
 wrong = "Add a and b with one half adder, then add c to that sum with a second. There's a carry out if either half adder carried."

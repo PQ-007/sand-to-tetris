@@ -31,5 +31,6 @@ d addr load clk | q
 """
 
 [hints]
+nudge = "Eight RAM8s. Some address bits pick the RAM8, the rest pick the word inside it."
 wrong = "The top 3 bits of addr pick the RAM8; the bottom 3 go to every RAM8 as its own address. Check which split bits feed which joiner."
 unknown = "A word reads as unknown until something is stored in it. Writing to one RAM8 must not disturb the others."

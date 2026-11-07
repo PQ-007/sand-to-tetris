@@ -30,4 +30,5 @@ d load clk | q
 """
 
 [hints]
+nudge = "Sixteen Bits side by side: one Bit with Repeat ×16."
 wrong = "Every copy of Bit needs the same load and clk: tick share for both. d and q are split bit by bit."

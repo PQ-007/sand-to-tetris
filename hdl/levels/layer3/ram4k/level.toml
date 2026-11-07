@@ -31,5 +31,6 @@ d addr load clk | q
 """
 
 [hints]
+nudge = "The same pattern again: eight RAM512s."
 wrong = "The top 3 bits of addr pick the RAM512; the bottom 9 go to every RAM512 as its own address. Check which split bits feed which joiner."
 unknown = "A word reads as unknown until something is stored in it. Writing to one RAM512 must not disturb the others."

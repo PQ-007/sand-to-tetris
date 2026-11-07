@@ -284,7 +284,8 @@ fn check_all(root: &Path) -> Result<String, String> {
             lines.push(format!("✗ {}: no reference.json", title(&e.level)));
             continue;
         };
-        let listed = parts_match(&e.level, reference);
+        let mut listed = parts_match(&e.level, reference);
+        listed.extend(missing_hints(&e.level));
         if !listed.is_empty() {
             ok = false;
             for problem in listed {
@@ -362,6 +363,15 @@ fn course_problems(levels: &[&Level]) -> Vec<String> {
         ));
     }
     problems
+}
+
+/// The Hint button on every level shows `nudge` first, then `wrong`.
+fn missing_hints(level: &Level) -> Vec<String> {
+    ["nudge", "wrong"]
+        .iter()
+        .filter(|k| level.hints.get(**k).is_none_or(|h| h.trim().is_empty()))
+        .map(|k| format!("no `{k}` hint (the Hint button shows `nudge`, then `wrong`)"))
+        .collect()
 }
 
 /// From Layer 2 up, a level's `requires` is also the list of parts it's
@@ -548,6 +558,22 @@ mod tests {
         let lonely = lv("nor", 1, &["not"], false);
         let found = course_problems(&[&not, &nand, &and, &only_order, &lonely]);
         assert!(found[0].contains("top, nor"), "{found:?}");
+    }
+
+    #[test]
+    fn every_level_has_a_nudge_and_an_approach() {
+        use s2t_netlist::builder::level;
+        let mut l = level("x", 2, &["a"], &["out"]);
+        assert_eq!(missing_hints(&l).len(), 2);
+        l.hints.insert("wrong".into(), "Use an AND.".into());
+        l.hints.insert("nudge".into(), "  ".into());
+        assert_eq!(
+            missing_hints(&l),
+            vec!["no `nudge` hint (the Hint button shows `nudge`, then `wrong`)"]
+        );
+        l.hints
+            .insert("nudge".into(), "Think about when out is 1.".into());
+        assert!(missing_hints(&l).is_empty());
     }
 
     #[test]

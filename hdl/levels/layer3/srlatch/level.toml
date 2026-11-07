@@ -27,5 +27,6 @@ s r | q
 """
 
 [hints]
+nudge = "A circuit remembers when its output feeds back into its own input. Try two NORs, each fed by the other."
 wrong = "With s=0 and r=0, q must keep its previous value. That needs feedback: wire each NOR's output to an input of the other NOR."
 unknown = "A latch is unknown (X) until it's first set or reset. If q stays X even after s=1, check that s and r each reach one of the NORs, and that q comes from a NOR's output."

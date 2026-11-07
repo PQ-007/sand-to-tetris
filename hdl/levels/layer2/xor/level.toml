@@ -17,4 +17,5 @@ a b | out
 """
 
 [hints]
+nudge = "XOR is 1 when exactly one input is 1: like OR, except when both are 1."
 wrong = "XOR is 'a OR b, but NOT both'. Which gate tells you 'not both'?"

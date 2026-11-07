@@ -31,4 +31,5 @@ a b f invb cin | out z n c
 """
 
 [hints]
+nudge = "Compute every possible result at once (ADD, AND, OR, XOR), then let f pick one. Leave the flags for last."
 wrong = "Work in stages: flip b with XOR16 (sharing invb), compute ADD, AND, OR and XOR of a and the flipped b, then let a 4-way MUX16 pick one with f. Then the flags: n is bit 15 of the result; z is NOT (any bit is 1); c is the adder's cout, but only when f = 0."

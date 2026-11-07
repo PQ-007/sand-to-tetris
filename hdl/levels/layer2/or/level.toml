@@ -17,4 +17,5 @@ a b | out
 """
 
 [hints]
+nudge = "a OR b is the same as NOT (NOT a AND NOT b). NAND already gives you the «NOT (… AND …)» part."
 wrong = "A NAND outputs 1 unless both inputs are 1. If you invert a and b first, when are both inverted inputs 1?"

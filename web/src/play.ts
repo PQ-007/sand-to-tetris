@@ -78,6 +78,12 @@ const esc = (s: string) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+/** Hints the Hint button reveals, in order: a nudge, then the approach. */
+const HINT_ORDER = ["nudge", "wrong"];
+
+/** How many hints each level has shown during this visit. */
+const shownHints = new Map<string, number>();
+
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   attrs: Record<string, string> = {},
@@ -375,6 +381,7 @@ class PlayPage {
       ...this.pathInfo(),
       el("h2", {}, t("play.goal")),
       el("p", { class: "goal" }, levelGoal(l)),
+      this.hintBox(),
     );
     side.append(goal);
     if (!this.app.store.persistent) {
@@ -874,6 +881,52 @@ class PlayPage {
       used.append(ul);
     }
     return [kicker, from, used];
+  }
+
+  /**
+   * The Hint button: each press shows one more hint, a gentle nudge first,
+   * then the approach. What's shown stays for this visit (a re-render, e.g.
+   * a language switch, keeps it).
+   */
+  private hintBox(): HTMLElement {
+    const hints = HINT_ORDER.map((kind) =>
+      levelHint(this.level, kind, this.level.hints[kind] ?? null),
+    ).filter((h): h is string => Boolean(h));
+    const box = el("div", { class: "hint-box" });
+    if (!hints.length) return box;
+    const list = el("ol", { class: "hint-list", "aria-live": "polite" });
+    const button = el("button", { type: "button", class: "hint-button" });
+    const show = () => {
+      const n = shownHints.get(this.level.id) ?? 0;
+      list.replaceChildren(
+        ...hints.slice(0, n).map((h, i) => {
+          const li = el("li");
+          li.append(
+            el("strong", {}, t("play.hintLabel", { n: i + 1 })),
+            ...rich(` ${h}`),
+          );
+          return li;
+        }),
+      );
+      button.hidden = n >= hints.length;
+      button.textContent =
+        n === 0
+          ? t("play.hintFirst")
+          : t("play.hintNext", { n: n + 1, total: hints.length });
+    };
+    button.addEventListener("click", () => {
+      shownHints.set(this.level.id, (shownHints.get(this.level.id) ?? 0) + 1);
+      show();
+      // The button hides after the last hint: move focus to that hint.
+      const last = list.lastElementChild;
+      if (button.hidden && last instanceof HTMLElement) {
+        last.tabIndex = -1;
+        last.focus();
+      }
+    });
+    show();
+    box.append(list, button);
+    return box;
   }
 
   /** A toolbox item's name in the current language. */

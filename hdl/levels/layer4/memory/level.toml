@@ -43,5 +43,6 @@ d addr load key timer clk | q
 """
 
 [hints]
+nudge = "The top bits of the address say which device it is: RAM, the screen, or the keyboard and timer. Work that out first."
 wrong = "Find the failing address's region from its top 3 bits. RAM gets load only for 000 and 001; the screen only for 010 below 0x4300; the keyboard, the timer and everything else never store anything."
 unknown = "RAM and screen words read as unknown until something is stored there. Addresses outside RAM, the screen and the keyboard must read 0, not unknown: pick a zero bus for them."

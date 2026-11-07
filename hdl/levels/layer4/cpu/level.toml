@@ -83,5 +83,6 @@ instr inM reset clk | pc addrM outM writeM
 """
 
 [hints]
+nudge = "Follow one instruction: the control unit reads it, registers feed the ALU, the result goes back to a register, and the PC moves on. Wire that path first, then add the rest."
 wrong = "Each instruction is two steps: clk low (the pins show this cycle's work) and clk high (the results are stored). Read the `#` line above the failing step to see which instruction ran, then follow its signals from the control unit through the datapath."
 unknown = "Registers and flags are unknown until something writes them; the PC until the first reset. If a value stays unknown after it's written, check the write port: d comes from the result MUX8WAY16, we and wa from the control unit."

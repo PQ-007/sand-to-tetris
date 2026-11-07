@@ -33,5 +33,6 @@ d addr load clk | q
 """
 
 [hints]
+nudge = "Eight registers. The address decides which one may load and which one you read."
 wrong = "Only the register at addr may load: route load through the demultiplexer, not straight to every register. And read through the multiplexer with the same addr."
 unknown = "A register reads as unknown until something is stored in it. If q stays unknown at an address you wrote, check that clk and d reach every register."

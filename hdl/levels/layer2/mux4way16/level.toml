@@ -19,4 +19,5 @@ a b c d sel | out
 """
 
 [hints]
+nudge = "Choose in two rounds: first between a and b and between c and d, then between the two winners."
 wrong = "sel bit 0 picks a/b and c/d; sel bit 1 picks between those two results."

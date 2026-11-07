@@ -20,4 +20,5 @@ a | out
 """
 
 [hints]
+nudge = "Don't place 16 NOTs: one NOT with Repeat ×16 (in the part's options) takes a whole bus."
 wrong = "Use Repeat: one gate, repeated 16 times, works on all 16 bits at once."
