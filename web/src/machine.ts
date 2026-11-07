@@ -258,12 +258,16 @@ class MachinePage {
     this.canvas.addEventListener("keyup", (e) => this.key(e, false));
     this.canvas.addEventListener("blur", () => this.setKey(0));
     this.readColors();
-    window
-      .matchMedia?.("(prefers-color-scheme: dark)")
-      .addEventListener?.("change", () => {
-        this.readColors();
-        this.draw();
-      });
+    // The screen's colours are read once: read them again on a new theme.
+    const recolor = () => {
+      if (!this.canvas.isConnected) {
+        window.removeEventListener("s2t-theme", recolor);
+        return;
+      }
+      this.readColors();
+      this.draw();
+    };
+    window.addEventListener("s2t-theme", recolor);
     window.addEventListener("hashchange", () => this.pause(), { once: true });
     void this.offerAssemblers(q("[data-assembler-box]"), q("[data-assembler]"));
     void this.offerTranslators(

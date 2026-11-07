@@ -9,6 +9,7 @@ import { mountMachine } from "./machine";
 import { installGlossaryFilter, renderRoute, trackSections } from "./pages";
 import { mountPlay } from "./play";
 import { parseRoute } from "./router";
+import { getTheme, initTheme, setTheme } from "./theme";
 import { mountWorkshop } from "./workshop";
 
 const app = document.getElementById("app");
@@ -140,7 +141,24 @@ function chrome(): void {
   document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) => {
     b.setAttribute("aria-pressed", String(b.dataset.lang === lang));
   });
+  themeButton();
 }
+
+/** The toggle says what pressing it does: "Dark theme" while light. */
+function themeButton(): void {
+  const b = document.querySelector<HTMLButtonElement>("[data-theme-toggle]");
+  if (!b) return;
+  const label = t(getTheme() === "dark" ? "theme.toLight" : "theme.toDark");
+  b.setAttribute("aria-label", label);
+  b.title = label;
+}
+
+document
+  .querySelector<HTMLButtonElement>("[data-theme-toggle]")
+  ?.addEventListener("click", () =>
+    setTheme(getTheme() === "dark" ? "light" : "dark"),
+  );
+window.addEventListener("s2t-theme", themeButton);
 
 document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) => {
   b.addEventListener("click", () => {
@@ -158,6 +176,7 @@ document.addEventListener("s2t-progress", () => void updateHud());
 
 if (app) installGlossaryPopover(app);
 window.addEventListener("hashchange", show);
+initTheme();
 chrome();
 show();
 void updateHud();

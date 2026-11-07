@@ -1,7 +1,9 @@
 /* Look: black and white, quiet and exact, in the manner of hairline line
    drawings. Ink on paper in light mode, paper on ink in dark; colour is
    kept for one job only, saying something is wrong (--error). Hairline
-   figures read the --hairline-* tokens, so they match the page. */
+   figures read the --hairline-* tokens, so they match the page. Dark
+   mode is <html data-theme="dark"> (theme.ts; index.html sets it before
+   first paint, from the learner's pick or the system). */
 :root {
   --bg: #ffffff;
   --surface: #ffffff;
@@ -57,43 +59,41 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0a0a0a;
-    --surface: #0f0f0f;
-    --surface-2: #151515;
-    --surface-3: #1d1d1d;
-    --text: #ededed;
-    --muted: #a1a1a1;
-    --faint: #6b6b6b;
-    --border: #232323;
-    --border-strong: #353535;
-    --accent: #ededed;
-    --copper: #a1a1a1;
-    --link: #ededed;
-    --on-accent: #0a0a0a;
-    --focus: #ededed;
-    --ok: #ededed;
-    --error: #f97066;
-    --p-type: #3a3a3a;
-    --n-type: #1f1f1f;
-    --oxide: #141414;
-    --metal: #bdbdbd;
-    --on-metal: #0a0a0a;
-    --channel: #fafafa;
-    --analog: #a1a1a1;
-    --digital: #fafafa;
-    --zone-ok: rgba(255, 255, 255, 0.04);
-    --zone-bad: rgba(249, 112, 102, 0.1);
-    --hairline-hi: #ededed;
-    --hairline-edge: #6b6b72;
-    --hairline-mid: #48484e;
-    --hairline-lo: #2a2a2e;
-    --shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-lift:
-      0 0 0 1px rgba(255, 255, 255, 0.08), 0 12px 32px -16px rgba(0, 0, 0, 0.7);
-    color-scheme: dark;
-  }
+:root[data-theme="dark"] {
+  --bg: #0a0a0a;
+  --surface: #0f0f0f;
+  --surface-2: #151515;
+  --surface-3: #1d1d1d;
+  --text: #ededed;
+  --muted: #a1a1a1;
+  --faint: #6b6b6b;
+  --border: #232323;
+  --border-strong: #353535;
+  --accent: #ededed;
+  --copper: #a1a1a1;
+  --link: #ededed;
+  --on-accent: #0a0a0a;
+  --focus: #ededed;
+  --ok: #ededed;
+  --error: #f97066;
+  --p-type: #3a3a3a;
+  --n-type: #1f1f1f;
+  --oxide: #141414;
+  --metal: #bdbdbd;
+  --on-metal: #0a0a0a;
+  --channel: #fafafa;
+  --analog: #a1a1a1;
+  --digital: #fafafa;
+  --zone-ok: rgba(255, 255, 255, 0.04);
+  --zone-bad: rgba(249, 112, 102, 0.1);
+  --hairline-hi: #ededed;
+  --hairline-edge: #6b6b72;
+  --hairline-mid: #48484e;
+  --hairline-lo: #2a2a2e;
+  --shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-lift:
+    0 0 0 1px rgba(255, 255, 255, 0.08), 0 12px 32px -16px rgba(0, 0, 0, 0.7);
+  color-scheme: dark;
 }
 
 * {
@@ -1103,13 +1103,11 @@ th {
   --wire-x: #8a8a8a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --wire-1: #ededed;
-    --wire-0: #5a5a5a;
-    --wire-z: #444444;
-    --wire-x: #8a8a8a;
-  }
+:root[data-theme="dark"] {
+  --wire-1: #ededed;
+  --wire-0: #5a5a5a;
+  --wire-z: #444444;
+  --wire-x: #8a8a8a;
 }
 
 .visually-hidden {
@@ -1680,6 +1678,28 @@ svg.circuit:focus-visible {
 }
 
 .editor-status:empty {
+  display: none;
+}
+
+/* Why the circuit can't run (every wire shows X until it's fixed). */
+.canvas-blocked {
+  margin: 0;
+  max-width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  background: var(--surface);
+  border: 1px solid var(--error);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.canvas-blocked strong {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.canvas-blocked:empty {
   display: none;
 }
 
@@ -3048,6 +3068,33 @@ a:hover {
 
 .lang-switch {
   margin-left: 0;
+}
+
+/* Light/dark: a thin sun in light mode, a moon in dark. */
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 999px;
+  border-color: var(--border);
+  flex: none;
+}
+
+.theme-toggle svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+:root[data-theme="dark"] .theme-toggle :is(.sun, .rays),
+:root:not([data-theme="dark"]) .theme-toggle .moon {
+  display: none;
 }
 
 .lang-switch button[aria-pressed="true"] {

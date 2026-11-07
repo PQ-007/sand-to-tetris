@@ -63,6 +63,7 @@ import { check, disassemble, simulate, simulateSteps } from "./sim/core";
 import type {
   Design,
   Diagnostic,
+  Problem,
   Endpoint,
   LevelInfo,
   StepsView,
@@ -187,6 +188,8 @@ class PlayPage {
     "aria-live": "polite",
   });
   private statusTimer = 0;
+  /** Why the circuit can't run right now, shown on the canvas. */
+  private blockedBox = el("p", { class: "canvas-blocked", role: "status" });
   private emptyHint = el("p", { class: "canvas-empty" });
   private zoomLabel = el(
     "button",
@@ -368,7 +371,7 @@ class PlayPage {
     this.canvas.fillContainer(wrap);
     // Suggested fixes sit above the status pill, bottom left.
     const dock = el("div", { class: "canvas-dock" });
-    dock.append(this.fixBox, this.statusLine);
+    dock.append(this.blockedBox, this.fixBox, this.statusLine);
     frame.append(wrap, this.emptyHint, dock, this.zoomControls());
     const footer = el("div", { class: "bench-footer" });
     footer.append(this.stats, this.slowNote);
@@ -1213,6 +1216,16 @@ class PlayPage {
     this.redoBtn.disabled = !this.history.canRedo();
     this.clearBtn.disabled =
       !this.design.parts.length && !this.design.wires.length;
+    // A problem that stops the circuit running (every wire shows X then):
+    // say so on the canvas and mark what it names.
+    const stopper = this.view?.blocked
+      ? this.view.problems.find((p) => p.severity === "error")
+      : undefined;
+    const blocking = {
+      problem: stopper,
+      parts: stopper?.parts ?? [],
+      ports: stopper?.ports ?? [],
+    };
     this.canvas.render({
       design: this.design,
       inputs: this.level.inputs,
@@ -1221,9 +1234,10 @@ class PlayPage {
       portWidths: this.level.widths,
       view: this.view,
       inputValues: this.inputs,
-      highlightParts: this.highlightParts,
-      highlightPorts: this.highlightPorts,
+      highlightParts: new Set([...this.highlightParts, ...blocking.parts]),
+      highlightPorts: new Set([...this.highlightPorts, ...blocking.ports]),
     });
+    this.renderBlocked(blocking.problem);
     this.emptyHint.hidden = this.design.parts.length > 0;
     this.emptyHint.textContent = t("play.emptyHint");
     this.renderInputs();
@@ -1237,6 +1251,18 @@ class PlayPage {
       this.markCurrentRow();
     }
     this.renderProblems();
+  }
+
+  /** "Can't run: …" on the canvas while a problem blocks the circuit. */
+  private renderBlocked(problem: Problem | undefined): void {
+    if (!problem || !this.design.parts.length) {
+      this.blockedBox.replaceChildren();
+      return;
+    }
+    this.blockedBox.replaceChildren(
+      el("strong", {}, t("play.cantRun")),
+      ...rich(` ${problemText(problem)}`),
+    );
   }
 
   private renderInputs(): void {

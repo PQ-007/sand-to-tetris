@@ -8,6 +8,21 @@
       content="Build a computer from sand to Tetris: transistors, gates, a CPU, a compiler and a game, all in your browser."
     />
     <title>Sand to Tetris</title>
+    <script>
+      // Light or dark before first paint (the same rule as theme.ts):
+      // the learner's pick (s2t-theme), else the system's setting.
+      (function () {
+        var dark = false;
+        try {
+          var saved = localStorage.getItem("s2t-theme");
+          dark =
+            saved === "dark" ||
+            (saved !== "light" &&
+              matchMedia("(prefers-color-scheme: dark)").matches);
+        } catch (e) {}
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -52,6 +67,19 @@
           МН
         </button>
       </div>
+      <button type="button" class="theme-toggle" data-theme-toggle>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle class="sun" cx="12" cy="12" r="4.5" />
+          <path
+            class="rays"
+            d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"
+          />
+          <path
+            class="moon"
+            d="M19.5 14.5A7.5 7.5 0 1 1 9.5 4.5a6 6 0 0 0 10 10z"
+          />
+        </svg>
+      </button>
       <s2t-core-status class="core-status"></s2t-core-status>
     </header>
     <main id="app"></main>

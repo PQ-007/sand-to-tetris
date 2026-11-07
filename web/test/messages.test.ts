@@ -30,6 +30,21 @@ const diag = (over: Partial<Diagnostic>): Diagnostic => ({
 });
 
 describe("checker messages in the learner's language", () => {
+  it("two signals on one wire: names both ends in Mongolian", () => {
+    setLang("mn");
+    expect(
+      problemText(
+        problem("two-drivers", {
+          listeners: "`or4.a`",
+          drivers: "input `in` bit 5 and input `in` bit 6",
+        }),
+      ),
+    ).toBe(
+      "`or4.a`: нэг дор хоёр дохио ирж байна (оролт `in` бит 5, оролт `in` бит 6). Хоёр гаралт нэг утсыг булаацалдаж байна; утас бүр яг нэг эх үүсвэртэй байх ёстой",
+    );
+    setLang("en");
+  });
+
   it("keeps the core's exact English", () => {
     setLang("en");
     expect(problemText(problem("output-unconnected", { port: "out" }))).toBe(

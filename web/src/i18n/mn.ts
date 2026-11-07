@@ -14,6 +14,8 @@ export const mn: Record<keyof typeof en, Message> = {
   "nav.build": "Бүтээх",
   "nav.glossary": "Нэр томьёо",
   "nav.language": "Хэл",
+  "theme.toDark": "Харанхуй загвар",
+  "theme.toLight": "Гэгээлэг загвар",
   "hud.levels": "Түвшин",
   "hud.levelsLabel":
     "Давсан түвшин: {total}-аас {passed}. Түвшнүүдийн хуудсыг нээх.",
@@ -240,6 +242,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.levelMap": "Түвшнүүд",
   "play.toolbox": "Toolbox",
   "play.parts": "Эд анги",
+  "play.cantRun": "Одоохондоо ажиллахгүй:",
   "play.clear": "Цэвэрлэх",
   "play.clearTitle": "Бүх эд анги, утсыг устгах (Буцаах товч сэргээнэ)",
   "play.clearConfirm":
@@ -448,6 +451,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "state.maybe": "тодорхойгүй",
   "endpoint.input": "оролт {name}",
   "endpoint.output": "гаралт {name}",
+  "endpoint.bit": "бит {n}",
 
   // ---- баруун товшилтын цэс ----
   "menu.lookInside": "Дотор нь харах",
@@ -514,6 +518,8 @@ export const mn: Record<keyof typeof en, Message> = {
   "problem.inner-broken":
     "Энэ бүтээл доторх нэг бүрэлдэхүүн эвдэрсэн байна: {detail}",
   "problem.engine": "Загварчлах үед алдаа гарлаа: {detail}",
+  "problem.two-drivers":
+    "{listeners}: нэг дор хоёр дохио ирж байна ({drivers}). Хоёр гаралт нэг утсыг булаацалдаж байна; утас бүр яг нэг эх үүсвэртэй байх ёстой",
   "problem.too-big":
     "Бүх хэсгийг нь задлахад энэ хэлхээ {limit}-аас олон хаалгатай болох тул загварчлахад хэт том. Түвшнүүдийн хуудсан дээр том хэсгүүдийг (санах ой, төв процессор) хурдан загвар руу шилжүүл",
   "reason.widthOnlyWiring": "зөвхөн splitter ба joiner өргөнтэй байдаг",

@@ -20,6 +20,8 @@ export const en = {
   "nav.build": "Build",
   "nav.glossary": "Glossary",
   "nav.language": "Language",
+  "theme.toDark": "Dark theme",
+  "theme.toLight": "Light theme",
   "hud.levels": "Levels",
   "hud.levelsLabel": "Levels passed: {passed} of {total}. Open the level map.",
   "core.loading": "Loading simulator…",
@@ -247,6 +249,7 @@ export const en = {
   "play.levelMap": "Level map",
   "play.toolbox": "Toolbox",
   "play.parts": "Parts",
+  "play.cantRun": "Can't run yet:",
   "play.clear": "Clear",
   "play.clearTitle": "Remove every part and wire (Undo brings them back)",
   "play.clearConfirm": (v: Vars) =>
@@ -451,6 +454,7 @@ export const en = {
   "state.maybe": "maybe",
   "endpoint.input": "input {name}",
   "endpoint.output": "output {name}",
+  "endpoint.bit": "bit {n}",
 
   // ---- right-click menu ----
   "menu.lookInside": "Look inside",
@@ -517,6 +521,8 @@ export const en = {
   "problem.pin-unconnected": "`{part}.{pin}` isn't connected",
   "problem.inner-broken": "a component inside this design is broken: {detail}",
   "problem.engine": "{detail}",
+  "problem.two-drivers":
+    "{listeners} gets two signals at once, from {drivers}: two outputs fighting over one wire. Each wire needs exactly one source",
   "problem.too-big":
     "this circuit is over {limit} gates once every part is expanded: too big to simulate. Switch big parts (memories, the CPU) to their fast models on the level map",
   "reason.widthOnlyWiring": "only splitters and joiners have a width",

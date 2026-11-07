@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use crate::design::{Design, Endpoint};
 use crate::flatten::NetId;
 use crate::level::Level;
-use crate::validate::{part_pins, validate, Library, Problem, WIRING};
+use crate::validate::{part_pins, validate, Dir, Library, Problem, WIRING};
 
 /// One leaf-component instance.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -53,7 +53,13 @@ pub enum GateError {
     /// Two outputs (or an input and an output) drive the same wire.
     MultipleDrivers {
         drivers: Vec<String>,
+        /// Top-level parts to highlight: the drivers' and the listeners'.
         parts: Vec<String>,
+        /// The input pins (`` `g.a` ``) and output ports (`` output `out` ``)
+        /// on the contested wire: where the two signals meet.
+        listeners: Vec<String>,
+        /// Output ports on the contested wire.
+        ports: Vec<String>,
     },
 }
 
@@ -77,6 +83,15 @@ impl std::fmt::Display for GateError {
                 "this circuit is over {} gates once every part is expanded: too big to \
                  simulate. Switch big parts (memories, the CPU) to their fast models",
                 group_thousands(*limit)
+            ),
+            GateError::MultipleDrivers {
+                drivers, listeners, ..
+            } if !listeners.is_empty() => write!(
+                f,
+                "{} gets two signals at once, from {}: two outputs fighting over one wire. \
+                 Each wire needs exactly one source",
+                listeners.join(" and "),
+                drivers.join(" and ")
             ),
             GateError::MultipleDrivers { drivers, .. } => write!(
                 f,
@@ -108,6 +123,8 @@ fn group_thousands(n: usize) -> String {
 }
 
 type Key = (Vec<String>, String, u32);
+/// Who drives a net: its name for messages, and the top-level part it's in.
+type Driver = (String, Option<String>);
 
 /// Bits of each port, as builder nodes.
 type PortNodes = Vec<(String, Vec<usize>)>;
@@ -380,12 +397,18 @@ pub fn flatten_gates(
     let top_out = port_nodes(&mut b, &level.outputs);
     // Make sure every top-level pin has nodes, even if unwired.
     let mut visible: Vec<(Endpoint, Vec<usize>)> = Vec::new();
+    // Input pins of real parts (not splitters/joiners, which are only
+    // wiring): where two drivers' signals meet, for the error message.
+    let mut listening: Vec<(String, String, Vec<usize>)> = Vec::new();
     for part in &design.parts {
         if let Ok(Some(pins)) = part_pins(part, library) {
             for p in pins {
-                let nodes = (0..p.width)
+                let nodes: Vec<usize> = (0..p.width)
                     .map(|i| b.node((vec![part.id.clone()], p.name.clone(), i)))
                     .collect();
+                if p.dir == Dir::In && !WIRING.contains(&part.kind.as_str()) {
+                    listening.push((part.id.clone(), p.name.clone(), nodes.clone()));
+                }
                 visible.push((
                     Endpoint::Pin {
                         part: part.id.clone(),
@@ -442,7 +465,7 @@ pub fn flatten_gates(
     }
 
     // Each net must have at most one driver.
-    let mut drivers: HashMap<NetId, Vec<(String, Option<String>)>> = HashMap::new();
+    let mut drivers: HashMap<NetId, Vec<Driver>> = HashMap::new();
     for (p, nets) in &inputs {
         for (i, n) in nets.iter().enumerate() {
             let name = if nets.len() > 1 {
@@ -469,16 +492,45 @@ pub fn flatten_gates(
             }
         }
     }
-    let mut clash: Vec<&Vec<(String, Option<String>)>> =
-        drivers.values().filter(|d| d.len() > 1).collect();
-    clash.sort();
-    if let Some(d) = clash.first() {
+    let mut clash: Vec<(&NetId, &Vec<Driver>)> =
+        drivers.iter().filter(|(_, d)| d.len() > 1).collect();
+    clash.sort_by(|a, b| a.1.cmp(b.1));
+    if let Some((&wire, d)) = clash.first() {
         let mut parts: Vec<String> = d.iter().filter_map(|(_, p)| p.clone()).collect();
+        // Name a bit only on a bus: "`r.d` bit 3", "`g.a`".
+        let bit = |name: String, width: usize, i: usize| {
+            if width > 1 {
+                format!("{name} bit {i}")
+            } else {
+                name
+            }
+        };
+        let mut listeners = Vec::new();
+        for (part, pin, nodes) in &listening {
+            for (i, &n) in nodes.iter().enumerate() {
+                if net(&mut b, n) == wire {
+                    listeners.push(bit(format!("`{part}.{pin}`"), nodes.len(), i));
+                    parts.push(part.clone());
+                }
+            }
+        }
+        let mut ports = Vec::new();
+        for (p, nets) in &outputs {
+            for (i, &n) in nets.iter().enumerate() {
+                if n == wire {
+                    listeners.push(bit(format!("output `{p}`"), nets.len(), i));
+                    ports.push(p.clone());
+                }
+            }
+        }
         parts.sort();
         parts.dedup();
+        ports.dedup();
         return Err(GateError::MultipleDrivers {
             drivers: d.iter().map(|(n, _)| n.clone()).collect(),
             parts,
+            listeners,
+            ports,
         });
     }
 
@@ -670,11 +722,51 @@ mod tests {
         let err = flatten_gates(&lvl, &d, &lib, &leaf_layer1(&lib), false).unwrap_err();
         assert_eq!(
             err.to_string(),
-            "one wire is driven by `n1.out` and `n2.out`: two outputs fighting over one wire. \
-             Each wire needs exactly one source"
+            "output `out` gets two signals at once, from `n1.out` and `n2.out`: two outputs \
+             fighting over one wire. Each wire needs exactly one source"
         );
         assert!(
-            matches!(err, GateError::MultipleDrivers { ref parts, .. } if parts == &["n1", "n2"])
+            matches!(err, GateError::MultipleDrivers { ref parts, ref ports, .. }
+            if parts == &["n1", "n2"] && ports == &["out"])
         );
+    }
+
+    /// Two splitter bits wired into one gate input: the bits come straight
+    /// from the input port, so the message names the pin they meet at, and
+    /// that part is the one to highlight.
+    #[test]
+    fn two_bits_into_one_input_names_the_input() {
+        let lib = lib();
+        let lvl = wide("bad", &[("in", 2)], &[("out", 1)]);
+        let mut d = design(
+            "bad",
+            &[("g", "nand")],
+            &[
+                (port("in"), pin("s", "in")),
+                (pin("s", "0"), pin("g", "a")),
+                (pin("s", "1"), pin("g", "a")),
+                (pin("g", "out"), port("out")),
+            ],
+        );
+        d.parts.push(part_with("s", "split", Some(2), None, &[]));
+        let err = flatten_gates(&lvl, &d, &lib, &leaf_layer1(&lib), true).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "`g.a` gets two signals at once, from input `in` bit 0 and input `in` bit 1: \
+             two outputs fighting over one wire. Each wire needs exactly one source"
+        );
+        match err {
+            GateError::MultipleDrivers {
+                parts,
+                listeners,
+                ports,
+                ..
+            } => {
+                assert_eq!(listeners, ["`g.a`"]);
+                assert_eq!(parts, ["g"]);
+                assert!(ports.is_empty());
+            }
+            other => panic!("{other:?}"),
+        }
     }
 }

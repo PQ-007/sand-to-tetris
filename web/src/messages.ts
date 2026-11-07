@@ -31,6 +31,27 @@ function endpointText(text: string): string {
   return text.replace(/^port (`[^`]+`)$/, "$1");
 }
 
+/** The engine's names for wire ends, "input `in` bit 5 and `g.out`", in
+ * the current language. */
+function wireEndsText(text: string): string {
+  return text
+    .split(" and ")
+    .map((end) =>
+      end
+        .replace(/^input (`[^`]+`)/, (_, n: string) =>
+          t("endpoint.input", { name: n }),
+        )
+        .replace(/^output (`[^`]+`)/, (_, n: string) =>
+          t("endpoint.output", { name: n }),
+        )
+        .replace(
+          / bit (\d+)$/,
+          (_, n: string) => ` ${t("endpoint.bit", { n })}`,
+        ),
+    )
+    .join(t("levels.and"));
+}
+
 export function problemText(p: Problem): string {
   if (getLang() === "en") return p.message;
   const key = `problem.${p.code}`;
@@ -39,6 +60,8 @@ export function problemText(p: Problem): string {
   if (args.reason) args.reason = reasonText(args.reason);
   if (args.from) args.from = endpointText(args.from);
   if (args.to) args.to = endpointText(args.to);
+  for (const k of ["drivers", "listeners"])
+    if (args[k]) args[k] = wireEndsText(args[k] ?? "");
   return t(key as Key, args);
 }
 
