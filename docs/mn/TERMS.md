@@ -21,6 +21,12 @@ step", хөлөг for a ship, a process's алхам, логик түвшин, �
 Everyday interface words stay Mongolian: давхарга (layer), Давтах (Repeat),
 шалгах, давсан, нээлттэй, буцаах, ахиц, томруулах.
 
+**Gate** and **CPU** stay English too (the user's choice, 2026-11-07): логик
+gate, gate-ийн, gate-үүд, gate-ийн саатал (not хаалга); CPU, CPU-гийн, CPU-г,
+CPU-д, as ALU takes them (not төв процессор). хаалга stays only where it means
+a real door or gate (the airlock hint, the «door open AND …» example, the
+conveyor figure).
+
 Suffixes on English words follow the pronunciation, after a hyphen: latch-ийн,
 latch-д, flip-flop-ын, carry-г, bus-ыг, gate-ийн, source-оос, drain-тэй.
 
@@ -50,7 +56,7 @@ and `web/src/i18n/demos.mn.ts`.
 | Bit | Бит |
 | Binary | Хоёртын тоолол |
 | Boolean algebra | Булийн алгебр |
-| Logic gate | Логик хаалга |
+| Logic gate | Логик gate |
 | Turing machine | Тьюрингийн машин |
 | Switch | Унтраалга |
 | Relay | Реле |
@@ -102,7 +108,7 @@ and `web/src/i18n/demos.mn.ts`.
 | Short circuit | Богино холболт |
 | Universal gate | Universal gate |
 | Abstraction | Хийсвэрлэл |
-| Gate delay | Хаалганы саатал |
+| Gate delay | Gate-ийн саатал |
 | Multiplexer (MUX) | Multiplexer (MUX) |
 | Demultiplexer (DMUX) | Demultiplexer (DMUX) |
 | Bus | Bus |

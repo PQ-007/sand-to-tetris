@@ -34,14 +34,14 @@ export const mn: Record<keyof typeof en, Message> = {
   "outline.0.title": "Элснээс унтраалга хүртэл",
   "outline.0.summary":
     "Компьютер гэж юу вэ, хүмүүс электроникаас өмнө хэрхэн тооцоолж байсан, цахиур хэрхэн транзистор болдог.",
-  "outline.1.title": "Транзистороос логик хаалга хүртэл",
+  "outline.1.title": "Транзистороос логик gate хүртэл",
   "outline.1.summary":
-    "NMOS, PMOS транзисторуудыг холбож NOT, NAND, NOR хаалга бүтээнэ.",
+    "NMOS, PMOS транзисторуудыг холбож NOT, NAND, NOR gate бүтээнэ.",
   "outline.2.title": "Хослолын логик",
   "outline.2.summary": "MUX, DMUX, нэмэгч ба 16 битийн ALU.",
   "outline.3.title": "Санах ой",
   "outline.3.summary": "Latch, flip-flop, регистр, RAM ба програмын тоолуур.",
-  "outline.4.title": "Төв процессор",
+  "outline.4.title": "CPU",
   "outline.4.summary":
     "Хамтдаа зохиох instruction set, datapath ба control unit.",
   "outline.5.title": "Ассемблер",
@@ -176,7 +176,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "levels.nextUp": "Дараагийнх",
   "levels.continue": "Үргэлжлүүлэх: step {n}, {name} →",
   "levels.stageDone": "Дууссан: {done}/{n}",
-  "stage.gates": "Унтраалгаас хаалга",
+  "stage.gates": "Унтраалгаас gate",
   "stage.gates.intro":
     "Нэг нь дээш, нөгөө нь доош татдаг хоёр транзистор NOT болно. Хосуудыг өөрөөр холбоход тэр л санаагаар NAND, NOR гарна.",
   "stage.const": "Тогтмол дохио",
@@ -184,10 +184,10 @@ export const mn: Record<keyof typeof en, Message> = {
     "VDD эсвэл GND-д холбосон wire тогтмол 1 эсвэл 0 болно. Дараагийн part-ууд үүнийг хэзээ ч өөрчлөгддөггүй оролтод ашиглана.",
   "stage.logic": "NAND-аас логик",
   "stage.logic.intro":
-    "Эндээс эхлэн транзистор биш, хаалгаар бүтээнэ. AND, OR хийхэд NAND, NOT хангалттай, тэр хоёроос XOR гарна.",
+    "Эндээс эхлэн транзистор биш, gate-ээр бүтээнэ. AND, OR хийхэд NAND, NOT хангалттай, тэр хоёроос XOR гарна.",
   "stage.wide": "Нэг дор 16 бит",
   "stage.wide.intro":
-    "Компьютер 16 битийн үгээр ажиллана. Давтах ×16 саяхан бүтээсэн хаалгыг чинь бит бүрт нэг хувь болгон давтана.",
+    "Компьютер 16 битийн үгээр ажиллана. Давтах ×16 саяхан бүтээсэн gate-ийг чинь бит бүрт нэг хувь болгон давтана.",
   "stage.choose": "Дохио сонгох",
   "stage.choose.intro":
     "MUX нь хоёр дохионы алийг нь нэвтрүүлэхийг нэг wire-аар шийдүүлнэ. Энэ үеийн MUX бүр өмнөх MUX-аас бүтнэ.",
@@ -202,7 +202,7 @@ export const mn: Record<keyof typeof en, Message> = {
     "Бүгдийг нийлүүл: OR8WAY тэгийг илрүүлнэ, shifter битүүдийг шилжүүлнэ, ALU процессорын бүх тооцоог хийнэ.",
   "stage.bit": "Нэг битийг санах",
   "stage.bit.intro":
-    "Хаалганы гаралтыг оролт руу нь эргүүлж өгвөл санадаг болно. Step бүр өмнөхийнхөө сул талыг засаж, эцэст нь зөвхөн clock edge дээр өөрчлөгддөг болно.",
+    "Gate-ийн гаралтыг оролт руу нь эргүүлж өгвөл санадаг болно. Step бүр өмнөхийнхөө сул талыг засаж, эцэст нь зөвхөн clock edge дээр өөрчлөгддөг болно.",
   "stage.registers": "Регистрүүд",
   "stage.registers.intro":
     "16 Bit зэрэгцээд регистр болно. Найман регистр процессорын register file болно, тоолдог регистр бол програмын тоолуур.",
@@ -385,11 +385,11 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.deletedWire": "Утсыг устгалаа.",
   "play.movedBack": "Ирмэг рүү буцаалаа: {name}.",
   "play.settled": (v) =>
-    `${v.depth} хаалганы саатлын дараа тогтворжлоо${v.fast ? " (хурдан загвар бүрийг нэг алхмаар тооцдог тул жинхэнэ төхөөрөмж илүү удаан ажиллана)" : ""}.`,
+    `${v.depth} gate-ийн саатлын дараа тогтворжлоо${v.fast ? " (хурдан загвар бүрийг нэг алхмаар тооцдог тул жинхэнэ төхөөрөмж илүү удаан ажиллана)" : ""}.`,
   "play.oscillates":
     "Өөрчлөгдсөөр байна: энэ хэлхээ хэлбэлзэж, хэзээ ч тогтворждоггүй.",
   "play.slow": (v) =>
-    `Энэ хэлхээ ${v.cells} хаалга загварчилж байгаа тул өөрчлөлт бүр хэсэг хугацаа авна. Дараахыг хурдан загвар руу шилжүүлэхэд шууд болно: ${v.names}. Үүнийг `,
+    `Энэ хэлхээ ${v.cells} gate загварчилж байгаа тул өөрчлөлт бүр хэсэг хугацаа авна. Дараахыг хурдан загвар руу шилжүүлэхэд шууд болно: ${v.names}. Үүнийг `,
   "play.slowLink": "level-үүдийн хуудсан",
   "play.slowEnd": " дээр хийнэ.",
   "play.optionsFor": "Тохиргоо: {id}",
@@ -435,7 +435,7 @@ export const mn: Record<keyof typeof en, Message> = {
       ? `Бүх ${v.rows} ${v.seq ? "step" : "мөр"}, ${v.random} санамсаргүй ${v.seq ? "step" : "шалгалт"} тохирлоо`
       : `Бүх ${v.rows} ${v.seq ? "step" : "мөр"} тохирлоо`,
   "play.usingTransistors": "{n} транзистор ашиглав",
-  "play.usingGates": "{cells} хаалга ашиглав, гүн нь {depth} хаалганы саатал",
+  "play.usingGates": "{cells} gate ашиглав, гүн нь {depth} gate-ийн саатал",
   "play.nowInToolbox": "{name} одоо таны toolbox-д байна.",
   "play.failedRows": (v) =>
     `✗ ${v.rows} ${v.seq ? "step-ээс" : "мөрөөс"} ${v.failed} нь хараахан тохирохгүй байна.`,
@@ -550,7 +550,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "problem.two-drivers":
     "{listeners}: нэг дор хоёр дохио ирж байна ({drivers}). Хоёр гаралт нэг wire-ыг булаацалдаж байна; wire бүр яг нэг эх үүсвэртэй байх ёстой",
   "problem.too-big":
-    "Бүх хэсгийг нь задлахад энэ хэлхээ {limit}-аас олон хаалгатай болох тул загварчлахад хэт том. Level-үүдийн хуудсан дээр том хэсгүүдийг (санах ой, төв процессор) хурдан загвар руу шилжүүл",
+    "Бүх хэсгийг нь задлахад энэ хэлхээ {limit}-аас олон gate-тэй болох тул загварчлахад хэт том. Level-үүдийн хуудсан дээр том хэсгүүдийг (санах ой, CPU) хурдан загвар руу шилжүүл",
   "reason.widthOnlyWiring": "зөвхөн splitter ба joiner өргөнтэй байдаг",
   "reason.repeatOnlyComponents": "зөвхөн бүрэлдэхүүнийг давтаж болно",
   "reason.sharedNeedsRepeat":
