@@ -47,10 +47,10 @@ describe("hairline figures", () => {
   it("a figure drawn for the course passes the skill's frame: one figure, 400 × 320", async () => {
     const { readFileSync } = await import("node:fs");
     const src = readFileSync(
-      new URL("../src/vendor/hairline/sandfall.js", import.meta.url),
+      new URL("../src/vendor/hairline/breadboard.js", import.meta.url),
       "utf8",
     );
-    expect(src).toMatch(/hairline\(\{\s*name: "sandfall"/);
+    expect(src).toMatch(/hairline\(\{\s*name: "breadboard"/);
     // rule 10: no words in the drawing (no svg text elements)
     expect(src).not.toMatch(/mk\("text"/);
     expect(src.split("\n").length).toBeLessThanOrEqual(200);

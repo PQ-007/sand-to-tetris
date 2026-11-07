@@ -3,9 +3,10 @@
 // markup that holds its place. Pure: the figures themselves are drawn by
 // hairline.ts, loaded only when a page has one.
 //
-// Only where the figure's object is the page's idea. The home page's tray
-// of sand whose grains rise into falling blocks is the whole course (drawn
-// for it: vendor/hairline/sandfall.js). Lockers, one opened by the pointer,
+// Only where the figure's object is the page's idea. The home page shows
+// what the course builds: a computer made by hand on a breadboard, chips
+// you can lift out and a screen with a falling block (drawn for it:
+// vendor/hairline/breadboard.js). Lockers, one opened by the pointer,
 // are memory cells and an address; the call stack is the VM's; tiles
 // settling into a tree is parsing. Building is wiring (a patch panel); the
 // Machine runs on the computer you built (a laptop); the glossary is for
@@ -14,7 +15,7 @@
 // them, not a near miss.
 
 export type FigureName =
-  | "sandfall"
+  | "breadboard"
   | "exploded"
   | "lockers"
   | "terminal"
@@ -43,7 +44,7 @@ export const FIGURES: {
   chapters: Record<number, FigureName>;
 } = {
   pages: {
-    home: "sandfall",
+    home: "breadboard",
     levels: "patch",
     machine: "laptop",
     glossary: "loupe",

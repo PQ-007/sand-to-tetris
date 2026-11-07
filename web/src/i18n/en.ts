@@ -71,8 +71,8 @@ export const en = {
   "home.title": "From sand to Tetris",
   "home.tagline":
     "Start with sand. Build switches, gates, memory, a CPU, a compiler and an operating system. Finish by playing Tetris on the computer you made.",
-  "figure.sandfall":
-    "Line drawing of a tray of sand: under the pointer, four grains rise into blocks, the way this course turns sand into a game.",
+  "figure.breadboard":
+    "Line drawing of a computer built by hand on a breadboard: the chip under the pointer lifts out of the board, and a small screen shows a falling block.",
   "figure.patch":
     "Line drawing of a patch panel: the cable under the pointer lifts, and its neighbours lean away. Building here is wiring.",
   "figure.laptop":

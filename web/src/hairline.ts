@@ -42,7 +42,7 @@ Object.assign(globalThis, {
   HL,
   hairline: (f: CustomFigure) => custom.set(f.name, f),
 });
-await import("./vendor/hairline/sandfall.js");
+await import("./vendor/hairline/breadboard.js");
 
 /** Hosts a custom figure on `el`, as the package dresses its own. */
 function host(name: string) {
@@ -96,7 +96,7 @@ const DRAW: Record<
   patch,
   phosphor,
   query,
-  sandfall: host("sandfall"),
+  breadboard: host("breadboard"),
   settle,
   stack,
   terminal,
