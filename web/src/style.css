@@ -3300,6 +3300,21 @@ button.primary:hover:not(:disabled),
   margin-block: -2rem;
 }
 
+/* The home figure with its button: take the computer apart, put it back. */
+.hero-figure {
+  display: grid;
+  justify-items: center;
+}
+
+/* The drawing's frame has room above it, none to spare below. */
+.hero .hero-figure .hl-figure {
+  margin-block: -2rem 0.5rem;
+}
+
+.figure-toggle {
+  font-size: 0.875rem;
+}
+
 /* Beside a page's title: thumbnail size (hairline figures read at 240px). */
 .page-head .hl-figure.head {
   flex: none;

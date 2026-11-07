@@ -47,7 +47,10 @@ function home(): string {
           <a class="button" href="#/levels">${esc(t("home.workbench"))}</a>
         </p>
       </div>
-      ${pageFigure("home", (n) => t(`figure.${n}`))}
+      <div class="hero-figure">
+        ${pageFigure("home", (n) => t(`figure.${n}`), "", 0)}
+        <button type="button" class="figure-toggle" data-figure-toggle data-apart="false">${esc(t("home.takeApart"))}</button>
+      </div>
     </section>
     <section class="steps" aria-label="${esc(t("home.howItWorks"))}">
       ${step(1, "home.read", "home.readText")}

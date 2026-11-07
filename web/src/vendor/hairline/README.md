@@ -3,9 +3,10 @@
 - `kernel.js`: the engine from the `hairline-create` skill of
   [Hairline](https://github.com/lucasmarkes/hairline) (MIT, see `LICENSE`),
   unchanged except for the last line, which exports `HL` as an ES module.
-- `breadboard.js`: the home page figure (a computer built by hand on a
-  breadboard: the chip under the pointer lifts out, a screen shows a falling
-  block), drawn for this course with that skill
+- `computer.js`: the home page figure (a desktop computer that comes apart
+  in layers: case, board with CPU and RAM, cover, monitor, keyboard; the
+  pointer picks a part, the page's button takes it apart and puts it back),
+  drawn for this course with that skill
   (`/hairline-create`), passed by its validator and look check. It is written
   in the skill's format (it reads a global `HL` and calls a global
   `hairline({...})`); `web/src/hairline.ts` provides both and hosts it the way

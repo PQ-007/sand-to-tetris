@@ -30,6 +30,20 @@ function syncFigures(): void {
     void figures.then((m) => m.syncFigures(app));
   });
 }
+// The home page's button takes the computer figure apart and puts it back.
+document.addEventListener("click", (e) => {
+  const button = (e.target as Element | null)?.closest?.<HTMLButtonElement>(
+    "[data-figure-toggle]",
+  );
+  const figure = button
+    ?.closest(".hero-figure")
+    ?.querySelector<HTMLElement>(".hl-figure");
+  if (!button || !figure) return;
+  const apart = button.dataset.apart !== "true";
+  button.dataset.apart = String(apart);
+  button.textContent = t(apart ? "home.putTogether" : "home.takeApart");
+  void figures?.then((m) => m.setFigureValue(figure, apart ? 1 : 0));
+});
 if (app)
   new MutationObserver(syncFigures).observe(app, {
     childList: true,

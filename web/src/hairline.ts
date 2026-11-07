@@ -42,7 +42,15 @@ Object.assign(globalThis, {
   HL,
   hairline: (f: CustomFigure) => custom.set(f.name, f),
 });
-await import("./vendor/hairline/breadboard.js");
+await import("./vendor/hairline/computer.js");
+
+/** What changes each custom figure's number (a button, not the slider). */
+const setters = new WeakMap<HTMLElement, (value: number) => void>();
+
+/** Sets a drawn custom figure's number: for the computer, how far apart. */
+export function setFigureValue(el: HTMLElement, value: number): void {
+  setters.get(el)?.(value);
+}
 
 /** Hosts a custom figure on `el`, as the package dresses its own. */
 function host(name: string) {
@@ -70,7 +78,11 @@ function host(name: string) {
         live.textContent = v;
       },
     };
-    const handle = f.mount({ stage: el, svg, read }, f.range[1]);
+    // A page may start a figure at its own number (data-value), else the
+    // figure's default; setFigureValue changes it later.
+    const start = Number(el.dataset.value ?? f.range[1]);
+    const handle = f.mount({ stage: el, svg, read }, start);
+    setters.set(el, (v) => handle.set(v));
     return {
       update: () => {},
       destroy: () => {
@@ -96,7 +108,7 @@ const DRAW: Record<
   patch,
   phosphor,
   query,
-  breadboard: host("breadboard"),
+  computer: host("computer"),
   settle,
   stack,
   terminal,

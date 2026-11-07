@@ -4,9 +4,8 @@
 // hairline.ts, loaded only when a page has one.
 //
 // Only where the figure's object is the page's idea. The home page shows
-// what the course builds: a computer made by hand on a breadboard, chips
-// you can lift out and a screen with a falling block (drawn for it:
-// vendor/hairline/breadboard.js). Lockers, one opened by the pointer,
+// what the course builds: a computer, which a button takes apart into its
+// layers and puts back together (drawn for it: vendor/hairline/computer.js). Lockers, one opened by the pointer,
 // are memory cells and an address; the call stack is the VM's; tiles
 // settling into a tree is parsing. Building is wiring (a patch panel); the
 // Machine runs on the computer you built (a laptop); the glossary is for
@@ -15,7 +14,7 @@
 // them, not a near miss.
 
 export type FigureName =
-  | "breadboard"
+  | "computer"
   | "exploded"
   | "lockers"
   | "terminal"
@@ -44,7 +43,7 @@ export const FIGURES: {
   chapters: Record<number, FigureName>;
 } = {
   pages: {
-    home: "breadboard",
+    home: "computer",
     levels: "patch",
     machine: "laptop",
     glossary: "loupe",
@@ -69,12 +68,14 @@ export function figureSlot(
   name: FigureName,
   label: string,
   extra = "",
+  value?: number,
 ): string {
   const safe = label
     .replace(/&/g, "&amp;")
     .replace(/"/g, "&quot;")
     .replace(/</g, "&lt;");
-  return `<div class="hl-figure${extra ? ` ${extra}` : ""}" data-figure="${name}" data-label="${safe}"></div>`;
+  const start = value === undefined ? "" : ` data-value="${value}"`;
+  return `<div class="hl-figure${extra ? ` ${extra}` : ""}" data-figure="${name}" data-label="${safe}"${start}></div>`;
 }
 
 /** The placeholder for a page's figure, with its label in `label`. */
@@ -82,7 +83,8 @@ export function pageFigure(
   page: FigurePage,
   label: (name: FigureName) => string,
   extra = "",
+  value?: number,
 ): string {
   const name = FIGURES.pages[page];
-  return figureSlot(name, label(name), extra);
+  return figureSlot(name, label(name), extra, value);
 }
