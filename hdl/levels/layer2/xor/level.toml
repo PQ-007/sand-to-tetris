@@ -7,7 +7,7 @@ It's the gate that adds two bits (ignoring the carry).
 """
 inputs = ["a", "b"]
 outputs = ["out"]
-requires = ["and", "or"]
+requires = ["and", "or", "nand"]
 truth_table = """
 a b | out
 0 0 | 0

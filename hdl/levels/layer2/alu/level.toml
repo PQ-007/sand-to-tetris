@@ -10,7 +10,7 @@ With these, a − b is ADD with invb = 1 and cin = 1.
 """
 inputs = ["a", "b", "f", "invb", "cin"]
 outputs = ["out", "z", "n", "c"]
-requires = ["addc16", "xor16", "and16", "or16", "mux4way16", "or8way"]
+requires = ["addc16", "xor16", "and16", "or16", "mux4way16", "or8way", "and", "or", "not", "nor", "xor"]
 widths = { a = 16, b = 16, f = 2, out = 16 }
 model = "alu"
 truth_table = """

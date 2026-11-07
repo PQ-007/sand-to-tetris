@@ -10,7 +10,7 @@ import {
   type App,
 } from "./app";
 import { fingerprint } from "./fast";
-import { orderLevels, playLibrary, type Status } from "./game";
+import { builtFrom, orderLevels, playLibrary, type Status } from "./game";
 import {
   layoutTree,
   NODE_H,
@@ -98,8 +98,9 @@ function nextStep(a: App, steps: Step[]): Step | undefined {
 function builtFromHtml(a: App, step: Step): string {
   const lv = levelEntry(a, step.id)?.info.level;
   if (!lv) return "";
-  const chips = lv.requires.length
-    ? `<ul class="tree-chips">${lv.requires
+  const parts = builtFrom(lv);
+  const chips = parts.length
+    ? `<ul class="tree-chips">${parts
         .map((r) => {
           const req = levelEntry(a, r)?.info.level;
           const fresh = step.fresh.includes(r);
@@ -115,7 +116,12 @@ function builtFromHtml(a: App, step: Step): string {
  * saying what it's built from. The step to play next is marked.
  */
 function roadmapHtml(a: App): string {
-  const steps = roadmapSteps(orderLevels(a.levels).map((l) => l.info.level));
+  const steps = roadmapSteps(
+    orderLevels(a.levels).map((l) => ({
+      id: l.info.level.id,
+      requires: builtFrom(l.info.level),
+    })),
+  );
   const next = nextStep(a, steps);
   const layers = [...new Set(steps.map((s) => s.stage.layer))];
   return `<div class="roadmap" aria-label="${esc(t("levels.roadmapLabel"))}">${layers
@@ -346,7 +352,12 @@ function wireTree(root: HTMLElement, a: App): void {
 
 /** "Continue: Step 14 · MUX16 →", a link straight to the next step. */
 function continueHtml(a: App): string {
-  const steps = roadmapSteps(orderLevels(a.levels).map((l) => l.info.level));
+  const steps = roadmapSteps(
+    orderLevels(a.levels).map((l) => ({
+      id: l.info.level.id,
+      requires: builtFrom(l.info.level),
+    })),
+  );
   const next = nextStep(a, steps);
   const lv = next && levelEntry(a, next.id)?.info.level;
   if (!next || !lv) return "";

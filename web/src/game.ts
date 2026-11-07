@@ -156,6 +156,15 @@ export function playLibrary(
   };
 }
 
+/**
+ * The parts a level is built from: its `requires` from Layer 2 up (check-all
+ * makes each reference use exactly those). Layer 1 is built from
+ * transistors; there `requires` only sets the order levels open.
+ */
+export function builtFrom(level: { layer: number; requires: string[] }) {
+  return level.layer === 1 ? [] : level.requires;
+}
+
 export interface ToolboxItem {
   kind: string;
   label: string;
@@ -209,7 +218,7 @@ export function toolbox(
         kind: c.id,
         label: c.name,
         primitive: false,
-        suggested: me.requires.includes(c.id),
+        suggested: builtFrom(me).includes(c.id),
       });
     }
   }

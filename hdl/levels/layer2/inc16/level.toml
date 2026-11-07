@@ -6,7 +6,7 @@ Add 1 to a 16-bit number. Use your ADD16 with the number 1 as its second input: 
 """
 inputs = ["a"]
 outputs = ["out"]
-requires = ["add16", "one"]
+requires = ["add16", "one", "zero"]
 widths = { a = 16, out = 16 }
 model = "inc16"
 truth_table = """

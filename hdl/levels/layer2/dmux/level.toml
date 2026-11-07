@@ -6,7 +6,7 @@ Build a demultiplexer (DMUX): the opposite of a MUX. It sends its input to outpu
 """
 inputs = ["in", "sel"]
 outputs = ["a", "b"]
-requires = ["and"]
+requires = ["and", "not"]
 truth_table = """
 in sel | a b
 0 0 | 0 0

@@ -206,8 +206,9 @@ describe("what a level may use", () => {
         .map((t) => t.kind);
     expect(picked("mux")).toEqual(["nand"]);
     expect(picked("and16")).toEqual(["split", "join", "nand"]);
-    // Layer 1 always offers the bare transistors, plus what it requires.
-    expect(picked("nand")).toEqual(["pmos", "nmos", "vdd", "gnd", "not"]);
+    // Layer 1 is built from bare transistors; its requires only set the
+    // order (NOT is still there, behind "More parts").
+    expect(picked("nand")).toEqual(["pmos", "nmos", "vdd", "gnd"]);
   });
 
   it("follows the course roadmap, not the alphabet", () => {

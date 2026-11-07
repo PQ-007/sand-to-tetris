@@ -44,6 +44,7 @@ import {
   updatePart,
 } from "./editor/model";
 import {
+  builtFrom,
   memoryParts,
   orderLevels,
   playLibrary,
@@ -813,7 +814,9 @@ class PlayPage {
    */
   private pathInfo(): HTMLElement[] {
     const levels = orderLevels(this.app.levels).map((e) => e.info.level);
-    const steps = roadmapSteps(levels);
+    const steps = roadmapSteps(
+      levels.map((l) => ({ id: l.id, requires: builtFrom(l) })),
+    );
     const step = steps.find((s) => s.id === this.level.id);
     if (!step) return [];
     const kicker = el(
@@ -823,7 +826,7 @@ class PlayPage {
     );
     const from = el("div", { class: "built-from" });
     from.append(el("span", { class: "muted" }, t("levels.builtFrom")));
-    const needs = this.level.requires;
+    const needs = builtFrom(this.level);
     if (!needs.length) from.append(el("span", {}, t("levels.builtFromBase")));
     const list = el("ul", { class: "tree-chips" });
     for (const id of needs) {
