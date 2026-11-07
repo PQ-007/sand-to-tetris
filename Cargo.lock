@@ -81,6 +81,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "s2t-c"
+version = "0.1.0"
+dependencies = [
+ "s2t-asm",
+ "s2t-isa",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "s2t-checker"
 version = "0.1.0"
 dependencies = [
@@ -97,6 +107,7 @@ name = "s2t-cli"
 version = "0.1.0"
 dependencies = [
  "s2t-asm",
+ "s2t-c",
  "s2t-checker",
  "s2t-lang",
  "s2t-models",
