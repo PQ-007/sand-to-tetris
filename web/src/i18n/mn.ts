@@ -16,9 +16,9 @@ export const mn: Record<keyof typeof en, Message> = {
   "nav.language": "Хэл",
   "theme.toDark": "Харанхуй загвар",
   "theme.toLight": "Гэгээлэг загвар",
-  "hud.levels": "Түвшин",
+  "hud.levels": "Level",
   "hud.levelsLabel":
-    "Давсан түвшин: {total}-аас {passed}. Түвшнүүдийн хуудсыг нээх.",
+    "Давсан level: {total}-аас {passed}. Level-үүдийн хуудсыг нээх.",
   "core.loading": "Simulator-ыг ачаалж байна…",
   "core.ok": "Simulator {version}",
   "core.okTitle": "Simulator-ын цөм {version} ачаалагдлаа",
@@ -26,8 +26,8 @@ export const mn: Record<keyof typeof en, Message> = {
   "page.error": "Энэ хуудсыг ачаалахад алдаа гарлаа",
   "page.loading": "Ачаалж байна…",
   "title.glossary": "Нэр томьёо",
-  "title.levels": "Түвшнүүд",
-  "title.level": "Түвшин",
+  "title.levels": "Level-үүд",
+  "title.level": "Level",
   "title.notFound": "Олдсонгүй",
 
   // ---- хичээлийн бүтэц ----
@@ -67,7 +67,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "figure.computer":
     "Ширээний компьютерын шугаман зураг: дотроо тэжээлийн блок, самбартай (хөргөгчийн доорх процессор, RAM, конденсатор) их бие, тавиуртай дэлгэц, гар, хулгана. Курсор нэг хэсгийг сонгож дээрх хэсгүүдийг өргөнө; товч үүнийг давхаргуудад нь задална.",
   "figure.patch":
-    "Patch panel-ийн шугаман зураг: курсорын доорх кабель өргөгдөж, хөршүүд нь хазайна. Энд бүтээх нь утас холбох юм.",
+    "Patch panel-ийн шугаман зураг: курсорын доорх кабель өргөгдөж, хөршүүд нь хазайна. Энд бүтээх нь wire холбох юм.",
   "figure.laptop":
     "Нимгэн зөөврийн компьютерын шугаман зураг: курсорын өндөр тагийг хэр их нээхийг тогтооно.",
   "figure.loupe":
@@ -106,7 +106,7 @@ export const mn: Record<keyof typeof en, Message> = {
     "Бүлэг бүр нэг давхаргыг энгийн үгээр, оролцоот жишээтэйгээр тайлбарлана.",
   "home.build": "Бүтээ",
   "home.buildText":
-    "Өмнө бүтээсэн эд ангиасаа бүрэлдэхүүнээ засварлагч дээр өөрөө холбож бүтээ.",
+    "Өмнө бүтээсэн part-уудаасаа бүрэлдэхүүнээ засварлагч дээр өөрөө холбож бүтээ.",
   "home.unlock": "Нээ",
   "home.unlockText":
     "Шалгалтыг давбал тэр нь дараагийн давхаргад ашиглах битүү блок болж toolbox-д чинь нэмэгдэнэ.",
@@ -138,10 +138,10 @@ export const mn: Record<keyof typeof en, Message> = {
   "notFound.text": "Энэ хаягт хуудас алга.",
   "notFound.back": "Бүлгүүд рүү буцах",
 
-  // ---- түвшний зураглал ----
+  // ---- level-ийн зураглал ----
   "levels.title": "Компьютерээ бүтээ",
   "levels.lead":
-    "Түвшин бүр нэг бүрэлдэхүүн. Давбал дараагийн түвшнүүдэд ашиглахаар toolbox-д чинь нэмэгдэнэ.",
+    "Level бүр нэг бүрэлдэхүүн. Давбал дараагийн level-үүдэд ашиглахаар toolbox-д чинь нэмэгдэнэ.",
   "levels.layer": "{n}-р давхарга: {name}",
   "status.passed": "✓ Давсан",
   "status.open": "Нээлттэй",
@@ -154,26 +154,26 @@ export const mn: Record<keyof typeof en, Message> = {
     "Ашигладаг зүйлсийн нэг нь өөрчлөгдөж, одоо шалгалтыг давахгүй байна. Нээж шалтгааныг нь үзээрэй.",
   "levels.viewLabel": "Харагдац",
   "levels.viewTree": "Tech tree",
-  "levels.viewRoadmap": "Замын зураг",
+  "levels.viewRoadmap": "Roadmap",
   "levels.roadmapLabel": "Хичээл алхам алхмаар",
-  "levels.step": "Алхам {n}",
-  "levels.builtFrom": "Ашиглах эд анги",
+  "levels.step": "Step {n}",
+  "levels.builtFrom": "Ашиглах part",
   "levels.builtFromBase": "Транзистор, VDD ба GND",
   "levels.usedIn": "Ашиглагдах",
   "levels.usedInMore": "ба өөр {n}",
   "levels.usedInTop":
     "Юунд ч биш: энэ бол бэлэн компьютер. Bitfall үүн дээр ажиллана.",
   "levels.usedInNone": "Дараа нь юу ч үүнийг ашиглахгүй: заавал биш дасгал.",
-  "levels.justBuilt": "өмнөх алхмаас",
+  "levels.justBuilt": "өмнөх step-ээс",
   "levels.nextUp": "Дараагийнх",
-  "levels.continue": "Үргэлжлүүлэх: алхам {n}, {name} →",
+  "levels.continue": "Үргэлжлүүлэх: step {n}, {name} →",
   "levels.stageDone": "Дууссан: {done}/{n}",
   "stage.gates": "Унтраалгаас хаалга",
   "stage.gates.intro":
     "Нэг нь дээш, нөгөө нь доош татдаг хоёр транзистор NOT болно. Хосуудыг өөрөөр холбоход тэр л санаагаар NAND, NOR гарна.",
   "stage.const": "Тогтмол дохио",
   "stage.const.intro":
-    "VDD эсвэл GND-д холбосон утас тогтмол 1 эсвэл 0 болно. Дараагийн эд ангиуд үүнийг хэзээ ч өөрчлөгддөггүй оролтод ашиглана.",
+    "VDD эсвэл GND-д холбосон wire тогтмол 1 эсвэл 0 болно. Дараагийн part-ууд үүнийг хэзээ ч өөрчлөгддөггүй оролтод ашиглана.",
   "stage.logic": "NAND-аас логик",
   "stage.logic.intro":
     "Эндээс эхлэн транзистор биш, хаалгаар бүтээнэ. AND, OR хийхэд NAND, NOT хангалттай, тэр хоёроос XOR гарна.",
@@ -182,7 +182,7 @@ export const mn: Record<keyof typeof en, Message> = {
     "Компьютер 16 битийн үгээр ажиллана. Давтах ×16 саяхан бүтээсэн хаалгыг чинь бит бүрт нэг хувь болгон давтана.",
   "stage.choose": "Дохио сонгох",
   "stage.choose.intro":
-    "MUX нь хоёр дохионы алийг нь нэвтрүүлэхийг нэг утсаар шийдүүлнэ. Энэ үеийн MUX бүр өмнөх MUX-аас бүтнэ.",
+    "MUX нь хоёр дохионы алийг нь нэвтрүүлэхийг нэг wire-аар шийдүүлнэ. Энэ үеийн MUX бүр өмнөх MUX-аас бүтнэ.",
   "stage.route": "Дохио илгээх",
   "stage.route.intro":
     "DMUX бол эсрэгээр эргүүлсэн MUX: нэг оролтыг sel сонгосон гаралт руу илгээнэ. RAM аль үгийг бичихээ үүгээр сонгоно.",
@@ -194,7 +194,7 @@ export const mn: Record<keyof typeof en, Message> = {
     "Бүгдийг нийлүүл: OR8WAY тэгийг илрүүлнэ, shifter битүүдийг шилжүүлнэ, ALU процессорын бүх тооцоог хийнэ.",
   "stage.bit": "Нэг битийг санах",
   "stage.bit.intro":
-    "Хаалганы гаралтыг оролт руу нь эргүүлж өгвөл санадаг болно. Алхам бүр өмнөхийнхөө сул талыг засаж, эцэст нь зөвхөн clock edge дээр өөрчлөгддөг болно.",
+    "Хаалганы гаралтыг оролт руу нь эргүүлж өгвөл санадаг болно. Step бүр өмнөхийнхөө сул талыг засаж, эцэст нь зөвхөн clock edge дээр өөрчлөгддөг болно.",
   "stage.registers": "Регистрүүд",
   "stage.registers.intro":
     "16 Bit зэрэгцээд регистр болно. Найман регистр процессорын register file болно, тоолдог регистр бол програмын тоолуур.",
@@ -211,14 +211,14 @@ export const mn: Record<keyof typeof en, Message> = {
   "stage.machine.intro":
     "RAM, дэлгэц, гарт хаяг өгөөд, тэр санах ойг процессортой холбо.",
   "levels.treeLabel":
-    "Түвшнүүд tech tree хэлбэрээр: түвшин бүр өөрт хэрэгтэй түвшнүүдийн доор байрлана",
+    "Level-үүд tech tree хэлбэрээр: level бүр өөрт хэрэгтэй level-үүдийн доор байрлана",
   "levels.treeHelp":
-    "Түвшин бүр өөрт хэрэгтэй хэсгүүдийн доор байрлана. Аль нэгийг сонгож юу хэрэгтэй, юуг нээдгийг хар; сумтай товчоор түвшнүүдийн хооронд шилжинэ.",
+    "Level бүр өөрт хэрэгтэй хэсгүүдийн доор байрлана. Аль нэгийг сонгож юу хэрэгтэй, юуг нээдгийг хар; сумтай товчоор level-үүдийн хооронд шилжинэ.",
   "levels.needs": "Хэрэгтэй",
   "levels.unlocks": "Нээдэг",
   "levels.needsNothing": "Юу ч хэрэггүй: эндээс эхэл.",
   "levels.unlocksNothing": "Одоохондоо юу ч биш: энэ бол модны оройн хэсэг.",
-  "levels.play": "Түвшинг нээх →",
+  "levels.play": "Level-ийг нээх →",
   "levels.fastBadge": "⚡ хурдан",
   "levels.progress": "Таны ахиц",
   "levels.saved": "Энэ хөтөчид автоматаар хадгалагдана.",
@@ -250,30 +250,30 @@ export const mn: Record<keyof typeof en, Message> = {
     "Энэ файл «Элснээс Тетрис хүртэл»-ийн ахицын файл биш байна.",
   "progress.damaged": "Гэмтсэн бичлэг: «{id}».",
 
-  // ---- түвшний хуудас ----
+  // ---- level-ийн хуудас ----
   "play.loading": "Simulator-ыг ачаалж байна…",
-  "play.noLevel": "Ийм түвшин алга",
-  "play.backToMap": "Түвшнүүд рүү буцах",
-  "play.locked": "Хаалттай түвшин: {name}",
+  "play.noLevel": "Ийм level алга",
+  "play.backToMap": "Level-үүд рүү буцах",
+  "play.locked": "Хаалттай level: {name}",
   "play.passFirst": "Эхлээд дараахыг давна уу: {names}.",
   "play.crumbs": "Байршил",
   "play.layerN": "{n}-р давхарга",
-  "play.nextLevel": "Дараагийн түвшин →",
-  "play.levelMap": "Түвшнүүд",
+  "play.nextLevel": "Дараагийн level →",
+  "play.levelMap": "Level-үүд",
   "play.toolbox": "Toolbox",
-  "play.parts": "Эд анги",
+  "play.parts": "Parts",
   "play.cantRun": "Одоохондоо ажиллахгүй:",
   "play.clear": "Цэвэрлэх",
-  "play.clearTitle": "Бүх эд анги, утсыг устгах (Буцаах товч сэргээнэ)",
+  "play.clearTitle": "Бүх part, wire-ыг устгах (Буцаах товч сэргээнэ)",
   "play.clearConfirm":
-    "Бүх эд анги ({parts}), утсыг ({wires}) устгах уу? Хуудаснаас гарах хүртэл Буцаах (Ctrl+Z) сэргээж чадна.",
+    "Бүх part ({parts}), wire-ыг ({wires}) устгах уу? Хуудаснаас гарах хүртэл Буцаах (Ctrl+Z) сэргээж чадна.",
   "play.cleared": "Canvas цэвэрлэгдлээ. Буцаах (Ctrl+Z) сэргээнэ.",
-  "play.hintFirst": "Зөвлөмж харах",
-  "play.hintNext": "Дараагийн зөвлөмж ({n}/{total})",
-  "play.hintLabel": "Зөвлөмж {n}:",
-  "play.moreParts": "Бусад эд анги ({n})",
-  "play.fewerParts": "Цөөн эд анги",
-  "play.stepOf": "Алхам {n}/{total}",
+  "play.hintFirst": "Hint харах",
+  "play.hintNext": "Дараагийн hint ({n}/{total})",
+  "play.hintLabel": "Hint {n}:",
+  "play.moreParts": "Бусад part ({n})",
+  "play.fewerParts": "Цөөн part",
+  "play.stepOf": "Step {n}/{total}",
   "play.addTool": "Нэмэх: {name} (эсвэл canvas дээр чирж оруулна)",
   "play.undo": "Буцаах",
   "play.redo": "Дахих",
@@ -281,11 +281,11 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.redoTitle": "Дахих (Ctrl+Shift+Z)",
   "play.workbench": "Workbench",
   "play.narrow":
-    "Засварлагч том дэлгэц дээр хамгийн тохиромжтой. Утсан дээр canvas-ыг чирж гүйлгэнэ; цэсний товч эсвэл баруун товшилт эд ангийн үйлдлүүдийг харуулна.",
+    "Засварлагч том дэлгэц дээр хамгийн тохиромжтой. Утсан дээр canvas-ыг чирж гүйлгэнэ; цэсний товч эсвэл баруун товшилт part бүрийн үйлдлүүдийг харуулна.",
   "play.sideLabel": "Зорилго, оролт ба шалгалт",
   "play.goal": "Зорилго",
   "play.notSaving":
-    "Таны хөтөч энэ сайтад өгөгдөл хадгалахыг зөвшөөрөхгүй байгаа тул ахиц зөвхөн энэ цонхыг хаах хүртэл хадгалагдана. Үлдээхийн тулд түвшнүүдийн хуудсан дээрх «Export» товчийг ашиглаарай.",
+    "Таны хөтөч энэ сайтад өгөгдөл хадгалахыг зөвшөөрөхгүй байгаа тул ахиц зөвхөн энэ цонхыг хаах хүртэл хадгалагдана. Үлдээхийн тулд level-үүдийн хуудсан дээрх «Export» товчийг ашиглаарай.",
   "play.inputs": "Оролтууд",
   "play.busHelp":
     "Олон битийн оролт бүрд тоо бичнэ: аравтын, 0x… арван зургаатын эсвэл 0b… хоёртын. Enter дарж хэрэглэнэ.",
@@ -297,7 +297,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.outputs": "Гаралтууд",
   "play.notANumber":
     "“{text}” нь 0-ээс {max} хүртэлх тоо биш байна. Аравтын, 0x… арван зургаатын эсвэл 0b… хоёртын тоо бичиж болно.",
-  "play.step": "Алхам",
+  "play.step": "Step",
   "play.want": "{name} (хүлээгдэж буй)",
   "play.yours": "{name} (таных)",
   "play.result": "Үр дүн",
@@ -306,15 +306,15 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.differs": "✗ ялгаатай",
   "play.check": "Шалгах",
   "play.checking": "Шалгаж байна…",
-  "play.testSteps": "Шалгалтын алхмууд",
+  "play.testSteps": "Шалгалтын step-үүд",
   "play.truthTable": "Үнэний хүснэгт",
   "play.stepsHelp":
-    "Алхмууд дээрээс доош дарааллаар явагдах бөгөөд хэлхээ алхам хооронд санаж үлдэнэ. «дурын» нь ямар ч утга болно гэсэн үг. Алхам дээр дарж шалгалтыг тэр хүртэл дахин явуулна.",
+    "Step-үүд дээрээс доош дарааллаар явагдах бөгөөд хэлхээ step хооронд санаж үлдэнэ. «дурын» нь ямар ч утга болно гэсэн үг. Step дээр дарж шалгалтыг тэр хүртэл дахин явуулна.",
   "play.tableHelp":
     "Холбох тусам шууд шинэчлэгдэнэ. Мөр дээр дарж тэр оролтуудыг тохируулна.",
-  "play.howPartsRun": "Эд анги хэрхэн ажиллаж байна",
+  "play.howPartsRun": "Part-ууд хэрхэн ажиллаж байна",
   "play.howPartsRunHelp":
-    "Аль эд анги хурдан загвараар ажиллахыг түвшнүүдийн хуудсан дээр сонгоно.",
+    "Аль part хурдан загвараар ажиллахыг level-үүдийн хуудсан дээр сонгоно.",
   "play.runsTable":
     "үнэний хүснэгтээрээ (таны транзисторууд бүх мөрийг давсан)",
   "play.runsFast": "хурдан загвараар (таны бүтээлтэй тохирсон)",
@@ -340,11 +340,11 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.fit": "Багтаах",
   "play.fitTitle": "Хэлхээг бүхэлд нь харагдуулах",
   "play.shortcuts": "Shortcuts",
-  "keys.add": "Эд анги нэмэх",
+  "keys.add": "Part нэмэх",
   "keys.addHow": "Toolbox-оос чирэх, эсвэл дарах",
-  "keys.wire": "Хоёр хөлийг холбох",
-  "keys.wireHow": "Нэг хөлөөс нөгөө рүү чирэх, эсвэл хоёуланг нь дарах",
-  "keys.move": "Эд анги, оролт, гаралтыг зөөх",
+  "keys.wire": "Хоёр pin-ийг холбох",
+  "keys.wireHow": "Нэг pin-ээс нөгөө рүү чирэх, эсвэл хоёуланг нь дарах",
+  "keys.move": "Part, оролт, гаралтыг зөөх",
   "keys.moveHow": "Чирэх · Tab-аар сонгоод сумтай товч",
   "keys.flip": "Оролтыг сэлгэх",
   "keys.flipHow": "Дарах · Enter",
@@ -365,13 +365,13 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.changed":
     "Сүүлийн шалгалтаас хойш өөрчлөгдсөн. Дахин «Шалгах»-ыг дарна уу.",
   "play.emptyHint":
-    "Toolbox-оос эд анги энд чирж оруулах, эсвэл canvas дээр баруун товшиж нэмнэ. Дараа нь хөлөөс хөл рүү чирж холбоно.",
+    "Toolbox-оос part энд чирж оруулах, эсвэл canvas дээр баруун товшиж нэмнэ. Дараа нь pin-ээс pin рүү чирж холбоно.",
   "play.added": "Нэмэгдлээ: {id}.",
   "play.addedFree":
     "Нэмэгдлээ: {id}. Canvas дээр Tab-аар сонгоод сумтай товчоор зөөж болно.",
   "play.duplicated": "Хуулбар нэмэгдлээ: {id} ({from}-ийн хуулбар).",
-  "play.disconnectedAll": "Бүх утсыг салгалаа: {name}.",
-  "play.disconnectedOne": "Нэг утсыг салгалаа: {name}.",
+  "play.disconnectedAll": "Бүх wire-ыг салгалаа: {name}.",
+  "play.disconnectedOne": "Нэг wire-ыг салгалаа: {name}.",
   "play.connected": "Холбогдлоо: {from} — {to}.",
   "play.deleted": "Устгалаа: {id}.",
   "play.deletedWire": "Утсыг устгалаа.",
@@ -382,19 +382,19 @@ export const mn: Record<keyof typeof en, Message> = {
     "Өөрчлөгдсөөр байна: энэ хэлхээ хэлбэлзэж, хэзээ ч тогтворждоггүй.",
   "play.slow": (v) =>
     `Энэ хэлхээ ${v.cells} хаалга загварчилж байгаа тул өөрчлөлт бүр хэсэг хугацаа авна. Дараахыг хурдан загвар руу шилжүүлэхэд шууд болно: ${v.names}. Үүнийг `,
-  "play.slowLink": "түвшнүүдийн хуудсан",
+  "play.slowLink": "level-үүдийн хуудсан",
   "play.slowEnd": " дээр хийнэ.",
   "play.optionsFor": "Тохиргоо: {id}",
   "play.busWidth": "Bus-ын өргөн ",
   "play.bits": "{n} бит",
   "play.repeat": "Давтах × ",
   "play.repeatHelp":
-    "Хуулбар бүр олон битийн хөл бүрийн өөрийн хэсгийг авна. Харин хуваалцсан оролтыг бүх хуулбар ижил уншина.",
+    "Хуулбар бүр олон битийн pin бүрийн өөрийн хэсгийг авна. Харин хуваалцсан оролтыг бүх хуулбар ижил уншина.",
   "play.share": " хуваалцах: {pin}",
   "play.fixTry": "Санал: ",
   "play.fixRepeat": "Давтах ×{n}: {part}",
   "play.fixRepeatWhy":
-    " Bus {w} бит дамжуулна, харин эд ангийн нэг хуулбар {b} бит авна.",
+    " Bus {w} бит дамжуулна, харин part-ын нэг хуулбар {b} бит авна.",
   "play.fixShare": "Хуваалцах: {pin} ({part})",
   "play.fixShareWhy": " Бүх хуулбар ижил {b} битийн оролтыг уншина: `{pin}`.",
   "play.fixBits": "Дараагийн {n} битийг ижил аргаар холбох",
@@ -402,15 +402,15 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.fixFill": "Сул {n} битэд холбох: {source} → {part}",
   "play.fixFillWhy":
     " Joiner дээрх ашиглаагүй битүүд ихэвчлэн тогтмол 0 авдаг.",
-  "play.wiredMany": "{n} утас нэмэгдлээ.",
+  "play.wiredMany": "{n} wire нэмэгдлээ.",
   "play.simError": "Загварчлалын алдаа: {error}",
-  "play.showingStep1": "1-р алхмыг асаасан үеэс эхлэн харуулж байна.",
+  "play.showingStep1": "Step 1-ийг асаасан үеэс эхлэн харуулж байна.",
   "play.showingStep":
-    "{n}-р алхмыг харуулж байна (1–{m}-р алхмыг дахин явуулсны дараа).",
+    "Step {n}-ийг харуулж байна (step 1–{m}-ийг дахин явуулсны дараа).",
   "play.showingRow":
-    "{n}-р мөрийг харуулж байна. Тодруулсан эд анги «!» тэмдэгтэй.",
+    "{n}-р мөрийг харуулж байна. Тодруулсан part «!» тэмдэгтэй.",
   "play.waveform": "Waveform",
-  "play.waveTest": "Шалгалтын алхмууд",
+  "play.waveTest": "Шалгалтын step-үүд",
   "play.waveLive": "Шууд",
   "play.waveClear": "Арилгах",
   "play.waveLiveEmpty":
@@ -424,22 +424,22 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.passed": "✓ Давлаа!",
   "play.passedRows": (v) =>
     v.random
-      ? `Бүх ${v.rows} ${v.seq ? "алхам" : "мөр"}, ${v.random} санамсаргүй ${v.seq ? "алхам" : "шалгалт"} тохирлоо`
-      : `Бүх ${v.rows} ${v.seq ? "алхам" : "мөр"} тохирлоо`,
+      ? `Бүх ${v.rows} ${v.seq ? "step" : "мөр"}, ${v.random} санамсаргүй ${v.seq ? "step" : "шалгалт"} тохирлоо`
+      : `Бүх ${v.rows} ${v.seq ? "step" : "мөр"} тохирлоо`,
   "play.usingTransistors": "{n} транзистор ашиглав",
   "play.usingGates": "{cells} хаалга ашиглав, гүн нь {depth} хаалганы саатал",
   "play.nowInToolbox": "{name} одоо таны toolbox-д байна.",
   "play.failedRows": (v) =>
-    `✗ ${v.rows} ${v.seq ? "алхмаас" : "мөрөөс"} ${v.failed} нь хараахан тохирохгүй байна.`,
+    `✗ ${v.rows} ${v.seq ? "step-ээс" : "мөрөөс"} ${v.failed} нь хараахан тохирохгүй байна.`,
   "play.failedRandom": (v) =>
-    ` ${v.run} санамсаргүй ${v.seq ? "алхмаас" : "шалгалтаас"} ${v.failed} нь мөн бүтэлгүйтэв.`,
+    ` ${v.run} санамсаргүй ${v.seq ? "step-ээс" : "шалгалтаас"} ${v.failed} нь мөн бүтэлгүйтэв.`,
   "play.designErrors": "✗ Бүтээлд алдаа байна (доор үзнэ үү).",
-  "play.hint": "Зөвлөмж: ",
+  "play.hint": "Hint: ",
   "play.inside": "Дотор нь: {path}",
   "play.upOne": "Нэг давхарга дээш",
   "play.close": "Хаах",
   "play.insideNote":
-    "Таны {name} бүтээл {parent} дотор авч буй утгуудаараа ажиллаж байна. Энд зөвхөн харах боломжтой: өөрийн түвшний хуудсан дээр нь засна.",
+    "Таны {name} бүтээл {parent} дотор авч буй утгуудаараа ажиллаж байна. Энд зөвхөн харах боломжтой: өөрийн level-ийн хуудсан дээр нь засна.",
   "play.editIt": "Засах: {name}",
 
   // ---- canvas ----
@@ -452,7 +452,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "canvas.split": "Splitter {w}",
   "canvas.join": "Joiner {w}",
   "canvas.shared": "{pin} (хуваалцсан)",
-  "canvas.pinTitle": "{pin}{bits} = {value}. Өөр хөл рүү чирж холбоно.",
+  "canvas.pinTitle": "{pin}{bits} = {value}. Өөр pin рүү чирж холбоно.",
   "canvas.pinBits": " ({n} бит)",
   "canvas.input": "Оролт",
   "canvas.output": "Гаралт",
@@ -463,9 +463,9 @@ export const mn: Record<keyof typeof en, Message> = {
   "canvas.outTitle": "Гаралт {name}: чирж зөөнө",
   "canvas.inTitleBus": "Оролт {name}: дарж тоо бичнэ, чирж зөөнө",
   "canvas.inTitle": "Оролт {name}: дарж 0 ба 1-ийн хооронд сэлгэнэ, чирж зөөнө",
-  "model.sameEnd": "Утас хоёр өөр үзүүртэй байх ёстой.",
+  "model.sameEnd": "Wire хоёр өөр үзүүртэй байх ёстой.",
   "model.alreadyConnected": "Энэ хоёр аль хэдийн холбогдсон байна.",
-  "canvas.pendingWire": "Одоо холбох хөл дээрээ дарна уу (Escape цуцална).",
+  "canvas.pendingWire": "Одоо холбох pin дээрээ дарна уу (Escape цуцална).",
   "state.on": "асаалттай",
   "state.off": "унтраалттай",
   "state.maybe": "тодорхойгүй",
@@ -489,78 +489,78 @@ export const mn: Record<keyof typeof en, Message> = {
   "menu.undo": "Буцаах",
   "menu.redo": "Дахих",
   "menu.clear": "Canvas цэвэрлэх",
-  "menu.wire": "Утас",
-  "menu.wireTitle": "Утас: {from} — {to}",
+  "menu.wire": "Wire",
+  "menu.wireTitle": "Wire: {from} — {to}",
   "menu.input": "Оролт {name}",
   "menu.output": "Гаралт {name}",
-  "menu.whichPin": "{id}-ийн аль хөлийг холбох вэ?",
+  "menu.whichPin": "{id}: аль pin-ийг холбох вэ?",
   "menu.connectTo": "{from}-г юутай холбох вэ…",
-  "menu.disconnectFrom": "Утас салгах: {name}",
-  "menu.allWires": "Бүх утас",
-  "menu.wireCount": "{n} утас",
+  "menu.disconnectFrom": "Wire салгах: {name}",
+  "menu.allWires": "Бүх wire",
+  "menu.wireCount": "{n} wire",
 
   // ---- waveform ----
-  "wave.label": "{n} алхмын waveform: {names}. Ижил утгууд хүснэгтэд бас бий.",
-  "wave.replay": "{n}-р алхам хүртэл дахин явуулах",
+  "wave.label":
+    "{n} step-ийн waveform: {names}. Ижил утгууд хүснэгтэд бас бий.",
+  "wave.replay": "Step {n} хүртэл дахин явуулах",
 
   // ---- toolbox-ын нэрс ----
   "tool.split": "Splitter",
   "tool.join": "Joiner",
   // ---- шалгагчийн мессеж ----
   "problem.component-mismatch":
-    "Энэ бүтээл `{design}`-д зориулагдсан, гэтэл түвшин нь `{level}` байна",
+    "Энэ бүтээл `{design}`-д зориулагдсан, гэтэл level нь `{level}` байна",
   "problem.duplicate-part":
-    "Хоёр эд анги ижил `{part}` нэртэй байна; нэр давтагдах ёсгүй",
+    "Хоёр part ижил `{part}` нэртэй байна; нэр давтагдах ёсгүй",
   "problem.unknown-kind":
-    "`{part}` эд ангийн төрөл `{kind}` гэж байна, ийм эд анги эсвэл бүрэлдэхүүн алга",
+    "`{part}` part-ын төрөл `{kind}` гэж байна, ийм part эсвэл бүрэлдэхүүн алга",
   "problem.primitive-not-allowed":
-    "`{part}` эд анги нь дан `{kind}` байна, гэтэл энэ бол {layer}-р давхаргын түвшин. Транзистор ба тэжээлийн шугамыг зөвхөн 1-р давхаргад шууд ашиглана; 2-р давхаргаас эхлэн өөрийн бүтээсэн бүрэлдэхүүнүүдээр бүтээнэ",
+    "`{part}` part нь дан `{kind}` байна, гэтэл энэ бол {layer}-р давхаргын level. Транзистор ба тэжээлийн шугамыг зөвхөн 1-р давхаргад шууд ашиглана; 2-р давхаргаас эхлэн өөрийн бүтээсэн бүрэлдэхүүнүүдээр бүтээнэ",
   "problem.layer-violation":
-    "`{part}` эд анги нь {kind_layer}-р давхаргын `{kind}` бүрэлдэхүүн, гэтэл энэ бол {layer}-р давхаргын түвшин. {layer}-р давхаргын бүрэлдэхүүн зөвхөн {layer}-р болон түүнээс доош давхаргын эд ангийг ашиглана",
+    "`{part}` part нь {kind_layer}-р давхаргын `{kind}` бүрэлдэхүүн, гэтэл энэ бол {layer}-р давхаргын level. {layer}-р давхаргын бүрэлдэхүүн зөвхөн {layer}-р болон түүнээс доош давхаргын part-ыг ашиглана",
   "problem.not-unlocked":
-    "`{part}` эд анги нь таны хараахан нээгээгүй `{kind}` бүрэлдэхүүн: эхлээд `{kind}` түвшинг давна уу",
+    "`{part}` part нь таны хараахан нээгээгүй `{kind}` бүрэлдэхүүн: эхлээд `{kind}` level-ийг давна уу",
   "problem.self-reference":
-    "`{part}` эд анги нь яг энэ бүрэлдэхүүн өөрөө байна; бүрэлдэхүүн өөрийгөө агуулж болохгүй",
+    "`{part}` part нь яг энэ бүрэлдэхүүн өөрөө байна; бүрэлдэхүүн өөрийгөө агуулж болохгүй",
   "problem.dependency-cycle":
     "Бүрэлдэхүүнүүд бие биеэсээ тойргоор хамаарч байна: {path}",
   "problem.unknown-port":
-    "Нэг утас `{port}` руу явж байна, гэтэл энэ бүрэлдэхүүнд ийм оролт, гаралт алга (байгаа нь: {valid})",
+    "Нэг wire `{port}` руу явж байна, гэтэл энэ бүрэлдэхүүнд ийм оролт, гаралт алга (байгаа нь: {valid})",
   "problem.unknown-part":
-    "Нэг утас `{part}` эд анги руу явж байна, гэтэл ийм эд анги алга",
+    "Нэг wire `{part}` part руу явж байна, гэтэл ийм part алга",
   "problem.unknown-pin":
-    "Нэг утас `{part}.{pin}` руу явж байна, гэтэл `{kind}` төрөлд `{pin}` хөл алга (байгаа нь: {valid})",
+    "Нэг wire `{part}.{pin}` руу явж байна, гэтэл `{kind}` төрөлд `{pin}` pin алга (байгаа нь: {valid})",
   "problem.output-unconnected": "`{port}` гаралт юутай ч холбогдоогүй байна",
-  "problem.bad-part": "`{part}` эд анги: {reason}",
+  "problem.bad-part": "`{part}` part: {reason}",
   "problem.width-mismatch":
-    "Утасны хоёр үзүүрийн өргөн ялгаатай: {from} нь {from_width} бит, {to} нь {to_width} бит. Хоёр үзүүр ижил өргөнтэй байх ёстой",
+    "Wire-ын хоёр үзүүрийн өргөн ялгаатай: {from} нь {from_width} бит, {to} нь {to_width} бит. Хоёр үзүүр ижил өргөнтэй байх ёстой",
   "problem.input-unused": "`{port}` оролт ашиглагдаагүй байна",
   "problem.pin-unconnected": "`{part}.{pin}` холбогдоогүй байна",
   "problem.inner-broken":
     "Энэ бүтээл доторх нэг бүрэлдэхүүн эвдэрсэн байна: {detail}",
   "problem.engine": "Загварчлах үед алдаа гарлаа: {detail}",
   "problem.two-drivers":
-    "{listeners}: нэг дор хоёр дохио ирж байна ({drivers}). Хоёр гаралт нэг утсыг булаацалдаж байна; утас бүр яг нэг эх үүсвэртэй байх ёстой",
+    "{listeners}: нэг дор хоёр дохио ирж байна ({drivers}). Хоёр гаралт нэг wire-ыг булаацалдаж байна; wire бүр яг нэг эх үүсвэртэй байх ёстой",
   "problem.too-big":
-    "Бүх хэсгийг нь задлахад энэ хэлхээ {limit}-аас олон хаалгатай болох тул загварчлахад хэт том. Түвшнүүдийн хуудсан дээр том хэсгүүдийг (санах ой, төв процессор) хурдан загвар руу шилжүүл",
+    "Бүх хэсгийг нь задлахад энэ хэлхээ {limit}-аас олон хаалгатай болох тул загварчлахад хэт том. Level-үүдийн хуудсан дээр том хэсгүүдийг (санах ой, төв процессор) хурдан загвар руу шилжүүл",
   "reason.widthOnlyWiring": "зөвхөн splitter ба joiner өргөнтэй байдаг",
   "reason.repeatOnlyComponents": "зөвхөн бүрэлдэхүүнийг давтаж болно",
   "reason.sharedNeedsRepeat":
-    "хуваалцсан хөл зөвхөн давтсан бүрэлдэхүүнд утгатай",
+    "хуваалцсан pin зөвхөн давтсан бүрэлдэхүүнд утгатай",
   "reason.needsWidth": "splitter, joiner-т өргөн заах хэрэгтэй",
   "reason.badWidth": "{n} өргөн зөвшөөрөгдөхгүй; 2-оос 64 хүртэл байна",
   "reason.badRepeat": "{n} удаа давтах боломжгүй; 1-ээс 64 хүртэл байна",
-  "reason.tooWide": "давтахад хөл 64 битээс өргөн болж байна",
+  "reason.tooWide": "давтахад pin 64 битээс өргөн болж байна",
   "reason.wiringLayer2":
     "splitter ба joiner 2-р давхаргад олон битийн bus-тай хамт гарч ирнэ",
   "diag.row": "{n}-р мөр",
-  "diag.step1": "1-р алхам",
-  "diag.step2": "2-р алхам (1-р алхмын дараа)",
-  "diag.stepN": "{n}-р алхам (1–{m}-р алхмын дараа)",
+  "diag.step1": "Step 1",
+  "diag.step2": "Step 2 (step 1-ийн дараа)",
+  "diag.stepN": "Step {n} (step 1–{m}-ийн дараа)",
   "diag.randomTest": "Санамсаргүй {n}-р шалгалт",
-  "diag.randomStep1": "Санамсаргүй 1-р алхам",
-  "diag.randomStep2": "Санамсаргүй 2-р алхам (санамсаргүй 1-р алхмын дараа)",
-  "diag.randomStepN":
-    "Санамсаргүй {n}-р алхам (санамсаргүй 1–{m}-р алхмын дараа)",
+  "diag.randomStep1": "Санамсаргүй step 1",
+  "diag.randomStep2": "Санамсаргүй step 2 (санамсаргүй step 1-ийн дараа)",
+  "diag.randomStepN": "Санамсаргүй step {n} (санамсаргүй step 1–{m}-ийн дараа)",
   "diag.wrong":
     "{label}: {inputs} → {port}={expected} байх ёстой, гэтэл {port}={actual} гарлаа.",
   "diag.floating":

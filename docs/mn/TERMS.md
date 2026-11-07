@@ -10,8 +10,16 @@ RAM8, …), pin names and code are always in Latin letters.
 The same goes for interface jargon: Workbench, Toolbox, Canvas, Simulator,
 Export / Import, Tech tree, Shortcuts, Tick, side quest, Waveform, Splitter /
 Joiner stay in English (not "ажлын ширээ", "багаж", "зотон", "загварчлагч").
-Everyday words stay Mongolian: түвшин, давхарга, хөл, эд анги, утас,
-шалгах, буцаах, ахиц, томруулах.
+So do the game's and the editor's own words (the user's choice, 2026-11-07):
+**Level, Step, Roadmap, Hint, Part(s), Pin, Wire** (not түвшин, алхам,
+замын зураг, зөвлөмж, эд анги, хөл, утас): level-ийн, step-ийн, hint-ийн,
+part-ын, pin-ийг, wire-ыг; plural level-үүд, step-үүд, part-ууд, pin-үүд,
+wire-ууд. Where the word order allows, avoid the suffix: "Step {n}", "Level
+бүр". This is about the site's own interface: ordinary Mongolian stays
+Mongolian in prose (утас for a phone or a thread, алхам алхмаар for "step by
+step", хөлөг for a ship, a process's алхам, логик түвшин, дээд түвшний хэл).
+Everyday interface words stay Mongolian: давхарга (layer), Давтах (Repeat),
+шалгах, давсан, нээлттэй, буцаах, ахиц, томруулах.
 
 Suffixes on English words follow the pronunciation, after a hyphen: latch-ийн,
 latch-д, flip-flop-ын, carry-г, bus-ыг, gate-ийн, source-оос, drain-тэй.
