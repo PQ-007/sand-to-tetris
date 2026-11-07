@@ -79,6 +79,8 @@ export const en = {
   "home.title": "From sand to Tetris",
   "home.tagline":
     "There is no magic, just abstraction layers built on top of one another.",
+  "figure.layers":
+    "Line drawing of the course as a stack of layers, each built on the one below: sand grains at the bottom, then transistors, gates, adders on a carry line, memory cells, a CPU with its pins, code, and on top a falling-block game, lit. The pointer picks a layer and lifts what it holds up; the button spreads the layers apart.",
   "figure.computer":
     "Line drawing of a tower PC, built: on four feet, a vented top, a glass side held by thumbscrews; behind it a board with its heatsinks, a CPU under a tower cooler, four RAM sticks, a graphics card with two fans, a power supply and a cage of two drives; power, reset and USB in front. The pointer picks a part and slides it out; the button takes the whole build apart.",
   "figure.patch":

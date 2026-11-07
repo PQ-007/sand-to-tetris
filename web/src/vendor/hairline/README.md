@@ -3,12 +3,16 @@
 - `kernel.js`: the engine from the `hairline-create` skill of
   [Hairline](https://github.com/lucasmarkes/hairline) (MIT, see `LICENSE`),
   unchanged except for the last line, which exports `HL` as an ES module.
-- `computer.js`: the home page figure (a tower PC, built: on four feet with
-  a vented top and a glass side, the board with its heatsinks, a CPU under a
-  tower cooler, RAM, a graphics card, the power supply and a drive cage;
-  power, reset and USB in front; the pointer picks a part and slides it out,
-  the page's button takes the build apart and puts it back), drawn for this
-  course with that skill
+- `layers.js`: the home page figure (the course as a stepped stack of
+  layers, each on the one below: sand, transistors, gates, adders, memory, a
+  CPU, code and a lit falling-block game on top; the pointer picks a layer
+  and lifts what it holds up, the page's button spreads the stack apart and
+  stacks it again), drawn for this course with that skill
+- `computer.js`: inside Chapters 0 and 4 (a tower PC, built: on four feet
+  with a vented top and a glass side, the board with its heatsinks, a CPU
+  under a tower cooler, RAM, a graphics card, the power supply and a drive
+  cage; power, reset and USB in front; the pointer picks a part and slides
+  it out), drawn for this course with that skill
 - `wafer.js` (Chapter 0: a wafer ruled into dies that rise under the
   pointer), `transistor.js` (Chapter 1: a MOSFET cut away; nearing the gate
   gathers electrons until the channel forms), `carry.js` (Chapter 2: eight

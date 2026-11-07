@@ -47,6 +47,7 @@ Object.assign(globalThis, {
   hairline: (f: CustomFigure) => custom.set(f.name, f),
 });
 await Promise.all([
+  import("./vendor/hairline/layers.js"),
   import("./vendor/hairline/computer.js"),
   import("./vendor/hairline/wafer.js"),
   import("./vendor/hairline/transistor.js"),
@@ -57,7 +58,7 @@ await Promise.all([
 /** What changes each custom figure's number (a button, not the slider). */
 const setters = new WeakMap<HTMLElement, (value: number) => void>();
 
-/** Sets a drawn custom figure's number: for the computer, how far apart. */
+/** Sets a drawn custom figure's number: for the layers, how far apart. */
 export function setFigureValue(el: HTMLElement, value: number): void {
   setters.get(el)?.(value);
 }
@@ -122,6 +123,7 @@ const DRAW: Record<
   query,
   riffle,
   slow,
+  layers: host("layers"),
   computer: host("computer"),
   wafer: host("wafer"),
   transistor: host("transistor"),
