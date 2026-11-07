@@ -32,6 +32,7 @@ import type { Signal } from "./editor/waveform";
 import {
   addPart,
   addWire,
+  clearDesign,
   disconnect,
   duplicatePart,
   emptyDesign,
@@ -194,6 +195,7 @@ class PlayPage {
   );
   private undoBtn = el("button", { type: "button" }, t("play.undo"));
   private redoBtn = el("button", { type: "button" }, t("play.redo"));
+  private clearBtn = el("button", { type: "button" }, t("play.clear"));
   private inputBox = el("div", { class: "input-toggles" });
   private outputBox = el("div", { class: "output-bits" });
   /** One-click fixes for wires of different widths, over the canvas. */
@@ -349,7 +351,14 @@ class PlayPage {
     this.redoBtn.addEventListener("click", () => this.redo());
     this.undoBtn.title = t("play.undoTitle");
     this.redoBtn.title = t("play.redoTitle");
-    toolbar.append(this.undoBtn, this.redoBtn, this.shortcutsButton());
+    this.clearBtn.addEventListener("click", () => this.clear());
+    this.clearBtn.title = t("play.clearTitle");
+    toolbar.append(
+      this.undoBtn,
+      this.redoBtn,
+      this.clearBtn,
+      this.shortcutsButton(),
+    );
 
     // The canvas scrolls inside a frame that also holds overlays: the
     // status pill, the empty-canvas hint and the zoom controls.
@@ -651,6 +660,24 @@ class PlayPage {
     this.scheduleSave();
   }
 
+  /**
+   * Removes every part and wire. It's one undo step, but the cleared design
+   * is saved and undo history doesn't survive a reload, so ask first.
+   */
+  private clear(): void {
+    const { parts, wires } = this.design;
+    if (!parts.length && !wires.length) return;
+    if (
+      !confirm(
+        t("play.clearConfirm", { parts: parts.length, wires: wires.length }),
+      )
+    )
+      return;
+    this.selected = null;
+    this.onChange(clearDesign(this.design), true);
+    this.say(t("play.cleared"));
+  }
+
   // ---- right-click menu -------------------------------------------------------
 
   private showMenu(target: MenuTarget, at: { x: number; y: number }): void {
@@ -807,6 +834,7 @@ class PlayPage {
         this.say(t("play.added", { id }));
       } else if (action === "undo") this.undo();
       else if (action === "redo") this.redo();
+      else if (action === "clear") this.clear();
       back();
     }
   }
@@ -1183,6 +1211,8 @@ class PlayPage {
     else this.renderWave();
     this.undoBtn.disabled = !this.history.canUndo();
     this.redoBtn.disabled = !this.history.canRedo();
+    this.clearBtn.disabled =
+      !this.design.parts.length && !this.design.wires.length;
     this.canvas.render({
       design: this.design,
       inputs: this.level.inputs,
