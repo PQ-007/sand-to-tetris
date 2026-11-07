@@ -11,11 +11,11 @@ import { Demo, chips, figcaption, sheet, slider, svg, wide } from "./kit";
 const CSS = sheet(`
   .band0, .band1 { fill: var(--zone-ok); }
   .forbidden { fill: var(--zone-bad); }
-  .analog { stroke: var(--analog); fill: none; stroke-width: 2.5; stroke-dasharray: 7 5; }
-  .digital { stroke: var(--digital); fill: none; stroke-width: 2.5; }
+  .analog { stroke: var(--analog); fill: none; stroke-width: 1.5; stroke-dasharray: 7 5; }
+  .digital { stroke: var(--digital); fill: none; stroke-width: 1.5; }
   .analog-pt { fill: var(--analog); }
   .digital-pt { fill: var(--digital); }
-  .curve { fill: none; stroke: var(--accent); stroke-width: 2; }
+  .curve { fill: none; stroke: var(--accent); stroke-width: 1.25; }
   .ref { stroke: var(--muted); stroke-dasharray: 3 3; }
   .grid line { stroke: var(--border); }
   .two { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); align-items: start; margin-top: 0.75rem; }

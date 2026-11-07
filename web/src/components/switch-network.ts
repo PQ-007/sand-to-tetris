@@ -4,14 +4,14 @@ import { Demo, figcaption, sheet, svg, wide } from "./kit";
 
 const CSS = sheet(`
   .row { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
-  .wire { stroke: var(--muted); stroke-width: 3; fill: none; }
+  .wire { stroke: var(--muted); stroke-width: 1.75; fill: none; }
   .wire.live { stroke: var(--wire-1); }
-  .lamp { fill: var(--bg); stroke: var(--text); stroke-width: 2; }
+  .lamp { fill: var(--bg); stroke: var(--text); stroke-width: 1.25; }
   .lamp.on { fill: var(--channel); }
   .switch-btn { display: flex; gap: 0.5rem; margin: 0.5rem 0 0.75rem; }
   table { border-collapse: collapse; font-variant-numeric: tabular-nums; margin-top: 0.5rem; }
   td, th { padding: 0.125rem 0.625rem; text-align: center; border-bottom: 1px solid var(--border); }
-  tr.current { background: color-mix(in srgb, var(--accent) 18%, transparent); font-weight: 700; }
+  tr.current { background: color-mix(in srgb, var(--accent) 18%, transparent); font-weight: 600; }
   h3 { margin: 0; font-size: 1rem; }
 `);
 

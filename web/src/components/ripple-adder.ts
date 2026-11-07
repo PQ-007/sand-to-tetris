@@ -8,7 +8,7 @@ const CSS = sheet(`
   .grid .k { font-size: 0.875rem; color: var(--muted); }
   .cell { text-align: center; border: 1px solid var(--border); border-radius: 0.375rem; padding: 0.2rem 0; background: var(--bg); }
   .cell.unknown { color: var(--muted); border-style: dashed; }
-  .cell.carry1 { border-color: var(--accent); font-weight: 700; }
+  .cell.carry1 { border-color: var(--accent); font-weight: 600; }
   .cell.new { outline: 2px solid var(--focus); }
   .row-sep { grid-column: 1 / -1; border-top: 2px solid var(--text); margin: 0.125rem 0; }
   input[type=number] { width: 5rem; font: inherit; }

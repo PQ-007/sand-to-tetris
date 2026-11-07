@@ -69,7 +69,20 @@ export const en = {
   "home.title": "From sand to Tetris",
   "home.tagline":
     "Start with sand. Build switches, gates, memory, a CPU, a compiler and an operating system. Finish by playing Tetris on the computer you made.",
-  "home.stackLabel": "The course, from sand at the bottom to Tetris at the top",
+  "figure.exploded":
+    "Line drawing of an app pulled apart into layers, like the layers of this course. Move the pointer across it to open them.",
+  "figure.lockers":
+    "Line drawing of twelve lockers: the one under the pointer opens, the way one memory cell answers its address.",
+  "figure.terminal":
+    "Line drawing of a terminal window: the pointer scrolls back through its lines, like reading a listing.",
+  "figure.stack":
+    "Line drawing of a call stack of five frames: the frames above lift to open the one under the pointer.",
+  "figure.settle":
+    "Line drawing of crooked tiles that settle into a tree as the pointer nears, the way a parser turns text into a syntax tree.",
+  "figure.keyboard":
+    "Line drawing of a keyboard: the key under the pointer sinks, and its neighbours follow it down.",
+  "figure.phosphor":
+    "Line drawing of a seven by seven dot screen playing a loop; the pointer paints a trail that fades.",
   "home.start": "Start reading",
   "home.workbench": "Open the workbench",
   "home.howItWorks": "How it works",
@@ -239,8 +252,8 @@ export const en = {
   "play.clearConfirm": (v: Vars) =>
     `Remove all ${v.parts} ${v.parts === 1 ? "part" : "parts"} and ${v.wires} ${v.wires === 1 ? "wire" : "wires"}? Undo (Ctrl+Z) brings them back until you leave the page.`,
   "play.cleared": "Canvas cleared. Undo (Ctrl+Z) brings it back.",
-  "play.hintFirst": "💡 Show a hint",
-  "play.hintNext": "💡 Show the next hint ({n} of {total})",
+  "play.hintFirst": "Show a hint",
+  "play.hintNext": "Show the next hint ({n} of {total})",
   "play.hintLabel": "Hint {n}:",
   "play.moreParts": "More parts ({n})",
   "play.fewerParts": "Fewer parts",

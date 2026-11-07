@@ -3,12 +3,12 @@ import { t } from "../i18n";
 import { Demo, figcaption, reducedMotion, sheet, svg, wide } from "./kit";
 
 const CSS = sheet(`
-  .wire { stroke: var(--muted); stroke-width: 3; fill: none; }
+  .wire { stroke: var(--muted); stroke-width: 1.75; fill: none; }
   .wire.v1 { stroke: var(--wire-1); }
   .wire.vX { stroke: var(--wire-x); stroke-dasharray: 6 4; }
-  .gate { fill: var(--bg); stroke: var(--text); stroke-width: 2; }
+  .gate { fill: var(--bg); stroke: var(--text); stroke-width: 1.25; }
   .tag { fill: var(--surface); stroke: var(--border); }
-  .val { font-weight: 700; }
+  .val { font-weight: 600; }
   .name { font-weight: 600; }
   .delay { fill: var(--muted); }
   .note.warn { color: var(--error); font-weight: 600; }

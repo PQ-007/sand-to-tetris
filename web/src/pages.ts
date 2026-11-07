@@ -1,3 +1,4 @@
+import { FIGURES, figureSlot } from "./figures";
 import { CHAPTERS } from "./chapters";
 import { t, type Key } from "./i18n";
 import { chapterHref, type Route } from "./router";
@@ -36,15 +37,6 @@ function home(): string {
   }).join("");
   const step = (n: number, h: Key, p: Key) =>
     `<div><span class="step-n" aria-hidden="true">${n}</span><h2>${esc(t(h))}</h2><p>${esc(t(p))}</p></div>`;
-  // The whole course as a stack of chips: sand at the bottom, Tetris on top.
-  const stack = [...CHAPTERS]
-    .reverse()
-    .map((ch) => {
-      const on = ready.has(ch.number);
-      const label = `<span class="chip-n" aria-hidden="true">${ch.number}</span><span class="chip-name">${esc(outline(ch.number, "title"))}</span>`;
-      return `<li class="stack-chip" data-ready="${on}" style="--i:${ch.number}">${on ? `<a href="${chapterHref(ch.number)}">${label}</a>` : `${label}<span class="visually-hidden"> ${esc(t("chapter.soonSr"))}</span>`}</li>`;
-    })
-    .join("");
   return `<section class="hero">
       <div class="hero-text">
         <p class="eyebrow">${esc(t("home.eyebrow", { n: CHAPTERS.length }))}</p>
@@ -55,7 +47,7 @@ function home(): string {
           <a class="button" href="#/levels">${esc(t("home.workbench"))}</a>
         </p>
       </div>
-      <ol class="stack" aria-label="${esc(t("home.stackLabel"))}">${stack}</ol>
+      ${figureSlot(FIGURES.home, t(`figure.${FIGURES.home}`))}
     </section>
     <section class="steps" aria-label="${esc(t("home.howItWorks"))}">
       ${step(1, "home.read", "home.readText")}
@@ -96,6 +88,7 @@ function chapter(number: number): string {
   const sources = ch.html.includes('id="sources"')
     ? `<li><a href="${chapterHref(number, "sources")}" data-section="sources">${esc(t("chapter.sources"))}</a></li>`
     : "";
+  const figure = FIGURES.chapters[number];
   const prev = ready.get(number - 1);
   const next = ready.get(number + 1);
   const pagerLink = (c: typeof ch, cls: string, label: Key) =>
@@ -116,10 +109,13 @@ function chapter(number: number): string {
       </details>
     </nav>
     <article class="chapter-page">
-      <header class="chapter-head">
-        <p class="eyebrow">${esc(t("chapter.n", { n: ch.number }))}</p>
-        <h1 tabindex="-1">${esc(ch.title)}</h1>
-        <p class="lead">${esc(ch.summary)}</p>
+      <header class="chapter-head${figure ? " with-figure" : ""}">
+        <div>
+          <p class="eyebrow">${esc(t("chapter.n", { n: ch.number }))}</p>
+          <h1 tabindex="-1">${esc(ch.title)}</h1>
+          <p class="lead">${esc(ch.summary)}</p>
+        </div>
+        ${figure ? figureSlot(figure, t(`figure.${figure}`)) : ""}
       </header>
       ${ch.html}
       ${pager}
