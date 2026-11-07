@@ -401,6 +401,11 @@ export class CircuitCanvas {
 
   private drawWires(): void {
     const g = svg("g", { class: "wires" }, this.el);
+    // Value tags already drawn. Wires fanning out from one pin along a
+    // shared trunk (same end, same vertical run) need only one tag, and an
+    // identical tag on top of another is left out.
+    const tags: { x: number; y: number; width: number; text: string }[] = [];
+    const trunks = new Set<string>();
     this.props.design.wires.forEach((w, i) => {
       const a = this.point(w.from);
       const b = this.point(w.to);
@@ -424,6 +429,16 @@ export class CircuitCanvas {
       svg("path", { d: pathData(pts), class: "wire-line" }, wg);
       const [lx, ly] = labelPoint(pts);
       const tagWidth = Math.max(16, shown.length * 7 + 8);
+      const covered = tags.some(
+        (o) =>
+          o.text === shown &&
+          Math.abs(o.x - lx) < (o.width + tagWidth) / 2 &&
+          Math.abs(o.y - ly) < 16,
+      );
+      const ends = [w.from, w.to].map((e) => `${lx}|${endpointKey(e)}`);
+      if (covered || ends.some((k) => trunks.has(k))) return;
+      ends.forEach((k) => trunks.add(k));
+      tags.push({ x: lx, y: ly, width: tagWidth, text: shown });
       svg(
         "rect",
         {
@@ -1262,8 +1277,18 @@ export function partIcon(
   kind: string,
   ports: ComponentPorts,
 ): SVGSVGElement | null {
-  const shape = shapeOfPart({ kind }, ports);
-  const paths = symbolPaths(symbolOf(kind), shape);
+  const sym = symbolOf(kind);
+  // Selectors are drawn 2-way: an 8-way one is too tall for a button.
+  const small: ComponentPorts | null =
+    sym.kind === "mux"
+      ? { mux: { inputs: ["a", "b", "sel"], outputs: ["out"], name: "" } }
+      : sym.kind === "dmux"
+        ? { dmux: { inputs: ["in", "sel"], outputs: ["a", "b"], name: "" } }
+        : null;
+  const shape = small
+    ? shapeOfPart({ kind: sym.kind }, small)
+    : shapeOfPart({ kind }, ports);
+  const paths = symbolPaths(sym, shape);
   if (!paths) return null;
   const h = shape.height / 2 + 2;
   const icon = svg("svg", {

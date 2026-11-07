@@ -20,7 +20,12 @@ import {
   type Point,
 } from "./editor/geometry";
 import { openMenu } from "./editor/menu";
-import { widthFixes, type Fix } from "./editor/fixes";
+import {
+  bitWireFixes,
+  widthFixes,
+  type Fix,
+  type WireFix,
+} from "./editor/fixes";
 import { bitsOf, formatValue, parseNumber, showValue } from "./editor/values";
 import { drawWaveform } from "./editor/waveform-view";
 import type { Signal } from "./editor/waveform";
@@ -1509,7 +1514,15 @@ class PlayPage {
       this.level.layer >= 2
         ? widthFixes(this.design, this.level.widths ?? {}, this.ports)
         : [];
-    this.fixBox.replaceChildren(...fixes.map((fix) => this.fixItem(fix)));
+    // So does wiring bus bits one by one: offer the rest in one click.
+    const wiring =
+      this.level.layer >= 2
+        ? bitWireFixes(this.design, this.level.inputs, this.ports)
+        : [];
+    this.fixBox.replaceChildren(
+      ...fixes.map((fix) => this.fixItem(fix)),
+      ...wiring.map((fix) => this.wireFixItem(fix)),
+    );
     if (this.view?.shorts.length) {
       this.problemList.prepend(
         el(
@@ -1550,6 +1563,44 @@ class PlayPage {
             b: base(fix.pin),
           })
         : t("play.fixShareWhy", { pin: fix.pin, b: base(fix.pin) });
+    li.append(el("strong", {}, t("play.fixTry")), button, ...rich(why));
+    return li;
+  }
+
+  private wireFixItem(fix: WireFix): HTMLElement {
+    const n = fix.wires.length;
+    const show = (w: WireFix["wires"][number] | undefined) =>
+      w
+        ? `\`${endpointLabel(w.from, this.level.inputs)} → ${endpointLabel(w.to, this.level.inputs)}\``
+        : "";
+    const li = el("li", { class: "fix" });
+    const button = el(
+      "button",
+      { type: "button" },
+      fix.kind === "bits"
+        ? t("play.fixBits", { n })
+        : t("play.fixFill", {
+            n,
+            source: endpointLabel(fix.source, this.level.inputs),
+            part: fix.part,
+          }),
+    );
+    button.addEventListener("click", () => {
+      let next = this.design;
+      for (const w of fix.wires) {
+        const added = addWire(next, w.from, w.to);
+        if (typeof added !== "string") next = added;
+      }
+      this.onChange(next, true);
+      this.say(t("play.wiredMany", { n }));
+    });
+    const why =
+      fix.kind === "bits"
+        ? t("play.fixBitsWhy", {
+            first: show(fix.wires[0]),
+            rest: n > 1 ? `, ${show(fix.wires[1])}, …` : "",
+          })
+        : t("play.fixFillWhy");
     li.append(el("strong", {}, t("play.fixTry")), button, ...rich(why));
     return li;
   }

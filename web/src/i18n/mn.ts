@@ -348,6 +348,12 @@ export const mn: Record<keyof typeof en, Message> = {
     " Bus {w} бит дамжуулна, харин эд ангийн нэг хуулбар {b} бит авна.",
   "play.fixShare": "Хуваалцах: {pin} ({part})",
   "play.fixShareWhy": " Бүх хуулбар ижил {b} битийн оролтыг уншина: `{pin}`.",
+  "play.fixBits": "Дараагийн {n} битийг ижил аргаар холбох",
+  "play.fixBitsWhy": " Дараагийнх: {first}{rest}.",
+  "play.fixFill": "Сул {n} битэд холбох: {source} → {part}",
+  "play.fixFillWhy":
+    " Joiner дээрх ашиглаагүй битүүд ихэвчлэн тогтмол 0 авдаг.",
+  "play.wiredMany": "{n} утас нэмэгдлээ.",
   "play.simError": "Загварчлалын алдаа: {error}",
   "play.showingStep1": "1-р алхмыг асаасан үеэс эхлэн харуулж байна.",
   "play.showingStep":
