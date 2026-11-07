@@ -150,6 +150,9 @@ int __buf[768];
 // once, so a frame never appears half drawn.
 void use_buffer(void) { __target = __buf; }
 void use_screen(void) { __target = SCREEN; }
+// Draw into a 768-word image of your own (say, a background drawn once and
+// copied in with memcpy each frame).
+void draw_into(int *words) { __target = words; }
 
 void show(void) {
     int *s = __buf;

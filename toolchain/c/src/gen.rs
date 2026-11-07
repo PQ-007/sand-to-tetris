@@ -180,9 +180,43 @@ pub fn generate(prog: &Program) -> Output {
         }
     }
     Output {
-        items: g.out,
+        items: peephole(g.out),
         data_end,
     }
+}
+
+/// Small clean-ups on the output: a value stored to the frame or a low
+/// global and loaded straight back into the same register needs no load,
+/// and a jump to the very next line needs no jump.
+fn peephole(items: Vec<Item>) -> Vec<Item> {
+    let mut out: Vec<Item> = Vec::with_capacity(items.len());
+    for item in items {
+        if let (Item::Line(text, _), Some(Item::Line(prev, _))) = (&item, out.last()) {
+            if let (Some(load), Some(store)) = (
+                text.trim().strip_prefix("LOAD "),
+                prev.trim().strip_prefix("STORE "),
+            ) {
+                // Only the frame (r6) and globals (r5): no device sits there.
+                if load == store && (load.contains("[r6 ") || load.contains("[r5 ")) {
+                    continue;
+                }
+            }
+        }
+        if let Item::Label(l) = &item {
+            if let Some(Item::Jump {
+                cond: J::Always,
+                target,
+                ..
+            }) = out.last()
+            {
+                if target == l {
+                    out.pop();
+                }
+            }
+        }
+        out.push(item);
+    }
+    out
 }
 
 /// Which functions, globals and strings the program uses, from `main`.

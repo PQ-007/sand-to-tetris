@@ -109,6 +109,7 @@ program). Names mirror the C Shard OS (`docs/OS.md`).
 | `int draw_int(int v, int col, int row)` | v in decimal; returns the cells used |
 | `void draw_char_at(int c, int x, int y)` · `void draw_text_at(const char *s, int x, int y)` | the same at any pixel |
 | `void use_buffer(void)` · `void show(void)` | draw into a RAM copy of the screen, then show it all at once (no flicker) |
+| `void draw_into(int *words)` · `void use_screen(void)` | draw into a 768-word image of your own (a background drawn once); back to the screen |
 | `int key(void)` | the key held now, 0 if none |
 | `int wait_key(void)` | waits for a press and release; seeds the random numbers |
 | `int ticks(void)` | frames since the start (60 a second) |
