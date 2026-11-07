@@ -2696,6 +2696,7 @@ svg.waveform text {
 }
 
 .levels-head {
+  grid-template-columns: minmax(0, 1fr) auto 19rem;
   align-items: end;
   margin-bottom: 1.5rem;
 }
@@ -2712,6 +2713,9 @@ svg.waveform text {
   .levels-head,
   .tree-wrap {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .levels-head .hl-figure.head {
+    display: none;
   }
   .tree-detail .button.block {
     display: inline-flex;
@@ -3241,7 +3245,7 @@ button.primary:hover:not(:disabled),
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(16rem, 0.9fr);
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 1.1fr);
   gap: 2rem 3.5rem;
   align-items: center;
   max-width: none;
@@ -3290,8 +3294,38 @@ button.primary:hover:not(:disabled),
   margin-inline: auto;
 }
 
+/* The home figure is the page's picture: as wide as its column. */
 .hero .hl-figure {
-  max-width: 34rem;
+  max-width: 44rem;
+  margin-block: -2rem;
+}
+
+/* Beside a page's title: thumbnail size (hairline figures read at 240px). */
+.page-head .hl-figure.head {
+  flex: none;
+  width: 15rem;
+  margin: -2.25rem 0 -1.75rem auto;
+}
+
+/* Title and figure share the first row; the Machine's pickers take the
+   next one. */
+.page-head:has(> .hl-figure.head) > div:first-child {
+  flex: 1 1 28rem;
+}
+
+.machine-head .machine-pickers {
+  flex-basis: 100%;
+}
+
+.narrow-page .hl-figure.lost {
+  max-width: 16rem;
+  margin: 0 0 -1rem;
+}
+
+@media (max-width: 640px) {
+  .page-head .hl-figure.head {
+    display: none;
+  }
 }
 
 .chapter-head.with-figure {

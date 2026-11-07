@@ -24,6 +24,7 @@ import {
   neighbours,
   type TreeInput,
 } from "./techtree";
+import { pageFigure } from "./figures";
 import { t, type Key } from "./i18n";
 import { matchCheck } from "./sim/core";
 import { parseProgressFile, progressFile, workshopFromFile } from "./progress";
@@ -405,6 +406,7 @@ function render(root: HTMLElement, a: App): void {
         ${continueHtml(a)}
         ${view === "tree" ? `<p class="visually-hidden" id="tree-help">${esc(t("levels.treeHelp"))}</p>` : ""}
       </div>
+      ${pageFigure("levels", (n) => t(`figure.${n}` as Key), "head")}
       <section class="save-box" aria-labelledby="progress-h">
         <h2 id="progress-h">${esc(t("levels.progress"))}</h2>
         <p class="help">${esc(t(a.store.persistent ? "levels.saved" : "levels.notSaved"))}

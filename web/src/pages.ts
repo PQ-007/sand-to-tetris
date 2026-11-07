@@ -1,4 +1,4 @@
-import { FIGURES, figureSlot } from "./figures";
+import { FIGURES, figureSlot, pageFigure } from "./figures";
 import { CHAPTERS } from "./chapters";
 import { t, type Key } from "./i18n";
 import { chapterHref, type Route } from "./router";
@@ -47,7 +47,7 @@ function home(): string {
           <a class="button" href="#/levels">${esc(t("home.workbench"))}</a>
         </p>
       </div>
-      ${figureSlot(FIGURES.home, t(`figure.${FIGURES.home}`))}
+      ${pageFigure("home", (n) => t(`figure.${n}`))}
     </section>
     <section class="steps" aria-label="${esc(t("home.howItWorks"))}">
       ${step(1, "home.read", "home.readText")}
@@ -192,6 +192,7 @@ function glossaryPage(): string {
         <h1 tabindex="-1">${esc(t("title.glossary"))}</h1>
         <p class="lead">${esc(t("glossary.lead"))}</p>
       </div>
+      ${pageFigure("glossary", (n) => t(`figure.${n}`), "head")}
       <label class="search">
         <span class="visually-hidden">${esc(t("glossary.filterLabel"))}</span>
         <input type="search" placeholder="${esc(t("glossary.filter", { n: glossary.length }))}" data-gloss-filter />
@@ -226,7 +227,7 @@ export function installGlossaryFilter(root: HTMLElement): void {
 }
 
 function notFound(message = t("notFound.text")): string {
-  return `<div class="narrow-page"><h1 tabindex="-1">${esc(t("title.notFound"))}</h1><p>${esc(message)}</p><p><a href="#/">${esc(t("notFound.back"))}</a></p></div>`;
+  return `<div class="narrow-page">${pageFigure("notFound", (n) => t(`figure.${n}`), "lost")}<h1 tabindex="-1">${esc(t("title.notFound"))}</h1><p>${esc(message)}</p><p><a href="#/">${esc(t("notFound.back"))}</a></p></div>`;
 }
 
 const titled = (page: string) => `${page} · ${t("site.name")}`;

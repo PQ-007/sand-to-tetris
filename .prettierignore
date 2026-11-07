@@ -6,3 +6,5 @@ package-lock.json
 *.md
 # Design files are machine-written (by the editor and tools).
 hdl/**/*.json
+# Vendored hairline engine and figures: kept exactly as the skill checked them.
+web/src/vendor/hairline/*.js

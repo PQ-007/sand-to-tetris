@@ -1,5 +1,6 @@
 // The Machine page: write assembly or VM code, build it, and run it on the
 // reference CPU with its screen, keyboard, registers, stack and RAM in view.
+import { pageFigure } from "./figures";
 import { t, type Key } from "./i18n";
 import { EXAMPLES, type Example } from "./machine-programs";
 import { asmErrorText, langErrorText, vmErrorText } from "./messages";
@@ -153,6 +154,7 @@ class MachinePage {
           <h1 tabindex="-1">${esc(t("machine.title"))}</h1>
           <p class="lead">${esc(t("machine.lead"))}</p>
         </div>
+        ${pageFigure("machine", (n) => t(`figure.${n}` as Key), "head")}
         <div class="machine-pickers">
           <label>${esc(t("machine.language"))}
             <select data-lang>${langs}</select></label>

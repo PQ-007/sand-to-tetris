@@ -5,7 +5,10 @@ import { FIGURES, figureSlot } from "../src/figures";
 import { CHAPTERS } from "../src/chapters";
 
 describe("hairline figures", () => {
-  const all = [FIGURES.home, ...Object.values(FIGURES.chapters)];
+  const all = [
+    ...Object.values(FIGURES.pages),
+    ...Object.values(FIGURES.chapters),
+  ];
 
   it("every figure has an accessible name in both languages", () => {
     for (const name of all)
@@ -25,11 +28,31 @@ describe("hairline figures", () => {
     );
   });
 
-  it("every named figure exists in the package", async () => {
+  it("every named figure exists: in the package, or drawn for the course", async () => {
+    const { readdirSync } = await import("node:fs");
     const hairline = await import("@lucasmarkes/hairline");
+    const drawn = readdirSync(
+      new URL("../src/vendor/hairline", import.meta.url),
+    )
+      .filter((f) => f.endsWith(".js") && f !== "kernel.js")
+      .map((f) => f.replace(/\.js$/, ""));
     for (const name of all)
-      expect(typeof (hairline as Record<string, unknown>)[name], name).toBe(
-        "function",
-      );
+      expect(
+        typeof (hairline as Record<string, unknown>)[name] === "function" ||
+          drawn.includes(name),
+        name,
+      ).toBe(true);
+  });
+
+  it("a figure drawn for the course passes the skill's frame: one figure, 400 × 320", async () => {
+    const { readFileSync } = await import("node:fs");
+    const src = readFileSync(
+      new URL("../src/vendor/hairline/sandfall.js", import.meta.url),
+      "utf8",
+    );
+    expect(src).toMatch(/hairline\(\{\s*name: "sandfall"/);
+    // rule 10: no words in the drawing (no svg text elements)
+    expect(src).not.toMatch(/mk\("text"/);
+    expect(src.split("\n").length).toBeLessThanOrEqual(200);
   });
 });

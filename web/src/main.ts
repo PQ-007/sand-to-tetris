@@ -14,25 +14,33 @@ import { mountWorkshop } from "./workshop";
 
 const app = document.getElementById("app");
 
-/** The hairline figure module, once a page with a figure has loaded it. */
-let figures: typeof import("./hairline") | null = null;
-
-/** Draws the page's hairline figures, loading their code the first time. */
-function drawFigures(root: HTMLElement): void {
-  if (!root.querySelector(".hl-figure")) return;
-  void import("./hairline").then((m) => {
-    figures = m;
-    if (root.isConnected) m.mountFigures(root);
+/**
+ * Keeps hairline figures in step with the page: draws a placeholder as soon
+ * as it appears (pages like the level map render later, and re-render) and
+ * stops figures whose element left. Their code loads with the first one.
+ */
+let figures: Promise<typeof import("./hairline")> | null = null;
+let figureSync = 0;
+function syncFigures(): void {
+  if (!app || figureSync) return;
+  figureSync = requestAnimationFrame(() => {
+    figureSync = 0;
+    if (!figures && !app.querySelector(".hl-figure")) return;
+    figures ??= import("./hairline");
+    void figures.then((m) => m.syncFigures(app));
   });
 }
+if (app)
+  new MutationObserver(syncFigures).observe(app, {
+    childList: true,
+    subtree: true,
+  });
 
 function show(): void {
   if (!app) return;
   const route = parseRoute(location.hash);
   const { html, title, anchor } = renderRoute(route);
-  figures?.unmountFigures();
   app.innerHTML = html;
-  drawFigures(app);
   document.title = title;
   // Each page type gets its own layout (see style.css).
   document.body.dataset.page = route.page;
