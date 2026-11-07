@@ -4,8 +4,8 @@
 // hairline.ts, loaded only when a page has one.
 //
 // Only where the figure's object is the page's idea. The home page shows
-// what the course builds: a computer, which a button takes apart into its
-// layers and puts back together (drawn for it: vendor/hairline/computer.js). Lockers, one opened by the pointer,
+// what the course builds: a tower PC, built, which a button takes apart into
+// its parts and puts back together (drawn for it: vendor/hairline/computer.js). Lockers, one opened by the pointer,
 // are memory cells and an address; the call stack is the VM's; tiles
 // settling into a tree is parsing. Building is wiring (a patch panel); the
 // Programs are what glows on the screen (phosphor); the Machine page keeps
