@@ -87,6 +87,8 @@ export const en = {
     "Line drawing of a transistor, cut away: bring the pointer to the gate and electrons gather under it until the channel joins source to drain.",
   "figure.carry":
     "Line drawing of eight one-bit adders in a row: point at a bit and the carry ripples to it from bit 0, one adder after another.",
+  "figure.cpu":
+    "Line drawing of a processor with its die bare: point at a block (the registers, the ALU, the shifter, the control unit, the program counter) and it lifts off the die.",
   "figure.exploded":
     "Line drawing of an app pulled apart into layers, like the layers of this course. Move the pointer across it to open them.",
   "figure.lockers":

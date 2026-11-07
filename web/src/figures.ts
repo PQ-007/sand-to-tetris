@@ -13,13 +13,14 @@
 // its chapter's figure. Chapters the package has no figure for got one
 // drawn for them: a wafer ruled into dies (sand to silicon), a transistor
 // cut away, its channel forming (switches), a ripple-carry adder (logic),
-// and the computer whose board carries the CPU.
+// and a CPU with its die bare, the blocks of Chapter 4 on it.
 
 export type FigureName =
   | "computer"
   | "wafer"
   | "transistor"
   | "carry"
+  | "cpu"
   | "exploded"
   | "lockers"
   | "terminal"
@@ -63,7 +64,7 @@ export const FIGURES: {
     1: "transistor",
     2: "carry",
     3: "lockers",
-    4: "computer",
+    4: "cpu",
     5: "terminal",
     6: "stack",
     7: "settle",
