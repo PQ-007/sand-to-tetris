@@ -470,6 +470,17 @@ fn compile(path: &Path) -> Result<String, String> {
     }
 }
 
+/// `s2t cc file.c`: the assembly a C program becomes (docs/C.md).
+fn cc(path: &Path) -> Result<String, String> {
+    let c = s2t_c::build(&read(path)?);
+    if c.errors.is_empty() {
+        Ok(c.asm.join("\n"))
+    } else {
+        let lines: Vec<String> = c.errors.iter().map(|e| e.to_string()).collect();
+        Err(format!("{}:\n{}", path.display(), lines.join("\n")))
+    }
+}
+
 /// Runs a command. `Ok` output goes to stdout with exit code 0; `Err`
 /// output goes to stderr with exit code 1.
 pub fn run(args: &[String]) -> Result<String, String> {
@@ -491,8 +502,20 @@ pub fn run(args: &[String]) -> Result<String, String> {
         ["asm", file] => asm(Path::new(file), json),
         ["vm", file] => vm(Path::new(file), json),
         ["compile", file] => compile(Path::new(file)),
+        ["cc", file] => cc(Path::new(file)),
         [] => Err(USAGE.to_string()),
-        [cmd, ..] if !["check", "check-all", "asm", "vm", "compile", "version"].contains(cmd) => {
+        [cmd, ..]
+            if ![
+                "check",
+                "check-all",
+                "asm",
+                "vm",
+                "compile",
+                "cc",
+                "version",
+            ]
+            .contains(cmd) =>
+        {
             Err(format!("unknown command `{cmd}`\n\n{USAGE}"))
         }
         _ => Err(USAGE.to_string()),

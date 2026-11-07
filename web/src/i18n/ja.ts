@@ -14,6 +14,7 @@ export const ja: Record<keyof typeof en, Message> = {
   "nav.learn": "学ぶ",
   "nav.build": "作る",
   "nav.glossary": "用語集",
+  "nav.programs": "プログラム",
   "nav.language": "言語",
   "theme.toDark": "ダークテーマ",
   "theme.toLight": "ライトテーマ",
@@ -27,6 +28,16 @@ export const ja: Record<keyof typeof en, Message> = {
   "page.error": "このページの読み込み中に問題が起きました",
   "page.loading": "読み込み中…",
   "title.glossary": "用語集",
+  "title.programs": "プログラム",
+  "programs.lead":
+    "あなたが作ったコンピュータのために書かれたゲームとプログラム。遊んで、読んで、書き換えられます。",
+  "programs.intro":
+    "Bitfall は一緒に設計した言語 C Shard で、あなたの OS の上に書かれています。ほかは日々使われている言語 C で書かれ、アセンブリへ直接コンパイルされます: このマシンにできる最大限です。どれもマシンのページで動き、ソースは自由に書き換えられます。",
+  "programs.play": "マシンで遊ぶ",
+  "programs.try": "マシンで試す",
+  "programs.listLabel": "プログラム",
+  "programs.lang.c": "C",
+  "programs.lang.shard": "C Shard",
   "title.levels": "レベル",
   "title.level": "レベル",
   "title.notFound": "見つかりません",
@@ -56,17 +67,16 @@ export const ja: Record<keyof typeof en, Message> = {
   "outline.7.summary": "一緒に設計する言語 C Shard と、そのコンパイラ。",
   "outline.8.title": "オペレーティングシステム",
   "outline.8.summary": "画面、文字、キーボード、タイマー、乱数を C Shard で。",
-  "outline.9.title": "Bitfall",
-  "outline.9.summary":
-    "自分で作ったコンピュータで遊ぶ、オリジナルの落ち物ゲーム。",
 
   // ---- ホーム ----
   "home.eyebrow": "全 {n} 章のコース",
   "home.title": "砂から Tetris へ",
   "home.tagline":
     "魔法はありません。あるのは、積み重ねられた抽象化の層だけです。",
+  "figure.hourglass":
+    "砂時計の線画: 上の球の砂がくびれを通って落ち、下の球では粒がブロックとなって積もる。立方体の列と、流れの下を落ちてくるピース。ポインタで列を選ぶと持ち上がる。ボタンで砂を落とし切り、砂時計をひっくり返す。",
   "figure.computer":
-    "デスクトップコンピュータの線画: 電源とボード(ヒートシンクの下の CPU、RAM、コンデンサ)が入ったケース、スタンド付きのモニター、キーボードとマウス。ポインタで部品を選ぶと、その上にあるものが持ち上がる。ボタンで層ごとに分解できる。",
+    "組み立てたタワー型 PC の線画: 4 本の脚、通気口のある天板、ねじで留めたガラスの側面。その奥にヒートシンク付きのボード、タワークーラーの下の CPU、RAM 4 枚、ファン 2 基のグラフィックボード、電源、ドライブ 2 台のケージ。前面に電源とリセットのボタン、USB。ポインタで部品を選ぶと引き出され、ボタンで全体を分解できる。",
   "figure.patch":
     "パッチパネルの線画: ポインタの下のケーブルが持ち上がり、隣のケーブルが離れるように傾く。ここで作ることは配線すること。",
   "figure.laptop":
@@ -106,9 +116,10 @@ export const ja: Record<keyof typeof en, Message> = {
   "figure.phosphor":
     "7 × 7 のドット画面がループを再生している線画。ポインタでなぞると、消えていく跡が残る。",
   "home.start": "読み始める",
-  "home.takeApart": "分解する",
-  "home.putTogether": "組み立て直す",
+  "home.runSand": "砂を落とす",
+  "home.turnOver": "ひっくり返す",
   "home.workbench": "作業台を開く",
+  "home.programs": "プログラムで遊ぶ",
   "home.howItWorks": "進め方",
   "home.read": "読む",
   "home.readText":

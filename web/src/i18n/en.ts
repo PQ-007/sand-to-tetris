@@ -19,6 +19,7 @@ export const en = {
   "nav.learn": "Learn",
   "nav.build": "Build",
   "nav.glossary": "Glossary",
+  "nav.programs": "Programs",
   "nav.language": "Language",
   "theme.toDark": "Dark theme",
   "theme.toLight": "Light theme",
@@ -31,6 +32,16 @@ export const en = {
   "page.error": "Something went wrong loading this page",
   "page.loading": "Loading…",
   "title.glossary": "Glossary",
+  "title.programs": "Programs",
+  "programs.lead":
+    "Games and programs written for the computer you built, to play, read and change.",
+  "programs.intro":
+    "Bitfall is in C Shard, the language we designed together, on your OS. The rest are in C, a language people use every day, compiled straight to assembly: the most this machine can do. Every one runs on the Machine page, and its source is yours to change.",
+  "programs.play": "Play on the Machine",
+  "programs.try": "Try it on the Machine",
+  "programs.listLabel": "Programs",
+  "programs.lang.c": "C",
+  "programs.lang.shard": "C Shard",
   "title.levels": "Levels",
   "title.level": "Level",
   "title.notFound": "Not found",
@@ -62,17 +73,16 @@ export const en = {
   "outline.8.title": "The operating system",
   "outline.8.summary":
     "Screen, text, keyboard, timer and random numbers, in C Shard.",
-  "outline.9.title": "Bitfall",
-  "outline.9.summary":
-    "An original falling-block game, played on the computer you built.",
 
   // ---- home ----
   "home.eyebrow": "A course in {n} chapters",
   "home.title": "From sand to Tetris",
   "home.tagline":
     "There is no magic, just abstraction layers built on top of one another.",
+  "figure.hourglass":
+    "Line drawing of an hourglass: the sand in its top bulb runs through the neck, and in the bottom bulb the grains settle as blocks, rows of cubes, with a piece falling under the stream. The pointer picks a row and lifts it; the button lets the sand run out, then turns the hourglass over.",
   "figure.computer":
-    "Line drawing of a desktop computer: a case with a power supply and a board inside (a CPU under its heatsink, RAM, capacitors), a monitor on its stand, a keyboard and a mouse. The pointer picks a part and lifts what's above it; the button takes it apart into layers.",
+    "Line drawing of a tower PC, built: on four feet, a vented top, a glass side held by thumbscrews; behind it a board with its heatsinks, a CPU under a tower cooler, four RAM sticks, a graphics card with two fans, a power supply and a cage of two drives; power, reset and USB in front. The pointer picks a part and slides it out; the button takes the whole build apart.",
   "figure.patch":
     "Line drawing of a patch panel: the cable under the pointer lifts, and its neighbours lean away. Building here is wiring.",
   "figure.laptop":
@@ -112,9 +122,10 @@ export const en = {
   "figure.phosphor":
     "Line drawing of a seven by seven dot screen playing a loop; the pointer paints a trail that fades.",
   "home.start": "Start reading",
-  "home.takeApart": "Take it apart",
-  "home.putTogether": "Put it back together",
+  "home.runSand": "Let the sand run",
+  "home.turnOver": "Turn it over",
   "home.workbench": "Open the workbench",
+  "home.programs": "Play the programs",
   "home.howItWorks": "How it works",
   "home.read": "Read",
   "home.readText":

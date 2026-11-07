@@ -40,6 +40,27 @@ describe("docs/ content", () => {
     expect(content.mn.glossary.length).toBe(content.en.glossary.length);
   });
 
+  it("every program page is translated with the same sections, and runs", async () => {
+    const { PROGRAMS } = await import("../src/programs");
+    const { EXAMPLES } = await import("../src/machine-programs");
+    expect(content.en.programs.length).toBeGreaterThan(0);
+    expect(content.mn.programs.map((p) => p.id)).toEqual(
+      content.en.programs.map((p) => p.id),
+    );
+    content.en.programs.forEach((p, i) => {
+      expect(content.mn.programs[i]?.headingIds, p.id).toEqual(p.headingIds);
+      const info = PROGRAMS[p.id];
+      expect(info, `${p.id}: an entry in src/programs.ts`).toBeTruthy();
+      expect(
+        EXAMPLES.some((e) => e.id === info?.example && e.lang === info?.lang),
+        `${p.id}: its Machine example`,
+      ).toBe(true);
+    });
+    expect(Object.keys(PROGRAMS).sort()).toEqual(
+      content.en.programs.map((p) => p.id).sort(),
+    );
+  });
+
   it("every chapter has a sources section if it cites anything", () => {
     for (const ch of [...content.en.chapters, ...content.mn.chapters]) {
       if (ch.html.includes('class="cite'))

@@ -1,38 +1,39 @@
 /**
- * Computer: a desktop computer that comes apart. In the base, a power supply
- * with its fan and a drive cage; above it the board: a CPU under a finned
- * heatsink, four RAM sticks, capacitors, chips, a slot, back connectors and
- * traces; the cover (vents, power button, light, drive bays) encloses both;
- * a monitor on its stand shows a block falling; a keyboard and a mouse lie in
- * front. The number is how far apart it is: the layers lift one gap each, a
- * beat apart, and the keyboard slides forward. The pointer picks a part: its
- * outline goes bright, what is stacked above it lifts to show it, and the
- * read-out names it. Hits are tested on the target pose (rule 01).
+ * Computer: a tower PC, built: case, board (I/O cover, socket heatsinks, power
+ * connector, M.2, slots), a CPU under a tower cooler, RAM, a graphics card, the
+ * power supply and a drive cage, behind a glass side. The number is how far
+ * apart it is: every part slides out towards us, a beat apart, the glass
+ * furthest. The pointer picks a part: its outline goes bright, it slides out
+ * (the glass first makes way), the read-out names it. Hits use the target pose.
  */
 const {
   Cam, clamp, facing, fit, hull, poly, prism, proj, rings, rrect, seg, tween, tset, tval, tdone,
   flatDot, mk, place, pointer, put, register, disposer, solid,
 } = HL;
 
-const W = 100, D = 64, GAP = 20, STEP = 60, PICK = 10, PSTEP = 40;
-const BASE = 6, IN = 7, PLATE = 1.5, CASE = 20, MON = 36, KY = D + 10, LIFTS = [0, 1, 3.2, 4.2, 1];
-const PIXELS = ["...##...", "...##...", "........", "........", "##.#####", "####.###"];
+const L = 84, Wd = 40, H = 92, T = 3, GAP = 15, STEP = 60, PICK = 9, PSTEP = 40;
+// how far each part slides at full explode, in gaps (paint order)
+const OUT = { case: 0, board: 0.5, psu: 1, drives: 1.2, gpu: 1.7, ram: 1.3, cpu: 2.2, glass: 3.2 };
 
 function mount({ stage, svg, read }, value) {
   const bag = disposer();
-  const C = Cam(45, 0.5, 1.42);
-  const top = BASE + CASE + 14 + MON + 4.2 * GAP + PICK;
-  fit(C, [[0, 0, 0], [W, 0, 0], [0, KY + 26 + GAP + PICK, 0], [W + 14, KY + 26 + GAP + PICK, 0], [8, 6, top], [W - 8, 6, top]], 200, 166);
-  const P = proj(C), front = facing(C);
-  const g = mk("g", {}, svg);
-  const face = (y, pts) => pts.map(([x, z]) => P(x, y, z));
-  const ring = (x, z, r, y) => face(y, rrect(x - r, z - r, x + r, z + r, r, 4).map((q) => [q.u, q.v]));
+  const C = Cam(45, 0.5, 2.05);
+  const far = Wd + 3.2 * GAP + PICK * 1.6 + 2;
+  fit(C, [[0, 0, -3], [L, 0, -3], [0, far, -3], [L, far, -3], [0, 0, H], [L, far, H]], 200, 166);
+  const P = proj(C), front = facing(C), g = mk("g", {}, svg);
+  // circles on a face: across y and z at x, across x and y at z, across x and z at y
+  const sq = (a, b, r) => rrect(a - r, b - r, a + r, b + r, r, 4);
+  const ringX = (x, y, z, r) => poly(sq(y, z, r).map((q) => P(x, q.u, q.v)));
+  const ringZ = (x, y, z, r) => poly(sq(x, y, r).map((q) => P(q.u, q.v, z)));
+  const ringY = (x, y, z, r) => poly(sq(x, z, r).map((q) => P(q.u, y, q.v)));
+  // a fan seen from above: rings and three blades
+  const fanZ = (x, y, z, r) => [r, r * 0.68, r * 0.26].map((k) => ringZ(x, y, z, k)).join("")
+    + [0, 2.1, 4.2].map((a) => seg(P(x + Math.cos(a) * r * 0.26, y + Math.sin(a) * r * 0.26, z), P(x + Math.cos(a + 0.7) * r * 0.86, y + Math.sin(a + 0.7) * r * 0.86, z))).join("");
+  const box = (x0, z0, x1, z1, y) => poly([P(x0, y, z0), P(x1, y, z0), P(x1, y, z1), P(x0, y, z1)]);
 
-  // A part: a group of solids and lines, redrawn at an offset; `box` gives
-  // the world box its outline (for the hit test) is taken from.
   const parts = [];
-  function part(name, layer, box, draw) {
-    const grp = mk("g", {}, g), p = { name, layer, box, grp, s: [], l: [], tw: tween(0), pk: tween(0), drawn: NaN };
+  function part(name, bounds, draw) {
+    const grp = mk("g", {}, g), p = { name, bounds, grp, s: [], l: [], tw: tween(0), pk: tween(0), drawn: NaN };
     p.blk = (k, x0, y0, x1, y1, z0, h, r = 1.2, b = 0.7) => {
       p.s[k] ||= solid(grp);
       const [a, i] = rings(x0, y0, x1, y1, r, Math.min(b, (x1 - x0) / 3, (y1 - y0) / 3));
@@ -44,81 +45,92 @@ function mount({ stage, svg, read }, value) {
     return p;
   }
 
-  // the base: a power supply with its fan at the back, a drive cage in front
-  part("case", 0, () => [[0, 0, 0], [W, D, BASE + 7]], (p) => {
-    p.blk(0, 0, 0, W, D, 0, BASE, 6, 1.6);
-    p.blk(1, 8, 6, 38, 30, BASE, 7, 2, 1);
-    p.blk(2, 8, 40, 34, 58, BASE, 5);
-    p.line(0, [8, 6, 4.4, 2.6].map((r) => poly(rrect(23 - r, 18 - r, 23 + r, 18 + r, r, 4).map((q) => P(q.u, q.v, BASE + 7)))).join(""));
-    p.line(1, [44, 48, 52].map((y) => seg(P(10, y, BASE + 5), P(32, y, BASE + 5))).join(""));
+  // the case's far walls and floor, on four feet
+  part("case", () => [[0, 0, -3], [L, Wd, H]], (p) => {
+    [[3, 3], [L - 13, 3], [3, Wd - 7], [L - 13, Wd - 7]].forEach(([x, y], k) => p.blk(4 + k, x, y, x + 10, y + 4, -3, 3, 1.5, 0.6));
+    p.blk(0, 0, 0, L, T, 0, H, 3, 1);
+    p.blk(1, 0, 0, T, Wd, 0, H, 1.2, 0.6);
+    p.blk(2, 0, 0, L, Wd, 0, T, 3, 1);
   });
 
-  // the board: far to near, so nearer parts cover farther ones
-  const CAPS = [[30, 44], [34, 47], [64, 18], [64, 24]];
-  part("board", 1, (o) => [[4, 4, BASE + IN + o], [W - 4, D - 4, BASE + IN + o + PLATE + 6]], (p, o) => {
-    const z = BASE + IN + o, t = z + PLATE;
-    p.blk(0, 4, 4, W - 4, D - 4, z, PLATE, 3, 1);
-    p.line(0, [[26, 30, 66, 30], [48, 40, 48, 50], [20, 20, 36, 20], [60, 46, 84, 46]].map(([a, b, c, d]) => seg(P(a, b, t), P(c, d, t))).join(""));
-    p.blk(1, 70, 6, 80, 11, t, 4);
-    p.blk(2, 84, 6, 92, 11, t, 4);
-    p.blk(3, 12, 10, 22, 18, t, 2);
-    p.blk(4, 36, 16, 60, 40, t, 6, 1.5, 0.8);
-    p.line(1, [0, 1, 2, 3, 4, 5, 6].map((k) => seg(P(38, 18 + k * 3.3, t + 6), P(58, 18 + k * 3.3, t + 6))).join(""), "nf");
-    [66, 70, 74, 78].forEach((x, k) => p.blk(5 + k, x, 12, x + 2.5, 54, t, 5.5, 0.6, 0.3));
-    CAPS.forEach(([x, y], k) => p.blk(9 + k, x - 1.8, y - 1.8, x + 1.8, y + 1.8, t, 4, 1.8, 0.6));
-    p.blk(13, 10, 48, 50, 51, t, 3, 0.8, 0.4);
-    p.blk(14, 84, 40, 94, 50, t, 2);
+  // the board: rear I/O cover, socket heatsinks, power connector, M.2, slots
+  part("board", (o) => [[8, 3 + o, 28], [74, 9 + o, 88]], (p, o) => {
+    const y = 4.5 + o, f = (x, z) => P(x, y, z);
+    p.blk(0, 8, 3 + o, 74, y, 28, 60, 1, 0.4);
+    p.line(0, [[20, 52, 44, 52], [50, 50, 70, 50], [60, 34, 60, 46], [52, 56, 52, 80]].map(([a, b, c, d]) => seg(f(a, b), f(c, d))).join("")
+      + box(12, 47, 70, 49, y) + box(56, 30, 68, 34, y));
+    p.blk(1, 9, y, 15, 9 + o, 62, 24, 1, 0.5);
+    p.blk(2, 26, y, 48, 8.5 + o, 83, 4, 1, 0.5);
+    p.blk(3, 22, y, 25.5, 8.5 + o, 60, 22, 1, 0.5);
+    p.blk(4, 70, y, 73, 8 + o, 56, 16, 0.8, 0.4);
+    p.blk(5, 16, y, 42, 6.2 + o, 30, 3.5, 0.8, 0.4);
   });
 
-  // the cover: vents on top; a power button, a light and two drive bays in front
-  part("cover", 2, (o) => [[0, 0, BASE + o], [W, D, BASE + CASE + o]], (p, o) => {
-    const z = BASE + o, t = z + CASE, m = z + CASE / 2;
-    p.blk(0, 0, 0, W, D, z, CASE, 6, 1.6);
+  // the power supply, its fan facing up
+  part("psu", (o) => [[6, 4 + o, T], [46, 36 + o, 22]], (p, o) => {
+    p.blk(0, 6, 4 + o, 46, 36 + o, T, 19, 2, 1);
+    p.line(0, fanZ(26, 20 + o, T + 19, 8));
+  });
+
+  // a cage of two drives beside it
+  part("drives", (o) => [[52, 6 + o, T], [77, 36 + o, 20]], (p, o) => {
+    p.blk(0, 52, 6 + o, 77, 36 + o, T, 17, 1.5, 0.8);
+    const y = 36 + o;
+    p.line(0, box(54, 6, 75, 11, y) + box(54, 13, 75, 18, y) + [8.5, 15.5].map((z) => ringY(72, y, z, 0.8)).join(""));
+  });
+
+  // the graphics card: bracket at the back, two fans, a power plug on top
+  part("gpu", (o) => [[8, 4.5 + o, 34], [72, 33 + o, 47.5]], (p, o) => {
+    p.blk(0, 8, 4.5 + o, 10.5, 33 + o, 34, 13, 0.6, 0.3);
+    p.blk(1, 12, 4.5 + o, 72, 32 + o, 36, 9, 2, 1);
+    p.line(0, fanZ(30, 18 + o, 45, 8.5) + fanZ(54, 18 + o, 45, 8.5));
+    p.line(1, seg(P(12, 32 + o, 38), P(72, 32 + o, 38)));
+    p.blk(2, 64, 22 + o, 70, 28 + o, 45, 2.5, 0.8, 0.4);
+  });
+
+  // four RAM sticks beside the CPU, a ridge on each
+  part("ram", (o) => [[52, 4.5 + o, 60], [67, 13 + o, 82]], (p, o) => {
+    [52, 56, 60, 64].forEach((x, k) => p.blk(k, x, 4.5 + o, x + 2.4, 13 + o, 60, 22, 0.6, 0.3));
+    p.line(0, [52, 56, 60, 64].map((x) => seg(P(x + 1.2, 5.5 + o, 82), P(x + 1.2, 12 + o, 82))).join(""));
+  });
+
+  // the CPU under a tower cooler: fins, heat pipes over the top, a fan in front
+  part("cpu", (o) => [[30, 4.5 + o, 60], [49, 26 + o, 82]], (p, o) => {
+    p.blk(0, 30, 4.5 + o, 46, 26 + o, 60, 22, 1.5, 0.8);
     let d = "";
-    for (let k = 0; k < 8; k++) d += seg(P(50 + k * 5, D - 14, t), P(50 + k * 5, D - 6, t));
+    for (let z = 63; z < 82; z += 2.4) d += seg(P(31.5, 26 + o, z), P(44.5, 26 + o, z));
+    for (const x of [33, 36.5, 40, 43.5]) d += seg(P(x, 7 + o, 82), P(x, 24 + o, 82));
     p.line(0, d);
-    p.line(1, poly(face(D + 0.2, [[10, m + 3], [40, m + 3], [40, m + 6], [10, m + 6]])) + poly(face(D + 0.2, [[10, m - 4], [40, m - 4], [40, m - 1], [10, m - 1]])));
-    p.line(2, poly(ring(W - 14, m, 2.6, D + 0.2)), "nf");
-    p.led ||= flatDot(p.grp, C, 0.9, "dot m");
-    place(p.led, P(W - 24, D + 0.2, m));
+    p.blk(1, 46, 5 + o, 49, 25.5 + o, 61, 20, 1.5, 0.7);
+    p.line(1, [9, 6, 2.4].map((r) => ringX(49, 15.2 + o, 71, r)).join("")
+      + [0, 2.1, 4.2].map((a) => seg(P(49, 15.2 + o + Math.cos(a) * 2.4, 71 + Math.sin(a) * 2.4), P(49, 15.2 + o + Math.cos(a + 0.7) * 7.6, 71 + Math.sin(a + 0.7) * 7.6))).join(""), "nf lo");
   });
 
-  // the monitor on its stand; its screen faces us
-  const px = [];
-  const mon = part("screen", 3, (o) => [[8, 4, BASE + CASE + o], [W - 8, 20, BASE + CASE + 14 + MON + o]], (p, o) => {
-    const z = BASE + CASE + o, zp = z + 14, yf = 12.2;
-    p.blk(0, 34, 4, 66, 20, z, 1.5, 4, 1);
-    p.blk(1, 46, 7, 54, 11, z + 1.5, 13);
-    p.blk(2, 8, 6, W - 8, 12, zp, MON, 3, 1.2);
-    p.line(0, poly(face(yf, rrect(14, zp + 5, W - 14, zp + MON - 5, 2.5, 4).map((q) => [q.u, q.v]))), "nf");
-    if (!p.dots) {
-      p.dots = [];
-      PIXELS.forEach((row) => [...row].forEach((c) => {
-        const el = flatDot(p.grp, C, 0.95, c === "#" ? "dot" : "dot off");
-        p.dots.push(el);
-        if (c === "#") px.push(el);
-      }));
-      p.pow = flatDot(p.grp, C, 0.7, "dot m");
-    }
-    let k = 0;
-    PIXELS.forEach((row, r) => [...row].forEach((_, c) => place(p.dots[k++], P(23 + c * 7.7, yf, zp + MON - 10 - r * 4.4))));
-    place(p.pow, P(W - 12, yf, zp + 2.5));
+  // the vented top and the front panel: power, reset, USB, a light, vents
+  const led = [];
+  part("case", () => [[L - 4, 0, 0], [L, Wd, H]], (p) => {
+    p.blk(0, 0, 0, L, Wd, H - T, T, 3, 1);
+    p.blk(1, L - 4, 0, L, Wd, 0, H, 1.5, 0.7);
+    let top = "";
+    for (let x = 14; x <= 66; x += 4) top += seg(P(x, 8, H), P(x, 32, H));
+    p.line(1, top);
+    let d = ringX(L, 14, H - 10, 3) + ringX(L, 30, H - 10, 1.1);
+    for (const y of [8, 13]) d += poly([P(L, y, H - 18), P(L, y + 3, H - 18), P(L, y + 3, H - 16.6), P(L, y, H - 16.6)]);
+    for (let y = 8; y <= 32; y += 4) d += seg(P(L, y, 10), P(L, y, H - 26));
+    p.line(0, d, "nf");
+    if (!led.length) led.push(flatDot(p.grp, C, 0.9, "dot"));
+    place(led[0], P(L, 22, H - 10));
   });
 
-  // the keyboard and the mouse; apart, they slide toward us
-  part("keys", 1, (o) => [[8, KY + o, 0], [W + 12, KY + o + 24, 4]], (p, o) => {
-    const y = KY + o, t = 3.5;
-    p.blk(0, 8, y, W - 8, y + 24, 0, t, 3, 1.2);
-    let d = "";
-    for (let r = 0; r < 4; r++) for (let c = 0; c < 12; c++)
-      d += poly(rrect(13 + c * 6.3, y + 3 + r * 4.2, 17.6 + c * 6.3, y + 6.4 + r * 4.2, 0.8, 2).map((q) => P(q.u, q.v, t)));
-    p.line(0, d + poly(rrect(32, y + 20, W - 32, y + 22.4, 0.8, 2).map((q) => P(q.u, q.v, t))));
-    p.blk(1, W - 2, y + 4, W + 10, y + 20, 0, 3.5, 5, 1.2);
-    p.line(1, seg(P(W + 4, y + 4.5, 3.5), P(W + 4, y + 10, 3.5)));
+  // the glass side: only its edges show, and four thumbscrews
+  part("glass", (o) => [[0, Wd + o, 0], [L, Wd + 1.5 + o, H]], (p, o) => {
+    p.blk(0, 0, Wd + o, L, Wd + 1.5 + o, 0, H, 3, 0.6);
+    p.s[0].sil.classList.add("nf");
+    p.s[0].cr.classList.add("nf");
+    p.line(0, [[5, 5], [L - 5, 5], [5, H - 5], [L - 5, H - 5]].map(([x, z]) => ringY(x, Wd + 1.5 + o, z, 1.4)).join(""));
   });
 
-  // the cover lifts furthest: it has to clear the board it covers
-  const offset = (p, a, k = 0) => a * GAP * LIFTS[parts.indexOf(p)] + k * PICK;
+  const offset = (p, a, k = 0) => a * GAP * OUT[p.name] + k * PICK;
   const B = register(stage, (_dt, now) => {
     let moving = false;
     for (const p of parts) {
@@ -130,12 +142,11 @@ function mount({ stage, svg, read }, value) {
   });
   bag.add(B.unregister);
 
-  // each part's outline in its target pose, for the hit test
   let outlines = [];
   function aim(a, now) {
-    parts.forEach((p, i) => tset(p.tw, a, now, i * STEP));
+    parts.forEach((p, i) => tset(p.tw, a, now, (parts.length - 1 - i) * STEP));
     outlines = parts.map((p) => {
-      const [[x0, y0, z0], [x1, y1, z1]] = p.box(offset(p, a)), pts = [];
+      const [[x0, y0, z0], [x1, y1, z1]] = p.bounds(offset(p, a)), pts = [];
       for (const x of [x0, x1]) for (const y of [y0, y1]) for (const z of [z0, z1]) pts.push(P(x, y, z));
       return hull(pts);
     });
@@ -151,24 +162,25 @@ function mount({ stage, svg, read }, value) {
   };
 
   let act = -2;
-  /** Picks part i (-1: none): what is stacked above it lifts to show it. */
+  /** Picks part i (-1: none): it slides out, the glass makes way first. */
   function choose(i) {
     if (i === act) return;
     act = i;
-    const now = performance.now();
+    const now = performance.now(), gl = parts.length - 1, inner = i > 0 && i < gl && parts[i].name !== "case";
     parts.forEach((p, k) => {
-      const up = i < 0 ? 0 : i === 4 ? +(k === 4) : k === 4 ? 0 : i === 3 ? +(k === 3) : +(k > i);
-      tset(p.pk, up, now, Math.abs(k - Math.max(i, 0)) * PSTEP);
-      p.s.forEach((s) => s.sil.classList.toggle("hi", k === i));
+      const out = k === i && p.name !== "case" ? 1 : k === gl && inner ? 1.6 : 0;
+      tset(p.pk, out, now, Math.abs(k - Math.max(i, 0)) * PSTEP);
+      p.s.forEach((s) => s.sil.classList.toggle("hi", k === i || (p.name === "case" && parts[i]?.name === "case")));
     });
-    const lit = i < 0 || parts[i] === mon;
-    px.forEach((el) => el.classList.toggle("m", !lit));
+    led[0].setAttribute("class", i < 0 ? "dot" : "dot m");
     read.textContent = i < 0 ? "rest" : parts[i].name;
     B.wake();
   }
 
+  // nearest first: the parts inside, then the glass, then the case
+  const ORDER = [6, 5, 4, 3, 2, 1, 8, 7, 0];
   bag.add(pointer(stage, {
-    move: (pt) => choose([4, 3, 2, 1, 0].find((k) => inside(pt, outlines[k])) ?? -1),
+    move: (pt) => choose(ORDER.find((k) => inside(pt, outlines[k])) ?? -1),
     leave: () => choose(-1),
   }));
   aim(clamp(value, 0, 1), performance.now());
@@ -179,9 +191,9 @@ function mount({ stage, svg, read }, value) {
 
 hairline({
   name: "computer",
-  means: "A desktop computer that comes apart in layers: base, board, cover, monitor. The pointer picks a part and names it.",
+  means: "A tower PC, built: board, CPU and cooler, RAM, graphics card, drives, power supply. Parts slide out; the pointer picks one and names it.",
   rules: [1, 2, 4, 5],
   range: [0, 0.25, 1],
-  tour: [[200, 96], [212, 196], [150, 262], null],
+  tour: [[249, 70], [223, 139], [200, 177], null],
   mount,
 });

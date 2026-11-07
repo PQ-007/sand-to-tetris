@@ -1,10 +1,10 @@
 ---
-number: 9
+number: 1
 title: Bitfall
-summary: "The last layer: an original falling-block game in C Shard, on your OS, on the computer you built from transistors."
+summary: "The course's own falling-block game, in C Shard, on your OS, on the computer you built from transistors."
 ---
 
-Everything is in place: a CPU made of gates made of transistors, an assembler, a virtual machine, a language and an operating system. The last layer is a game. **Bitfall** is a falling-block puzzle we designed for this course: pieces drop into a well, and rows you complete disappear. It's written in C Shard, about 360 lines, in `games/bitfall.shard`, and it runs on the Machine page like any other program.
+Everything is in place: a CPU made of gates made of transistors, an assembler, a virtual machine, a language and an operating system. **Bitfall** is the game that runs on all of it: a falling-block puzzle we designed for this course, where pieces drop into a well and rows you complete disappear. It's written in C Shard, about 360 lines, in `games/bitfall.shard`, so every instruction it runs went through the compiler, translator and assembler you wrote, onto the OS you wrote.
 
 ## The game we designed
 
@@ -68,7 +68,7 @@ Press the right arrow while Bitfall runs, and follow it through everything you b
 
 The Machine page runs the CPU's fast model, the same behaviour your `cpu` and `computer` levels are checked against, so millions of instructions a second are no problem. In the editor, a fast model only replaces a design of yours after a match check proves the two agree.
 
-**[Play Bitfall on the Machine →](#/machine)**
+**[Play Bitfall on the Machine →](#/machine/bitfall)**
 
 ## Where falling blocks come from
 
@@ -87,6 +87,6 @@ The best-known falling-block puzzle is Tetris, which Alexey Pajitnov wrote in th
 - A game is a loop: read input, update the state on a timer, draw what changed.
 - Every layer of a computer is a small idea built on the one below it, and you built every one.
 
-**Next:** play, change the rules, or write a game of your own in C Shard. Every part of the machine underneath is yours.
+**Next:** play, change the rules, or write a game of your own, in C Shard or in C. Every part of the machine underneath is yours.
 
 </aside>

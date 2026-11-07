@@ -30,12 +30,24 @@ export interface LevelFile {
   toml: string;
 }
 
+/** A page of the Programs section (docs/programs/NN-id.md). */
+export type RenderedProgram = RenderedChapter & {
+  id: string;
+  untranslated?: boolean;
+};
+
 export interface SiteContent {
   /** `untranslated`: shown in English while this language's text is missing
    * (only for a language still being translated). */
   chapters: (RenderedChapter & { untranslated?: boolean })[];
+  programs: RenderedProgram[];
   glossary: GlossaryItem[];
 }
+
+/** A program page's id: its file name without the number, `02-wyrm.md` →
+ * `wyrm`. */
+export const programId = (file: string) =>
+  file.replace(/^\d+-/, "").replace(/\.md$/, "");
 
 /**
  * Reads hdl/levels/layerN/<id>/level.toml. Only level definitions are read:
@@ -177,10 +189,30 @@ export function loadContent(docsDir: string): LoadResult {
   const originals = new Map(
     names.map((n) => [n, read(join(chapterDir, n))] as const),
   );
-  const en = renderLanguage("en", glossary, sources, originals, "docs", errors);
+  const programDir = join(docsDir, "programs");
+  const programNames = existsSync(programDir)
+    ? readdirSync(programDir)
+        .filter((f) => f.endsWith(".md"))
+        .sort()
+    : [];
+  const programOriginals = new Map(
+    programNames.map((n) => [n, read(join(programDir, n))] as const),
+  );
+  const en = renderLanguage(
+    "en",
+    glossary,
+    sources,
+    originals,
+    programOriginals,
+    "docs",
+    errors,
+  );
 
   const ids = new Map(
     en.chapters.map((c, i) => [names[i] ?? "", c.headingIds] as const),
+  );
+  const programIds = new Map(
+    en.programs.map((c) => [`${c.id}`, c.headingIds] as const),
   );
   const content = { en } as Record<Lang, SiteContent>;
   for (const { lang, complete } of TRANSLATIONS) {
@@ -273,14 +305,47 @@ export function loadContent(docsDir: string): LoadResult {
         );
       translations.set(n, src);
     }
+    // The Programs pages: the same rules as chapters.
+    const programTr = new Map<string, string>();
+    const programFallback = new Set<string>();
+    for (const n of programNames) {
+      const path = join(dir, "programs", n);
+      if (!existsSync(path)) {
+        if (complete)
+          errors.push(
+            `${at}/programs/${n}: missing (translate docs/programs/${n})`,
+          );
+        else {
+          programTr.set(n, programOriginals.get(n) ?? "");
+          programFallback.add(programId(n));
+        }
+        continue;
+      }
+      const src = read(path);
+      const orig = programOriginals.get(n) ?? "";
+      if (tagsOf(src).join() !== tagsOf(orig).join())
+        errors.push(
+          `${at}/programs/${n}: uses demos ${tagsOf(src).join(", ") || "none"}, the original ${tagsOf(orig).join(", ") || "none"}`,
+        );
+      if (citesOf(src).join() !== citesOf(orig).join())
+        errors.push(
+          `${at}/programs/${n}: cites ${citesOf(src).join(", ") || "nothing"}, the original ${citesOf(orig).join(", ") || "nothing"}`,
+        );
+      programTr.set(n, src);
+    }
     const rendered = renderLanguage(
       lang,
       glossaryTr,
       sourcesTr,
       translations,
+      programTr,
       at,
       errors,
       ids,
+      programIds,
+    );
+    rendered.programs = rendered.programs.map((p) =>
+      programFallback.has(p.id) ? { ...p, untranslated: true } : p,
     );
     // Chapters still in English say so (by number: names line up 1:1).
     const untranslated = new Set(
@@ -306,9 +371,11 @@ function renderLanguage(
   glossary: GlossaryEntry[],
   sources: SourceEntry[],
   chapterSources: Map<string, string>,
+  programSources: Map<string, string>,
   dir: string,
   errors: string[],
   ids?: Map<string, string[]>,
+  programIds?: Map<string, string[]>,
 ): SiteContent {
   const { renderChapter, renderInline } = createRenderer({
     glossary,
@@ -331,6 +398,17 @@ function renderLanguage(
     );
   }
   chapters.sort((a, b) => a.number - b.number);
+  const programs: RenderedProgram[] = [];
+  for (const [name, src] of programSources) {
+    const id = programId(name);
+    const result = renderChapter(src, `${dir}/programs/${name}`, {
+      ids: programIds?.get(id),
+      routeBase: `#/programs/${id}`,
+    });
+    errors.push(...result.errors);
+    if (result.chapter) programs.push({ ...result.chapter, id });
+  }
+  programs.sort((a, b) => a.number - b.number);
   const file = `${dir}/glossary.yaml`;
   const items: GlossaryItem[] = glossary.map((g) => {
     const short = renderInline(g.short, `${file} (${g.id}.short)`);
@@ -352,5 +430,5 @@ function renderLanguage(
   });
   // Sorted by the term as shown in this language.
   items.sort((a, b) => a.term.localeCompare(b.term, lang));
-  return { chapters, glossary: items };
+  return { chapters, programs, glossary: items };
 }

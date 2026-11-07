@@ -330,6 +330,14 @@ pub fn lang_generate(program: &str, info: &str) -> Result<String, JsError> {
     js(to_json(Ok::<_, String>(lines)))
 }
 
+/// Compiles and assembles C (docs/C.md) → `Compiled` JSON: asm, sourceMap
+/// (C line per assembly line), code, data, codeMap (assembly line per ROM
+/// word), errors.
+#[wasm_bindgen(js_name = cBuild)]
+pub fn c_build(source: &str) -> Result<String, JsError> {
+    js(to_json(Ok::<_, String>(s2t_c::build(source))))
+}
+
 // ---- the Machine page: a program running on the reference CPU ---------------
 
 /// A running program: the reference CPU, RAM, screen and keyboard. Kept in

@@ -39,10 +39,11 @@ document.addEventListener("click", (e) => {
     ?.closest(".hero-figure")
     ?.querySelector<HTMLElement>(".hl-figure");
   if (!button || !figure) return;
-  const apart = button.dataset.apart !== "true";
-  button.dataset.apart = String(apart);
-  button.textContent = t(apart ? "home.putTogether" : "home.takeApart");
-  void figures?.then((m) => m.setFigureValue(figure, apart ? 1 : 0));
+  // The hourglass: let the sand run out (1), or turn it over to start again (0).
+  const ran = button.dataset.ran !== "true";
+  button.dataset.ran = String(ran);
+  button.textContent = t(ran ? "home.turnOver" : "home.runSand");
+  void figures?.then((m) => m.setFigureValue(figure, ran ? 1 : 0));
 });
 if (app)
   new MutationObserver(syncFigures).observe(app, {
@@ -69,12 +70,15 @@ function show(): void {
         ? "machine"
         : route.page === "glossary"
           ? "glossary"
-          : "learn";
+          : route.page === "programs"
+            ? "programs"
+            : "learn";
   document.querySelectorAll<HTMLElement>("[data-nav]").forEach((a) => {
     if (a.dataset.nav === section) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
   });
-  if (route.page === "chapter") trackSections(app);
+  if (route.page === "chapter" || (route.page === "programs" && route.program))
+    trackSections(app);
   if (route.page === "glossary") installGlossaryFilter(app);
   const done = () =>
     app.querySelector<HTMLElement>("h1")?.focus({ preventScroll: true });
@@ -94,9 +98,10 @@ function show(): void {
   ) {
     const page = route.page;
     const root = document.getElementById(`${page}-root`);
+    const example = route.page === "machine" ? route.example : undefined;
     const mount =
       page === "machine"
-        ? mountMachine
+        ? (r: HTMLElement) => mountMachine(r, example)
         : (r: HTMLElement) => mountWorkshop(r, page);
     if (root) void mount(root).then(done, (e) => showError(root, e));
     window.scrollTo(0, 0);

@@ -121,6 +121,20 @@ export function langErrorText(e: AsmError): string {
   return t(`lang.${e.code}` as Key, args);
 }
 
+/** A C error (docs/C.md) in the current language. English keeps the
+ * compiler's own message; elsewhere the code and args build the text, with
+ * `what` (a short code) spelled out where it is one. */
+export function cErrorText(e: AsmError): string {
+  if (getLang() === "en" || !(`c.${e.code}` in en)) return e.message;
+  const args: Record<string, string> = { ...e.args };
+  const what = args.what;
+  if (what && e.code === "unsupported" && `c.u.${what}` in en)
+    args.what = t(`c.u.${what}` as Key);
+  if (what && e.code === "expected" && `c.what.${what}` in en)
+    args.what = t(`c.what.${what}` as Key);
+  return t(`c.${e.code}` as Key, args);
+}
+
 /** A VM error (docs/VM.md) in the current language; a code the site
  * doesn't know (the learner's own, like "todo") keeps its message. */
 export function vmErrorText(e: AsmError): string {

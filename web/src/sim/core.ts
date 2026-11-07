@@ -18,6 +18,7 @@ import type {
   Report,
   SimView,
   StepsView,
+  CBuilt,
   LangCompiled,
   LangError,
   LangInfo,
@@ -129,6 +130,11 @@ export type VmRunner = wasm.VmRunner;
 /** Compiles C Shard with the reference compiler (to VM code). */
 export function langCompile(source: string): LangCompiled {
   return JSON.parse(wasm.langCompile(source)) as LangCompiled;
+}
+
+/** Compiles and assembles C (docs/C.md) with the reference compiler. */
+export function cBuild(source: string): CBuilt {
+  return JSON.parse(wasm.cBuild(source)) as CBuilt;
 }
 
 type Staged<T> = { ok: T } | { error: LangError };

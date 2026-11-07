@@ -410,6 +410,18 @@ export interface LangInfo {
 /** Same shape as the assembler's errors. */
 export type LangError = AsmError;
 
+/** A C program (docs/C.md), compiled and assembled (s2t_c::Compiled). */
+export interface CBuilt {
+  asm: string[];
+  /** For each assembly line, its C line (0: startup, library, runtime). */
+  sourceMap: number[];
+  code: number[];
+  data: number[];
+  /** For each ROM word, its 1-based assembly line. */
+  codeMap: number[];
+  errors: LangError[];
+}
+
 export interface LangCompiled {
   vm: string[];
   /** For each VM line, its source line (0: none). */
