@@ -80,7 +80,7 @@ export const en = {
   "home.tagline":
     "There is no magic, just abstraction layers built on top of one another.",
   "figure.computer":
-    "Line drawing of a tower PC, built: behind its glass side, a board with a CPU under a tower cooler, four RAM sticks, a graphics card with two fans and a power supply. The pointer picks a part and slides it out; the button takes the whole build apart.",
+    "Line drawing of a tower PC, built: on four feet, a vented top, a glass side held by thumbscrews; behind it a board with its heatsinks, a CPU under a tower cooler, four RAM sticks, a graphics card with two fans, a power supply and a cage of two drives; power, reset and USB in front. The pointer picks a part and slides it out; the button takes the whole build apart.",
   "figure.patch":
     "Line drawing of a patch panel: the cable under the pointer lifts, and its neighbours lean away. Building here is wiring.",
   "figure.laptop":
