@@ -46,9 +46,11 @@ import {
 import {
   builtFrom,
   memoryParts,
+  nextLevel,
   orderLevels,
   playLibrary,
   toolbox,
+  usedIn,
   type ToolboxItem,
 } from "./game";
 import { t, type Key } from "./i18n";
@@ -269,8 +271,10 @@ class PlayPage {
 
   private build(): void {
     const l = this.level;
-    const ordered = orderLevels(this.app.levels).map((e) => e.info.level.id);
-    const next = ordered[ordered.indexOf(l.id) + 1];
+    const next = nextLevel(
+      orderLevels(this.app.levels).map((e) => e.info.level),
+      l.id,
+    );
     this.root.innerHTML = `
       <div class="play-head">
         <nav class="crumbs" aria-label="${esc(t("play.crumbs"))}"><a href="#/levels">${esc(t("title.levels"))}</a> <span aria-hidden="true">/</span> ${esc(t("play.layerN", { n: l.layer }))} <span aria-hidden="true">/</span></nav>
@@ -847,7 +851,29 @@ class PlayPage {
       list.append(li);
     }
     if (needs.length) from.append(list);
-    return [kicker, from];
+    // What it's for: the levels built from it.
+    const users = usedIn(levels, this.level.id);
+    const used = el("div", { class: "built-from" });
+    if (!users.length)
+      used.append(
+        el(
+          "span",
+          { class: "muted" },
+          t(this.level.optional ? "levels.usedInNone" : "levels.usedInTop"),
+        ),
+      );
+    else {
+      used.append(el("span", { class: "muted" }, t("levels.usedIn")));
+      const ul = el("ul", { class: "tree-chips" });
+      for (const id of users) {
+        const lv = levelEntry(this.app, id)?.info.level;
+        const li = el("li");
+        li.append(el("span", { class: "chip" }, lv ? levelName(lv) : id));
+        ul.append(li);
+      }
+      used.append(ul);
+    }
+    return [kicker, from, used];
   }
 
   /** A toolbox item's name in the current language. */

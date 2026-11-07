@@ -10,7 +10,13 @@ import {
   type App,
 } from "./app";
 import { fingerprint } from "./fast";
-import { builtFrom, orderLevels, playLibrary, type Status } from "./game";
+import {
+  builtFrom,
+  orderLevels,
+  playLibrary,
+  usedIn,
+  type Status,
+} from "./game";
 import {
   layoutTree,
   NODE_H,
@@ -88,9 +94,11 @@ function swapHtml(a: App, id: string): string {
 
 /** The step to play next: the first open (or broken) one on the roadmap. */
 function nextStep(a: App, steps: Step[]): Step | undefined {
+  // Side quests are never "next": the path goes on without them.
+  const main = steps.filter((s) => !levelEntry(a, s.id)?.info.level.optional);
   return (
-    steps.find((s) => a.status[s.id] === "open") ??
-    steps.find((s) => a.status[s.id] === "broken")
+    main.find((s) => a.status[s.id] === "open") ??
+    main.find((s) => a.status[s.id] === "broken")
   );
 }
 
@@ -109,6 +117,23 @@ function builtFromHtml(a: App, step: Step): string {
         .join("")}</ul>`
     : `<span>${esc(t("levels.builtFromBase"))}</span>`;
   return `<div class="built-from"><span class="muted">${esc(t("levels.builtFrom"))}</span>${chips}</div>`;
+}
+
+/** What a level is for: "Used in: MUX16, Shifter, …" (names only). */
+function usedInHtml(a: App, id: string): string {
+  const all = a.levels.map((l) => l.info.level);
+  const users = usedIn(all, id).map((u) => {
+    const lv = levelEntry(a, u)?.info.level;
+    return lv ? levelName(lv) : u;
+  });
+  const optional = levelEntry(a, id)?.info.level.optional;
+  const shown =
+    users.length > 4
+      ? `${users.slice(0, 4).join(", ")} ${t("levels.usedInMore", { n: users.length - 4 })}`
+      : users.join(", ");
+  if (!users.length)
+    return `<p class="used-in muted">${esc(t(optional ? "levels.usedInNone" : "levels.usedInTop"))}</p>`;
+  return `<p class="used-in"><span class="muted">${esc(t("levels.usedIn"))}</span> ${esc(shown)}</p>`;
 }
 
 /**
@@ -156,6 +181,7 @@ function roadmapHtml(a: App): string {
                   </div>
                   <p>${esc(detailText(a, lv.id))}</p>
                   ${builtFromHtml(a, step)}
+                  ${usedInHtml(a, lv.id)}
                   ${swapHtml(a, lv.id)}
                 </li>`;
               })

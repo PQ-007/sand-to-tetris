@@ -307,12 +307,61 @@ fn check_all(root: &Path) -> Result<String, String> {
             }
         }
     }
+    let levels: Vec<&Level> = entries.iter().map(|e| &e.level).collect();
+    for problem in course_problems(&levels) {
+        ok = false;
+        lines.push(format!("✗ {problem}"));
+    }
     let text = lines.join("\n");
     if ok {
         Ok(text)
     } else {
         Err(text)
     }
+}
+
+/// The parts a level is built from (see `parts_match`).
+fn built_from(level: &Level) -> &[String] {
+    if level.layer < 2 {
+        &[]
+    } else {
+        &level.requires
+    }
+}
+
+/// Every level the course doesn't mark optional must be on the way to the
+/// finished computer: exactly one required level (the top) is built into
+/// nothing else, and every other required level is built into a required
+/// level. A required level never needs a side quest. (Dependencies have no
+/// cycles, so from any required level, following "is built into" upward
+/// always ends at the one top.)
+fn course_problems(levels: &[&Level]) -> Vec<String> {
+    let required = |id: &str| levels.iter().any(|l| l.id == id && !l.optional);
+    let mut problems = Vec::new();
+    let mut tops = Vec::new();
+    for l in levels.iter().filter(|l| !l.optional) {
+        let used = levels
+            .iter()
+            .any(|u| !u.optional && built_from(u).contains(&l.id));
+        if !used {
+            tops.push(l.id.as_str());
+        }
+        for r in built_from(l) {
+            if levels.iter().any(|o| &o.id == r) && !required(r) {
+                problems.push(format!(
+                    "{}: it's required but built from the side quest `{r}`",
+                    title(l)
+                ));
+            }
+        }
+    }
+    if tops.len() > 1 {
+        problems.push(format!(
+            "only the finished computer should be built into nothing, but so are: {}. Use each in a later level, or mark it `optional = true`",
+            tops.join(", ")
+        ));
+    }
+    problems
 }
 
 /// From Layer 2 up, a level's `requires` is also the list of parts it's
@@ -466,6 +515,39 @@ mod tests {
         let mut nand = level("nand", 1, &["a", "b"], &["out"]);
         nand.requires = vec!["not".into()];
         assert!(parts_match(&nand, &uses(&[("p", "pmos")])).is_empty());
+    }
+
+    #[test]
+    fn every_required_level_leads_to_the_top() {
+        use s2t_netlist::builder::level;
+        let lv = |id: &str, layer: u8, req: &[&str], optional: bool| {
+            let mut l = level(id, layer, &["a"], &["out"]);
+            l.requires = req.iter().map(|r| r.to_string()).collect();
+            l.optional = optional;
+            l
+        };
+        let not = lv("not", 1, &[], false);
+        let nand = lv("nand", 1, &["not"], false);
+        let and = lv("and", 2, &["nand", "not"], false);
+        let top = lv("top", 2, &["and"], false);
+        assert!(course_problems(&[&not, &nand, &and, &top]).is_empty());
+        // A required level nothing is built from is a second top.
+        let stray = lv("not16", 2, &["not"], false);
+        let found = course_problems(&[&not, &nand, &and, &top, &stray]);
+        assert_eq!(found.len(), 1);
+        assert!(found[0].contains("top, not16"), "{found:?}");
+        // As a side quest it's fine...
+        let side = lv("not16", 2, &["not"], true);
+        assert!(course_problems(&[&not, &nand, &and, &top, &side]).is_empty());
+        // ...but a required level can't need it.
+        let top2 = lv("top", 2, &["and", "not16"], false);
+        let found = course_problems(&[&not, &nand, &and, &top2, &side]);
+        assert!(found[0].contains("side quest `not16`"), "{found:?}");
+        // Layer 1's requires only set the order: NAND isn't "used" by it.
+        let only_order = lv("top", 2, &["and"], false);
+        let lonely = lv("nor", 1, &["not"], false);
+        let found = course_problems(&[&not, &nand, &and, &only_order, &lonely]);
+        assert!(found[0].contains("top, nor"), "{found:?}");
     }
 
     #[test]

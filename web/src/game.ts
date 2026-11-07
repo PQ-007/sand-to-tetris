@@ -22,8 +22,9 @@ export interface LevelEntry {
 
 /**
  * Levels in play order: the course roadmap (by layer, then stage by
- * stage), with requirements always first; levels the roadmap doesn't list
- * come after it, by name.
+ * stage; side quests stay where the roadmap puts them), with requirements
+ * always first; levels the roadmap doesn't list come after it, side
+ * quests last, by name.
  */
 export function orderLevels(levels: LevelEntry[]): LevelEntry[] {
   const byId = new Map(levels.map((l) => [l.info.level.id, l]));
@@ -44,8 +45,8 @@ export function orderLevels(levels: LevelEntry[]): LevelEntry[] {
     .sort(
       (a, b) =>
         a.info.level.layer - b.info.level.layer ||
-        Number(a.info.level.optional) - Number(b.info.level.optional) ||
         place(a) - place(b) ||
+        Number(a.info.level.optional) - Number(b.info.level.optional) ||
         a.info.level.id.localeCompare(b.info.level.id),
     )
     .forEach(visit);
@@ -163,6 +164,26 @@ export function playLibrary(
  */
 export function builtFrom(level: { layer: number; requires: string[] }) {
   return level.layer === 1 ? [] : level.requires;
+}
+
+/**
+ * The levels built from `id`: what the part is for. check-all makes sure
+ * every required level is used by a required level, up to the computer.
+ */
+export function usedIn(
+  levels: { id: string; layer: number; requires: string[] }[],
+  id: string,
+): string[] {
+  return levels.filter((l) => builtFrom(l).includes(id)).map((l) => l.id);
+}
+
+/** The next level to play after `id` in `order`, skipping side quests. */
+export function nextLevel(
+  order: { id: string; optional: boolean }[],
+  id: string,
+): string | undefined {
+  const at = order.findIndex((l) => l.id === id);
+  return order.slice(at + 1).find((l) => !l.optional)?.id;
 }
 
 export interface ToolboxItem {

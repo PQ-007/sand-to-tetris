@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   memoryParts,
   needsRecheck,
+  nextLevel,
   orderLevels,
   playLibrary,
   statuses,
   toolbox,
+  usedIn,
   type LevelEntry,
   type Progress,
 } from "../src/game";
@@ -209,6 +211,29 @@ describe("what a level may use", () => {
     // Layer 1 is built from bare transistors; its requires only set the
     // order (NOT is still there, behind "More parts").
     expect(picked("nand")).toEqual(["pmos", "nmos", "vdd", "gnd"]);
+  });
+
+  it("says which levels a part is used in (Layer 1's order doesn't count)", () => {
+    const levels = [
+      { id: "not", layer: 1, requires: [] },
+      { id: "nand", layer: 1, requires: ["not"] },
+      { id: "and", layer: 2, requires: ["nand", "not"] },
+      { id: "mux", layer: 2, requires: ["and", "not"] },
+    ];
+    expect(usedIn(levels, "not")).toEqual(["and", "mux"]);
+    expect(usedIn(levels, "and")).toEqual(["mux"]);
+    expect(usedIn(levels, "mux")).toEqual([]);
+  });
+
+  it("skips side quests when picking the next level", () => {
+    const order = [
+      { id: "xor", optional: false },
+      { id: "not16", optional: true },
+      { id: "and16", optional: false },
+    ];
+    expect(nextLevel(order, "xor")).toBe("and16");
+    expect(nextLevel(order, "not16")).toBe("and16");
+    expect(nextLevel(order, "and16")).toBeUndefined();
   });
 
   it("follows the course roadmap, not the alphabet", () => {

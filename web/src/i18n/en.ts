@@ -132,6 +132,11 @@ export const en = {
   "levels.step": "Step {n}",
   "levels.builtFrom": "Built from",
   "levels.builtFromBase": "Transistors, VDD and GND",
+  "levels.usedIn": "Used in",
+  "levels.usedInMore": "and {n} more",
+  "levels.usedInTop":
+    "Nothing: this is the finished computer. Bitfall runs on it.",
+  "levels.usedInNone": "Nothing later needs it: an optional warm-up.",
   "levels.justBuilt": "from the step before",
   "levels.nextUp": "Next up",
   "levels.continue": "Continue: step {n}, {name} →",

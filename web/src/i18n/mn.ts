@@ -124,6 +124,11 @@ export const mn: Record<keyof typeof en, Message> = {
   "levels.step": "Алхам {n}",
   "levels.builtFrom": "Ашиглах эд анги",
   "levels.builtFromBase": "Транзистор, VDD ба GND",
+  "levels.usedIn": "Ашиглагдах",
+  "levels.usedInMore": "ба өөр {n}",
+  "levels.usedInTop":
+    "Юунд ч биш: энэ бол бэлэн компьютер. Bitfall үүн дээр ажиллана.",
+  "levels.usedInNone": "Дараа нь юу ч үүнийг ашиглахгүй: заавал биш дасгал.",
   "levels.justBuilt": "өмнөх алхмаас",
   "levels.nextUp": "Дараагийнх",
   "levels.continue": "Үргэлжлүүлэх: алхам {n}, {name} →",
@@ -139,7 +144,7 @@ export const mn: Record<keyof typeof en, Message> = {
     "Эндээс эхлэн транзистор биш, хаалгаар бүтээнэ. AND, OR хийхэд NAND, NOT хангалттай, тэр хоёроос XOR гарна.",
   "stage.wide": "Нэг дор 16 бит",
   "stage.wide.intro":
-    "Компьютер 16 битийн үгээр ажиллана. Repeat ×16 саяхан бүтээсэн хаалгыг чинь бит бүрт нэг хувь болгон давтана.",
+    "Компьютер 16 битийн үгээр ажиллана. Давтах ×16 саяхан бүтээсэн хаалгыг чинь бит бүрт нэг хувь болгон давтана.",
   "stage.choose": "Дохио сонгох",
   "stage.choose.intro":
     "MUX нь хоёр дохионы алийг нь нэвтрүүлэхийг нэг утсаар шийдүүлнэ. Энэ үеийн MUX бүр өмнөх MUX-аас бүтнэ.",

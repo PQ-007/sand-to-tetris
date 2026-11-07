@@ -8,6 +8,7 @@ A bus is a bundle of wires carrying a whole number. Use your NOT with Repeat ×1
 inputs = ["a"]
 outputs = ["out"]
 requires = ["not"]
+optional = true
 widths = { a = 16, out = 16 }
 model = "not16"
 truth_table = """
