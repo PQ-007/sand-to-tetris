@@ -6,7 +6,8 @@ declare module "virtual:s2t-content" {
   >;
   export const levelFiles: import("../content/load").LevelFile[];
   /** Translated level names, goals and hints (English is in the files). */
-  export const levelText: {
-    mn: Record<string, import("../content/load").LevelText>;
-  };
+  export const levelText: Record<
+    "mn" | "ja",
+    Record<string, import("../content/load").LevelText>
+  >;
 }

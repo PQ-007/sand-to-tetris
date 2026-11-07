@@ -1,6 +1,6 @@
 import { FIGURES, figureSlot, pageFigure } from "./figures";
 import { CHAPTERS } from "./chapters";
-import { t, type Key } from "./i18n";
+import { getLang, t, type Key } from "./i18n";
 import { chapterHref, type Route } from "./router";
 import { site } from "./text";
 
@@ -111,7 +111,8 @@ function chapter(number: number): string {
         <p class="toc-top"><a href="${chapterHref(number)}">${esc(t("chapter.backToTop"))}</a></p>
       </details>
     </nav>
-    <article class="chapter-page">
+    <article class="chapter-page"${ch.untranslated ? ' lang="en"' : ""}>
+      ${ch.untranslated ? `<p class="notice" lang="${getLang()}">${esc(t("chapter.notTranslated"))}</p>` : ""}
       <header class="chapter-head${figure ? " with-figure" : ""}">
         <div>
           <p class="eyebrow">${esc(t("chapter.n", { n: ch.number }))}</p>

@@ -24,9 +24,12 @@ export function contentPlugin(docsDir: string, levelsDir: string): Plugin {
       // Level definitions only (level.toml) and their translated texts;
       // never reference solutions.
       const levelFiles = loadLevels(levels);
-      const mnText = resolve(levels, "mn.yaml");
-      this.addWatchFile(mnText);
-      const levelText = { mn: loadLevelText(mnText) };
+      const levelText: Record<string, ReturnType<typeof loadLevelText>> = {};
+      for (const lang of ["mn", "ja"]) {
+        const file = resolve(levels, `${lang}.yaml`);
+        this.addWatchFile(file);
+        levelText[lang] = loadLevelText(file);
+      }
       return (
         `export const content = ${JSON.stringify(content)};\n` +
         `export const levelFiles = ${JSON.stringify(levelFiles)};\n` +
@@ -41,7 +44,7 @@ export function contentPlugin(docsDir: string, levelsDir: string): Plugin {
           !f.startsWith(dir) &&
           !(
             f.startsWith(levels) &&
-            (f.endsWith("level.toml") || f.endsWith("mn.yaml"))
+            (f.endsWith("level.toml") || f.endsWith(".yaml"))
           )
         )
           return;

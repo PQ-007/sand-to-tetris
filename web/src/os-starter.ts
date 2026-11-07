@@ -204,7 +204,9 @@ fn random_below(n: int) -> int {
 `;
 }
 
+// Japanese: the English starter until it is translated (a later stage).
 export const OS_STARTERS: Record<Lang, string> = {
   en: starter(EN),
   mn: starter(MN),
+  ja: starter(EN),
 };

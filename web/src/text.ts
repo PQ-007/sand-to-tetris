@@ -8,14 +8,19 @@ export function site() {
   return content[getLang()];
 }
 
-const mn = () => (getLang() === "mn" ? levelText.mn : undefined);
+/** The level texts of the current language (none for English: the
+ * originals are in the level files). */
+const tr = () => {
+  const lang = getLang();
+  return lang === "en" ? undefined : levelText[lang];
+};
 
 export function levelName(level: Pick<Level, "id" | "name">): string {
-  return mn()?.[level.id]?.name || level.name;
+  return tr()?.[level.id]?.name || level.name;
 }
 
 export function levelGoal(level: Pick<Level, "id" | "goal">): string {
-  return mn()?.[level.id]?.goal || level.goal.trim();
+  return tr()?.[level.id]?.goal || level.goal.trim();
 }
 
 /** The level's hint for a kind of failure, in the current language. */
@@ -24,5 +29,5 @@ export function levelHint(
   kind: string,
   english: string | null,
 ): string | null {
-  return mn()?.[level.id]?.hints[kind] ?? english;
+  return tr()?.[level.id]?.hints[kind] ?? english;
 }

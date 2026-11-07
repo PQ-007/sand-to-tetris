@@ -121,4 +121,9 @@ export function runtime(): string[] {
 }
 `;
 
-export const TRANSLATOR_STARTERS: Record<Lang, string> = { en: EN, mn: MN };
+// Japanese: the English starter until it is translated (a later stage).
+export const TRANSLATOR_STARTERS: Record<Lang, string> = {
+  en: EN,
+  mn: MN,
+  ja: EN,
+};
