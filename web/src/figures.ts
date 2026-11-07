@@ -4,9 +4,9 @@
 // hairline.ts, loaded only when a page has one.
 //
 // Only where the figure's object is the page's idea. The home page shows
-// the course's own line: abstraction layers built on top of one another, a
-// stepped stack from sand to a game, which a button spreads apart and stacks
-// again (drawn for it: vendor/hairline/layers.js). Lockers, one opened by the pointer,
+// the site's name as one object: an hourglass whose sand settles as falling
+// blocks, which a button lets run and turns over (drawn for it:
+// vendor/hairline/hourglass.js). Lockers, one opened by the pointer,
 // are memory cells and an address; the call stack is the VM's; tiles
 // settling into a tree is parsing. Building is wiring (a patch panel); the
 // Programs are what glows on the screen (phosphor); the Machine page keeps
@@ -18,7 +18,7 @@
 // and a CPU with its die bare, the blocks of Chapter 4 on it.
 
 export type FigureName =
-  | "layers"
+  | "hourglass"
   | "computer"
   | "wafer"
   | "transistor"
@@ -56,7 +56,7 @@ export const FIGURES: {
   chapters: Record<number, FigureName>;
 } = {
   pages: {
-    home: "layers",
+    home: "hourglass",
     levels: "patch",
     programs: "phosphor",
     glossary: "loupe",

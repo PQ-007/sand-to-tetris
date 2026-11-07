@@ -50,8 +50,8 @@ function home(): string {
         </p>
       </div>
       <div class="hero-figure">
-        ${pageFigure("home", (n) => t(`figure.${n}`), "", 0)}
-        <button type="button" class="figure-toggle" data-figure-toggle data-apart="false">${esc(t("home.takeApart"))}</button>
+        ${pageFigure("home", (n) => t(`figure.${n}`), "", 0.6)}
+        <button type="button" class="figure-toggle" data-figure-toggle data-ran="false">${esc(t("home.runSand"))}</button>
       </div>
     </section>
     <section class="steps" aria-label="${esc(t("home.howItWorks"))}">

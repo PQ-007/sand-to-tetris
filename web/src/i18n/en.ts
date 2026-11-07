@@ -79,8 +79,8 @@ export const en = {
   "home.title": "From sand to Tetris",
   "home.tagline":
     "There is no magic, just abstraction layers built on top of one another.",
-  "figure.layers":
-    "Line drawing of the course as a stack of layers, each built on the one below: sand grains at the bottom, then transistors, gates, adders on a carry line, memory cells, a CPU with its pins, code, and on top a falling-block game, lit. The pointer picks a layer and lifts what it holds up; the button spreads the layers apart.",
+  "figure.hourglass":
+    "Line drawing of an hourglass: the sand in its top bulb runs through the neck, and in the bottom bulb the grains settle as blocks, rows of cubes, with a piece falling under the stream. The pointer picks a row and lifts it; the button lets the sand run out, then turns the hourglass over.",
   "figure.computer":
     "Line drawing of a tower PC, built: on four feet, a vented top, a glass side held by thumbscrews; behind it a board with its heatsinks, a CPU under a tower cooler, four RAM sticks, a graphics card with two fans, a power supply and a cage of two drives; power, reset and USB in front. The pointer picks a part and slides it out; the button takes the whole build apart.",
   "figure.patch":
@@ -122,8 +122,8 @@ export const en = {
   "figure.phosphor":
     "Line drawing of a seven by seven dot screen playing a loop; the pointer paints a trail that fades.",
   "home.start": "Start reading",
-  "home.takeApart": "Take it apart",
-  "home.putTogether": "Put it back together",
+  "home.runSand": "Let the sand run",
+  "home.turnOver": "Turn it over",
   "home.workbench": "Open the workbench",
   "home.programs": "Play the programs",
   "home.howItWorks": "How it works",

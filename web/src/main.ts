@@ -39,10 +39,11 @@ document.addEventListener("click", (e) => {
     ?.closest(".hero-figure")
     ?.querySelector<HTMLElement>(".hl-figure");
   if (!button || !figure) return;
-  const apart = button.dataset.apart !== "true";
-  button.dataset.apart = String(apart);
-  button.textContent = t(apart ? "home.putTogether" : "home.takeApart");
-  void figures?.then((m) => m.setFigureValue(figure, apart ? 1 : 0));
+  // The hourglass: let the sand run out (1), or turn it over to start again (0).
+  const ran = button.dataset.ran !== "true";
+  button.dataset.ran = String(ran);
+  button.textContent = t(ran ? "home.turnOver" : "home.runSand");
+  void figures?.then((m) => m.setFigureValue(figure, ran ? 1 : 0));
 });
 if (app)
   new MutationObserver(syncFigures).observe(app, {
