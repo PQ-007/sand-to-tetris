@@ -3335,6 +3335,16 @@ button.primary:hover:not(:disabled),
   flex-basis: 100%;
 }
 
+/* A figure inside a chapter's text: thumbnail-sized, centred. */
+line-figure {
+  display: block;
+}
+
+.chapter-page .hl-figure.inline {
+  max-width: 19rem;
+  margin: 0.5rem auto 1.25rem;
+}
+
 .narrow-page .hl-figure.lost {
   max-width: 16rem;
   margin: 0 0 -1rem;

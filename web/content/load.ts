@@ -130,9 +130,11 @@ const TRANSLATIONS: { lang: Exclude<Lang, "en">; complete: boolean }[] = [
   { lang: "ja", complete: false },
 ];
 
-/** The demo tags a chapter uses, in order. */
+/** The demo tags a chapter uses, in order (a figure with its name). */
 const tagsOf = (src: string) =>
-  [...src.matchAll(/^<([a-z0-9]+-[a-z0-9-]+)>/gm)].map((m) => m[1]);
+  [...src.matchAll(/^<([a-z0-9]+-[a-z0-9-]+)(?:\s+name="([^"]+)")?>/gm)].map(
+    (m) => (m[2] ? `${m[1]}:${m[2]}` : m[1]),
+  );
 /** Source ids a chapter cites. */
 const citesOf = (src: string) =>
   [...new Set([...src.matchAll(/\[@([a-z0-9-]+)\]/g)].map((m) => m[1]))].sort();

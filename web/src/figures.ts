@@ -31,7 +31,11 @@ export type FigureName =
   | "patch"
   | "laptop"
   | "loupe"
-  | "query";
+  | "query"
+  | "plug"
+  | "cabinet"
+  | "slow"
+  | "riffle";
 
 export type FigurePage =
   | "home"

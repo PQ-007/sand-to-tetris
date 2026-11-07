@@ -10,6 +10,8 @@ You now have every part a computer needs: an ALU that calculates, registers and 
 
 A program is a list of **[[instructions|instruction]]**, and an instruction is just a number. In our computer each one is a 16-bit word: some bits say *what* to do (add, store, jump), others say *with what* (which registers, which constant). A program stored as plain words is **[[machine code|machine-code]]**. People write it in **[[assembly language|assembly-language]]** instead, one short line per instruction:
 
+<line-figure name="riffle"></line-figure>
+
 ```
         SET  r0, 0        ; sum = 0
         SET  r1, 10       ; i = 10
@@ -88,6 +90,8 @@ Built entirely from your own gates, the reference CPU is about 4,300 gates, and 
 ## Memory and the computer
 
 The CPU talks to memory through four pins: addrM (an address, from the ALU), outM (a value to store), writeM (store now) and inM (the word read back). Behind those pins sits the **memory map**, which decides what each address means:
+
+<line-figure name="computer"></line-figure>
 
 | Addresses | What's there |
 |---|---|

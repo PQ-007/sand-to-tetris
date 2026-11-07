@@ -70,7 +70,7 @@ export const en = {
   "home.eyebrow": "A course in {n} chapters",
   "home.title": "From sand to Tetris",
   "home.tagline":
-    "Start with sand. Build switches, gates, memory, a CPU, a compiler and an operating system. Finish by playing Tetris on the computer you made.",
+    "There is no magic, just abstraction layers built on top of one another.",
   "figure.computer":
     "Line drawing of a desktop computer: a case with a power supply and a board inside (a CPU under its heatsink, RAM, capacitors), a monitor on its stand, a keyboard and a mouse. The pointer picks a part and lifts what's above it; the button takes it apart into layers.",
   "figure.patch":
@@ -89,6 +89,14 @@ export const en = {
     "Line drawing of eight one-bit adders in a row: point at a bit and the carry ripples to it from bit 0, one adder after another.",
   "figure.cpu":
     "Line drawing of a processor with its die bare: point at a block (the registers, the ALU, the shifter, the control unit, the program counter) and it lifts off the die.",
+  "figure.plug":
+    "Line drawing of a wall socket and a plug on the floor: the pointer draws the plug toward the socket. A constant is a wire tied to a supply.",
+  "figure.cabinet":
+    "Line drawing of a rack of twelve blades: the pointer's height pulls the nearest ones out on their rails, the way an address picks one bank of memory.",
+  "figure.slow":
+    "Line drawing of crates riding a belt through a gate, one at a time; hovering slows the clock without stopping it.",
+  "figure.riffle":
+    "Line drawing of a tray of eight cards, each with its number punched on its tab: the card under the pointer stands up, like an instruction word read from the program.",
   "figure.exploded":
     "Line drawing of an app pulled apart into layers, like the layers of this course. Move the pointer across it to open them.",
   "figure.lockers":

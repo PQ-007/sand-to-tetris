@@ -41,6 +41,8 @@ Build it on your SR latch: set it when d is 1 *and* en is 1, reset it when d is 
 
 A D latch is *transparent* while it's enabled: every wobble on d passes straight through. Now picture a whole computer of them, where one latch's output feeds the next one's input. A value could race through several latches during one enable pulse, and the result would depend on exactly how fast each gate is. We need memory that changes at one instant only.
 
+<line-figure name="slow"></line-figure>
+
 The answer is a **[[clock]]**: one signal, shared by the whole computer, that goes 0, 1, 0, 1 over and over. Memory is allowed to change only at a **[[clock edge|clock-edge]]**, the instant the clock rises from 0 to 1. Between edges everything holds still, and the logic in between has time to work out the next values.
 
 A **[[flip-flop]]** does this with two D latches in a row:
@@ -75,6 +77,8 @@ The *Test steps* view shows the level's whole test, and clicking a column replay
 ## RAM: memory with addresses
 
 A register holds one number. To hold many, you need a way to say *which* one: an **[[address]]**, like a house number. **[[RAM|ram]]** (random-access memory) is a set of registers where you can read or write any address as quickly as any other.
+
+<line-figure name="cabinet"></line-figure>
 
 RAM8 holds eight 16-bit registers, so its address is 3 bits (0 to 7). It needs two jobs done:
 

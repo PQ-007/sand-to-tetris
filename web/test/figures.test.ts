@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { en } from "../src/i18n/en";
+import { ja } from "../src/i18n/ja";
 import { mn } from "../src/i18n/mn";
 import { FIGURES, figureSlot } from "../src/figures";
 import { CHAPTERS } from "../src/chapters";
@@ -12,8 +13,36 @@ describe("hairline figures", () => {
 
   it("every figure has an accessible name in both languages", () => {
     for (const name of all)
-      for (const dict of [en, mn] as Record<string, unknown>[])
+      for (const dict of [en, mn, ja] as Record<string, unknown>[])
         expect(dict[`figure.${name}`], name).toBeTruthy();
+  });
+
+  it("every figure inside a chapter exists and has its labels", async () => {
+    const { readFileSync, readdirSync } = await import("node:fs");
+    const hairline = await import("@lucasmarkes/hairline");
+    const dir = new URL("../../docs/chapters/", import.meta.url);
+    const drawn = readdirSync(
+      new URL("../src/vendor/hairline/", import.meta.url),
+    )
+      .filter((f) => f.endsWith(".js") && f !== "kernel.js")
+      .map((f) => f.replace(/\.js$/, ""));
+    const used = readdirSync(dir).flatMap((f) =>
+      [
+        ...readFileSync(new URL(f, dir), "utf8").matchAll(
+          /<line-figure name="([^"]+)">/g,
+        ),
+      ].map((m) => m[1] ?? ""),
+    );
+    expect(used.length).toBeGreaterThan(0);
+    for (const name of used) {
+      expect(
+        typeof (hairline as Record<string, unknown>)[name] === "function" ||
+          drawn.includes(name),
+        name,
+      ).toBe(true);
+      for (const dict of [en, mn, ja] as Record<string, unknown>[])
+        expect(dict[`figure.${name}`], name).toBeTruthy();
+    }
   });
 
   it("only illustrates chapters that exist", () => {

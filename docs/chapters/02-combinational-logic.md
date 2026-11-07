@@ -34,6 +34,8 @@ Your CPU will be full of these. A multiplexer picks which register to read, or w
 
 To carry a number you need several wires, one per [[bit]] of its [[binary]] form. Thirteen is `1101` in binary (8 + 4 + 0 + 1), so it needs four wires. A bundle of wires carrying one number is a **[[bus]]**. In the editor a bus is one thick wire labelled with its number. The computer you'll build uses 16-bit buses, enough for numbers from 0 to 65,535.
 
+<line-figure name="patch"></line-figure>
+
 Two tools work with buses:
 
 - **[[Splitters and joiners|splitter-and-joiner]]**: a splitter separates a bus into its single-bit wires, numbered from bit 0 (the ones digit) upwards; a joiner gathers single bits back into a bus.

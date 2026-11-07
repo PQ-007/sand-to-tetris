@@ -51,6 +51,8 @@ Falling is timed with `ticks()`, the frame counter you added to the memory map, 
 
 Press the right arrow while Bitfall runs, and follow it through everything you built:
 
+<line-figure name="exploded"></line-figure>
+
 | Layer | What happens |
 |---|---|
 | Keyboard | the Machine page puts 130 at address 0x6000 |

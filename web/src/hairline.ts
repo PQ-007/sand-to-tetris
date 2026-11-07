@@ -5,6 +5,7 @@
 // (vendor/hairline), hosted here the way the skill's bench page hosts them.
 // Loaded lazily: only pages with a figure pay for it.
 import {
+  cabinet,
   exploded,
   keyboard,
   laptop,
@@ -12,8 +13,11 @@ import {
   loupe,
   patch,
   phosphor,
+  plug,
   query,
+  riffle,
   settle,
+  slow,
   stack,
   terminal,
   type Figure,
@@ -106,6 +110,7 @@ const DRAW: Record<
   FigureName,
   (el: HTMLElement, o: { label?: string }) => Figure
 > = {
+  cabinet,
   exploded,
   keyboard,
   laptop,
@@ -113,7 +118,10 @@ const DRAW: Record<
   loupe,
   patch,
   phosphor,
+  plug,
   query,
+  riffle,
+  slow,
   computer: host("computer"),
   wafer: host("wafer"),
   transistor: host("transistor"),
