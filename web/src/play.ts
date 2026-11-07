@@ -11,7 +11,7 @@ import {
   type MenuContext,
   type MenuTarget,
 } from "./editor/actions";
-import { CircuitCanvas, type CanvasProps } from "./editor/canvas";
+import { CircuitCanvas, partIcon, type CanvasProps } from "./editor/canvas";
 import {
   clampToCanvas,
   freeSpot,
@@ -47,6 +47,7 @@ import {
 } from "./game";
 import { t, type Key } from "./i18n";
 import { diagnosticText, knownText, problemText } from "./messages";
+import { roadmapSteps } from "./roadmap";
 import { playHref } from "./router";
 import { levelGoal, levelHint, levelName } from "./text";
 import { check, disassemble, simulate, simulateSteps } from "./sim/core";
@@ -283,18 +284,41 @@ class PlayPage {
       "aria-label": t("play.toolbox"),
     });
     toolbar.append(el("span", { class: "toolbar-label" }, t("play.parts")));
-    for (const tool of this.tools) {
+    // The parts this level is built from come first; everything else the
+    // learner has unlocked waits behind "More parts" (still usable).
+    const more = this.tools.filter((tool) => !tool.suggested);
+    const moreBtn = el("button", {
+      type: "button",
+      class: "more-tools",
+      "aria-expanded": "false",
+    });
+    const showMore = (open: boolean) => {
+      toolbar.classList.toggle("show-more", open);
+      moreBtn.setAttribute("aria-expanded", String(open));
+      moreBtn.textContent = open
+        ? t("play.fewerParts")
+        : t("play.moreParts", { n: more.length });
+    };
+    moreBtn.addEventListener("click", () =>
+      showMore(!toolbar.classList.contains("show-more")),
+    );
+    showMore(false);
+    const tools = [...this.tools.filter((tool) => tool.suggested), ...more];
+    for (const tool of tools) {
+      if (tool === more[0]) toolbar.append(moreBtn);
       const label = this.toolLabel(tool);
       const b = el(
         "button",
         {
           type: "button",
-          class: `tool${tool.primitive ? "" : " component"}`,
+          class: `tool${tool.primitive ? "" : " component"}${tool.suggested ? "" : " extra"}`,
           "data-kind": tool.kind,
           title: t("play.addTool", { name: label }),
         },
         label,
       );
+      const icon = partIcon(tool.kind, this.ports);
+      if (icon) b.prepend(icon);
       b.addEventListener("pointerdown", (e) => this.startPlacing(tool, e));
       // A click (mouse or keyboard) adds the part at a free spot, unless
       // this press was a drag that already dropped it on the canvas.
@@ -338,6 +362,7 @@ class PlayPage {
     });
     const goal = el("section", { class: "side-section goal-box" });
     goal.append(
+      ...this.pathInfo(),
       el("h2", {}, t("play.goal")),
       el("p", { class: "goal" }, levelGoal(l)),
     );
@@ -774,6 +799,47 @@ class PlayPage {
     const { design, id } = addPart(this.design, kind, freeSpot(taken));
     this.onChange(design, true);
     this.say(t("play.addedFree", { id }));
+  }
+
+  /**
+   * Where this level sits on the roadmap: "Step 14 of 43 · Choosing a
+   * signal", and the parts it's built from (linked), marking the ones the
+   * step before just made.
+   */
+  private pathInfo(): HTMLElement[] {
+    const levels = orderLevels(this.app.levels).map((e) => e.info.level);
+    const steps = roadmapSteps(levels);
+    const step = steps.find((s) => s.id === this.level.id);
+    if (!step) return [];
+    const kicker = el(
+      "p",
+      { class: "panel-kicker" },
+      `${t("play.stepOf", { n: step.n, total: steps.length })} · ${t(`stage.${step.stage.id}` as Key)}`,
+    );
+    const from = el("div", { class: "built-from" });
+    from.append(el("span", { class: "muted" }, t("levels.builtFrom")));
+    const needs = this.level.requires;
+    if (!needs.length) from.append(el("span", {}, t("levels.builtFromBase")));
+    const list = el("ul", { class: "tree-chips" });
+    for (const id of needs) {
+      const lv = levelEntry(this.app, id)?.info.level;
+      const fresh = step.fresh.includes(id);
+      const li = el("li");
+      li.append(
+        el(
+          "a",
+          {
+            href: playHref(id),
+            class: fresh ? "fresh" : "",
+            title: fresh ? t("levels.justBuilt") : "",
+          },
+          lv ? levelName(lv) : id,
+        ),
+      );
+      list.append(li);
+    }
+    if (needs.length) from.append(list);
+    return [kicker, from];
   }
 
   /** A toolbox item's name in the current language. */

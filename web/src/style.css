@@ -1226,6 +1226,176 @@ th {
   border-color: var(--error);
 }
 
+/* ---- Roadmap: stages of numbered steps along a rail ------------------ */
+
+.continue {
+  margin: 1rem 0 0;
+}
+
+.roadmap .layer {
+  margin-bottom: 2.5rem;
+}
+
+.stage {
+  margin: 0 0 1.75rem;
+  max-width: 52rem;
+}
+
+.stage-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.stage-head h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.125rem;
+}
+
+.stage-count {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.stage-intro {
+  margin: 0.25rem 0 0.875rem;
+  color: var(--muted);
+  max-width: 44rem;
+}
+
+/* One column of steps; a rail runs through the step numbers. */
+.road-steps {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 3rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.road-steps::before {
+  content: "";
+  position: absolute;
+  left: 1.0625rem;
+  top: 1.25rem;
+  bottom: 1.25rem;
+  width: 2px;
+  background: var(--border-strong);
+}
+
+.road-n {
+  position: absolute;
+  left: -3rem;
+  top: 0.875rem;
+  width: 2.125rem;
+  height: 2.125rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.road-step[data-status="passed"] .road-n {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.road-step[data-status="open"] .road-n,
+.road-step.next .road-n {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+}
+
+.level-card.road-step h4 {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.35;
+}
+
+.level-card.road-step h4 a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.level-card.road-step h4 a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+}
+
+.level-card.road-step.next {
+  border-width: 2px;
+}
+
+.step-tags {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pill-next {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent, #fff);
+}
+
+/* "Built from" chips: the parts a step uses; fresh = made one step ago. */
+.built-from {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin-top: 0.625rem;
+  font-size: 0.8125rem;
+}
+
+.built-from .chip,
+.built-from a {
+  display: inline-block;
+  padding: 0.125rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: inherit;
+  text-decoration: none;
+}
+
+.built-from .chip[data-status="passed"] {
+  border-color: color-mix(in srgb, var(--ok) 50%, var(--border));
+}
+
+.built-from .fresh {
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.built-from .fresh::before {
+  content: "↳ ";
+  color: var(--accent);
+}
+
+.goal-box .built-from {
+  margin: 0.375rem 0 1rem;
+}
+
+.goal-box .panel-kicker {
+  margin: 0;
+}
+
 .file-button {
   display: inline-flex;
   align-items: center;
@@ -1338,6 +1508,40 @@ th {
 .tool.component {
   border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
   background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+/* Parts this level isn't built from wait behind "More parts". */
+.toolbar:not(.show-more) .tool.extra {
+  display: none;
+}
+
+.tool.extra {
+  opacity: 0.85;
+}
+
+.more-tools {
+  border-style: dashed;
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.tool-icon {
+  width: 1.75rem;
+  height: 1.25rem;
+  flex: none;
+}
+
+.tool-icon .sym {
+  stroke-width: 3;
+}
+
+.tool-icon .box {
+  fill: var(--surface);
+  stroke-width: 3;
 }
 
 .ghost {
@@ -1702,6 +1906,24 @@ svg.circuit.wiring .pin-hit {
 .box.copy {
   stroke: var(--muted);
   stroke-width: 1.5;
+}
+
+/* Schematic symbols: gate bodies use .box; leads run from pins to them. */
+.sym.lead {
+  stroke-linecap: round;
+}
+
+.sym.clock {
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.sym-text {
+  fill: var(--muted) !important;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  pointer-events: none;
 }
 
 .part-label {

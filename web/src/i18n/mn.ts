@@ -119,7 +119,57 @@ export const mn: Record<keyof typeof en, Message> = {
     "Ашигладаг зүйлсийн нэг нь өөрчлөгдөж, одоо шалгалтыг давахгүй байна. Нээж шалтгааныг нь үзээрэй.",
   "levels.viewLabel": "Харагдац",
   "levels.viewTree": "Tech tree",
-  "levels.viewList": "Жагсаалт",
+  "levels.viewRoadmap": "Замын зураг",
+  "levels.roadmapLabel": "Хичээл алхам алхмаар",
+  "levels.step": "Алхам {n}",
+  "levels.builtFrom": "Ашиглах эд анги",
+  "levels.builtFromBase": "Транзистор, VDD ба GND",
+  "levels.justBuilt": "өмнөх алхмаас",
+  "levels.nextUp": "Дараагийнх",
+  "levels.continue": "Үргэлжлүүлэх: алхам {n}, {name} →",
+  "levels.stageDone": "Дууссан: {done}/{n}",
+  "stage.gates": "Унтраалгаас хаалга",
+  "stage.gates.intro":
+    "Нэг нь дээш, нөгөө нь доош татдаг хоёр транзистор NOT болно. Хосуудыг өөрөөр холбоход тэр л санаагаар NAND, NOR гарна.",
+  "stage.const": "Тогтмол дохио",
+  "stage.const.intro":
+    "VDD эсвэл GND-д холбосон утас тогтмол 1 эсвэл 0 болно. Дараагийн эд ангиуд үүнийг хэзээ ч өөрчлөгддөггүй оролтод ашиглана.",
+  "stage.logic": "NAND-аас логик",
+  "stage.logic.intro":
+    "Эндээс эхлэн транзистор биш, хаалгаар бүтээнэ. AND, OR хийхэд NAND, NOT хангалттай, тэр хоёроос XOR гарна.",
+  "stage.wide": "Нэг дор 16 бит",
+  "stage.wide.intro":
+    "Компьютер 16 битийн үгээр ажиллана. Repeat ×16 саяхан бүтээсэн хаалгыг чинь бит бүрт нэг хувь болгон давтана.",
+  "stage.choose": "Дохио сонгох",
+  "stage.choose.intro":
+    "MUX нь хоёр дохионы алийг нь нэвтрүүлэхийг нэг утсаар шийдүүлнэ. Энэ үеийн MUX бүр өмнөх MUX-аас бүтнэ.",
+  "stage.route": "Дохио илгээх",
+  "stage.route.intro":
+    "DMUX бол эсрэгээр эргүүлсэн MUX: нэг оролтыг sel сонгосон гаралт руу илгээнэ. RAM аль үгийг бичихээ үүгээр сонгоно.",
+  "stage.add": "Нэмэх",
+  "stage.add.intro":
+    "Хоёр бит, дараа нь гурван бит нэм, тэгээд 16 нэмэгчийг гинжлээд үг нэмэгч болго. Нэмэгч бүр саяхан бүтээснээсээ бүтнэ.",
+  "stage.alu": "ALU",
+  "stage.alu.intro":
+    "Бүгдийг нийлүүл: OR8WAY тэгийг илрүүлнэ, shifter битүүдийг шилжүүлнэ, ALU процессорын бүх тооцоог хийнэ.",
+  "stage.bit": "Нэг битийг санах",
+  "stage.bit.intro":
+    "Хаалганы гаралтыг оролт руу нь эргүүлж өгвөл санадаг болно. Алхам бүр өмнөхийнхөө сул талыг засаж, эцэст нь зөвхөн clock edge дээр өөрчлөгддөг болно.",
+  "stage.registers": "Регистрүүд",
+  "stage.registers.intro":
+    "16 Bit зэрэгцээд регистр болно. Найман регистр процессорын register file болно, тоолдог регистр бол програмын тоолуур.",
+  "stage.ram": "RAM",
+  "stage.ram.intro":
+    "Хаягтай регистрүүд RAM8 болно. Илүү том RAM бүр өмнөх RAM-ынхаа хувиудаас бүтнэ.",
+  "stage.control": "Удирдлага",
+  "stage.control.intro":
+    "Control unit заавар уншиж, процессорыг удирддаг бүх дохиог тохируулна.",
+  "stage.cpu": "Процессор",
+  "stage.cpu.intro":
+    "Control unit, register file, ALU, shifter, програмын тоолуурыг холбож, clock бүрт нэг заавар гүйцэтгэдэг процессор бүтээ.",
+  "stage.machine": "Компьютер",
+  "stage.machine.intro":
+    "RAM, дэлгэц, гарт хаяг өгөөд, тэр санах ойг процессортой холбо.",
   "levels.treeLabel":
     "Түвшнүүд tech tree хэлбэрээр: түвшин бүр өөрт хэрэгтэй түвшнүүдийн доор байрлана",
   "levels.treeHelp":
@@ -172,6 +222,9 @@ export const mn: Record<keyof typeof en, Message> = {
   "play.levelMap": "Түвшнүүд",
   "play.toolbox": "Toolbox",
   "play.parts": "Эд анги",
+  "play.moreParts": "Бусад эд анги ({n})",
+  "play.fewerParts": "Цөөн эд анги",
+  "play.stepOf": "Алхам {n}/{total}",
   "play.addTool": "Нэмэх: {name} (эсвэл canvas дээр чирж оруулна)",
   "play.undo": "Буцаах",
   "play.redo": "Дахих",

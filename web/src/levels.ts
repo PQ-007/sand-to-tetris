@@ -22,6 +22,7 @@ import { t, type Key } from "./i18n";
 import { matchCheck } from "./sim/core";
 import { parseProgressFile, progressFile, workshopFromFile } from "./progress";
 import { workshopStore } from "./workshop-store";
+import { roadmapSteps, type Step } from "./roadmap";
 import { playHref } from "./router";
 import { levelGoal, levelName } from "./text";
 
@@ -44,14 +45,14 @@ export async function mountLevels(root: HTMLElement): Promise<void> {
   render(root, a);
 }
 
-type View = "tree" | "list";
+type View = "roadmap" | "tree";
 const VIEW_KEY = "s2t-map-view";
 
 function savedView(): View {
   try {
-    return localStorage.getItem(VIEW_KEY) === "list" ? "list" : "tree";
+    return localStorage.getItem(VIEW_KEY) === "tree" ? "tree" : "roadmap";
   } catch {
-    return "tree";
+    return "roadmap";
   }
 }
 
@@ -85,37 +86,85 @@ function swapHtml(a: App, id: string): string {
     <p class="swap-result" data-swap-result="${id}" aria-live="polite"></p>`;
 }
 
-function listHtml(a: App): string {
-  const ordered = orderLevels(a.levels);
-  const layers = [...new Set(ordered.map((l) => l.info.level.layer))];
-  return layers
-    .map((layer) => {
-      const cards = ordered
-        .filter((l) => l.info.level.layer === layer)
-        .map((l) => {
-          const lv = l.info.level;
-          const st = a.status[lv.id] ?? "locked";
-          const title =
-            esc(levelName(lv)) +
-            (lv.optional
-              ? ` <span class="badge">${esc(t("levels.sideQuest"))}</span>`
-              : "");
-          return `<li class="level-card" data-status="${st}">
-            <div class="level-top">
-              <h3>${st === "locked" ? title : `<a href="${playHref(lv.id)}">${title}</a>`}</h3>
-              <span class="pill level-status pill-${st}">${esc(statusText(st))}</span>
-            </div>
-            <p>${esc(detailText(a, lv.id))}</p>
-            ${swapHtml(a, lv.id)}
-          </li>`;
+/** The step to play next: the first open (or broken) one on the roadmap. */
+function nextStep(a: App, steps: Step[]): Step | undefined {
+  return (
+    steps.find((s) => a.status[s.id] === "open") ??
+    steps.find((s) => a.status[s.id] === "broken")
+  );
+}
+
+/** The parts a level is built from, as chips; fresh ones are marked. */
+function builtFromHtml(a: App, step: Step): string {
+  const lv = levelEntry(a, step.id)?.info.level;
+  if (!lv) return "";
+  const chips = lv.requires.length
+    ? `<ul class="tree-chips">${lv.requires
+        .map((r) => {
+          const req = levelEntry(a, r)?.info.level;
+          const fresh = step.fresh.includes(r);
+          return `<li><span class="chip${fresh ? " fresh" : ""}" data-status="${a.status[r] ?? "locked"}"${fresh ? ` title="${esc(t("levels.justBuilt"))}"` : ""}>${esc(req ? levelName(req) : r)}</span></li>`;
         })
-        .join("");
+        .join("")}</ul>`
+    : `<span>${esc(t("levels.builtFromBase"))}</span>`;
+  return `<div class="built-from"><span class="muted">${esc(t("levels.builtFrom"))}</span>${chips}</div>`;
+}
+
+/**
+ * The course as a numbered path: layer by layer, stage by stage, each step
+ * saying what it's built from. The step to play next is marked.
+ */
+function roadmapHtml(a: App): string {
+  const steps = roadmapSteps(orderLevels(a.levels).map((l) => l.info.level));
+  const next = nextStep(a, steps);
+  const layers = [...new Set(steps.map((s) => s.stage.layer))];
+  return `<div class="roadmap" aria-label="${esc(t("levels.roadmapLabel"))}">${layers
+    .map((layer) => {
+      const stages = [
+        ...new Set(
+          steps.filter((s) => s.stage.layer === layer).map((s) => s.stage),
+        ),
+      ];
       return `<section class="layer">
-        <div class="section-head"><h2>${esc(t("levels.layer", { n: layer, name: layerName(layer) }))}</h2>
-</div>
-        <ol class="level-cards">${cards}</ol></section>`;
+        <div class="section-head"><h2>${esc(t("levels.layer", { n: layer, name: layerName(layer) }))}</h2></div>
+        ${stages
+          .map((stage) => {
+            const own = steps.filter((s) => s.stage === stage);
+            const done = own.filter((s) => a.status[s.id] === "passed").length;
+            const items = own
+              .map((step) => {
+                const lv = levelEntry(a, step.id)?.info.level;
+                if (!lv) return "";
+                const st = a.status[step.id] ?? "locked";
+                const title =
+                  esc(levelName(lv)) +
+                  (lv.optional
+                    ? ` <span class="badge">${esc(t("levels.sideQuest"))}</span>`
+                    : "");
+                const isNext = step === next;
+                return `<li class="level-card road-step${isNext ? " next" : ""}" data-status="${st}">
+                  <span class="road-n" aria-hidden="true">${step.n}</span>
+                  <div class="level-top">
+                    <h4><span class="visually-hidden">${esc(t("levels.step", { n: step.n }))}: </span>${st === "locked" ? title : `<a href="${playHref(lv.id)}">${title}</a>`}</h4>
+                    <span class="step-tags">${isNext ? `<span class="pill pill-next">${esc(t("levels.nextUp"))}</span>` : ""}<span class="pill level-status pill-${st}">${esc(statusText(st))}</span></span>
+                  </div>
+                  <p>${esc(detailText(a, lv.id))}</p>
+                  ${builtFromHtml(a, step)}
+                  ${swapHtml(a, lv.id)}
+                </li>`;
+              })
+              .join("");
+            return `<section class="stage" data-done="${done === own.length}">
+              <div class="stage-head"><h3>${esc(t(`stage.${stage.id}` as Key))}</h3>
+                <span class="stage-count">${esc(t("levels.stageDone", { done, n: own.length }))}</span></div>
+              <p class="stage-intro">${esc(t(`stage.${stage.id}.intro` as Key))}</p>
+              <ol class="road-steps">${items}</ol>
+            </section>`;
+          })
+          .join("")}
+      </section>`;
     })
-    .join("");
+    .join("")}</div>`;
 }
 
 function treeInput(a: App): TreeInput[] {
@@ -295,6 +344,15 @@ function wireTree(root: HTMLElement, a: App): void {
   if (selected) select(root, a, selected);
 }
 
+/** "Continue: Step 14 · MUX16 →", a link straight to the next step. */
+function continueHtml(a: App): string {
+  const steps = roadmapSteps(orderLevels(a.levels).map((l) => l.info.level));
+  const next = nextStep(a, steps);
+  const lv = next && levelEntry(a, next.id)?.info.level;
+  if (!next || !lv) return "";
+  return `<p class="continue"><a class="button primary" href="${playHref(next.id)}">${esc(t("levels.continue", { n: next.n, name: levelName(lv) }))}</a></p>`;
+}
+
 function render(root: HTMLElement, a: App): void {
   const view = savedView();
   const toggle = (v: View, key: Key) =>
@@ -305,8 +363,9 @@ function render(root: HTMLElement, a: App): void {
         <h1 tabindex="-1">${esc(t("levels.title"))}</h1>
         <p class="lead">${esc(t("levels.lead"))}</p>
         <div class="view-toggle" role="group" aria-label="${esc(t("levels.viewLabel"))}">
-          ${toggle("tree", "levels.viewTree")}${toggle("list", "levels.viewList")}
+          ${toggle("roadmap", "levels.viewRoadmap")}${toggle("tree", "levels.viewTree")}
         </div>
+        ${continueHtml(a)}
         ${view === "tree" ? `<p class="visually-hidden" id="tree-help">${esc(t("levels.treeHelp"))}</p>` : ""}
       </div>
       <section class="save-box" aria-labelledby="progress-h">
@@ -318,11 +377,11 @@ function render(root: HTMLElement, a: App): void {
         <p class="import-status" aria-live="polite"></p>
       </section>
     </div>
-    ${view === "tree" ? treeHtml(a) : listHtml(a)}`;
+    ${view === "tree" ? treeHtml(a) : roadmapHtml(a)}`;
   root.querySelectorAll<HTMLButtonElement>("[data-view]").forEach((b) =>
     b.addEventListener("click", () => {
       try {
-        localStorage.setItem(VIEW_KEY, b.dataset.view ?? "tree");
+        localStorage.setItem(VIEW_KEY, b.dataset.view ?? "roadmap");
       } catch {
         // Not saved; the view still switches for now.
       }

@@ -127,7 +127,57 @@ export const en = {
     "Something it uses changed and it no longer passes. Open it to see why.",
   "levels.viewLabel": "View",
   "levels.viewTree": "Tech tree",
-  "levels.viewList": "List",
+  "levels.viewRoadmap": "Roadmap",
+  "levels.roadmapLabel": "The course, step by step",
+  "levels.step": "Step {n}",
+  "levels.builtFrom": "Built from",
+  "levels.builtFromBase": "Transistors, VDD and GND",
+  "levels.justBuilt": "from the step before",
+  "levels.nextUp": "Next up",
+  "levels.continue": "Continue: step {n}, {name} →",
+  "levels.stageDone": "{done}/{n} done",
+  "stage.gates": "Gates from switches",
+  "stage.gates.intro":
+    "Two transistors, one pulling up and one pulling down, make NOT. Wire the pairs differently and the same idea gives NAND and NOR.",
+  "stage.const": "Fixed signals",
+  "stage.const.intro":
+    "A wire tied to VDD or GND is a constant 1 or 0. Later parts use them for inputs that never change.",
+  "stage.logic": "Logic from NAND",
+  "stage.logic.intro":
+    "From here on you build with gates, not transistors. NAND and NOT are enough for AND and OR, and those two give XOR.",
+  "stage.wide": "Sixteen bits at once",
+  "stage.wide.intro":
+    "The computer works on 16-bit words. Repeat ×16 stamps out the gate you just built, one copy per bit.",
+  "stage.choose": "Choosing a signal",
+  "stage.choose.intro":
+    "A MUX lets one wire decide which of two signals gets through. Each MUX in this stage is built from the one before it.",
+  "stage.route": "Sending a signal",
+  "stage.route.intro":
+    "A DMUX is a MUX turned around: one input, sent to the output that sel picks. RAM uses it to pick which word to write.",
+  "stage.add": "Adding",
+  "stage.add.intro":
+    "Add two bits, then three, then chain sixteen adders into a word adder. Each adder is made from the one you just built.",
+  "stage.alu": "The ALU",
+  "stage.alu.intro":
+    "Put it together: OR8WAY spots a zero, the shifter moves bits, and the ALU does all of the CPU's calculating.",
+  "stage.bit": "Remembering one bit",
+  "stage.bit.intro":
+    "Feed a gate's output back into its input and it remembers. Each step fixes a weakness of the one before, until it changes only on the clock edge.",
+  "stage.registers": "Registers",
+  "stage.registers.intro":
+    "Sixteen Bits side by side make a register. Eight registers make the CPU's register file, and a register that counts is the program counter.",
+  "stage.ram": "RAM",
+  "stage.ram.intro":
+    "Registers with an address make RAM8. Each bigger RAM is made from copies of the one before it.",
+  "stage.control": "Control",
+  "stage.control.intro":
+    "The control unit reads an instruction and sets every signal that steers the CPU.",
+  "stage.cpu": "The processor",
+  "stage.cpu.intro":
+    "Wire the control unit, register file, ALU, shifter and program counter into a CPU that runs one instruction per clock.",
+  "stage.machine": "The computer",
+  "stage.machine.intro":
+    "Give RAM, the screen and the keyboard their addresses, then connect that memory to the CPU.",
   "levels.treeLabel":
     "Levels as a tech tree: each level sits below the levels it needs",
   "levels.treeHelp":
@@ -179,6 +229,9 @@ export const en = {
   "play.levelMap": "Level map",
   "play.toolbox": "Toolbox",
   "play.parts": "Parts",
+  "play.moreParts": "More parts ({n})",
+  "play.fewerParts": "Fewer parts",
+  "play.stepOf": "Step {n} of {total}",
   "play.addTool": "Add {name} (or drag it onto the canvas)",
   "play.undo": "Undo",
   "play.redo": "Redo",

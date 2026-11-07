@@ -40,6 +40,7 @@ import {
   type Point,
   type Shape,
 } from "./geometry";
+import { hidesPinNames, symbolOf, symbolPaths } from "./symbols";
 import { formatValue, showValue } from "./values";
 import {
   addWire,
@@ -331,6 +332,16 @@ export class CircuitCanvas {
     return shapeOfPart(part, this.props.componentPorts);
   }
 
+  /** True if wires leave this pin downward (a selector's `sel`). */
+  private vertical(e: Endpoint): boolean {
+    if ("port" in e) return false;
+    const part = this.props.design.parts.find((p) => p.id === e.part);
+    if (!part) return false;
+    return Boolean(
+      this.shape(part).pins.find((p) => p.pin === e.pin)?.vertical,
+    );
+  }
+
   private point(e: Endpoint): Point | undefined {
     if ("port" in e) return this.portAt(e.port);
     const part = this.props.design.parts.find((p) => p.id === e.part);
@@ -398,7 +409,7 @@ export class CircuitCanvas {
       const bits = this.width(w.from);
       const bus = bits > 1;
       const shown = showValue(v, bits);
-      const pts = route(a, b);
+      const pts = route(a, b, this.vertical(w.from), this.vertical(w.to));
       const selected =
         this.selection?.kind === "wire" && this.selection.index === i;
       const wg = svg(
@@ -553,9 +564,23 @@ export class CircuitCanvas {
         break;
       }
       default: {
-        // A repeated component is drawn as a stack of copies.
+        // Gates, selectors and constants get their schematic symbol; other
+        // components are boxes. A repeated component is drawn as a stack
+        // of copies.
+        const sym = symbolOf(kind);
+        const paths = symbolPaths(sym, shape);
         const copies = stack ? [stack, stack / 2, 0] : [0];
-        for (const d of copies)
+        for (const d of copies) {
+          if (paths) {
+            const at = svg(
+              "g",
+              { transform: `translate(${d},${-d})`, class: d ? "copy" : "" },
+              g,
+            );
+            if (!d) svg("path", { d: paths.lines, class: "sym lead" }, at);
+            svg("path", { d: paths.body, class: d ? "box copy" : "box" }, at);
+            continue;
+          }
           svg(
             "rect",
             {
@@ -568,6 +593,30 @@ export class CircuitCanvas {
             },
             g,
           );
+        }
+        if (paths?.bubble)
+          svg(
+            "circle",
+            {
+              cx: paths.bubble[0],
+              cy: paths.bubble[1],
+              r: 4,
+              class: "box bubble",
+            },
+            g,
+          );
+        if (paths?.text)
+          svg(
+            "text",
+            {
+              x: paths.text.at[0],
+              y: paths.text.at[1],
+              "text-anchor": "middle",
+              class: "sym-text",
+            },
+            g,
+            paths.text.value,
+          );
         svg(
           "text",
           {
@@ -579,20 +628,62 @@ export class CircuitCanvas {
           g,
           `${name} ${id}`,
         );
+        const selector = sym.kind === "mux" || sym.kind === "dmux";
         for (const pin of shape.pins) {
+          const shared = part.shared?.includes(pin.pin);
+          // A symbol says what its pins are; only a shared pin needs a word.
+          if (hidesPinNames(sym) && !shared) continue;
+          // Single outputs of a selector go without a name, as on paper.
+          if (selector && pin.side === "right" && pin.pin === "out") continue;
+          const text = shared ? t("canvas.shared", { pin: pin.pin }) : pin.pin;
+          if (hidesPinNames(sym)) {
+            // No room inside a gate: above its incoming wire instead.
+            svg(
+              "text",
+              {
+                x: pin.at[0] - 4,
+                y: pin.at[1] - 5,
+                "text-anchor": "end",
+                class: "pin-label",
+              },
+              g,
+              text,
+            );
+            continue;
+          }
+          if (pin.side === "bottom") {
+            svg(
+              "text",
+              { x: pin.at[0] + 6, y: pin.at[1] - 2, class: "pin-label" },
+              g,
+              text,
+            );
+            continue;
+          }
           const right = pin.side === "right";
+          // A clock input gets the edge-triggered mark: a small triangle.
+          const clock = pin.pin === "clk" && !paths && !right;
+          if (clock)
+            svg(
+              "path",
+              {
+                d: `M${pin.at[0]},${pin.at[1] - 6} L${pin.at[0] + 9},${pin.at[1]} L${pin.at[0]},${pin.at[1] + 6}`,
+                class: "sym clock",
+              },
+              g,
+            );
+          // Inside a selector's narrow body, labels hug its edges.
+          const inset = selector ? 26 : clock ? 12 : 6;
           svg(
             "text",
             {
-              x: pin.at[0] + (right ? -6 : 6),
+              x: pin.at[0] + (right ? -inset : inset),
               y: pin.at[1] + 4,
               "text-anchor": right ? "end" : "start",
               class: "pin-label",
             },
             g,
-            part.shared?.includes(pin.pin)
-              ? t("canvas.shared", { pin: pin.pin })
-              : pin.pin,
+            text,
           );
         }
       }
@@ -1165,6 +1256,32 @@ export class CircuitCanvas {
 
 /** CSS class for a value: v0, v1, vZ, vX for bits; buses are vbus unless
  * some bit is unknown (vX) or floating (vZ). */
+/** A small picture of a part's schematic symbol, for the toolbox (null for
+ * parts drawn as plain boxes). */
+export function partIcon(
+  kind: string,
+  ports: ComponentPorts,
+): SVGSVGElement | null {
+  const shape = shapeOfPart({ kind }, ports);
+  const paths = symbolPaths(symbolOf(kind), shape);
+  if (!paths) return null;
+  const h = shape.height / 2 + 2;
+  const icon = svg("svg", {
+    viewBox: `-42 ${-h} 84 ${2 * h}`,
+    class: "tool-icon",
+    "aria-hidden": "true",
+  });
+  svg("path", { d: paths.lines, class: "sym lead" }, icon);
+  svg("path", { d: paths.body, class: "box" }, icon);
+  if (paths.bubble)
+    svg(
+      "circle",
+      { cx: paths.bubble[0], cy: paths.bubble[1], r: 4, class: "box" },
+      icon,
+    );
+  return icon;
+}
+
 export function valueClass(v: string): string {
   if (v === "0" || v === "1" || v === "Z" || v === "X") return `v${v}`;
   if (v.includes("X")) return "vX";

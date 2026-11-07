@@ -196,6 +196,35 @@ describe("what a level may use", () => {
     ]);
   });
 
+  it("suggests the parts a level is built from, and splitters only for buses", () => {
+    const wide = entry("and16", 2, ["nand"]);
+    wide.info.level.widths = { a: 16 };
+    const levels = [...LEVELS, entry("mux", 2, ["nand"]), wide];
+    const picked = (id: string) =>
+      toolbox(levels, s, id)
+        .filter((t) => t.suggested)
+        .map((t) => t.kind);
+    expect(picked("mux")).toEqual(["nand"]);
+    expect(picked("and16")).toEqual(["split", "join", "nand"]);
+    // Layer 1 always offers the bare transistors, plus what it requires.
+    expect(picked("nand")).toEqual(["pmos", "nmos", "vdd", "gnd", "not"]);
+  });
+
+  it("follows the course roadmap, not the alphabet", () => {
+    const levels = [
+      entry("mux16", 2, ["mux"]),
+      entry("and16", 2, ["and"]),
+      entry("mux", 2, ["and"]),
+      entry("and", 2),
+    ];
+    expect(orderLevels(levels).map((l) => l.info.level.id)).toEqual([
+      "and",
+      "and16",
+      "mux",
+      "mux16",
+    ]);
+  });
+
   it("the play library holds passed designs except the level itself", () => {
     const lib = playLibrary(LEVELS, progress, s, "nand");
     expect(lib.unlocked.map((d) => d.component)).toEqual(["not"]);
