@@ -693,3 +693,18 @@
   term: "Game loop"
   short: "The loop at the heart of a game: read the input, update the game on a timer, draw what changed, again and again."
   see: [collision-detection]
+
+- id: fixed-point
+  term: "Fixed point"
+  short: "Fractions with whole numbers: store a value times a fixed scale (say 16 or 256), so 1.5 at scale 16 is 24. Machines without floating point use it for smooth motion and angles."
+  see: [twos-complement]
+
+- id: double-buffering
+  term: "Double buffering"
+  short: "Drawing a frame into a copy of the screen in memory, then showing the copy all at once, so the viewer never sees a half-drawn frame."
+  see: [memory-mapped-io, game-loop]
+
+- id: ray-casting
+  term: "Ray casting"
+  short: "Drawing a 3D view from a 2D map: for each column of the screen, follow a ray from the player until it meets a wall; the nearer the wall, the taller its column."
+  see: [fixed-point]

@@ -39,6 +39,20 @@ describe("parseRoute", () => {
   });
   it("knows the machine and the assembler workshop", () => {
     expect(parseRoute("#/machine")).toEqual({ page: "machine" });
+    expect(parseRoute("#/machine/wyrm")).toEqual({
+      page: "machine",
+      example: "wyrm",
+    });
+    expect(parseRoute("#/programs")).toEqual({ page: "programs" });
+    expect(parseRoute("#/programs/prowl")).toEqual({
+      page: "programs",
+      program: "prowl",
+    });
+    expect(parseRoute("#/programs/prowl/s/three-ways-to-hunt")).toEqual({
+      page: "programs",
+      program: "prowl",
+      anchor: "three-ways-to-hunt",
+    });
     expect(parseRoute("#/assembler")).toEqual({ page: "assembler" });
     expect(parseRoute("#/translator")).toEqual({ page: "translator" });
     expect(parseRoute("#/compiler")).toEqual({ page: "compiler" });

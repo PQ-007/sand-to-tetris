@@ -478,7 +478,7 @@ fn unsupported(line: usize, what: &str) -> CError {
         line,
         "unsupported",
         format!("{what} isn't supported here (docs/C.md lists what is)"),
-        &[("what", what.to_string())],
+        &[("what", crate::unsupported_code(what).to_string())],
     )
 }
 

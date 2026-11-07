@@ -63,6 +63,6 @@ Early computers ran one job and then waited for an operator to load the next one
 - Time comes from outside the CPU, so programs run at the same speed on any machine.
 - Random numbers in a computer come from a formula; the seed decides the sequence.
 
-**Next:** in Chapter 9 you'll write Tetris in C Shard, on your OS, on the computer you built from transistors.
+**Next:** [the Programs](#/programs). Bitfall, our falling-block game, in C Shard on your OS; and seven more games in C, compiled straight to assembly, all on the computer you built from transistors.
 
 </aside>

@@ -42,6 +42,49 @@ impl CError {
     }
 }
 
+/// The short code (`args.what`) for something unsupported, so other
+/// languages can name it (`c.u.<code>` on the site).
+pub(crate) fn unsupported_code(what: &str) -> &'static str {
+    let table = [
+        ("variadic macros", "variadic-macro"),
+        ("## in a macro", "paste"),
+        ("# in a macro", "stringize"),
+        ("long", "long"),
+        ("floating point", "float"),
+        ("bit-fields", "bit-fields"),
+        ("variadic functions", "variadic"),
+        ("returning a struct", "struct-return"),
+        ("passing a struct", "struct-param"),
+        ("this struct value", "struct-value"),
+        ("a member of a struct value", "struct-member"),
+    ];
+    table
+        .iter()
+        .find(|(p, _)| what.starts_with(p))
+        .map_or("other", |(_, c)| c)
+}
+
+/// The short code (`args.what`) for what the parser expected: a symbol in
+/// backticks stays as written, a phrase becomes a code (`c.what.<code>`).
+pub(crate) fn expected_code(what: &str) -> String {
+    let table = [
+        ("a name", "name"),
+        ("one type", "one-type"),
+        ("a type", "type"),
+        ("a struct name", "struct-name"),
+        ("a member name", "member"),
+        ("a value", "value"),
+        ("an operator", "operator"),
+    ];
+    if what.starts_with('`') {
+        return what.to_string();
+    }
+    table
+        .iter()
+        .find(|(p, _)| what.starts_with(p))
+        .map_or(what.to_string(), |(_, c)| c.to_string())
+}
+
 impl std::fmt::Display for CError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.line > 0 {

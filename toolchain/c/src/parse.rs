@@ -159,7 +159,7 @@ impl Parser {
             self.line(),
             "expected",
             format!("expected {what} here, not {found}"),
-            &[("what", what.to_string()), ("found", found)],
+            &[("what", crate::expected_code(what)), ("found", found)],
         )
     }
     fn expect(&mut self, p: &str) -> R<()> {
@@ -2169,7 +2169,7 @@ fn unsupported(line: usize, what: &str) -> CError {
         line,
         "unsupported",
         format!("{what} isn't supported here (docs/C.md lists what is)"),
-        &[("what", what.to_string())],
+        &[("what", crate::unsupported_code(what).to_string())],
     )
 }
 

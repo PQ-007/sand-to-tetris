@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { setLang } from "../src/i18n";
-import { diagnosticText, problemText } from "../src/messages";
+import { cErrorText, diagnosticText, problemText } from "../src/messages";
 import type { Diagnostic, Problem } from "../src/sim/types";
 
 const problem = (code: string, args: Record<string, string>): Problem => ({
@@ -101,6 +101,39 @@ describe("checker messages in the learner's language", () => {
         rows: 4,
       }),
     ).toMatch(/^2-р мөр: .* floating байна/);
+    setLang("en");
+  });
+});
+
+describe("C errors in the learner's language", () => {
+  const e = (code: string, args: Record<string, string>, message = "msg") => ({
+    line: 3,
+    code,
+    args,
+    message,
+  });
+
+  it("keeps the compiler's English and builds other languages from codes", () => {
+    setLang("en");
+    expect(
+      cErrorText(e("unknown-name", { name: "y" }, "y isn't declared")),
+    ).toBe("y isn't declared");
+    setLang("mn");
+    expect(cErrorText(e("unknown-name", { name: "y" }))).toBe(
+      "Зарлагдаагүй нэр: y",
+    );
+    // `what` is a short code, spelled out in the language.
+    expect(cErrorText(e("unsupported", { what: "float" }))).toContain(
+      "fixed-point int",
+    );
+    expect(cErrorText(e("expected", { what: "value", found: ";" }))).toBe(
+      "Энд утга байх ёстой, гэтэл: ;",
+    );
+    expect(cErrorText(e("expected", { what: "`)`", found: ";" }))).toBe(
+      "Энд `)` байх ёстой, гэтэл: ;",
+    );
+    // A code the site doesn't know keeps the compiler's message.
+    expect(cErrorText(e("brand-new", {}, "as written"))).toBe("as written");
     setLang("en");
   });
 });

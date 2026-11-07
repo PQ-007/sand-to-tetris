@@ -5,7 +5,12 @@ import { keyCode } from "../src/machine";
 import { BUILTIN_OS, withOs } from "../src/os";
 import { en } from "../src/i18n/en";
 import { mn } from "../src/i18n/mn";
-import type { AsmProgram, LangCompiled, VmBuilt } from "../src/sim/types";
+import type {
+  AsmProgram,
+  CBuilt,
+  LangCompiled,
+  VmBuilt,
+} from "../src/sim/types";
 import * as wasm from "../src/sim/pkg/s2t_wasm.js";
 
 const assemble = (src: string) =>
@@ -42,12 +47,67 @@ describe("Machine page examples", () => {
     return b.program;
   };
 
+  /** A C example, compiled and assembled (as the page does). */
+  const c = (id: string): AsmProgram => {
+    const b = JSON.parse(
+      wasm.cBuild(EXAMPLES.find((e) => e.id === id)!.source),
+    ) as CBuilt;
+    expect(b.errors, id).toEqual([]);
+    return { ...b, symbols: {}, sourceMap: b.codeMap };
+  };
+
   it("every example builds", () => {
     for (const ex of EXAMPLES)
       if (ex.lang === "asm")
         expect(assemble(ex.source).errors, ex.id).toEqual([]);
       else if (ex.lang === "vm") build(ex.id);
+      else if (ex.lang === "c") c(ex.id);
       else shard(ex.id);
+  });
+
+  it("C maps every ROM word back to a C line through its assembly", () => {
+    const b = JSON.parse(
+      wasm.cBuild(EXAMPLES.find((e) => e.id === "c-hello")!.source),
+    ) as CBuilt;
+    expect(b.codeMap.length).toBe(b.code.length);
+    expect(b.sourceMap.length).toBe(b.asm.length);
+    // Some instruction comes from the draw_text line (line 7).
+    const lines = b.codeMap.map((l) => b.sourceMap[l - 1]);
+    expect(lines).toContain(7);
+  });
+
+  it("C errors are reported on their line, with a code", () => {
+    const b = JSON.parse(
+      wasm.cBuild("int main(void) {\n  return y;\n}"),
+    ) as CBuilt;
+    expect(b.errors.map((e) => [e.line, e.code])).toEqual([
+      [2, "unknown-name"],
+    ]);
+  });
+
+  it("every C game shows its title, starts on a key and keeps running", () => {
+    for (const id of [
+      "wyrm",
+      "rally",
+      "shatter",
+      "swarm",
+      "debris",
+      "prowl",
+      "corridors",
+    ]) {
+      const m = machine(c(id));
+      m.run(2_000_000);
+      const title = Array.from(m.screen()).some((w) => w !== 0);
+      expect(title, `${id}: the title screen`).toBe(true);
+      m.setKey(65);
+      m.run(100_000);
+      m.setKey(0);
+      for (let f = 1; f < 30; f++) {
+        m.setTimer(f);
+        m.run(200_000);
+      }
+      expect(m.halted(), `${id}: the game loop keeps running`).toBe(false);
+    }
   });
 
   it("Bitfall shows its title, starts on a key and draws the board", () => {

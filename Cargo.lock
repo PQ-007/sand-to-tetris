@@ -179,6 +179,7 @@ name = "s2t-wasm"
 version = "0.1.0"
 dependencies = [
  "s2t-asm",
+ "s2t-c",
  "s2t-checker",
  "s2t-isa",
  "s2t-lang",

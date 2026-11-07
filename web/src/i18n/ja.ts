@@ -14,6 +14,7 @@ export const ja: Record<keyof typeof en, Message> = {
   "nav.learn": "学ぶ",
   "nav.build": "作る",
   "nav.glossary": "用語集",
+  "nav.programs": "プログラム",
   "nav.language": "言語",
   "theme.toDark": "ダークテーマ",
   "theme.toLight": "ライトテーマ",
@@ -27,6 +28,16 @@ export const ja: Record<keyof typeof en, Message> = {
   "page.error": "このページの読み込み中に問題が起きました",
   "page.loading": "読み込み中…",
   "title.glossary": "用語集",
+  "title.programs": "プログラム",
+  "programs.lead":
+    "あなたが作ったコンピュータのために書かれたゲームとプログラム。遊んで、読んで、書き換えられます。",
+  "programs.intro":
+    "Bitfall は一緒に設計した言語 C Shard で、あなたの OS の上に書かれています。ほかは日々使われている言語 C で書かれ、アセンブリへ直接コンパイルされます: このマシンにできる最大限です。どれもマシンのページで動き、ソースは自由に書き換えられます。",
+  "programs.play": "マシンで遊ぶ",
+  "programs.try": "マシンで試す",
+  "programs.listLabel": "プログラム",
+  "programs.lang.c": "C",
+  "programs.lang.shard": "C Shard",
   "title.levels": "レベル",
   "title.level": "レベル",
   "title.notFound": "見つかりません",
@@ -56,9 +67,6 @@ export const ja: Record<keyof typeof en, Message> = {
   "outline.7.summary": "一緒に設計する言語 C Shard と、そのコンパイラ。",
   "outline.8.title": "オペレーティングシステム",
   "outline.8.summary": "画面、文字、キーボード、タイマー、乱数を C Shard で。",
-  "outline.9.title": "Bitfall",
-  "outline.9.summary":
-    "自分で作ったコンピュータで遊ぶ、オリジナルの落ち物ゲーム。",
 
   // ---- ホーム ----
   "home.eyebrow": "全 {n} 章のコース",
@@ -109,6 +117,7 @@ export const ja: Record<keyof typeof en, Message> = {
   "home.takeApart": "分解する",
   "home.putTogether": "組み立て直す",
   "home.workbench": "作業台を開く",
+  "home.programs": "プログラムで遊ぶ",
   "home.howItWorks": "進め方",
   "home.read": "読む",
   "home.readText":

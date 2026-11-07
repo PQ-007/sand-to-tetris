@@ -8,7 +8,8 @@
 // layers and puts back together (drawn for it: vendor/hairline/computer.js). Lockers, one opened by the pointer,
 // are memory cells and an address; the call stack is the VM's; tiles
 // settling into a tree is parsing. Building is wiring (a patch panel); the
-// Machine runs on the computer you built (a laptop); the glossary is for
+// Programs are what glows on the screen (phosphor); the Machine page keeps
+// its room for the screen itself; the glossary is for
 // looking words up (a loupe); a missing page is a question. A workshop gets
 // its chapter's figure. Chapters the package has no figure for got one
 // drawn for them: a wafer ruled into dies (sand to silicon), a transistor
@@ -40,7 +41,7 @@ export type FigureName =
 export type FigurePage =
   | "home"
   | "levels"
-  | "machine"
+  | "programs"
   | "glossary"
   | "notFound"
   | "assembler"
@@ -55,7 +56,7 @@ export const FIGURES: {
   pages: {
     home: "computer",
     levels: "patch",
-    machine: "laptop",
+    programs: "phosphor",
     glossary: "loupe",
     notFound: "query",
     assembler: "terminal",
@@ -73,7 +74,6 @@ export const FIGURES: {
     6: "stack",
     7: "settle",
     8: "keyboard",
-    9: "phosphor",
   },
 };
 

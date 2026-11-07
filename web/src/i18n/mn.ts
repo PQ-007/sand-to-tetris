@@ -13,6 +13,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "nav.learn": "Суралцах",
   "nav.build": "Бүтээх",
   "nav.glossary": "Нэр томьёо",
+  "nav.programs": "Програмууд",
   "nav.language": "Хэл",
   "theme.toDark": "Харанхуй загвар",
   "theme.toLight": "Гэгээлэг загвар",
@@ -26,6 +27,16 @@ export const mn: Record<keyof typeof en, Message> = {
   "page.error": "Энэ хуудсыг ачаалахад алдаа гарлаа",
   "page.loading": "Ачаалж байна…",
   "title.glossary": "Нэр томьёо",
+  "title.programs": "Програмууд",
+  "programs.lead":
+    "Таны бүтээсэн компьютерт зориулж бичсэн тоглоом, програмууд: тоглож, уншиж, өөрчлөхөд.",
+  "programs.intro":
+    "Bitfall нь бидний хамтдаа зохиосон C Shard хэлээр, таны OS дээр бичигдсэн. Бусад нь хүмүүсийн өдөр бүр ашигладаг C хэлээр бичигдэж, шууд ассемблер руу хөрвүүлэгддэг: энэ машины хийж чадах хамгийн их зүйл. Бүгд Машин хуудсан дээр ажиллах бөгөөд эх кодыг нь өөрчлөх эрх таных.",
+  "programs.play": "Машин дээр тоглох",
+  "programs.try": "Машин дээр турших",
+  "programs.listLabel": "Програмууд",
+  "programs.lang.c": "C",
+  "programs.lang.shard": "C Shard",
   "title.levels": "Level-үүд",
   "title.level": "Level",
   "title.notFound": "Олдсонгүй",
@@ -55,9 +66,6 @@ export const mn: Record<keyof typeof en, Message> = {
   "outline.8.title": "Үйлдлийн систем",
   "outline.8.summary":
     "C Shard-аар бичсэн дэлгэц, текст, гар, timer ба санамсаргүй тоо.",
-  "outline.9.title": "Bitfall",
-  "outline.9.summary":
-    "Өөрийн бүтээсэн компьютер дээрээ тоглох өвөрмөц унадаг блоктой тоглоом.",
 
   // ---- нүүр ----
   "home.eyebrow": "{n} бүлэгтэй хичээл",
@@ -108,6 +116,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "home.takeApart": "Задлах",
   "home.putTogether": "Буцааж угсрах",
   "home.workbench": "Workbench нээх",
+  "home.programs": "Програмуудыг тоглох",
   "home.howItWorks": "Хэрхэн ажилладаг вэ",
   "home.read": "Унш",
   "home.readText":

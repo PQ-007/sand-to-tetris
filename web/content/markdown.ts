@@ -47,6 +47,9 @@ export interface ChapterOptions {
   /** Heading ids to use, in order (a translation takes the original's, so
    * section links work in every language). */
   ids?: string[];
+  /** Where in-page links point (`<routeBase>/s/<anchor>`); a chapter's
+   * own route by default. */
+  routeBase?: string;
 }
 
 interface Env extends MdEnv {
@@ -304,7 +307,7 @@ export function createRenderer(ctx: RenderContext) {
       );
       return { errors };
     }
-    const routeBase = `#/chapter/${m.number}`;
+    const routeBase = opts.routeBase ?? `#/chapter/${m.number}`;
     const env: Env & { toc: TocEntry[] } = {
       file,
       line: offset,

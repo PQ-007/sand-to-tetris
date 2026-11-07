@@ -157,7 +157,7 @@ int update(int k, int fire) {
     }
     for (int i = 0; i < BOMBS; i++) {
         if (!bomb_y[i]) continue;
-        bomb_y[i] += 2;
+        bomb_y[i]++;
         int x = bomb_x[i], y = bomb_y[i];
         if (y > 95 || hits_bunker(x, y + 3)) bomb_y[i] = 0;
         else if (y + 3 >= SHIP_Y && y <= SHIP_Y + 4 && x >= sx && x < sx + 9) {

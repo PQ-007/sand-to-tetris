@@ -1,7 +1,15 @@
-// Example programs for the Machine page: assembly (docs/ASSEMBLY.md) and
-// VM (docs/VM.md). A test builds every one with the reference toolchain
-// and runs them.
+// Example programs for the Machine page: assembly (docs/ASSEMBLY.md), VM
+// (docs/VM.md), C Shard (docs/LANGUAGE.md) and C (docs/C.md). A test builds
+// every one with the reference toolchain and runs them. The games are the
+// Programs section's (games/, docs/programs/).
 import BITFALL from "../../games/bitfall.shard?raw";
+import CORRIDORS from "../../games/corridors.c?raw";
+import DEBRIS from "../../games/debris.c?raw";
+import PROWL from "../../games/prowl.c?raw";
+import RALLY from "../../games/rally.c?raw";
+import SHATTER from "../../games/shatter.c?raw";
+import SWARM from "../../games/swarm.c?raw";
+import WYRM from "../../games/wyrm.c?raw";
 
 export interface Example {
   id:
@@ -17,8 +25,17 @@ export interface Example {
     | "shard-box"
     | "shard-dot"
     | "shard-hello"
-    | "bitfall";
-  lang: "asm" | "vm" | "shard";
+    | "bitfall"
+    | "c-hello"
+    | "c-bounce"
+    | "wyrm"
+    | "rally"
+    | "shatter"
+    | "swarm"
+    | "debris"
+    | "prowl"
+    | "corridors";
+  lang: "asm" | "vm" | "shard" | "c";
   source: string;
 }
 
@@ -435,4 +452,72 @@ fn main() {
 }
 `,
   },
+  {
+    id: "c-hello",
+    lang: "c",
+    source: `// C on the machine: machine.h gives the screen, text, the keyboard,
+// the timer and random numbers (docs/C.md). Click the screen, press a key.
+#include <machine.h>
+
+int main(void) {
+    clear();
+    draw_rect(0, 0, 128, 96);
+    draw_text("HELLO FROM C", 10, 2);
+    draw_text("PRESS A KEY TO ROLL", 6, 5);
+    int k = wait_key();
+    draw_text("YOU PRESSED", 6, 8);
+    draw_int(k, 18, 8);
+    draw_text("THE DICE SAYS", 6, 10);
+    draw_int(1 + rand_below(6), 20, 10);
+    return 0;
+}
+`,
+  },
+  {
+    id: "c-bounce",
+    lang: "c",
+    source: `// Balls bouncing, drawn into a buffer and shown a frame at a time.
+// Structs, arrays of them, fixed point (16 = one pixel) and next_frame.
+#include <machine.h>
+
+#define BALLS 12
+
+struct Ball {
+    int x, y, vx, vy;
+};
+
+struct Ball balls[BALLS];
+
+int main(void) {
+    for (int i = 0; i < BALLS; i++) {
+        struct Ball *b = &balls[i];
+        b->x = rand_below(120 * 16);
+        b->y = rand_below(88 * 16);
+        b->vx = rand_below(64) - 32;
+        b->vy = rand_below(64) - 32;
+    }
+    use_buffer();
+    for (;;) {
+        clear();
+        for (int i = 0; i < BALLS; i++) {
+            struct Ball *b = &balls[i];
+            b->x += b->vx;
+            b->y += b->vy;
+            if (b->x < 0 || b->x > 124 * 16) b->vx = -b->vx;
+            if (b->y < 0 || b->y > 92 * 16) b->vy = -b->vy;
+            fill_rect(b->x / 16, b->y / 16, 4, 4, 1);
+        }
+        show();
+        next_frame();
+    }
+}
+`,
+  },
+  { id: "wyrm", lang: "c", source: WYRM },
+  { id: "rally", lang: "c", source: RALLY },
+  { id: "shatter", lang: "c", source: SHATTER },
+  { id: "swarm", lang: "c", source: SWARM },
+  { id: "debris", lang: "c", source: DEBRIS },
+  { id: "prowl", lang: "c", source: PROWL },
+  { id: "corridors", lang: "c", source: CORRIDORS },
 ];

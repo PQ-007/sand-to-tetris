@@ -56,10 +56,4 @@ export const CHAPTERS: readonly PlannedChapter[] = [
     title: "The operating system",
     summary: "Screen, text, keyboard, timer and random numbers, in C Shard.",
   },
-  {
-    number: 9,
-    title: "Bitfall",
-    summary:
-      "An original falling-block game, played on the computer you built.",
-  },
 ];

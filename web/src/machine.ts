@@ -1,10 +1,21 @@
-// The Machine page: write assembly or VM code, build it, and run it on the
-// reference CPU with its screen, keyboard, registers, stack and RAM in view.
-import { pageFigure } from "./figures";
+// The Machine page: write assembly, VM code, C Shard or C, build it, and run
+// it on the reference CPU, the screen large, with the keyboard, registers,
+// stack and RAM in view.
 import { t, type Key } from "./i18n";
 import { EXAMPLES, type Example } from "./machine-programs";
-import { asmErrorText, langErrorText, vmErrorText } from "./messages";
-import { asmAssemble, disassemble, loadCore, Machine } from "./sim/core";
+import {
+  asmErrorText,
+  cErrorText,
+  langErrorText,
+  vmErrorText,
+} from "./messages";
+import {
+  asmAssemble,
+  cBuild,
+  disassemble,
+  loadCore,
+  Machine,
+} from "./sim/core";
 import type { AsmError, AsmProgram, LangCompiled } from "./sim/types";
 import { BUILTIN_OS, programLines, withOs } from "./os";
 import { fromAsmErrors, type VmTranslation } from "./translator";
@@ -22,12 +33,14 @@ import {
 type Lang = Example["lang"];
 
 const LANG_KEY = "s2t-machine-lang";
+const CODE_KEY = "s2t-machine-code";
 const SOURCE_KEYS: Record<Lang, string> = {
   asm: "s2t-machine-source",
   vm: "s2t-machine-vm",
   shard: "s2t-machine-shard",
+  c: "s2t-machine-c",
 };
-const LANGS: Lang[] = ["asm", "vm", "shard"];
+const LANGS: Lang[] = ["asm", "vm", "shard", "c"];
 
 function asLang(v: string | null): Lang {
   return LANGS.find((l) => l === v) ?? "asm";
@@ -91,10 +104,20 @@ function readSource(lang: Lang): string {
   );
 }
 
-export async function mountMachine(root: HTMLElement): Promise<void> {
+/** Mounts the page; `example` (from #/machine/<id>) is loaded into the
+ * editor, in its language. */
+export async function mountMachine(
+  root: HTMLElement,
+  example?: string,
+): Promise<void> {
   root.innerHTML = `<p class="loading">${esc(t("page.loading"))}</p>`;
   await loadCore();
-  new MachinePage(root);
+  const ex = EXAMPLES.find((e) => e.id === example);
+  if (ex) {
+    store(LANG_KEY, ex.lang);
+    store(SOURCE_KEYS[ex.lang], ex.source);
+  }
+  new MachinePage(root, ex?.id);
 }
 
 class MachinePage {
@@ -138,8 +161,12 @@ class MachinePage {
   private stackView: HTMLElement;
   private asmBox: HTMLDetailsElement;
   private vmBox: HTMLDetailsElement;
+  private main: HTMLElement;
 
-  constructor(private root: HTMLElement) {
+  constructor(
+    private root: HTMLElement,
+    picked?: string,
+  ) {
     const langs = LANGS.map(
       (l) =>
         `<option value="${l}"${l === this.lang ? " selected" : ""}>${esc(t(`machine.lang.${l}`))}</option>`,
@@ -148,13 +175,13 @@ class MachinePage {
       (s) =>
         `<option value="${s.id}"${s === this.speed ? " selected" : ""}>${esc(t(`machine.speed.${s.id}` as Key))}</option>`,
     ).join("");
+    const codeShown = stored(CODE_KEY) !== "hidden";
     root.innerHTML = `
-      <div class="page-head machine-head">
-        <div>
+      <div class="machine-bar">
+        <div class="machine-title">
           <h1 tabindex="-1">${esc(t("machine.title"))}</h1>
           <p class="lead">${esc(t("machine.lead"))}</p>
         </div>
-        ${pageFigure("machine", (n) => t(`figure.${n}` as Key), "head")}
         <div class="machine-pickers">
           <label>${esc(t("machine.language"))}
             <select data-lang>${langs}</select></label>
@@ -170,16 +197,26 @@ class MachinePage {
             <select data-assembler></select></label>
         </div>
       </div>
-      <div class="machine-grid">
-        <section class="machine-code" aria-label="${esc(t("machine.codeLabel"))}">
-          <div class="toolbar">
+      <div class="machine-main" data-code="${codeShown ? "shown" : "hidden"}">
+        <section class="machine-stage" aria-label="${esc(t("machine.screenArea"))}">
+          <div class="toolbar machine-controls">
             <button type="button" class="primary" data-run>${esc(t("machine.run"))}</button>
             <button type="button" data-step>${esc(t("machine.step"))}</button>
             <button type="button" data-reset>${esc(t("machine.reset"))}</button>
-            <span class="spacer"></span>
             <label class="speed">${esc(t("machine.speed"))}
               <select data-speed>${speeds}</select></label>
+            <span class="spacer"></span>
+            <button type="button" data-code-toggle aria-pressed="${codeShown}">${esc(t(codeShown ? "machine.hideCode" : "machine.showCode"))}</button>
+            <button type="button" data-fullscreen>${esc(t("machine.fullscreen"))}</button>
           </div>
+          <div class="screen-box">
+            <canvas width="${W}" height="${H}" tabindex="0" role="img"
+              aria-label="${esc(t("machine.screenLabel"))}"></canvas>
+          </div>
+          <p class="machine-status" role="status"></p>
+          <p class="help">${esc(t("machine.keysHelp"))} <span class="key-state"></span></p>
+        </section>
+        <section class="machine-code" aria-label="${esc(t("machine.codeLabel"))}">
           <div class="asm-editor">
             <pre class="asm-gutter" aria-hidden="true"></pre>
             <textarea spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off"></textarea>
@@ -188,26 +225,21 @@ class MachinePage {
           <details class="machine-asm machine-vmcode" hidden><summary></summary><pre></pre></details>
           <details class="machine-asm" data-asm hidden><summary></summary><pre></pre></details>
         </section>
-        <section class="machine-side">
-          <div class="screen-box">
-            <canvas width="${W}" height="${H}" tabindex="0" role="img"
-              aria-label="${esc(t("machine.screenLabel"))}"></canvas>
-            <p class="help">${esc(t("machine.keysHelp"))} <span class="key-state"></span></p>
-          </div>
-          <div class="machine-panel">
-            <p class="machine-status" role="status"></p>
-            <table class="machine-regs"></table>
-          </div>
-          <div class="machine-panel" data-stack hidden>
-            <h2 class="panel-title">${esc(t("machine.stack"))}</h2>
-            <table class="machine-ram machine-stack"></table>
-          </div>
-          <div class="machine-panel">
-            <label class="ram-start">${esc(t("machine.ramFrom"))}
-              <input type="text" inputmode="numeric" value="0" data-ram></label>
-            <table class="machine-ram"></table>
-          </div>
-        </section>
+      </div>
+      <div class="machine-inspect">
+        <div class="machine-panel">
+          <h2 class="panel-title">${esc(t("machine.registers"))}</h2>
+          <table class="machine-regs"></table>
+        </div>
+        <div class="machine-panel" data-stack hidden>
+          <h2 class="panel-title">${esc(t("machine.stack"))}</h2>
+          <table class="machine-ram machine-stack"></table>
+        </div>
+        <div class="machine-panel">
+          <label class="ram-start">${esc(t("machine.ramFrom"))}
+            <input type="text" inputmode="numeric" value="0" data-ram></label>
+          <table class="machine-ram" data-ram-view></table>
+        </div>
       </div>`;
     const q = <T extends Element>(s: string) => root.querySelector(s) as T;
     this.editor = q("textarea");
@@ -218,7 +250,8 @@ class MachinePage {
     this.keyState = q(".key-state");
     this.regs = q(".machine-regs");
     this.ramStart = q("[data-ram]");
-    this.ramView = q(".machine-ram");
+    this.ramView = q("[data-ram-view]");
+    this.main = q(".machine-main");
     this.runBtn = q("[data-run]");
     this.examples = q("[data-example]");
     this.stackBox = q("[data-stack]");
@@ -253,6 +286,22 @@ class MachinePage {
       this.speed = SPEEDS.find((s) => s.id === id) ?? this.speed;
     });
     this.runBtn.addEventListener("click", () => void this.toggleRun());
+    const codeBtn = q<HTMLButtonElement>("[data-code-toggle]");
+    codeBtn.addEventListener("click", () => {
+      const show = this.main.dataset.code === "hidden";
+      this.main.dataset.code = show ? "shown" : "hidden";
+      codeBtn.setAttribute("aria-pressed", String(show));
+      codeBtn.textContent = t(show ? "machine.hideCode" : "machine.showCode");
+      store(CODE_KEY, show ? "shown" : "hidden");
+    });
+    const box = q<HTMLElement>(".screen-box");
+    const fsBtn = q<HTMLButtonElement>("[data-fullscreen]");
+    fsBtn.hidden = !box.requestFullscreen;
+    fsBtn.addEventListener("click", () => {
+      void box
+        .requestFullscreen?.()
+        .then(() => this.canvas.focus({ preventScroll: true }));
+    });
     q("[data-step]").addEventListener("click", () => void this.step());
     q("[data-reset]").addEventListener("click", () => void this.reset());
     this.ramStart.addEventListener("change", () => this.renderRam());
@@ -279,6 +328,7 @@ class MachinePage {
     void this.offerCompilers(q("[data-compiler-box]"), q("[data-compiler]"));
     void this.offerOses(q("[data-os-box]"), q("[data-os]"));
     this.renderLang();
+    if (picked) this.examples.value = picked;
     this.renderGutter();
     this.renderState();
     this.draw();
@@ -316,11 +366,15 @@ class MachinePage {
           ? "machine.sourceVm"
           : this.lang === "shard"
             ? "machine.sourceShard"
-            : "machine.source",
+            : this.lang === "c"
+              ? "machine.sourceC"
+              : "machine.source",
       ),
     );
     const box = this.root.querySelector<HTMLElement>("[data-translator-box]");
-    if (box) box.hidden = this.lang === "asm" || !this.hasOwnTranslator;
+    if (box)
+      box.hidden =
+        this.lang === "asm" || this.lang === "c" || !this.hasOwnTranslator;
     const cbox = this.root.querySelector<HTMLElement>("[data-compiler-box]");
     if (cbox) cbox.hidden = this.lang !== "shard" || !this.compile;
     const obox = this.root.querySelector<HTMLElement>("[data-os-box]");
@@ -393,7 +447,7 @@ class MachinePage {
       )
       .join("");
     this.hasOwnTranslator = true;
-    box.hidden = this.lang === "asm";
+    box.hidden = this.lang === "asm" || this.lang === "c";
     this.translate = choices[0]?.translate ?? this.translate;
     select.addEventListener("change", () => {
       const c = choices[Number(select.value)];
@@ -416,7 +470,7 @@ class MachinePage {
           `<option value="${i}">${esc(t(`machine.asm.${c.id}` as Key))}</option>`,
       )
       .join("");
-    box.hidden = false;
+    box.hidden = this.lang === "c";
     this.assemble = choices[0]?.assemble ?? this.assemble;
     select.addEventListener("change", () => {
       const c = choices[Number(select.value)];
@@ -458,6 +512,33 @@ class MachinePage {
             line: this.compiled?.sourceMap[e.line - 1] ?? 0,
           }))
         : errors;
+    if (this.lang === "c") {
+      // C goes straight to assembly with the reference compiler (no VM).
+      this.status.textContent = t("machine.compiling");
+      const built = cBuild(source);
+      if (built.errors.length) {
+        this.program = null;
+        this.fail(built.errors, cErrorText);
+        return false;
+      }
+      this.translation = {
+        lines: built.asm,
+        sourceMap: built.sourceMap,
+        errors: [],
+      };
+      this.program = {
+        code: built.code,
+        data: built.data,
+        symbols: {},
+        sourceMap: built.codeMap,
+        errors: [],
+      };
+      this.problems = [];
+      this.renderErrors();
+      this.renderTranslation();
+      this.load();
+      return true;
+    }
     if (this.lang === "shard") {
       this.status.textContent = t("machine.compiling");
       const compile = this.compile ?? (await compilerChoices())[0]?.compile;

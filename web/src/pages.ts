@@ -1,7 +1,8 @@
 import { FIGURES, figureSlot, pageFigure } from "./figures";
 import { CHAPTERS } from "./chapters";
 import { getLang, t, type Key } from "./i18n";
-import { chapterHref, type Route } from "./router";
+import { PROGRAMS } from "./programs";
+import { chapterHref, machineHref, programHref, type Route } from "./router";
 import { site } from "./text";
 
 const esc = (s: string) =>
@@ -45,6 +46,7 @@ function home(): string {
         <p class="hero-actions">
           <a class="button primary" href="${chapterHref(0)}">${esc(t("home.start"))}</a>
           <a class="button" href="#/levels">${esc(t("home.workbench"))}</a>
+          <a class="button" href="#/programs">${esc(t("home.programs"))}</a>
         </p>
       </div>
       <div class="hero-figure">
@@ -123,6 +125,103 @@ function chapter(number: number): string {
       </header>
       ${ch.html}
       ${pager}
+    </article>
+  </div>`;
+}
+
+/** The Programs section's front page: what it is, and every program. */
+function programsIndex(): string {
+  const items = site()
+    .programs.map((p) => {
+      const info = PROGRAMS[p.id];
+      const lang = info ? t(`programs.lang.${info.lang}` as Key) : "";
+      const play = info
+        ? `<a class="button" href="${machineHref(info.example)}">${esc(t(p.id === "c" ? "programs.try" : "programs.play"))}</a>`
+        : "";
+      return `<li class="program-card">
+        <div class="program-top">
+          <span class="chapter-number" aria-hidden="true">${String(p.number).padStart(2, "0")}</span>
+          <span class="program-lang">${esc(lang)}</span>
+        </div>
+        <h3><a href="${programHref(p.id)}">${esc(p.title)}</a></h3>
+        <p>${esc(p.summary)}</p>
+        <p class="program-actions">${play}</p>
+      </li>`;
+    })
+    .join("");
+  return `<div class="programs-page">
+    <div class="page-head">
+      <div>
+        <h1 tabindex="-1">${esc(t("title.programs"))}</h1>
+        <p class="lead">${esc(t("programs.lead"))}</p>
+        <p>${esc(t("programs.intro"))}</p>
+      </div>
+      ${pageFigure("programs", (n) => t(`figure.${n}`), "head")}
+    </div>
+    <ol class="programs">${items}</ol>
+  </div>`;
+}
+
+/** Every program, for the left column of a program page. */
+function programsNav(current: string): string {
+  const items = site()
+    .programs.map((p) => {
+      const here = p.id === current ? ' aria-current="page"' : "";
+      return `<li><a href="${programHref(p.id)}"${here}><span class="num" aria-hidden="true">${p.number}</span><span>${esc(p.title)}</span></a></li>`;
+    })
+    .join("");
+  return `<nav class="course-nav" aria-label="${esc(t("programs.listLabel"))}"><p class="side-title"><a href="${programHref()}">${esc(t("title.programs"))}</a></p><ol>${items}</ol></nav>`;
+}
+
+function programPage(id: string): string {
+  const list = site().programs;
+  const i = list.findIndex((p) => p.id === id);
+  const p = list[i];
+  if (!p) return notFound();
+  const info = PROGRAMS[id];
+  const toc = p.toc
+    .map(
+      (entry) =>
+        `<li><a href="${programHref(id, entry.id)}" data-section="${entry.id}">${esc(entry.text)}</a></li>`,
+    )
+    .join("");
+  const sources = p.html.includes('id="sources"')
+    ? `<li><a href="${programHref(id, "sources")}" data-section="sources">${esc(t("chapter.sources"))}</a></li>`
+    : "";
+  const prev = list[i - 1];
+  const next = list[i + 1];
+  const pagerLink = (c: typeof p, cls: string, label: Key) =>
+    `<a class="pager-link${cls}" href="${programHref(c.id)}"><span class="muted">${esc(t(label))}</span><span>${esc(c.title)}</span></a>`;
+  const actions = info
+    ? `<p class="program-actions">
+        <a class="button primary" href="${machineHref(info.example)}">${esc(t(id === "c" ? "programs.try" : "programs.play"))}</a>
+        <span class="muted">${esc(t(`programs.lang.${info.lang}` as Key))} · <code>${esc(info.file)}</code></span>
+      </p>`
+    : "";
+  return `<div class="doc-layout">
+    ${programsNav(id)}
+    <nav class="toc" aria-label="${esc(t("chapter.inThisChapter"))}">
+      <details open>
+        <summary class="side-title">${esc(t("chapter.onThisPage"))}</summary>
+        <ol>${toc}${sources}</ol>
+        <p class="toc-top"><a href="${programHref(id)}">${esc(t("chapter.backToTop"))}</a></p>
+      </details>
+    </nav>
+    <article class="chapter-page program-page"${p.untranslated ? ' lang="en"' : ""}>
+      ${p.untranslated ? `<p class="notice" lang="${getLang()}">${esc(t("chapter.notTranslated"))}</p>` : ""}
+      <header class="chapter-head">
+        <div>
+          <p class="eyebrow"><a href="${programHref()}">${esc(t("title.programs"))}</a></p>
+          <h1 tabindex="-1">${esc(p.title)}</h1>
+          <p class="lead">${esc(p.summary)}</p>
+          ${actions}
+        </div>
+      </header>
+      ${p.html}
+      <nav class="pager" aria-label="${esc(t("chapter.pagerLabel"))}">
+        ${prev ? pagerLink(prev, "", "chapter.previous") : "<span></span>"}
+        ${next ? pagerLink(next, " next", "chapter.next") : ""}
+      </nav>
     </article>
   </div>`;
 }
@@ -268,6 +367,16 @@ export function renderRoute(route: Route): {
         html: `<div id="play-root" class="play"></div>`,
         title: titled(t("title.level")),
       };
+    case "programs": {
+      const p = route.program
+        ? site().programs.find((x) => x.id === route.program)
+        : undefined;
+      return {
+        html: route.program ? programPage(route.program) : programsIndex(),
+        title: titled(p ? p.title : t("title.programs")),
+        anchor: route.anchor,
+      };
+    }
     case "machine":
       return {
         html: `<div id="machine-root" class="machine"></div>`,

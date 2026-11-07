@@ -19,6 +19,7 @@ export const en = {
   "nav.learn": "Learn",
   "nav.build": "Build",
   "nav.glossary": "Glossary",
+  "nav.programs": "Programs",
   "nav.language": "Language",
   "theme.toDark": "Dark theme",
   "theme.toLight": "Light theme",
@@ -31,6 +32,16 @@ export const en = {
   "page.error": "Something went wrong loading this page",
   "page.loading": "Loading…",
   "title.glossary": "Glossary",
+  "title.programs": "Programs",
+  "programs.lead":
+    "Games and programs written for the computer you built, to play, read and change.",
+  "programs.intro":
+    "Bitfall is in C Shard, the language we designed together, on your OS. The rest are in C, a language people use every day, compiled straight to assembly: the most this machine can do. Every one runs on the Machine page, and its source is yours to change.",
+  "programs.play": "Play on the Machine",
+  "programs.try": "Try it on the Machine",
+  "programs.listLabel": "Programs",
+  "programs.lang.c": "C",
+  "programs.lang.shard": "C Shard",
   "title.levels": "Levels",
   "title.level": "Level",
   "title.notFound": "Not found",
@@ -62,9 +73,6 @@ export const en = {
   "outline.8.title": "The operating system",
   "outline.8.summary":
     "Screen, text, keyboard, timer and random numbers, in C Shard.",
-  "outline.9.title": "Bitfall",
-  "outline.9.summary":
-    "An original falling-block game, played on the computer you built.",
 
   // ---- home ----
   "home.eyebrow": "A course in {n} chapters",
@@ -115,6 +123,7 @@ export const en = {
   "home.takeApart": "Take it apart",
   "home.putTogether": "Put it back together",
   "home.workbench": "Open the workbench",
+  "home.programs": "Play the programs",
   "home.howItWorks": "How it works",
   "home.read": "Read",
   "home.readText":

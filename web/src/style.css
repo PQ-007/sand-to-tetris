@@ -661,6 +661,116 @@ button.primary:hover:not(:disabled),
   }
 }
 
+/* ---- Programs: a card per program, the card's title the link ----------- */
+
+body[data-page="programs"] #app {
+  max-width: 90rem;
+}
+
+.programs-page {
+  max-width: 76rem;
+  margin: 0 auto;
+}
+
+.programs-page .page-head p:not(.lead) {
+  max-width: 46rem;
+  color: var(--muted);
+}
+
+.programs {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 1rem;
+}
+
+.program-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition:
+    box-shadow 0.15s,
+    border-color 0.15s;
+}
+
+.program-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lift);
+}
+
+.program-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.program-lang {
+  font: 0.6875rem var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+}
+
+.program-card h3 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 1.125rem;
+}
+
+.program-card h3 a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+/* The whole card opens the page; the Play button sits above that link. */
+.program-card h3 a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+}
+
+.program-card p {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.program-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+
+.program-card .program-actions {
+  margin: auto 0 0;
+}
+
+.program-card .program-actions .button {
+  position: relative;
+  z-index: 1;
+}
+
+.program-page .program-actions {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .program-card {
+    transition: none;
+  }
+}
+
 /* ---- Chapter pages: course nav | article | table of contents ----------- */
 
 .doc-layout {
@@ -3325,14 +3435,9 @@ button.primary:hover:not(:disabled),
   margin: -2.25rem 0 -1.75rem auto;
 }
 
-/* Title and figure share the first row; the Machine's pickers take the
-   next one. */
+/* Title and figure share the first row. */
 .page-head:has(> .hl-figure.head) > div:first-child {
   flex: 1 1 28rem;
-}
-
-.machine-head .machine-pickers {
-  flex-basis: 100%;
 }
 
 /* A figure inside a chapter's text: thumbnail-sized, centred. */
@@ -3468,9 +3573,76 @@ body[data-page="os"] #app {
   max-width: 96rem;
 }
 
-.machine-head,
 .workshop-head {
   margin-bottom: 1.25rem;
+}
+
+/* The Machine: one bar of pickers, then the screen as large as the window
+   allows beside the code (or alone, with the code hidden), then the
+   registers, stack and RAM. */
+.machine-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+  align-items: end;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.machine-title h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.machine-title .lead {
+  margin: 0.25rem 0 0;
+  max-width: 44rem;
+  font-size: 0.9375rem;
+}
+
+.machine-main {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(22rem, 2fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.machine-main[data-code="hidden"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.machine-main[data-code="hidden"] .machine-code {
+  display: none;
+}
+
+@media (max-width: 1000px) {
+  .machine-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.machine-controls {
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.machine-controls .speed {
+  margin-left: 0.5rem;
+}
+
+.machine-inspect {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+  margin-top: 1.25rem;
+  align-items: start;
+}
+
+.machine-code .asm-editor {
+  height: min(70vh, 46rem);
+  border-top: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 .machine-pickers {
@@ -3620,9 +3792,21 @@ body[data-page="os"] #app {
   gap: 1rem;
 }
 
+.screen-box {
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: var(--surface-2);
+}
+
+/* As large as fits: the full width, or the window's height (minus the bars
+   around it) at 4:3, whichever is smaller. Pixels stay square and sharp. */
 .screen-box canvas {
   display: block;
-  width: 100%;
+  width: min(100%, calc((100vh - 18rem) * 4 / 3));
+  min-width: min(100%, 256px);
   aspect-ratio: 4 / 3;
   image-rendering: pixelated;
   border: 1px solid var(--border-strong);
@@ -3630,14 +3814,33 @@ body[data-page="os"] #app {
   background: var(--bg);
 }
 
+.screen-box:fullscreen {
+  align-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--bg);
+}
+
+.screen-box:fullscreen canvas {
+  width: min(100vw, calc(100vh * 4 / 3));
+  border: 0;
+  border-radius: 0;
+}
+
+.machine-stage .machine-status {
+  margin: 0.75rem 0 0;
+}
+
 .screen-box canvas:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
 
-.screen-box .help {
-  margin: 0.5rem 0 0;
+.machine-stage .help {
+  margin: 0.25rem 0 0;
   font-size: 0.8125rem;
+  color: var(--muted);
 }
 
 .machine-panel {
