@@ -3600,6 +3600,12 @@ body[data-page="os"] #app {
   font-size: 0.9375rem;
 }
 
+/* The scrollbar's room is kept, so its coming and going never shifts the
+   page while a program runs. */
+:root:has(body[data-page="machine"]) {
+  scrollbar-gutter: stable;
+}
+
 .machine-main {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(22rem, 2fr);

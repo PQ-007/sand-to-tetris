@@ -615,7 +615,7 @@ class MachinePage {
       const pre = this.vmBox.querySelector("pre");
       if (summary)
         summary.textContent = t("machine.vmCode", { n: c.vm.length });
-      if (pre && this.vmBox.open) {
+      if (pre && this.vmBox.open && !this.running) {
         const pc = this.machine?.pc();
         const asmLine =
           pc !== undefined ? this.program?.sourceMap[pc] : undefined;
@@ -632,7 +632,7 @@ class MachinePage {
     const pre = this.asmBox.querySelector("pre");
     if (summary)
       summary.textContent = t("machine.translation", { n: tr.lines.length });
-    if (!pre || !this.asmBox.open) return;
+    if (!pre || !this.asmBox.open || this.running) return;
     const pc = this.machine?.pc();
     const current = pc !== undefined ? this.program?.sourceMap[pc] : undefined;
     pre.textContent = tr.lines
@@ -662,6 +662,8 @@ class MachinePage {
     this.runBtn.textContent = t("machine.pause");
     this.canvas.focus({ preventScroll: true });
     let last = performance.now();
+    let frames = 0;
+    this.renderGutter();
     const tick = (now: number) => {
       if (!this.running || !this.machine) return;
       // A long gap (a background tab) counts as one frame, not a jump.
@@ -670,7 +672,9 @@ class MachinePage {
       this.machine.setTimer(Math.floor((this.runMs * 60) / 1000) & 0xffff);
       this.machine.run(this.speed.perFrame);
       this.draw();
-      this.renderState();
+      // The screen every frame; the numbers around it a few times a second,
+      // so the page stays still while a program runs.
+      if (++frames % 10 === 0) this.renderState();
       if (this.machine.halted()) this.pause();
       else this.frame = requestAnimationFrame(tick);
     };
@@ -735,7 +739,9 @@ class MachinePage {
    * its instruction came from). */
   private renderGutter(): void {
     const lines = this.editor.value.split("\n").length;
-    const pc = this.machine?.pc();
+    // While running, the line changes thousands of times a second: no ▶
+    // until the program pauses, steps or halts.
+    const pc = this.running ? undefined : this.machine?.pc();
     let current =
       pc !== undefined && this.assembled === this.editor.value
         ? this.program?.sourceMap[pc]
@@ -744,9 +750,13 @@ class MachinePage {
       current = this.translation.sourceMap[current - 1];
     if (current !== undefined && this.compiled)
       current = this.compiled.sourceMap[current - 1];
-    this.gutter.textContent = Array.from({ length: lines }, (_, i) =>
+    const text = Array.from({ length: lines }, (_, i) =>
       i + 1 === current ? `▶${i + 1}` : String(i + 1),
     ).join("\n");
+    // Wide enough for the longest number and ▶, so the marker never moves
+    // the code sideways.
+    this.gutter.style.minWidth = `calc(${String(lines).length + 2}ch + 1.2rem)`;
+    if (this.gutter.textContent !== text) this.gutter.textContent = text;
     this.gutter.scrollTop = this.editor.scrollTop;
   }
 
