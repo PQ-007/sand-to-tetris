@@ -44,15 +44,20 @@ describe("hairline figures", () => {
       ).toBe(true);
   });
 
-  it("a figure drawn for the course passes the skill's frame: one figure, 400 × 320", async () => {
-    const { readFileSync } = await import("node:fs");
-    const src = readFileSync(
-      new URL("../src/vendor/hairline/computer.js", import.meta.url),
-      "utf8",
+  it("figures drawn for the course keep the skill's format and limits", async () => {
+    const { readFileSync, readdirSync } = await import("node:fs");
+    const dir = new URL("../src/vendor/hairline/", import.meta.url);
+    const figures = readdirSync(dir).filter(
+      (f) => f.endsWith(".js") && f !== "kernel.js",
     );
-    expect(src).toMatch(/hairline\(\{\s*name: "computer"/);
-    // rule 10: no words in the drawing (no svg text elements)
-    expect(src).not.toMatch(/mk\("text"/);
-    expect(src.split("\n").length).toBeLessThanOrEqual(200);
+    expect(figures.length).toBeGreaterThan(0);
+    for (const f of figures) {
+      const src = readFileSync(new URL(f, dir), "utf8");
+      const name = f.replace(/\.js$/, "");
+      expect(src, f).toMatch(new RegExp(`hairline\\(\\{\\s*name: "${name}"`));
+      // rule 10: no words in the drawing (no svg text elements)
+      expect(src, f).not.toMatch(/mk\("text"/);
+      expect(src.split("\n").length, f).toBeLessThanOrEqual(200);
+    }
   });
 });

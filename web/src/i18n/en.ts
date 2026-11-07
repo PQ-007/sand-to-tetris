@@ -72,7 +72,7 @@ export const en = {
   "home.tagline":
     "Start with sand. Build switches, gates, memory, a CPU, a compiler and an operating system. Finish by playing Tetris on the computer you made.",
   "figure.computer":
-    "Line drawing of a desktop computer: a case with a board inside, a monitor and a keyboard. The pointer picks a part and lifts what's above it; the button takes it apart into layers.",
+    "Line drawing of a desktop computer: a case with a power supply and a board inside (a CPU under its heatsink, RAM, capacitors), a monitor on its stand, a keyboard and a mouse. The pointer picks a part and lifts what's above it; the button takes it apart into layers.",
   "figure.patch":
     "Line drawing of a patch panel: the cable under the pointer lifts, and its neighbours lean away. Building here is wiring.",
   "figure.laptop":
@@ -81,6 +81,12 @@ export const en = {
     "Line drawing of a stand loupe over a ruled sheet: the pointer moves it, and the lines pass enlarged under the glass.",
   "figure.query":
     "Line drawing of a question mark built as a solid: the hook turns toward the pointer.",
+  "figure.wafer":
+    "Line drawing of a silicon wafer ruled into dies: under the pointer the dies rise out of it, the nearest most.",
+  "figure.transistor":
+    "Line drawing of a transistor, cut away: bring the pointer to the gate and electrons gather under it until the channel joins source to drain.",
+  "figure.carry":
+    "Line drawing of eight one-bit adders in a row: point at a bit and the carry ripples to it from bit 0, one adder after another.",
   "figure.exploded":
     "Line drawing of an app pulled apart into layers, like the layers of this course. Move the pointer across it to open them.",
   "figure.lockers":

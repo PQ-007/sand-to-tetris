@@ -42,7 +42,12 @@ Object.assign(globalThis, {
   HL,
   hairline: (f: CustomFigure) => custom.set(f.name, f),
 });
-await import("./vendor/hairline/computer.js");
+await Promise.all([
+  import("./vendor/hairline/computer.js"),
+  import("./vendor/hairline/wafer.js"),
+  import("./vendor/hairline/transistor.js"),
+  import("./vendor/hairline/carry.js"),
+]);
 
 /** What changes each custom figure's number (a button, not the slider). */
 const setters = new WeakMap<HTMLElement, (value: number) => void>();
@@ -109,6 +114,9 @@ const DRAW: Record<
   phosphor,
   query,
   computer: host("computer"),
+  wafer: host("wafer"),
+  transistor: host("transistor"),
+  carry: host("carry"),
   settle,
   stack,
   terminal,

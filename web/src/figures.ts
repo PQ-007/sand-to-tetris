@@ -10,11 +10,16 @@
 // settling into a tree is parsing. Building is wiring (a patch panel); the
 // Machine runs on the computer you built (a laptop); the glossary is for
 // looking words up (a loupe); a missing page is a question. A workshop gets
-// its chapter's figure. Chapters with no figure yet wait for one drawn for
-// them, not a near miss.
+// its chapter's figure. Chapters the package has no figure for got one
+// drawn for them: a wafer ruled into dies (sand to silicon), a transistor
+// cut away, its channel forming (switches), a ripple-carry adder (logic),
+// and the computer whose board carries the CPU.
 
 export type FigureName =
   | "computer"
+  | "wafer"
+  | "transistor"
+  | "carry"
   | "exploded"
   | "lockers"
   | "terminal"
@@ -54,7 +59,11 @@ export const FIGURES: {
     os: "keyboard",
   },
   chapters: {
+    0: "wafer",
+    1: "transistor",
+    2: "carry",
     3: "lockers",
+    4: "computer",
     5: "terminal",
     6: "stack",
     7: "settle",
