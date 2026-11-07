@@ -126,7 +126,7 @@ export class SwitchTimeline extends Demo {
         );
         svg(
           "line",
-          { x1: x0, x2: x1, y1: axis.y, y2: axis.y, "stroke-width": 2 },
+          { x1: x0, x2: x1, y1: axis.y, y2: axis.y, "stroke-width": 1.25 },
           g,
         );
         for (const t of axis.ticks) {

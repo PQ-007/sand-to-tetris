@@ -131,4 +131,5 @@ instr key timer reset clk | pc addrM outM writeM
 """
 
 [hints]
+nudge = "Two parts: what the CPU writes goes into memory, and what memory reads comes back to the CPU. The program ROM stays outside: instr is already an input."
 wrong = "The trace stores values and loads them back: if a LOAD shows the wrong value on outM a step later, check that memory's q reaches the CPU's inM and that writeM reaches memory's load."

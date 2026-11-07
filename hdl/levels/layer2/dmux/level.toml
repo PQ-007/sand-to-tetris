@@ -6,7 +6,7 @@ Build a demultiplexer (DMUX): the opposite of a MUX. It sends its input to outpu
 """
 inputs = ["in", "sel"]
 outputs = ["a", "b"]
-requires = ["and"]
+requires = ["and", "not"]
 truth_table = """
 in sel | a b
 0 0 | 0 0
@@ -16,4 +16,5 @@ in sel | a b
 """
 
 [hints]
+nudge = "Each output is «in, but only when sel says so». Which gate lets a signal through only while another signal is 1?"
 wrong = "Output a should be 'in AND NOT sel'; output b 'in AND sel'."

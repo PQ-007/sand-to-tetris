@@ -7,7 +7,7 @@ Multiplexers let a computer choose between values, for example which register to
 """
 inputs = ["a", "b", "sel"]
 outputs = ["out"]
-requires = ["and", "or"]
+requires = ["and", "or", "not"]
 truth_table = """
 a b sel | out
 0 0 0 | 0
@@ -21,4 +21,5 @@ a b sel | out
 """
 
 [hints]
+nudge = "Think of two gates, one for a and one for b, each letting its input through only when sel has the right value. Then combine the two."
 wrong = "Pass a through only when sel is 0 (AND it with NOT sel), pass b only when sel is 1, then OR the two."

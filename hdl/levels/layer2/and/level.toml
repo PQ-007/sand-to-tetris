@@ -17,6 +17,7 @@ a b | out
 """
 
 [hints]
+nudge = "You already have NAND, which is AND followed by NOT. How do you undo a NOT?"
 wrong = "AND is the opposite of NAND. What do you get if you feed a NAND's output into a NOT?"
 floating = "Is the NOT's output connected to out, and the NAND's output to the NOT's input?"
 unknown = "Are both NAND inputs connected?"

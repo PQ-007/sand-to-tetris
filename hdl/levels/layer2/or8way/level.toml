@@ -20,4 +20,5 @@ in | out
 """
 
 [hints]
+nudge = "out is 1 if any of the 8 bits is 1. Split the bus, then OR bits together until one is left."
 wrong = "Use a splitter to get the 8 bits, then OR them together: in pairs (a tree) is fastest."

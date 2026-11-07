@@ -11,6 +11,7 @@ import {
 import {
   addPart,
   addWire,
+  clearDesign,
   emptyDesign,
   endpointKey,
   endpointLabel,
@@ -85,6 +86,30 @@ describe("editing a design", () => {
     expect(endpointLabel({ port: "a" }, ["a"])).toBe("input a");
     expect(endpointLabel({ port: "out" }, ["a"])).toBe("output out");
     expect(endpointLabel({ part: "p1", pin: "gate" })).toBe("p1.gate");
+  });
+});
+
+describe("clearing the canvas", () => {
+  it("removes every part and wire, keeping the component and moved ports", () => {
+    let d = addPart(emptyDesign("and"), "nand", [200, 100]).design;
+    d = addWire(d, { port: "a" }, { part: "nand1", pin: "a" }) as typeof d;
+    d = movePort(d, "out", [500, 120]);
+    expect(clearDesign(d)).toEqual({
+      format: 1,
+      component: "and",
+      parts: [],
+      wires: [],
+      port_pos: { out: [500, 120] },
+    });
+  });
+
+  it("is undoable in one step", () => {
+    const d = addPart(emptyDesign("and"), "nand", [200, 100]).design;
+    const h = new History(d);
+    h.apply(clearDesign(d));
+    expect(h.current.parts).toEqual([]);
+    h.undo();
+    expect(h.current).toBe(d);
   });
 });
 

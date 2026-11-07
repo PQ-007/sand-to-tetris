@@ -11,7 +11,7 @@ import {
   type MenuContext,
   type MenuTarget,
 } from "./editor/actions";
-import { CircuitCanvas, type CanvasProps } from "./editor/canvas";
+import { CircuitCanvas, partIcon, type CanvasProps } from "./editor/canvas";
 import {
   clampToCanvas,
   freeSpot,
@@ -20,11 +20,19 @@ import {
   type Point,
 } from "./editor/geometry";
 import { openMenu } from "./editor/menu";
+import {
+  bitWireFixes,
+  widthFixes,
+  type Fix,
+  type WireFix,
+} from "./editor/fixes";
+import { bitsOf, formatValue, parseNumber, showValue } from "./editor/values";
 import { drawWaveform } from "./editor/waveform-view";
 import type { Signal } from "./editor/waveform";
 import {
   addPart,
   addWire,
+  clearDesign,
   disconnect,
   duplicatePart,
   emptyDesign,
@@ -37,20 +45,25 @@ import {
   updatePart,
 } from "./editor/model";
 import {
+  builtFrom,
   memoryParts,
+  nextLevel,
   orderLevels,
   playLibrary,
   toolbox,
+  usedIn,
   type ToolboxItem,
 } from "./game";
 import { t, type Key } from "./i18n";
 import { diagnosticText, knownText, problemText } from "./messages";
+import { roadmapSteps } from "./roadmap";
 import { playHref } from "./router";
 import { levelGoal, levelHint, levelName } from "./text";
 import { check, disassemble, simulate, simulateSteps } from "./sim/core";
 import type {
   Design,
   Diagnostic,
+  Problem,
   Endpoint,
   LevelInfo,
   StepsView,
@@ -66,6 +79,12 @@ const esc = (s: string) =>
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+
+/** Hints the Hint button reveals, in order: a nudge, then the approach. */
+const HINT_ORDER = ["nudge", "wrong"];
+
+/** How many hints each level has shown during this visit. */
+const shownHints = new Map<string, number>();
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -100,28 +119,6 @@ function componentPorts(a: App): CanvasProps["componentPorts"] {
     };
   }
   return out;
-}
-
-/** `5 (0101)` for small buses, `0x1235` for wide ones (as the checker). */
-export function formatValue(v: number, width: number): string {
-  if (width === 1) return String(v);
-  if (width <= 8) return `${v} (${v.toString(2).padStart(width, "0")})`;
-  return `0x${v.toString(16).padStart(Math.ceil(width / 4), "0")}`;
-}
-
-/** Parses `13`, `0xd` or `0b1101` (underscores allowed). */
-export function parseNumber(text: string): number | undefined {
-  const t = text.trim().replace(/_/g, "").toLowerCase();
-  const n = t.startsWith("0x")
-    ? parseInt(t.slice(2), 16)
-    : t.startsWith("0b")
-      ? parseInt(t.slice(2), 2)
-      : /^\d+$/.test(t)
-        ? Number(t)
-        : NaN;
-  return Number.isFinite(n) && /^(0x[0-9a-f]+|0b[01]+|\d+)$/.test(t)
-    ? n
-    : undefined;
 }
 
 /** Inputs to a component part, read from the parent's simulated pins. */
@@ -191,6 +188,8 @@ class PlayPage {
     "aria-live": "polite",
   });
   private statusTimer = 0;
+  /** Why the circuit can't run right now, shown on the canvas. */
+  private blockedBox = el("p", { class: "canvas-blocked", role: "status" });
   private emptyHint = el("p", { class: "canvas-empty" });
   private zoomLabel = el(
     "button",
@@ -199,7 +198,14 @@ class PlayPage {
   );
   private undoBtn = el("button", { type: "button" }, t("play.undo"));
   private redoBtn = el("button", { type: "button" }, t("play.redo"));
+  private clearBtn = el("button", { type: "button" }, t("play.clear"));
   private inputBox = el("div", { class: "input-toggles" });
+  private outputBox = el("div", { class: "output-bits" });
+  /** One-click fixes for wires of different widths, over the canvas. */
+  private fixBox = el("ul", {
+    class: "canvas-fixes",
+    "aria-live": "polite",
+  });
   private tableBody = el("tbody");
   /** What the live circuit holds (sequential levels): fed back into every
    * simulation so latches and flip-flops remember. */
@@ -276,8 +282,10 @@ class PlayPage {
 
   private build(): void {
     const l = this.level;
-    const ordered = orderLevels(this.app.levels).map((e) => e.info.level.id);
-    const next = ordered[ordered.indexOf(l.id) + 1];
+    const next = nextLevel(
+      orderLevels(this.app.levels).map((e) => e.info.level),
+      l.id,
+    );
     this.root.innerHTML = `
       <div class="play-head">
         <nav class="crumbs" aria-label="${esc(t("play.crumbs"))}"><a href="#/levels">${esc(t("title.levels"))}</a> <span aria-hidden="true">/</span> ${esc(t("play.layerN", { n: l.layer }))} <span aria-hidden="true">/</span></nav>
@@ -297,18 +305,41 @@ class PlayPage {
       "aria-label": t("play.toolbox"),
     });
     toolbar.append(el("span", { class: "toolbar-label" }, t("play.parts")));
-    for (const tool of this.tools) {
+    // The parts this level is built from come first; everything else the
+    // learner has unlocked waits behind "More parts" (still usable).
+    const more = this.tools.filter((tool) => !tool.suggested);
+    const moreBtn = el("button", {
+      type: "button",
+      class: "more-tools",
+      "aria-expanded": "false",
+    });
+    const showMore = (open: boolean) => {
+      toolbar.classList.toggle("show-more", open);
+      moreBtn.setAttribute("aria-expanded", String(open));
+      moreBtn.textContent = open
+        ? t("play.fewerParts")
+        : t("play.moreParts", { n: more.length });
+    };
+    moreBtn.addEventListener("click", () =>
+      showMore(!toolbar.classList.contains("show-more")),
+    );
+    showMore(false);
+    const tools = [...this.tools.filter((tool) => tool.suggested), ...more];
+    for (const tool of tools) {
+      if (tool === more[0]) toolbar.append(moreBtn);
       const label = this.toolLabel(tool);
       const b = el(
         "button",
         {
           type: "button",
-          class: `tool${tool.primitive ? "" : " component"}`,
+          class: `tool${tool.primitive ? "" : " component"}${tool.suggested ? "" : " extra"}`,
           "data-kind": tool.kind,
           title: t("play.addTool", { name: label }),
         },
         label,
       );
+      const icon = partIcon(tool.kind, this.ports);
+      if (icon) b.prepend(icon);
       b.addEventListener("pointerdown", (e) => this.startPlacing(tool, e));
       // A click (mouse or keyboard) adds the part at a free spot, unless
       // this press was a drag that already dropped it on the canvas.
@@ -323,7 +354,14 @@ class PlayPage {
     this.redoBtn.addEventListener("click", () => this.redo());
     this.undoBtn.title = t("play.undoTitle");
     this.redoBtn.title = t("play.redoTitle");
-    toolbar.append(this.undoBtn, this.redoBtn, this.shortcutsButton());
+    this.clearBtn.addEventListener("click", () => this.clear());
+    this.clearBtn.title = t("play.clearTitle");
+    toolbar.append(
+      this.undoBtn,
+      this.redoBtn,
+      this.clearBtn,
+      this.shortcutsButton(),
+    );
 
     // The canvas scrolls inside a frame that also holds overlays: the
     // status pill, the empty-canvas hint and the zoom controls.
@@ -331,7 +369,10 @@ class PlayPage {
     const wrap = el("div", { class: "canvas-wrap" });
     wrap.append(this.canvas.el);
     this.canvas.fillContainer(wrap);
-    frame.append(wrap, this.emptyHint, this.statusLine, this.zoomControls());
+    // Suggested fixes sit above the status pill, bottom left.
+    const dock = el("div", { class: "canvas-dock" });
+    dock.append(this.blockedBox, this.fixBox, this.statusLine);
+    frame.append(wrap, this.emptyHint, dock, this.zoomControls());
     const footer = el("div", { class: "bench-footer" });
     footer.append(this.stats, this.slowNote);
     bench.append(
@@ -349,8 +390,10 @@ class PlayPage {
     });
     const goal = el("section", { class: "side-section goal-box" });
     goal.append(
+      ...this.pathInfo(),
       el("h2", {}, t("play.goal")),
       el("p", { class: "goal" }, levelGoal(l)),
+      this.hintBox(),
     );
     side.append(goal);
     if (!this.app.store.persistent) {
@@ -364,6 +407,13 @@ class PlayPage {
       inputs.append(
         el("p", { class: "help", id: "bus-help" }, t("play.busHelp")),
       );
+      if (l.inputs.some((p) => this.showsBits(p)))
+        inputs.append(el("p", { class: "help" }, t("play.bitsHelp")));
+    }
+    if (l.outputs.some((p) => this.showsBits(p))) {
+      const outputs = el("section", { class: "side-section" });
+      outputs.append(el("h2", {}, t("play.outputs")), this.outputBox);
+      side.append(outputs);
     }
     const table = el("table", { class: "truth" });
     const head = el("thead");
@@ -613,6 +663,24 @@ class PlayPage {
     this.scheduleSave();
   }
 
+  /**
+   * Removes every part and wire. It's one undo step, but the cleared design
+   * is saved and undo history doesn't survive a reload, so ask first.
+   */
+  private clear(): void {
+    const { parts, wires } = this.design;
+    if (!parts.length && !wires.length) return;
+    if (
+      !confirm(
+        t("play.clearConfirm", { parts: parts.length, wires: wires.length }),
+      )
+    )
+      return;
+    this.selected = null;
+    this.onChange(clearDesign(this.design), true);
+    this.say(t("play.cleared"));
+  }
+
   // ---- right-click menu -------------------------------------------------------
 
   private showMenu(target: MenuTarget, at: { x: number; y: number }): void {
@@ -769,6 +837,7 @@ class PlayPage {
         this.say(t("play.added", { id }));
       } else if (action === "undo") this.undo();
       else if (action === "redo") this.redo();
+      else if (action === "clear") this.clear();
       back();
     }
   }
@@ -778,6 +847,117 @@ class PlayPage {
     const { design, id } = addPart(this.design, kind, freeSpot(taken));
     this.onChange(design, true);
     this.say(t("play.addedFree", { id }));
+  }
+
+  /**
+   * Where this level sits on the roadmap: "Step 14 of 43 · Choosing a
+   * signal", and the parts it's built from (linked), marking the ones the
+   * step before just made.
+   */
+  private pathInfo(): HTMLElement[] {
+    const levels = orderLevels(this.app.levels).map((e) => e.info.level);
+    const steps = roadmapSteps(
+      levels.map((l) => ({ id: l.id, requires: builtFrom(l) })),
+    );
+    const step = steps.find((s) => s.id === this.level.id);
+    if (!step) return [];
+    const kicker = el(
+      "p",
+      { class: "panel-kicker" },
+      `${t("play.stepOf", { n: step.n, total: steps.length })} · ${t(`stage.${step.stage.id}` as Key)}`,
+    );
+    const from = el("div", { class: "built-from" });
+    from.append(el("span", { class: "muted" }, t("levels.builtFrom")));
+    const needs = builtFrom(this.level);
+    if (!needs.length) from.append(el("span", {}, t("levels.builtFromBase")));
+    const list = el("ul", { class: "tree-chips" });
+    for (const id of needs) {
+      const lv = levelEntry(this.app, id)?.info.level;
+      const fresh = step.fresh.includes(id);
+      const li = el("li");
+      li.append(
+        el(
+          "a",
+          {
+            href: playHref(id),
+            class: fresh ? "fresh" : "",
+            title: fresh ? t("levels.justBuilt") : "",
+          },
+          lv ? levelName(lv) : id,
+        ),
+      );
+      list.append(li);
+    }
+    if (needs.length) from.append(list);
+    // What it's for: the levels built from it.
+    const users = usedIn(levels, this.level.id);
+    const used = el("div", { class: "built-from" });
+    if (!users.length)
+      used.append(
+        el(
+          "span",
+          { class: "muted" },
+          t(this.level.optional ? "levels.usedInNone" : "levels.usedInTop"),
+        ),
+      );
+    else {
+      used.append(el("span", { class: "muted" }, t("levels.usedIn")));
+      const ul = el("ul", { class: "tree-chips" });
+      for (const id of users) {
+        const lv = levelEntry(this.app, id)?.info.level;
+        const li = el("li");
+        li.append(el("span", { class: "chip" }, lv ? levelName(lv) : id));
+        ul.append(li);
+      }
+      used.append(ul);
+    }
+    return [kicker, from, used];
+  }
+
+  /**
+   * The Hint button: each press shows one more hint, a gentle nudge first,
+   * then the approach. What's shown stays for this visit (a re-render, e.g.
+   * a language switch, keeps it).
+   */
+  private hintBox(): HTMLElement {
+    const hints = HINT_ORDER.map((kind) =>
+      levelHint(this.level, kind, this.level.hints[kind] ?? null),
+    ).filter((h): h is string => Boolean(h));
+    const box = el("div", { class: "hint-box" });
+    if (!hints.length) return box;
+    const list = el("ol", { class: "hint-list", "aria-live": "polite" });
+    const button = el("button", { type: "button", class: "hint-button" });
+    const show = () => {
+      const n = shownHints.get(this.level.id) ?? 0;
+      list.replaceChildren(
+        ...hints.slice(0, n).map((h, i) => {
+          const li = el("li");
+          li.append(
+            el("strong", {}, t("play.hintLabel", { n: i + 1 })),
+            ...rich(` ${h}`),
+          );
+          return li;
+        }),
+      );
+      button.hidden = n >= hints.length;
+      button.textContent =
+        n === 0
+          ? t("play.hintFirst")
+          : t("play.hintNext", { n: n + 1, total: hints.length });
+    };
+    button.addEventListener("click", () => {
+      shownHints.set(this.level.id, (shownHints.get(this.level.id) ?? 0) + 1);
+      show();
+      // The button hides after the last hint: move focus to that hint.
+      const last = list.lastElementChild;
+      if (button.hidden && last instanceof HTMLElement) {
+        last.tabIndex = -1;
+        last.focus();
+      }
+    });
+    show();
+    box.append(list, button);
+    return box;
   }
 
   /** A toolbox item's name in the current language. */
@@ -1034,6 +1214,18 @@ class PlayPage {
     else this.renderWave();
     this.undoBtn.disabled = !this.history.canUndo();
     this.redoBtn.disabled = !this.history.canRedo();
+    this.clearBtn.disabled =
+      !this.design.parts.length && !this.design.wires.length;
+    // A problem that stops the circuit running (every wire shows X then):
+    // say so on the canvas and mark what it names.
+    const stopper = this.view?.blocked
+      ? this.view.problems.find((p) => p.severity === "error")
+      : undefined;
+    const blocking = {
+      problem: stopper,
+      parts: stopper?.parts ?? [],
+      ports: stopper?.ports ?? [],
+    };
     this.canvas.render({
       design: this.design,
       inputs: this.level.inputs,
@@ -1042,12 +1234,14 @@ class PlayPage {
       portWidths: this.level.widths,
       view: this.view,
       inputValues: this.inputs,
-      highlightParts: this.highlightParts,
-      highlightPorts: this.highlightPorts,
+      highlightParts: new Set([...this.highlightParts, ...blocking.parts]),
+      highlightPorts: new Set([...this.highlightPorts, ...blocking.ports]),
     });
+    this.renderBlocked(blocking.problem);
     this.emptyHint.hidden = this.design.parts.length > 0;
     this.emptyHint.textContent = t("play.emptyHint");
     this.renderInputs();
+    this.renderOutputs();
     this.renderStats();
     if (full) {
       this.renderProps();
@@ -1059,6 +1253,18 @@ class PlayPage {
     this.renderProblems();
   }
 
+  /** "Can't run: …" on the canvas while a problem blocks the circuit. */
+  private renderBlocked(problem: Problem | undefined): void {
+    if (!problem || !this.design.parts.length) {
+      this.blockedBox.replaceChildren();
+      return;
+    }
+    this.blockedBox.replaceChildren(
+      el("strong", {}, t("play.cantRun")),
+      ...rich(` ${problemText(problem)}`),
+    );
+  }
+
   private renderInputs(): void {
     // Don't rebuild while someone is typing a number.
     if (
@@ -1066,6 +1272,12 @@ class PlayPage {
       document.activeElement instanceof HTMLInputElement
     )
       return;
+    // Clicking a bit re-renders the inputs: keep focus on that bit.
+    const focused =
+      document.activeElement instanceof HTMLElement &&
+      this.inputBox.contains(document.activeElement)
+        ? document.activeElement.dataset.key
+        : undefined;
     this.inputBox.replaceChildren(
       ...this.level.inputs.map((name) => {
         const v = this.inputs[name] ?? 0;
@@ -1088,6 +1300,7 @@ class PlayPage {
           const asm = describe
             ? el("span", { class: "asm" }, describe(String(v)))
             : null;
+          let bits = this.showsBits(name) ? this.bitRow(name, v, w) : null;
           input.addEventListener("change", () => {
             const n = parseNumber(input.value);
             if (n === undefined || n >= 2 ** w || n < 0) {
@@ -1100,11 +1313,18 @@ class PlayPage {
             this.inputs[name] = n;
             this.currentStep = null;
             if (asm) asm.textContent = describe?.(String(n)) ?? "";
+            // The inputs aren't rebuilt while this box has focus.
+            const row = bits && this.bitRow(name, n, w);
+            if (row) bits?.replaceWith(row);
+            bits = row;
             this.refresh(false);
           });
           label.append(input);
           if (asm) label.append(asm);
-          return label;
+          if (!bits) return label;
+          const group = el("div", { class: "bus-field" });
+          group.append(label, bits);
+          return group;
         }
         const b = el(
           "button",
@@ -1112,12 +1332,91 @@ class PlayPage {
             type: "button",
             class: "input-toggle",
             "aria-pressed": String(v === 1),
+            "data-key": name,
           },
           `${name} = ${v}`,
         );
         b.addEventListener("click", () => this.toggle(name));
         return b;
       }),
+    );
+    if (focused)
+      this.inputBox
+        .querySelector<HTMLElement>(`[data-key="${CSS.escape(focused)}"]`)
+        ?.focus();
+  }
+
+  /** Buses up to 16 bits also show their bits (inputs can flip them). */
+  private showsBits(port: string): boolean {
+    const w = this.width(port);
+    return w > 1 && w <= 16;
+  }
+
+  /** One button per bit of a bus input, most significant first. */
+  private bitRow(name: string, v: number, w: number): HTMLElement {
+    const row = el("div", {
+      class: "bits",
+      role: "group",
+      "aria-label": t("play.bitsOf", { name }),
+    });
+    bitsOf(v, w).forEach((bit, k) => {
+      const i = w - 1 - k;
+      const b = el(
+        "button",
+        {
+          type: "button",
+          class: `bit v${bit}`,
+          "aria-pressed": String(bit === 1),
+          "data-key": `${name}.${i}`,
+          title: t("play.bitTitle", { name, i, v: bit }),
+          "aria-label": t("play.bitTitle", { name, i, v: bit }),
+        },
+        String(bit),
+      );
+      b.addEventListener("click", () => {
+        this.inputs[name] = bit ? v - 2 ** i : v + 2 ** i;
+        this.currentStep = null;
+        this.refresh(false);
+      });
+      row.append(b);
+    });
+    return row;
+  }
+
+  /** Bus outputs as a number and as bits, so a change shows bit by bit. */
+  private renderOutputs(): void {
+    this.outputBox.replaceChildren(
+      ...this.level.outputs
+        .filter((name) => this.showsBits(name))
+        .map((name) => {
+          const w = this.width(name);
+          const got = this.view?.outputs.find(([n]) => n === name)?.[1];
+          const bits =
+            got === undefined
+              ? []
+              : /^\d+$/.test(got)
+                ? bitsOf(Number(got), w).map(String)
+                : got.length === w
+                  ? [...got]
+                  : [];
+          const field = el("div", { class: "bus-field" });
+          field.append(
+            el(
+              "p",
+              { class: "bus-input" },
+              `${name} = ${got === undefined ? "–" : showValue(got, w)}`,
+            ),
+          );
+          const row = el("div", {
+            class: "bits",
+            role: "img",
+            "aria-label": `${t("play.bitsOf", { name })}: ${bits.join(" ") || "–"}`,
+          });
+          for (const bit of bits)
+            row.append(el("span", { class: `bit v${bit}` }, bit));
+          field.append(row);
+          return field;
+        }),
     );
   }
 
@@ -1151,9 +1450,7 @@ class PlayPage {
             : (view?.outputs.find(([n]) => n === name)?.[1] ?? "–");
           const any = row.skip.includes(name);
           if (!any && got !== String(want)) ok = false;
-          const shown = /^\d+$/.test(got)
-            ? formatValue(Number(got), this.width(name))
-            : got;
+          const shown = got === "–" ? got : showValue(got, this.width(name));
           cells += `<td>${any ? `<span class="any">${esc(t("play.any"))}</span>` : formatValue(want, this.width(name))}</td><td class="got">${shown}</td>`;
         }
         cells += `<td class="mark">${ok ? `<span class="ok">${esc(t("play.match"))}</span>` : `<span class="bad">${esc(t("play.differs"))}</span>`}</td>`;
@@ -1349,6 +1646,21 @@ class PlayPage {
         return li;
       }),
     );
+    // Wires of different widths usually mean a missing Repeat or Share:
+    // offer it as a button on the canvas, where the wiring happens.
+    const fixes =
+      this.level.layer >= 2
+        ? widthFixes(this.design, this.level.widths ?? {}, this.ports)
+        : [];
+    // So does wiring bus bits one by one: offer the rest in one click.
+    const wiring =
+      this.level.layer >= 2
+        ? bitWireFixes(this.design, this.level.inputs, this.ports)
+        : [];
+    this.fixBox.replaceChildren(
+      ...fixes.map((fix) => this.fixItem(fix)),
+      ...wiring.map((fix) => this.wireFixItem(fix)),
+    );
     if (this.view?.shorts.length) {
       this.problemList.prepend(
         el(
@@ -1358,6 +1670,77 @@ class PlayPage {
         ),
       );
     }
+  }
+
+  private fixItem(fix: Fix): HTMLElement {
+    const part = this.design.parts.find((p) => p.id === fix.part);
+    const base = (pin: string) =>
+      (part && this.ports[part.kind]?.widths?.[pin]) ?? 1;
+    const li = el("li", { class: "fix" });
+    const button = el(
+      "button",
+      { type: "button" },
+      fix.kind === "repeat"
+        ? t("play.fixRepeat", { part: fix.part, n: fix.n })
+        : t("play.fixShare", { part: fix.part, pin: fix.pin }),
+    );
+    button.addEventListener("click", () => {
+      const next =
+        fix.kind === "repeat"
+          ? updatePart(this.design, fix.part, { repeat: fix.n })
+          : updatePart(this.design, fix.part, {
+              shared: [...(part?.shared ?? []), fix.pin],
+            });
+      this.selected = fix.part;
+      this.onChange(next, true);
+    });
+    const why =
+      fix.kind === "repeat"
+        ? t("play.fixRepeatWhy", {
+            w: fix.n * base(fix.pin),
+            b: base(fix.pin),
+          })
+        : t("play.fixShareWhy", { pin: fix.pin, b: base(fix.pin) });
+    li.append(el("strong", {}, t("play.fixTry")), button, ...rich(why));
+    return li;
+  }
+
+  private wireFixItem(fix: WireFix): HTMLElement {
+    const n = fix.wires.length;
+    const show = (w: WireFix["wires"][number] | undefined) =>
+      w
+        ? `\`${endpointLabel(w.from, this.level.inputs)} → ${endpointLabel(w.to, this.level.inputs)}\``
+        : "";
+    const li = el("li", { class: "fix" });
+    const button = el(
+      "button",
+      { type: "button" },
+      fix.kind === "bits"
+        ? t("play.fixBits", { n })
+        : t("play.fixFill", {
+            n,
+            source: endpointLabel(fix.source, this.level.inputs),
+            part: fix.part,
+          }),
+    );
+    button.addEventListener("click", () => {
+      let next = this.design;
+      for (const w of fix.wires) {
+        const added = addWire(next, w.from, w.to);
+        if (typeof added !== "string") next = added;
+      }
+      this.onChange(next, true);
+      this.say(t("play.wiredMany", { n }));
+    });
+    const why =
+      fix.kind === "bits"
+        ? t("play.fixBitsWhy", {
+            first: show(fix.wires[0]),
+            rest: n > 1 ? `, ${show(fix.wires[1])}, …` : "",
+          })
+        : t("play.fixFillWhy");
+    li.append(el("strong", {}, t("play.fixTry")), button, ...rich(why));
+    return li;
   }
 
   /**

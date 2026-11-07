@@ -84,6 +84,8 @@ NAND has a remarkable property: it is a **[[universal gate]]**. You can build ev
 
 From Chapter 2 on, you can't place bare VDD and GND rails any more: you build only with components. Some circuits still need a fixed 0 or 1 (an adder's first column has no carry coming in, for example). So you'll make two tiny components now: **Constant 0** and **Constant 1**. Each is just one supply rail wired to the output, but once built they become parts like any other.
 
+<line-figure name="plug"></line-figure>
+
 **[Build Constant 0 →](#/play/zero)** · **[Build Constant 1 →](#/play/one)**
 
 ## How checking works

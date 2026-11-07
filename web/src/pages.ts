@@ -1,5 +1,6 @@
+import { FIGURES, figureSlot, pageFigure } from "./figures";
 import { CHAPTERS } from "./chapters";
-import { t, type Key } from "./i18n";
+import { getLang, t, type Key } from "./i18n";
 import { chapterHref, type Route } from "./router";
 import { site } from "./text";
 
@@ -36,15 +37,6 @@ function home(): string {
   }).join("");
   const step = (n: number, h: Key, p: Key) =>
     `<div><span class="step-n" aria-hidden="true">${n}</span><h2>${esc(t(h))}</h2><p>${esc(t(p))}</p></div>`;
-  // The whole course as a stack of chips: sand at the bottom, Tetris on top.
-  const stack = [...CHAPTERS]
-    .reverse()
-    .map((ch) => {
-      const on = ready.has(ch.number);
-      const label = `<span class="chip-n" aria-hidden="true">${ch.number}</span><span class="chip-name">${esc(outline(ch.number, "title"))}</span>`;
-      return `<li class="stack-chip" data-ready="${on}" style="--i:${ch.number}">${on ? `<a href="${chapterHref(ch.number)}">${label}</a>` : `${label}<span class="visually-hidden"> ${esc(t("chapter.soonSr"))}</span>`}</li>`;
-    })
-    .join("");
   return `<section class="hero">
       <div class="hero-text">
         <p class="eyebrow">${esc(t("home.eyebrow", { n: CHAPTERS.length }))}</p>
@@ -55,7 +47,10 @@ function home(): string {
           <a class="button" href="#/levels">${esc(t("home.workbench"))}</a>
         </p>
       </div>
-      <ol class="stack" aria-label="${esc(t("home.stackLabel"))}">${stack}</ol>
+      <div class="hero-figure">
+        ${pageFigure("home", (n) => t(`figure.${n}`), "", 0)}
+        <button type="button" class="figure-toggle" data-figure-toggle data-apart="false">${esc(t("home.takeApart"))}</button>
+      </div>
     </section>
     <section class="steps" aria-label="${esc(t("home.howItWorks"))}">
       ${step(1, "home.read", "home.readText")}
@@ -96,6 +91,7 @@ function chapter(number: number): string {
   const sources = ch.html.includes('id="sources"')
     ? `<li><a href="${chapterHref(number, "sources")}" data-section="sources">${esc(t("chapter.sources"))}</a></li>`
     : "";
+  const figure = FIGURES.chapters[number];
   const prev = ready.get(number - 1);
   const next = ready.get(number + 1);
   const pagerLink = (c: typeof ch, cls: string, label: Key) =>
@@ -115,11 +111,15 @@ function chapter(number: number): string {
         <p class="toc-top"><a href="${chapterHref(number)}">${esc(t("chapter.backToTop"))}</a></p>
       </details>
     </nav>
-    <article class="chapter-page">
-      <header class="chapter-head">
-        <p class="eyebrow">${esc(t("chapter.n", { n: ch.number }))}</p>
-        <h1 tabindex="-1">${esc(ch.title)}</h1>
-        <p class="lead">${esc(ch.summary)}</p>
+    <article class="chapter-page"${ch.untranslated ? ' lang="en"' : ""}>
+      ${ch.untranslated ? `<p class="notice" lang="${getLang()}">${esc(t("chapter.notTranslated"))}</p>` : ""}
+      <header class="chapter-head${figure ? " with-figure" : ""}">
+        <div>
+          <p class="eyebrow">${esc(t("chapter.n", { n: ch.number }))}</p>
+          <h1 tabindex="-1">${esc(ch.title)}</h1>
+          <p class="lead">${esc(ch.summary)}</p>
+        </div>
+        ${figure ? figureSlot(figure, t(`figure.${figure}`)) : ""}
       </header>
       ${ch.html}
       ${pager}
@@ -196,6 +196,7 @@ function glossaryPage(): string {
         <h1 tabindex="-1">${esc(t("title.glossary"))}</h1>
         <p class="lead">${esc(t("glossary.lead"))}</p>
       </div>
+      ${pageFigure("glossary", (n) => t(`figure.${n}`), "head")}
       <label class="search">
         <span class="visually-hidden">${esc(t("glossary.filterLabel"))}</span>
         <input type="search" placeholder="${esc(t("glossary.filter", { n: glossary.length }))}" data-gloss-filter />
@@ -230,7 +231,7 @@ export function installGlossaryFilter(root: HTMLElement): void {
 }
 
 function notFound(message = t("notFound.text")): string {
-  return `<div class="narrow-page"><h1 tabindex="-1">${esc(t("title.notFound"))}</h1><p>${esc(message)}</p><p><a href="#/">${esc(t("notFound.back"))}</a></p></div>`;
+  return `<div class="narrow-page">${pageFigure("notFound", (n) => t(`figure.${n}`), "lost")}<h1 tabindex="-1">${esc(t("title.notFound"))}</h1><p>${esc(message)}</p><p><a href="#/">${esc(t("notFound.back"))}</a></p></div>`;
 }
 
 const titled = (page: string) => `${page} · ${t("site.name")}`;

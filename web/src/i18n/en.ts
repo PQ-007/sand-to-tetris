@@ -20,6 +20,8 @@ export const en = {
   "nav.build": "Build",
   "nav.glossary": "Glossary",
   "nav.language": "Language",
+  "theme.toDark": "Dark theme",
+  "theme.toLight": "Light theme",
   "hud.levels": "Levels",
   "hud.levelsLabel": "Levels passed: {passed} of {total}. Open the level map.",
   "core.loading": "Loading simulator…",
@@ -48,24 +50,70 @@ export const en = {
   "outline.4.title": "The CPU",
   "outline.4.summary":
     "An instruction set we design together, a datapath and a control unit.",
-  "outline.5.title": "Assembler",
-  "outline.5.summary": "Turn readable assembly into the machine's binary.",
-  "outline.6.title": "VM and a language",
+  "outline.5.title": "The assembler",
+  "outline.5.summary":
+    "Write programs with names instead of numbers, and the program that turns them into binary.",
+  "outline.6.title": "The virtual machine",
   "outline.6.summary":
-    "A virtual machine, then a small high-level language compiled to it.",
-  "outline.7.title": "Mini OS",
-  "outline.7.summary": "Screen, keyboard, timer and random numbers.",
-  "outline.8.title": "Tetris",
+    "A stack machine of our own, and the translator that turns it into assembly.",
+  "outline.7.title": "The compiler",
+  "outline.7.summary":
+    "C Shard, a language we design together, and its compiler.",
+  "outline.8.title": "The operating system",
   "outline.8.summary":
-    "Write Tetris in your language and play it on your computer.",
+    "Screen, text, keyboard, timer and random numbers, in C Shard.",
+  "outline.9.title": "Bitfall",
+  "outline.9.summary":
+    "An original falling-block game, played on the computer you built.",
 
   // ---- home ----
   "home.eyebrow": "A course in {n} chapters",
   "home.title": "From sand to Tetris",
   "home.tagline":
-    "Start with sand. Build switches, gates, memory, a CPU, a compiler and an operating system. Finish by playing Tetris on the computer you made.",
-  "home.stackLabel": "The course, from sand at the bottom to Tetris at the top",
+    "There is no magic, just abstraction layers built on top of one another.",
+  "figure.computer":
+    "Line drawing of a desktop computer: a case with a power supply and a board inside (a CPU under its heatsink, RAM, capacitors), a monitor on its stand, a keyboard and a mouse. The pointer picks a part and lifts what's above it; the button takes it apart into layers.",
+  "figure.patch":
+    "Line drawing of a patch panel: the cable under the pointer lifts, and its neighbours lean away. Building here is wiring.",
+  "figure.laptop":
+    "Line drawing of a thin laptop: the pointer's height sets how far the lid opens.",
+  "figure.loupe":
+    "Line drawing of a stand loupe over a ruled sheet: the pointer moves it, and the lines pass enlarged under the glass.",
+  "figure.query":
+    "Line drawing of a question mark built as a solid: the hook turns toward the pointer.",
+  "figure.wafer":
+    "Line drawing of a silicon wafer ruled into dies: under the pointer the dies rise out of it, the nearest most.",
+  "figure.transistor":
+    "Line drawing of a transistor, cut away: bring the pointer to the gate and electrons gather under it until the channel joins source to drain.",
+  "figure.carry":
+    "Line drawing of eight one-bit adders in a row: point at a bit and the carry ripples to it from bit 0, one adder after another.",
+  "figure.cpu":
+    "Line drawing of a processor with its die bare: point at a block (the registers, the ALU, the shifter, the control unit, the program counter) and it lifts off the die.",
+  "figure.plug":
+    "Line drawing of a wall socket and a plug on the floor: the pointer draws the plug toward the socket. A constant is a wire tied to a supply.",
+  "figure.cabinet":
+    "Line drawing of a rack of twelve blades: the pointer's height pulls the nearest ones out on their rails, the way an address picks one bank of memory.",
+  "figure.slow":
+    "Line drawing of crates riding a belt through a gate, one at a time; hovering slows the clock without stopping it.",
+  "figure.riffle":
+    "Line drawing of a tray of eight cards, each with its number punched on its tab: the card under the pointer stands up, like an instruction word read from the program.",
+  "figure.exploded":
+    "Line drawing of an app pulled apart into layers, like the layers of this course. Move the pointer across it to open them.",
+  "figure.lockers":
+    "Line drawing of twelve lockers: the one under the pointer opens, the way one memory cell answers its address.",
+  "figure.terminal":
+    "Line drawing of a terminal window: the pointer scrolls back through its lines, like reading a listing.",
+  "figure.stack":
+    "Line drawing of a call stack of five frames: the frames above lift to open the one under the pointer.",
+  "figure.settle":
+    "Line drawing of crooked tiles that settle into a tree as the pointer nears, the way a parser turns text into a syntax tree.",
+  "figure.keyboard":
+    "Line drawing of a keyboard: the key under the pointer sinks, and its neighbours follow it down.",
+  "figure.phosphor":
+    "Line drawing of a seven by seven dot screen playing a loop; the pointer paints a trail that fades.",
   "home.start": "Start reading",
+  "home.takeApart": "Take it apart",
+  "home.putTogether": "Put it back together",
   "home.workbench": "Open the workbench",
   "home.howItWorks": "How it works",
   "home.read": "Read",
@@ -122,7 +170,62 @@ export const en = {
     "Something it uses changed and it no longer passes. Open it to see why.",
   "levels.viewLabel": "View",
   "levels.viewTree": "Tech tree",
-  "levels.viewList": "List",
+  "levels.viewRoadmap": "Roadmap",
+  "levels.roadmapLabel": "The course, step by step",
+  "levels.step": "Step {n}",
+  "levels.builtFrom": "Built from",
+  "levels.builtFromBase": "Transistors, VDD and GND",
+  "levels.usedIn": "Used in",
+  "levels.usedInMore": "and {n} more",
+  "levels.usedInTop":
+    "Nothing: this is the finished computer. Bitfall runs on it.",
+  "levels.usedInNone": "Nothing later needs it: an optional warm-up.",
+  "levels.justBuilt": "from the step before",
+  "levels.nextUp": "Next up",
+  "levels.continue": "Continue: step {n}, {name} →",
+  "levels.stageDone": "{done}/{n} done",
+  "stage.gates": "Gates from switches",
+  "stage.gates.intro":
+    "Two transistors, one pulling up and one pulling down, make NOT. Wire the pairs differently and the same idea gives NAND and NOR.",
+  "stage.const": "Fixed signals",
+  "stage.const.intro":
+    "A wire tied to VDD or GND is a constant 1 or 0. Later parts use them for inputs that never change.",
+  "stage.logic": "Logic from NAND",
+  "stage.logic.intro":
+    "From here on you build with gates, not transistors. NAND and NOT are enough for AND and OR, and those two give XOR.",
+  "stage.wide": "Sixteen bits at once",
+  "stage.wide.intro":
+    "The computer works on 16-bit words. Repeat ×16 stamps out the gate you just built, one copy per bit.",
+  "stage.choose": "Choosing a signal",
+  "stage.choose.intro":
+    "A MUX lets one wire decide which of two signals gets through. Each MUX in this stage is built from the one before it.",
+  "stage.route": "Sending a signal",
+  "stage.route.intro":
+    "A DMUX is a MUX turned around: one input, sent to the output that sel picks. RAM uses it to pick which word to write.",
+  "stage.add": "Adding",
+  "stage.add.intro":
+    "Add two bits, then three, then chain sixteen adders into a word adder. Each adder is made from the one you just built.",
+  "stage.alu": "The ALU",
+  "stage.alu.intro":
+    "Put it together: OR8WAY spots a zero, the shifter moves bits, and the ALU does all of the CPU's calculating.",
+  "stage.bit": "Remembering one bit",
+  "stage.bit.intro":
+    "Feed a gate's output back into its input and it remembers. Each step fixes a weakness of the one before, until it changes only on the clock edge.",
+  "stage.registers": "Registers",
+  "stage.registers.intro":
+    "Sixteen Bits side by side make a register. Eight registers make the CPU's register file, and a register that counts is the program counter.",
+  "stage.ram": "RAM",
+  "stage.ram.intro":
+    "Registers with an address make RAM8. Each bigger RAM is made from copies of the one before it.",
+  "stage.control": "Control",
+  "stage.control.intro":
+    "The control unit reads an instruction and sets every signal that steers the CPU.",
+  "stage.cpu": "The processor",
+  "stage.cpu.intro":
+    "Wire the control unit, register file, ALU, shifter and program counter into a CPU that runs one instruction per clock.",
+  "stage.machine": "The computer",
+  "stage.machine.intro":
+    "Give RAM, the screen and the keyboard their addresses, then connect that memory to the CPU.",
   "levels.treeLabel":
     "Levels as a tech tree: each level sits below the levels it needs",
   "levels.treeHelp":
@@ -174,6 +277,18 @@ export const en = {
   "play.levelMap": "Level map",
   "play.toolbox": "Toolbox",
   "play.parts": "Parts",
+  "play.cantRun": "Can't run yet:",
+  "play.clear": "Clear",
+  "play.clearTitle": "Remove every part and wire (Undo brings them back)",
+  "play.clearConfirm": (v: Vars) =>
+    `Remove all ${v.parts} ${v.parts === 1 ? "part" : "parts"} and ${v.wires} ${v.wires === 1 ? "wire" : "wires"}? Undo (Ctrl+Z) brings them back until you leave the page.`,
+  "play.cleared": "Canvas cleared. Undo (Ctrl+Z) brings it back.",
+  "play.hintFirst": "Show a hint",
+  "play.hintNext": "Show the next hint ({n} of {total})",
+  "play.hintLabel": "Hint {n}:",
+  "play.moreParts": "More parts ({n})",
+  "play.fewerParts": "Fewer parts",
+  "play.stepOf": "Step {n} of {total}",
   "play.addTool": "Add {name} (or drag it onto the canvas)",
   "play.undo": "Undo",
   "play.redo": "Redo",
@@ -190,6 +305,11 @@ export const en = {
   "play.busHelp":
     "Type a number for each bus input: decimal, 0x… hex or 0b… binary. Press Enter to apply.",
   "play.busLabel": "{name} ({w} bits) ",
+  "play.bitsOf": "Bits of {name}",
+  "play.bitTitle": "{name} bit {i} is {v}. Click to flip it.",
+  "play.bitsHelp":
+    "Or click a bit to flip it. The most significant bit is on the left, bit 0 on the right.",
+  "play.outputs": "Outputs",
   "play.notANumber":
     "“{text}” isn't a number from 0 to {max}. You can type decimal, 0x… hex or 0b… binary.",
   "play.step": "Step",
@@ -284,6 +404,17 @@ export const en = {
   "play.repeatHelp":
     "Each copy gets its own slice of every bus pin, except shared inputs, which all copies read.",
   "play.share": " share {pin}",
+  "play.fixTry": "Try: ",
+  "play.fixRepeat": "Repeat {part} ×{n}",
+  "play.fixRepeatWhy":
+    " The bus carries {w} bits, and one copy of the part takes {b}.",
+  "play.fixShare": "Share {pin} in {part}",
+  "play.fixShareWhy": " Every copy should read the same {b}-bit `{pin}`.",
+  "play.fixBits": "Wire the next {n} bits the same way",
+  "play.fixBitsWhy": " Next: {first}{rest}.",
+  "play.fixFill": "Connect {source} to the {n} free bits of {part}",
+  "play.fixFillWhy": " Unused bits of a joiner usually get a constant 0.",
+  "play.wiredMany": "Added {n} wires.",
   "play.simError": "Simulation error: {error}",
   "play.showingStep1": "Showing step 1, from power-on.",
   "play.showingStep": "Showing step {n}, after replaying steps 1–{m}.",
@@ -351,6 +482,7 @@ export const en = {
   "state.maybe": "maybe",
   "endpoint.input": "input {name}",
   "endpoint.output": "output {name}",
+  "endpoint.bit": "bit {n}",
 
   // ---- right-click menu ----
   "menu.lookInside": "Look inside",
@@ -367,6 +499,7 @@ export const en = {
   "menu.addHere": "Add {name} here",
   "menu.undo": "Undo",
   "menu.redo": "Redo",
+  "menu.clear": "Clear canvas",
   "menu.wire": "Wire",
   "menu.wireTitle": "Wire {from} — {to}",
   "menu.input": "Input {name}",
@@ -416,6 +549,8 @@ export const en = {
   "problem.pin-unconnected": "`{part}.{pin}` isn't connected",
   "problem.inner-broken": "a component inside this design is broken: {detail}",
   "problem.engine": "{detail}",
+  "problem.two-drivers":
+    "{listeners} gets two signals at once, from {drivers}: two outputs fighting over one wire. Each wire needs exactly one source",
   "problem.too-big":
     "this circuit is over {limit} gates once every part is expanded: too big to simulate. Switch big parts (memories, the CPU) to their fast models on the level map",
   "reason.widthOnlyWiring": "only splitters and joiners have a width",

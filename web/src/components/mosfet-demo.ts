@@ -16,10 +16,10 @@ const CSS = sheet(`
   .oxide { fill: var(--oxide); }
   .gate { fill: var(--metal); }
   .channel { fill: var(--channel); }
-  .wire { stroke: var(--text); stroke-width: 2; fill: none; }
-  .curve { fill: none; stroke: var(--accent); stroke-width: 2; }
+  .wire { stroke: var(--text); stroke-width: 1.25; fill: none; }
+  .curve { fill: none; stroke: var(--accent); stroke-width: 1.25; }
   .grid line { stroke: var(--border); }
-  .state { font-weight: 700; }
+  .state { font-weight: 600; }
 `);
 
 const W = 600;

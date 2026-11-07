@@ -9,6 +9,12 @@ export function emptyDesign(component: string): Design {
   return { format: 1, component, parts: [], wires: [] };
 }
 
+/** The design with every part and wire removed. Ports the learner moved
+ * stay where they are (that's layout, not circuit). */
+export function clearDesign(design: Design): Design {
+  return { ...design, parts: [], wires: [] };
+}
+
 export function endpointKey(e: Endpoint): string {
   return "port" in e ? `port:${e.port}` : `pin:${e.part}.${e.pin}`;
 }

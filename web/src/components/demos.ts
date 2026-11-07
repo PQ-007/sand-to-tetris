@@ -13,3 +13,4 @@ import "./stack-demo";
 import "./compile-demo";
 import "./font-demo";
 import "./bitrow-demo";
+import "./line-figure";

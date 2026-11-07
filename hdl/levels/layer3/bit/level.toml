@@ -26,5 +26,6 @@ d load clk | q
 """
 
 [hints]
+nudge = "A flip-flop stores something on every clock edge. To keep the old bit, it has to store its own output again."
 wrong = "With load=0 the flip-flop must store its own output again. Feed q back into the multiplexer, and let load choose between q and d."
 unknown = "If q stays unknown after a load, check that the multiplexer's output reaches the flip-flop's d and that clk reaches the flip-flop."

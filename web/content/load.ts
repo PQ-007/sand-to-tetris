@@ -31,7 +31,9 @@ export interface LevelFile {
 }
 
 export interface SiteContent {
-  chapters: RenderedChapter[];
+  /** `untranslated`: shown in English while this language's text is missing
+   * (only for a language still being translated). */
+  chapters: (RenderedChapter & { untranslated?: boolean })[];
   glossary: GlossaryItem[];
 }
 
@@ -53,7 +55,7 @@ export function loadLevels(levelsDir: string): LevelFile[] {
   return out;
 }
 
-export type Lang = "en" | "mn";
+export type Lang = "en" | "mn" | "ja";
 
 export interface LoadResult {
   content: Record<Lang, SiteContent>;
@@ -108,11 +110,31 @@ const LABELS: Record<
     checked: "Шалгасан:",
     estimate: "Ойролцоо тооцоо:",
   },
+  ja: {
+    sources: "出典",
+    contested: "異説あり:",
+    checked: "確認方法:",
+    estimate: "概算:",
+  },
 };
 
-/** The demo tags a chapter uses, in order. */
+/**
+ * Translations of the original. A complete one (Mongolian) must translate
+ * every chapter, glossary entry and source, or the build fails. A staged
+ * one (Japanese, being translated) falls back to the English original for
+ * what's missing, and that chapter is marked `untranslated`; whatever it
+ * does translate is checked just as strictly.
+ */
+const TRANSLATIONS: { lang: Exclude<Lang, "en">; complete: boolean }[] = [
+  { lang: "mn", complete: true },
+  { lang: "ja", complete: false },
+];
+
+/** The demo tags a chapter uses, in order (a figure with its name). */
 const tagsOf = (src: string) =>
-  [...src.matchAll(/^<([a-z0-9]+-[a-z0-9-]+)>/gm)].map((m) => m[1]);
+  [...src.matchAll(/^<([a-z0-9]+-[a-z0-9-]+)(?:\s+name="([^"]+)")?>/gm)].map(
+    (m) => (m[2] ? `${m[1]}:${m[2]}` : m[1]),
+  );
 /** Source ids a chapter cites. */
 const citesOf = (src: string) =>
   [...new Set([...src.matchAll(/\[@([a-z0-9-]+)\]/g)].map((m) => m[1]))].sort();
@@ -157,98 +179,125 @@ export function loadContent(docsDir: string): LoadResult {
   );
   const en = renderLanguage("en", glossary, sources, originals, "docs", errors);
 
-  // ---- Mongolian: every text translated, lined up with the original ----
-  const mnDir = join(docsDir, "mn");
-  const mnGlossary = safely(
-    "mn/glossary.yaml",
-    () =>
-      parseGlossary(
-        read(join(mnDir, "glossary.yaml")),
-        "docs/mn/glossary.yaml",
-      ),
-    [],
-  );
-  const mnTerms = new Map(mnGlossary.map((g) => [g.id, g]));
-  for (const g of glossary)
-    if (!mnTerms.has(g.id))
-      errors.push(`docs/mn/glossary.yaml: no translation of \`${g.id}\``);
-  for (const g of mnGlossary)
-    if (!glossary.some((o) => o.id === g.id))
-      errors.push(
-        `docs/mn/glossary.yaml: \`${g.id}\` isn't in docs/glossary.yaml`,
-      );
-  const glossaryMn = glossary.map((g) => {
-    const tr = mnTerms.get(g.id);
-    return tr ? { ...g, term: tr.term, short: tr.short, long: tr.long } : g;
-  });
-  const mnSources = safely(
-    "mn/sources.yaml",
-    () =>
-      parseSourceTexts(
-        read(join(mnDir, "sources.yaml")),
-        "docs/mn/sources.yaml",
-      ),
-    [],
-  );
-  const mnClaims = new Map(mnSources.map((x) => [x.id, x]));
-  const sourcesMn = sources.map((src) => {
-    const tr = mnClaims.get(src.id);
-    if (!tr) {
-      errors.push(`docs/mn/sources.yaml: no translation of \`${src.id}\``);
-      return src;
-    }
-    if (Boolean(src.uncertain) !== Boolean(tr.uncertain))
-      errors.push(
-        `docs/mn/sources.yaml: \`${src.id}\` must say why it's contested exactly when the original does`,
-      );
-    return {
-      ...src,
-      claim: tr.claim,
-      uncertain: tr.uncertain,
-      checked: tr.checked ?? src.checked,
-      sources: src.sources.map((r) =>
-        r.estimate && tr.note ? { ...r, note: tr.note } : r,
-      ),
-    };
-  });
-  const translations = new Map<string, string>();
-  for (const n of names) {
-    const path = join(mnDir, "chapters", n);
-    if (!existsSync(path)) {
-      errors.push(
-        `docs/mn/chapters/${n}: missing (translate docs/chapters/${n})`,
-      );
-      continue;
-    }
-    const src = read(path);
-    const orig = originals.get(n) ?? "";
-    if (tagsOf(src).join() !== tagsOf(orig).join())
-      errors.push(
-        `docs/mn/chapters/${n}: uses demos ${tagsOf(src).join(", ") || "none"}, the original ${tagsOf(orig).join(", ") || "none"}`,
-      );
-    if (citesOf(src).join() !== citesOf(orig).join())
-      errors.push(
-        `docs/mn/chapters/${n}: cites ${citesOf(src).join(", ") || "nothing"}, the original ${citesOf(orig).join(", ") || "nothing"}`,
-      );
-    translations.set(n, src);
-  }
   const ids = new Map(
     en.chapters.map((c, i) => [names[i] ?? "", c.headingIds] as const),
   );
-  const mn = renderLanguage(
-    "mn",
-    glossaryMn,
-    sourcesMn,
-    translations,
-    "docs/mn",
-    errors,
-    ids,
-  );
-  for (const c of mn.chapters) {
-    if (!en.chapters.some((o) => o.number === c.number))
-      errors.push(`docs/mn/chapters: chapter ${c.number} has no original`);
+  const content = { en } as Record<Lang, SiteContent>;
+  for (const { lang, complete } of TRANSLATIONS) {
+    const dir = join(docsDir, lang);
+    const at = `docs/${lang}`;
+    // A staged translation may not have a file at all yet.
+    const optional = (file: string) =>
+      !complete && !existsSync(join(dir, file));
+    const trGlossary = optional("glossary.yaml")
+      ? []
+      : safely(
+          `${lang}/glossary.yaml`,
+          () =>
+            parseGlossary(
+              read(join(dir, "glossary.yaml")),
+              `${at}/glossary.yaml`,
+            ),
+          [],
+        );
+    const terms = new Map(trGlossary.map((g) => [g.id, g]));
+    for (const g of glossary)
+      if (complete && !terms.has(g.id))
+        errors.push(`${at}/glossary.yaml: no translation of \`${g.id}\``);
+    for (const g of trGlossary)
+      if (!glossary.some((o) => o.id === g.id))
+        errors.push(
+          `${at}/glossary.yaml: \`${g.id}\` isn't in docs/glossary.yaml`,
+        );
+    const glossaryTr = glossary.map((g) => {
+      const tr = terms.get(g.id);
+      return tr ? { ...g, term: tr.term, short: tr.short, long: tr.long } : g;
+    });
+    const trSources = optional("sources.yaml")
+      ? []
+      : safely(
+          `${lang}/sources.yaml`,
+          () =>
+            parseSourceTexts(
+              read(join(dir, "sources.yaml")),
+              `${at}/sources.yaml`,
+            ),
+          [],
+        );
+    const claims = new Map(trSources.map((x) => [x.id, x]));
+    const sourcesTr = sources.map((src) => {
+      const tr = claims.get(src.id);
+      if (!tr) {
+        if (complete)
+          errors.push(`${at}/sources.yaml: no translation of \`${src.id}\``);
+        return src;
+      }
+      if (Boolean(src.uncertain) !== Boolean(tr.uncertain))
+        errors.push(
+          `${at}/sources.yaml: \`${src.id}\` must say why it's contested exactly when the original does`,
+        );
+      return {
+        ...src,
+        claim: tr.claim,
+        uncertain: tr.uncertain,
+        checked: tr.checked ?? src.checked,
+        sources: src.sources.map((r) =>
+          r.estimate && tr.note ? { ...r, note: tr.note } : r,
+        ),
+      };
+    });
+    const translations = new Map<string, string>();
+    const fallback = new Set<string>();
+    for (const n of names) {
+      const path = join(dir, "chapters", n);
+      if (!existsSync(path)) {
+        if (complete)
+          errors.push(
+            `${at}/chapters/${n}: missing (translate docs/chapters/${n})`,
+          );
+        else {
+          translations.set(n, originals.get(n) ?? "");
+          fallback.add(n);
+        }
+        continue;
+      }
+      const src = read(path);
+      const orig = originals.get(n) ?? "";
+      if (tagsOf(src).join() !== tagsOf(orig).join())
+        errors.push(
+          `${at}/chapters/${n}: uses demos ${tagsOf(src).join(", ") || "none"}, the original ${tagsOf(orig).join(", ") || "none"}`,
+        );
+      if (citesOf(src).join() !== citesOf(orig).join())
+        errors.push(
+          `${at}/chapters/${n}: cites ${citesOf(src).join(", ") || "nothing"}, the original ${citesOf(orig).join(", ") || "nothing"}`,
+        );
+      translations.set(n, src);
+    }
+    const rendered = renderLanguage(
+      lang,
+      glossaryTr,
+      sourcesTr,
+      translations,
+      at,
+      errors,
+      ids,
+    );
+    // Chapters still in English say so (by number: names line up 1:1).
+    const untranslated = new Set(
+      names
+        .map((n, i) => (fallback.has(n) ? en.chapters[i]?.number : undefined))
+        .filter((x) => x !== undefined),
+    );
+    rendered.chapters = rendered.chapters.map((c) =>
+      untranslated.has(c.number) ? { ...c, untranslated: true } : c,
+    );
+    for (const c of rendered.chapters) {
+      if (!en.chapters.some((o) => o.number === c.number))
+        errors.push(`${at}/chapters: chapter ${c.number} has no original`);
+    }
+    content[lang] = rendered;
   }
-  return { content: { en, mn }, files, errors };
+  return { content, files, errors };
 }
 
 /** Renders one language's chapters and glossary. */

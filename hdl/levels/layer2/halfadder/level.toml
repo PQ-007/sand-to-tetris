@@ -16,4 +16,5 @@ a b | sum carry
 """
 
 [hints]
+nudge = "Adding two bits gives a 2-bit answer: 1 + 1 = 10. Compare the sum and carry columns with gates you know."
 wrong = "Compare the sum column with XOR's truth table, and the carry column with AND's."

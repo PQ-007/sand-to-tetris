@@ -209,6 +209,12 @@ fn two_outputs_on_one_wire_is_a_problem_with_parts() {
         .find(|p| p.message.contains("fighting"))
         .unwrap();
     assert_eq!(p.parts, ["x", "y"]);
+    // Where they meet is named and highlighted too, with a code and
+    // values another language can rebuild the text from.
+    assert_eq!(p.code, "two-drivers");
+    assert_eq!(p.ports, ["out"]);
+    assert_eq!(p.args["listeners"], "output `out`");
+    assert_eq!(p.args["drivers"], "`x.out` and `y.out`");
 }
 
 #[test]

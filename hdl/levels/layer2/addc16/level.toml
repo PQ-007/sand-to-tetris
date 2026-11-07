@@ -21,4 +21,5 @@ a b cin | out cout
 """
 
 [hints]
+nudge = "Like ADD16, but the first column takes a carry in from outside, and the last column's carry comes out."
 wrong = "Feed cin into the first full adder's c, and take the last full adder's carry as cout."

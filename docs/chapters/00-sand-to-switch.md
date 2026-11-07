@@ -12,6 +12,8 @@ You won't wire anything yet. Instead you'll meet the ideas and the history behin
 
 A [[computer]] is a machine that does four things:
 
+<line-figure name="computer"></line-figure>
+
 1. **[[Input]]**: it takes in information (key presses, a photo, a temperature reading).
 2. **[[Memory]]**: it holds that information, and its results, for later.
 3. **Processing**: it changes the information by following instructions: adding, comparing, choosing.

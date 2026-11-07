@@ -21,6 +21,8 @@ The timer is new hardware: the memory map now sends address 0x6001 to a `timer` 
 
 The screen is 768 words, 8 to a row, and each pixel is one bit. To light pixel (x, y), `plot` finds its word at `0x4000 + 8y + x / 16` and makes a **[[bit mask|bit-mask]]** with a single 1 in the right place: `0x8000 >> (x % 16)`, because the leftmost pixel is the highest bit. OR with the mask turns the pixel on; AND with its inverse turns it off. Every other pixel in the word stays as it was.
 
+<line-figure name="phosphor"></line-figure>
+
 A filled rectangle could call `plot` for every pixel, but a game redraws a lot of them. `fill_rect` works a word at a time: for each row, it covers the pixels up to the next word boundary with one mask of several 1s, so a whole word costs one read and one write instead of sixteen. In C Shard, n ones starting `bit` pixels from the left of a word are `(-1 << (16 - n)) >> bit`.
 
 ## A font made of numbers

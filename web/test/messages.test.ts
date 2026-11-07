@@ -30,6 +30,21 @@ const diag = (over: Partial<Diagnostic>): Diagnostic => ({
 });
 
 describe("checker messages in the learner's language", () => {
+  it("two signals on one wire: names both ends in Mongolian", () => {
+    setLang("mn");
+    expect(
+      problemText(
+        problem("two-drivers", {
+          listeners: "`or4.a`",
+          drivers: "input `in` bit 5 and input `in` bit 6",
+        }),
+      ),
+    ).toBe(
+      "`or4.a`: нэг дор хоёр дохио ирж байна (оролт `in` бит 5, оролт `in` бит 6). Хоёр гаралт нэг wire-ыг булаацалдаж байна; wire бүр яг нэг эх үүсвэртэй байх ёстой",
+    );
+    setLang("en");
+  });
+
   it("keeps the core's exact English", () => {
     setLang("en");
     expect(problemText(problem("output-unconnected", { port: "out" }))).toBe(
@@ -53,7 +68,7 @@ describe("checker messages in the learner's language", () => {
           reason: "width 99 isn't allowed; use 2 to 64",
         }),
       ),
-    ).toBe("`s` эд анги: 99 өргөн зөвшөөрөгдөхгүй; 2-оос 64 хүртэл байна");
+    ).toBe("`s` part: 99 өргөн зөвшөөрөгдөхгүй; 2-оос 64 хүртэл байна");
     expect(
       problemText(
         problem("width-mismatch", {
@@ -75,10 +90,10 @@ describe("checker messages in the learner's language", () => {
     setLang("mn");
     const ctx = { sequential: true, rows: 12 };
     expect(diagnosticText(diag({ row: 3 }), ctx)).toBe(
-      "3-р алхам (1–2-р алхмын дараа): d=0 clk=1 → q=1 байх ёстой, гэтэл q=0 гарлаа.",
+      "Step 3 (step 1–2-ийн дараа): d=0 clk=1 → q=1 байх ёстой, гэтэл q=0 гарлаа.",
     );
     expect(diagnosticText(diag({ row: 14 }), ctx)).toMatch(
-      /^Санамсаргүй 2-р алхам \(санамсаргүй 1-р алхмын дараа\)/,
+      /^Санамсаргүй step 2 \(санамсаргүй step 1-ийн дараа\)/,
     );
     expect(
       diagnosticText(diag({ row: 2, kind: "floating", actual: "Z" }), {

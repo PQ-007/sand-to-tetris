@@ -1,5 +1,6 @@
 // Where things are drawn: part sizes, pin positions, port positions and
 // wire routes. Pure functions, so the layout is testable.
+import { symbolOf } from "./symbols";
 
 export const CANVAS = { width: 760, height: 460 };
 export const GRID = 10;
@@ -12,6 +13,8 @@ export interface PinSpot {
   at: Point;
   /** Which side the pin's label goes on. */
   side: "left" | "right" | "top" | "bottom";
+  /** Wires leave this pin downward (a selector's `sel` at the bottom). */
+  vertical?: boolean;
 }
 
 export interface Shape {
@@ -127,7 +130,18 @@ export function shapeOf(
         pins: [{ pin: "out", at: [0, -15], side: "top" }],
       };
     default: {
-      const ins = ports?.inputs ?? [];
+      const sym = symbolOf(kind);
+      if (sym.kind === "const")
+        return {
+          width: 40,
+          height: 20,
+          pins: [{ pin: "out", at: [20, 0], side: "right" }],
+        };
+      // A selector's `sel` comes in at the bottom, as on a schematic.
+      const selector = sym.kind === "mux" || sym.kind === "dmux";
+      const ins = (ports?.inputs ?? []).filter(
+        (p) => !(selector && p === "sel"),
+      );
       const outs = ports?.outputs ?? [];
       const rows = Math.max(ins.length, outs.length, 1);
       const height = rows * 20 + 20;
@@ -140,10 +154,25 @@ export function shapeOf(
           ] as Point,
           side,
         }));
+      const sel: PinSpot[] =
+        selector && ports?.inputs.includes("sel")
+          ? [
+              {
+                pin: "sel",
+                at: [0, height / 2],
+                side: "bottom",
+                vertical: true,
+              },
+            ]
+          : [];
       return {
         width: 80,
         height,
-        pins: [...column(ins, -40, "left"), ...column(outs, 40, "right")],
+        pins: [
+          ...column(ins, -40, "left"),
+          ...sel,
+          ...column(outs, 40, "right"),
+        ],
       };
     }
   }
@@ -273,10 +302,26 @@ export function clampToCanvas(p: Point): Point {
   ];
 }
 
-/** Right-angle route: across to the midpoint, down/up, then across. */
-export function route(a: Point, b: Point): Point[] {
-  if (a[0] === b[0] || a[1] === b[1]) return [a, b];
+/**
+ * Right-angle route: across to the midpoint, down/up, then across. A pin
+ * marked `vertical` (at the bottom of a part) is entered from below: from
+ * a source lower down, across then up; from higher up, around underneath.
+ */
+export function route(
+  a: Point,
+  b: Point,
+  aVertical = false,
+  bVertical = false,
+): Point[] {
+  if (aVertical && !bVertical) return route(b, a, false, true).reverse();
   const midX = Math.round((a[0] + b[0]) / 2 / GRID) * GRID;
+  if (bVertical && !aVertical) {
+    if (a[0] === b[0] && a[1] >= b[1]) return [a, b];
+    if (a[1] >= b[1]) return [a, [b[0], a[1]], b];
+    const below = b[1] + 2 * GRID;
+    return [a, [midX, a[1]], [midX, below], [b[0], below], b];
+  }
+  if (a[0] === b[0] || a[1] === b[1]) return [a, b];
   return [a, [midX, a[1]], [midX, b[1]], b];
 }
 
@@ -288,10 +333,17 @@ export function pathData(points: Point[]): string {
 export function labelPoint(points: Point[]): Point {
   const first = points[0] ?? [0, 0];
   const last = points[points.length - 1] ?? first;
-  if (points.length === 4) {
+  if (points.length >= 4) {
     const b = points[1] ?? first;
     const c = points[2] ?? last;
     return [b[0], (b[1] + c[1]) / 2];
+  }
+  if (points.length === 3) {
+    // An L: the middle of its longer leg.
+    const c = points[1] ?? first;
+    const leg = (p: Point) => Math.abs(p[0] - c[0]) + Math.abs(p[1] - c[1]);
+    const far = leg(first) >= leg(last) ? first : last;
+    return [(far[0] + c[0]) / 2, (far[1] + c[1]) / 2];
   }
   return [(first[0] + last[0]) / 2, (first[1] + last[1]) / 2];
 }

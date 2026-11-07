@@ -1,6 +1,9 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { CHAPTERS } from "../src/chapters";
 import { KNOWN_TAGS } from "../src/components/known-tags";
+import { en } from "../src/i18n/en";
+import { mn } from "../src/i18n/mn";
 import { loadContent, loadLevelText, loadLevels } from "../content/load";
 
 const docs = new URL("../../docs", import.meta.url).pathname;
@@ -42,6 +45,24 @@ describe("docs/ content", () => {
       if (ch.html.includes('class="cite'))
         expect(ch.html).toContain('class="sources"');
     }
+  });
+
+  // The course nav, home page and level map take titles from the outline.
+  it("the course outline lists every chapter under its own title", () => {
+    expect(CHAPTERS.map((c) => c.number)).toEqual(
+      content.en.chapters.map((c) => c.number),
+    );
+    for (const [lang, strings] of [
+      ["en", en],
+      ["mn", mn],
+    ] as const) {
+      for (const ch of content[lang].chapters) {
+        const key = `outline.${ch.number}.title` as keyof typeof en;
+        expect(strings[key], `${lang} chapter ${ch.number}`).toBe(ch.title);
+      }
+    }
+    for (const ch of content.en.chapters)
+      expect(CHAPTERS[ch.number]?.title).toBe(ch.title);
   });
 });
 
@@ -85,22 +106,25 @@ describe("spoiler guard", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("every level has a Mongolian name, goal and the same hints", () => {
-    const dir = new URL("../../hdl/levels", import.meta.url).pathname;
-    const text = loadLevelText(`${dir}/mn.yaml`);
-    for (const l of loadLevels(dir)) {
-      const mn = text[l.id];
-      expect(mn?.name, `${l.id} name`).toBeTruthy();
-      expect(mn?.goal, `${l.id} goal`).toBeTruthy();
-      const hints = l.toml.split("[hints]")[1] ?? "";
-      const keys = [...hints.matchAll(/^(\w+)\s*=/gm)].map((m) => m[1]);
-      expect(Object.keys(mn?.hints ?? {}).sort(), `${l.id} hints`).toEqual(
-        keys.sort(),
-      );
-    }
-    const ids = new Set(loadLevels(dir).map((l) => l.id));
-    expect(Object.keys(text).filter((id) => !ids.has(id))).toEqual([]);
-  });
+  it.each(["mn", "ja"])(
+    "every level has a %s name, goal and the same hints",
+    (lang) => {
+      const dir = new URL("../../hdl/levels", import.meta.url).pathname;
+      const text = loadLevelText(`${dir}/${lang}.yaml`);
+      for (const l of loadLevels(dir)) {
+        const tr = text[l.id];
+        expect(tr?.name, `${l.id} name`).toBeTruthy();
+        expect(tr?.goal, `${l.id} goal`).toBeTruthy();
+        const hints = l.toml.split("[hints]")[1] ?? "";
+        const keys = [...hints.matchAll(/^(\w+)\s*=/gm)].map((m) => m[1]);
+        expect(Object.keys(tr?.hints ?? {}).sort(), `${l.id} hints`).toEqual(
+          keys.sort(),
+        );
+      }
+      const ids = new Set(loadLevels(dir).map((l) => l.id));
+      expect(Object.keys(text).filter((id) => !ids.has(id))).toEqual([]);
+    },
+  );
 
   it("the site gets every level definition, and nothing else from hdl/", () => {
     const levels = loadLevels(

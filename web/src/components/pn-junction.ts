@@ -20,12 +20,12 @@ const CSS = sheet(`
   .p { fill: var(--p-type); }
   .n { fill: var(--n-type); }
   .depl { fill: var(--surface); stroke: var(--muted); stroke-dasharray: 4 3; }
-  .carrier text { font-weight: 700; font-size: 13px; }
+  .carrier text { font-weight: 600; font-size: 13px; }
   .ion { fill: var(--muted); font-size: 11px; }
   .flow { animation: drift 1.6s linear infinite; }
   .flow.rev { animation-direction: reverse; }
   @keyframes drift { from { transform: translateX(-24px); } to { transform: translateX(24px); } }
-  .curve { fill: none; stroke: var(--accent); stroke-width: 2; }
+  .curve { fill: none; stroke: var(--accent); stroke-width: 1.25; }
   .grid line { stroke: var(--border); }
 `);
 

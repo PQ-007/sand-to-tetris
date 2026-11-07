@@ -30,5 +30,6 @@ d addr load clk | q
 """
 
 [hints]
+nudge = "The same pattern, but four RAM4Ks this time. How many address bits does it take to pick one of four?"
 wrong = "The top 2 bits of addr (bits 12 and 13) pick the RAM4K; the low 12 bits go to every RAM4K as its own address."
 unknown = "A word reads as unknown until something is stored in it. Writing to one RAM4K must not disturb the others."

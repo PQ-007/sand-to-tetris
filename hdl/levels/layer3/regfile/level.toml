@@ -28,5 +28,6 @@ d we wa ra rb clk | qa qb
 """
 
 [hints]
+nudge = "Eight registers: one address picks which may load, and a multiplexer picks which you read. Here you read two at once."
 wrong = "Every register gets the same d and clk; only the one picked by wa may load, and only when we is 1. The two read ports are independent: ra drives one MUX8WAY16, rb the other."
 unknown = "A register reads as unknown until it's written. If a written register stays unknown, check that its load comes from the DMUX8WAY output for its number."

@@ -59,7 +59,9 @@ We use this build-and-unlock pattern as an interaction model only. Levels, wordi
 - **Look inside:** double-click a box to open it and see your own design running live. A breadcrumb (`Computer › CPU › ALU`) takes you back up.
 - **Wide signals:** bus wires (16 bits in one thick wire), splitters/joiners, and a **Repeat ×N** block (build one bit slice, stamp out N copies).
 - **Keyboard and screen readers:** every action works from the keyboard on the canvas itself: parts and ports are focusable and move with the arrow keys, the actions menu (menu key or Shift+F10) connects, disconnects, duplicates and deletes, and each part's label lists its wires. (An earlier separate keyboard panel was folded into this.)
-- **The level map is a tech tree:** each level sits below the levels it needs, one band per layer; selecting a level shows what it needs and unlocks. A list view stays available.
+- **The level map is a roadmap** (decided 2026-11-07, replacing the list as the default): the course in planned stages (`web/src/roadmap.ts`), each a short chain where every level reuses the one just before it (AND → AND16, MUX → MUX16 → 4-way → 8-way, RAM8 → RAM64 → …). Steps are numbered across the course, each says what it's built from (marking the part made one step earlier), and "Continue" opens the next one. The play order and "Next level" follow the roadmap. The tech tree stays as a second view.
+- **The toolbox is focused:** a level shows the parts it's built from (its `requires`, plus Splitter/Joiner when it has a bus) first; the rest of the unlocked parts wait behind "More parts". This is a convenience; layering is still enforced by the validator.
+- **Schematic symbols:** gates are drawn with their distinctive shapes (AND, OR, XOR, NOT, inversion bubbles; 16-bit versions show their width inside), selectors as trapezoids with `sel` at the bottom, constants as small tags, and a clock triangle marks `clk` on boxes. Other components stay labelled boxes. The toolbox shows the same symbols.
 - **Errors appear on the canvas:**
   - an unconnected pin pulses;
   - a wire with two drivers turns red;

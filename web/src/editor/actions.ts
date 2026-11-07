@@ -141,6 +141,13 @@ export function menuFor(
             hint: "Ctrl+Shift+Z",
             disabled: !ctx.canRedo,
           },
+          "separator",
+          {
+            id: "clear",
+            label: t("menu.clear"),
+            danger: true,
+            disabled: !ctx.design.parts.length && !ctx.design.wires.length,
+          },
         ],
       };
   }

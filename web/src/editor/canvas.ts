@@ -40,6 +40,8 @@ import {
   type Point,
   type Shape,
 } from "./geometry";
+import { hidesPinNames, symbolOf, symbolPaths } from "./symbols";
+import { formatValue, showValue } from "./values";
 import {
   addWire,
   endpointKey,
@@ -330,6 +332,16 @@ export class CircuitCanvas {
     return shapeOfPart(part, this.props.componentPorts);
   }
 
+  /** True if wires leave this pin downward (a selector's `sel`). */
+  private vertical(e: Endpoint): boolean {
+    if ("port" in e) return false;
+    const part = this.props.design.parts.find((p) => p.id === e.part);
+    if (!part) return false;
+    return Boolean(
+      this.shape(part).pins.find((p) => p.pin === e.pin)?.vertical,
+    );
+  }
+
   private point(e: Endpoint): Point | undefined {
     if ("port" in e) return this.portAt(e.port);
     const part = this.props.design.parts.find((p) => p.id === e.part);
@@ -389,13 +401,20 @@ export class CircuitCanvas {
 
   private drawWires(): void {
     const g = svg("g", { class: "wires" }, this.el);
+    // Value tags already drawn. Wires fanning out from one pin along a
+    // shared trunk (same end, same vertical run) need only one tag, and an
+    // identical tag on top of another is left out.
+    const tags: { x: number; y: number; width: number; text: string }[] = [];
+    const trunks = new Set<string>();
     this.props.design.wires.forEach((w, i) => {
       const a = this.point(w.from);
       const b = this.point(w.to);
       if (!a || !b) return;
       const v = this.value(w.from) ?? "X";
-      const bus = this.width(w.from) > 1;
-      const pts = route(a, b);
+      const bits = this.width(w.from);
+      const bus = bits > 1;
+      const shown = showValue(v, bits);
+      const pts = route(a, b, this.vertical(w.from), this.vertical(w.to));
       const selected =
         this.selection?.kind === "wire" && this.selection.index === i;
       const wg = svg(
@@ -409,7 +428,17 @@ export class CircuitCanvas {
       svg("path", { d: pathData(pts), class: "wire-hit" }, wg);
       svg("path", { d: pathData(pts), class: "wire-line" }, wg);
       const [lx, ly] = labelPoint(pts);
-      const tagWidth = Math.max(16, v.length * 7 + 8);
+      const tagWidth = Math.max(16, shown.length * 7 + 8);
+      const covered = tags.some(
+        (o) =>
+          o.text === shown &&
+          Math.abs(o.x - lx) < (o.width + tagWidth) / 2 &&
+          Math.abs(o.y - ly) < 16,
+      );
+      const ends = [w.from, w.to].map((e) => `${lx}|${endpointKey(e)}`);
+      if (covered || ends.some((k) => trunks.has(k))) return;
+      ends.forEach((k) => trunks.add(k));
+      tags.push({ x: lx, y: ly, width: tagWidth, text: shown });
       svg(
         "rect",
         {
@@ -426,7 +455,7 @@ export class CircuitCanvas {
         "text",
         { x: lx, y: ly + 3, "text-anchor": "middle", class: "wire-value" },
         wg,
-        v,
+        shown,
       );
     });
   }
@@ -446,6 +475,8 @@ export class CircuitCanvas {
     const base = NAMES[kind] ?? this.props.componentPorts[kind]?.name ?? kind;
     const name =
       part.repeat && part.repeat > 1 ? `${base} ×${part.repeat}` : base;
+    // How far a repeated part's stack of copies reaches up and right.
+    const stack = (part.repeat ?? 1) > 1 ? 8 : 0;
     const g = svg(
       "g",
       {
@@ -462,9 +493,9 @@ export class CircuitCanvas {
       "rect",
       {
         x: -shape.width / 2 - 6,
-        y: -shape.height / 2 - 6,
-        width: shape.width + 12,
-        height: shape.height + 12,
+        y: -shape.height / 2 - 6 - stack,
+        width: shape.width + 12 + stack,
+        height: shape.height + 12 + stack,
         rx: 8,
         class: "part-hit",
       },
@@ -521,7 +552,7 @@ export class CircuitCanvas {
           "text",
           {
             x: 0,
-            y: -shape.height / 2 - 6,
+            y: -shape.height / 2 - 12,
             "text-anchor": "middle",
             class: "part-label",
           },
@@ -548,43 +579,126 @@ export class CircuitCanvas {
         break;
       }
       default: {
-        svg(
-          "rect",
-          {
-            x: -shape.width / 2,
-            y: -shape.height / 2,
-            width: shape.width,
-            height: shape.height,
-            rx: 6,
-            class: "box",
-          },
-          g,
-        );
+        // Gates, selectors and constants get their schematic symbol; other
+        // components are boxes. A repeated component is drawn as a stack
+        // of copies.
+        const sym = symbolOf(kind);
+        const paths = symbolPaths(sym, shape);
+        const copies = stack ? [stack, stack / 2, 0] : [0];
+        for (const d of copies) {
+          if (paths) {
+            const at = svg(
+              "g",
+              { transform: `translate(${d},${-d})`, class: d ? "copy" : "" },
+              g,
+            );
+            if (!d) svg("path", { d: paths.lines, class: "sym lead" }, at);
+            svg("path", { d: paths.body, class: d ? "box copy" : "box" }, at);
+            continue;
+          }
+          svg(
+            "rect",
+            {
+              x: -shape.width / 2 + d,
+              y: -shape.height / 2 - d,
+              width: shape.width,
+              height: shape.height,
+              rx: 6,
+              class: d ? "box copy" : "box",
+            },
+            g,
+          );
+        }
+        if (paths?.bubble)
+          svg(
+            "circle",
+            {
+              cx: paths.bubble[0],
+              cy: paths.bubble[1],
+              r: 4,
+              class: "box bubble",
+            },
+            g,
+          );
+        if (paths?.text)
+          svg(
+            "text",
+            {
+              x: paths.text.at[0],
+              y: paths.text.at[1],
+              "text-anchor": "middle",
+              class: "sym-text",
+            },
+            g,
+            paths.text.value,
+          );
         svg(
           "text",
           {
             x: 0,
-            y: -shape.height / 2 - 6,
+            y: -shape.height / 2 - 12 - stack,
             "text-anchor": "middle",
             class: "part-label",
           },
           g,
           `${name} ${id}`,
         );
+        const selector = sym.kind === "mux" || sym.kind === "dmux";
         for (const pin of shape.pins) {
+          const shared = part.shared?.includes(pin.pin);
+          // A symbol says what its pins are; only a shared pin needs a word.
+          if (hidesPinNames(sym) && !shared) continue;
+          // Single outputs of a selector go without a name, as on paper.
+          if (selector && pin.side === "right" && pin.pin === "out") continue;
+          const text = shared ? t("canvas.shared", { pin: pin.pin }) : pin.pin;
+          if (hidesPinNames(sym)) {
+            // No room inside a gate: above its incoming wire instead.
+            svg(
+              "text",
+              {
+                x: pin.at[0] - 4,
+                y: pin.at[1] - 5,
+                "text-anchor": "end",
+                class: "pin-label",
+              },
+              g,
+              text,
+            );
+            continue;
+          }
+          if (pin.side === "bottom") {
+            svg(
+              "text",
+              { x: pin.at[0] + 6, y: pin.at[1] - 2, class: "pin-label" },
+              g,
+              text,
+            );
+            continue;
+          }
           const right = pin.side === "right";
+          // A clock input gets the edge-triggered mark: a small triangle.
+          const clock = pin.pin === "clk" && !paths && !right;
+          if (clock)
+            svg(
+              "path",
+              {
+                d: `M${pin.at[0]},${pin.at[1] - 6} L${pin.at[0] + 9},${pin.at[1]} L${pin.at[0]},${pin.at[1] + 6}`,
+                class: "sym clock",
+              },
+              g,
+            );
+          // Inside a selector's narrow body, labels hug its edges.
+          const inset = selector ? 26 : clock ? 12 : 6;
           svg(
             "text",
             {
-              x: pin.at[0] + (right ? -6 : 6),
+              x: pin.at[0] + (right ? -inset : inset),
               y: pin.at[1] + 4,
               "text-anchor": right ? "end" : "start",
               class: "pin-label",
             },
             g,
-            part.shared?.includes(pin.pin)
-              ? t("canvas.shared", { pin: pin.pin })
-              : pin.pin,
+            text,
           );
         }
       }
@@ -625,7 +739,7 @@ export class CircuitCanvas {
         t("canvas.pinTitle", {
           pin: `${id}.${pin.pin}`,
           bits: bits > 1 ? t("canvas.pinBits", { n: bits }) : "",
-          value: v ?? "–",
+          value: v === undefined ? "–" : showValue(v, bits),
         }),
       );
       svg(
@@ -653,7 +767,11 @@ export class CircuitCanvas {
         ? String(inputValues[name] ?? 0)
         : (view?.outputs.find(([n]) => n === name)?.[1] ?? "–");
       const flagged = this.props.highlightPorts.has(name);
-      const bus = (this.props.portWidths?.[name] ?? 1) > 1;
+      const bits = this.props.portWidths?.[name] ?? 1;
+      const bus = bits > 1;
+      const shown = isIn
+        ? formatValue(inputValues[name] ?? 0, bits)
+        : showValue(value, bits);
       const selected =
         this.selection?.kind === "port" && this.selection.name === name;
       const g = svg(
@@ -671,7 +789,7 @@ export class CircuitCanvas {
                   isIn ? "canvas.portLabelIn" : "canvas.portLabelOut",
                   {
                     name,
-                    value,
+                    value: shown,
                     wired: this.wiredText({ port: name }),
                     bus: bus ? 1 : 0,
                   },
@@ -680,7 +798,7 @@ export class CircuitCanvas {
         },
         this.el,
       );
-      const label = `${name} = ${value}`;
+      const label = `${name} = ${shown}`;
       const boxW = Math.max(50, label.length * 7.5 + 12);
       const x = isIn ? -boxW - 8 : 8;
       svg(
@@ -1153,6 +1271,42 @@ export class CircuitCanvas {
 
 /** CSS class for a value: v0, v1, vZ, vX for bits; buses are vbus unless
  * some bit is unknown (vX) or floating (vZ). */
+/** A small picture of a part's schematic symbol, for the toolbox (null for
+ * parts drawn as plain boxes). */
+export function partIcon(
+  kind: string,
+  ports: ComponentPorts,
+): SVGSVGElement | null {
+  const sym = symbolOf(kind);
+  // Selectors are drawn 2-way: an 8-way one is too tall for a button.
+  const small: ComponentPorts | null =
+    sym.kind === "mux"
+      ? { mux: { inputs: ["a", "b", "sel"], outputs: ["out"], name: "" } }
+      : sym.kind === "dmux"
+        ? { dmux: { inputs: ["in", "sel"], outputs: ["a", "b"], name: "" } }
+        : null;
+  const shape = small
+    ? shapeOfPart({ kind: sym.kind }, small)
+    : shapeOfPart({ kind }, ports);
+  const paths = symbolPaths(sym, shape);
+  if (!paths) return null;
+  const h = shape.height / 2 + 2;
+  const icon = svg("svg", {
+    viewBox: `-42 ${-h} 84 ${2 * h}`,
+    class: "tool-icon",
+    "aria-hidden": "true",
+  });
+  svg("path", { d: paths.lines, class: "sym lead" }, icon);
+  svg("path", { d: paths.body, class: "box" }, icon);
+  if (paths.bubble)
+    svg(
+      "circle",
+      { cx: paths.bubble[0], cy: paths.bubble[1], r: 4, class: "box" },
+      icon,
+    );
+  return icon;
+}
+
 export function valueClass(v: string): string {
   if (v === "0" || v === "1" || v === "Z" || v === "X") return `v${v}`;
   if (v.includes("X")) return "vX";

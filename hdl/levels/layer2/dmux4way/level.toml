@@ -22,4 +22,5 @@ in sel | a b c d
 """
 
 [hints]
+nudge = "Route in two rounds, like a 4-way MUX16 backwards: first to a pair, then inside the pair."
 wrong = "sel's bit 1 should choose between the a/b pair and the c/d pair; bit 0 chooses inside the pair."

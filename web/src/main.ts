@@ -9,9 +9,46 @@ import { mountMachine } from "./machine";
 import { installGlossaryFilter, renderRoute, trackSections } from "./pages";
 import { mountPlay } from "./play";
 import { parseRoute } from "./router";
+import { getTheme, initTheme, setTheme } from "./theme";
 import { mountWorkshop } from "./workshop";
 
 const app = document.getElementById("app");
+
+/**
+ * Keeps hairline figures in step with the page: draws a placeholder as soon
+ * as it appears (pages like the level map render later, and re-render) and
+ * stops figures whose element left. Their code loads with the first one.
+ */
+let figures: Promise<typeof import("./hairline")> | null = null;
+let figureSync = 0;
+function syncFigures(): void {
+  if (!app || figureSync) return;
+  figureSync = requestAnimationFrame(() => {
+    figureSync = 0;
+    if (!figures && !app.querySelector(".hl-figure")) return;
+    figures ??= import("./hairline");
+    void figures.then((m) => m.syncFigures(app));
+  });
+}
+// The home page's button takes the computer figure apart and puts it back.
+document.addEventListener("click", (e) => {
+  const button = (e.target as Element | null)?.closest?.<HTMLButtonElement>(
+    "[data-figure-toggle]",
+  );
+  const figure = button
+    ?.closest(".hero-figure")
+    ?.querySelector<HTMLElement>(".hl-figure");
+  if (!button || !figure) return;
+  const apart = button.dataset.apart !== "true";
+  button.dataset.apart = String(apart);
+  button.textContent = t(apart ? "home.putTogether" : "home.takeApart");
+  void figures?.then((m) => m.setFigureValue(figure, apart ? 1 : 0));
+});
+if (app)
+  new MutationObserver(syncFigures).observe(app, {
+    childList: true,
+    subtree: true,
+  });
 
 function show(): void {
   if (!app) return;
@@ -126,7 +163,24 @@ function chrome(): void {
   document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) => {
     b.setAttribute("aria-pressed", String(b.dataset.lang === lang));
   });
+  themeButton();
 }
+
+/** The toggle says what pressing it does: "Dark theme" while light. */
+function themeButton(): void {
+  const b = document.querySelector<HTMLButtonElement>("[data-theme-toggle]");
+  if (!b) return;
+  const label = t(getTheme() === "dark" ? "theme.toLight" : "theme.toDark");
+  b.setAttribute("aria-label", label);
+  b.title = label;
+}
+
+document
+  .querySelector<HTMLButtonElement>("[data-theme-toggle]")
+  ?.addEventListener("click", () =>
+    setTheme(getTheme() === "dark" ? "light" : "dark"),
+  );
+window.addEventListener("s2t-theme", themeButton);
 
 document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) => {
   b.addEventListener("click", () => {
@@ -144,6 +198,7 @@ document.addEventListener("s2t-progress", () => void updateHud());
 
 if (app) installGlossaryPopover(app);
 window.addEventListener("hashchange", show);
+initTheme();
 chrome();
 show();
 void updateHud();

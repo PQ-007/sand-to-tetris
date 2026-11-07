@@ -26,3 +26,6 @@ npm test           # all tests
 
 Code: MIT ([LICENSE](LICENSE)). Written content in `docs/`: CC BY-SA 4.0
 ([docs/LICENSE.md](docs/LICENSE.md)).
+
+Line figures: [Hairline](https://hairline.lucasmarkes.com) by Lucas Marques
+(`@lucasmarkes/hairline`, MIT).

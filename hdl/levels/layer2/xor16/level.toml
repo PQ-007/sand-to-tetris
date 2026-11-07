@@ -18,4 +18,5 @@ a b | out
 """
 
 [hints]
+nudge = "Like AND16, with your XOR."
 wrong = "Use Repeat: one gate, repeated 16 times, works on all 16 bits at once."

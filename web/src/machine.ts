@@ -1,5 +1,6 @@
 // The Machine page: write assembly or VM code, build it, and run it on the
 // reference CPU with its screen, keyboard, registers, stack and RAM in view.
+import { pageFigure } from "./figures";
 import { t, type Key } from "./i18n";
 import { EXAMPLES, type Example } from "./machine-programs";
 import { asmErrorText, langErrorText, vmErrorText } from "./messages";
@@ -153,6 +154,7 @@ class MachinePage {
           <h1 tabindex="-1">${esc(t("machine.title"))}</h1>
           <p class="lead">${esc(t("machine.lead"))}</p>
         </div>
+        ${pageFigure("machine", (n) => t(`figure.${n}` as Key), "head")}
         <div class="machine-pickers">
           <label>${esc(t("machine.language"))}
             <select data-lang>${langs}</select></label>
@@ -258,12 +260,16 @@ class MachinePage {
     this.canvas.addEventListener("keyup", (e) => this.key(e, false));
     this.canvas.addEventListener("blur", () => this.setKey(0));
     this.readColors();
-    window
-      .matchMedia?.("(prefers-color-scheme: dark)")
-      .addEventListener?.("change", () => {
-        this.readColors();
-        this.draw();
-      });
+    // The screen's colours are read once: read them again on a new theme.
+    const recolor = () => {
+      if (!this.canvas.isConnected) {
+        window.removeEventListener("s2t-theme", recolor);
+        return;
+      }
+      this.readColors();
+      this.draw();
+    };
+    window.addEventListener("s2t-theme", recolor);
     window.addEventListener("hashchange", () => this.pause(), { once: true });
     void this.offerAssemblers(q("[data-assembler-box]"), q("[data-assembler]"));
     void this.offerTranslators(

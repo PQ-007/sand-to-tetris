@@ -72,4 +72,5 @@ instr z n c | wa we ra rb f invb cin useimm imm rsel setflags writeM jump jr off
 """
 
 [hints]
+nudge = "Don't do it all at once: one output at a time. First turn op (bits 15–13) into one wire per instruction group."
 wrong = "Find the instruction group in the failing row (op = bits 15–13) and check the signals for that group one at a time. A 3-bit choice between register fields is a MUX repeated ×3 with sel shared."

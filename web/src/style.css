@@ -1,88 +1,102 @@
-/* Look: a circuit board seen as a game HUD. Dark is the main theme;
-   light mode is the same board under bright bench lights. */
+/* Look: black and white, quiet and exact, in the manner of hairline line
+   drawings. Ink on paper in light mode, paper on ink in dark; colour is
+   kept for one job only, saying something is wrong (--error). Hairline
+   figures read the --hairline-* tokens, so they match the page. Dark
+   mode is <html data-theme="dark"> (theme.ts; index.html sets it before
+   first paint, from the learner's pick or the system). */
 :root {
-  --bg: #eef2f8;
-  --bg-grid: rgba(31, 111, 235, 0.07);
-  --bg-via: rgba(168, 106, 31, 0.14);
-  --surface: #fbfcfe;
-  --surface-2: #f0f4fa;
-  --surface-3: #e5ebf5;
-  --text: #0e1626;
-  --muted: #526078;
-  --border: #d3dcea;
-  --border-strong: #aebbd0;
-  --accent: #1f6feb;
-  --copper: #a86a1f;
-  --link: #0b5cc4;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f7f7f7;
+  --surface-3: #efefef;
+  --text: #0a0a0a;
+  --muted: #737373;
+  --faint: #a3a3a3;
+  --border: #ebebeb;
+  --border-strong: #d4d4d4;
+  --accent: #0a0a0a;
+  --copper: #737373;
+  --link: #0a0a0a;
   --on-accent: #ffffff;
-  --focus: #1f6feb;
-  --ok: #138a4a;
-  --error: #c62828;
-  --glow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
-  /* Semiconductor and demo colours */
-  --p-type: #f6d8cc;
-  --n-type: #d3e2f5;
-  --oxide: #e8e2b8;
-  --metal: #6b6f76;
+  --focus: #0a0a0a;
+  --ok: #0a0a0a;
+  --error: #b42318;
+  --glow: 0 0 0 0 transparent;
+  /* Semiconductor and demo colours: tones of grey, every state labelled. */
+  --p-type: #dcdcdc;
+  --n-type: #f4f4f4;
+  --oxide: #fafafa;
+  --metal: #404040;
   --on-metal: #ffffff;
-  --channel: #d97706;
-  --analog: #b45309;
-  --digital: #1d4ed8;
-  --zone-ok: rgba(19, 138, 74, 0.1);
-  --zone-bad: rgba(198, 40, 40, 0.1);
+  --channel: #0a0a0a;
+  --analog: #737373;
+  --digital: #0a0a0a;
+  --zone-ok: rgba(0, 0, 0, 0.035);
+  --zone-bad: rgba(180, 35, 24, 0.07);
+  /* Hairline figures */
+  --hairline-plate: var(--bg);
+  --hairline-hi: #232327;
+  --hairline-edge: #a4a4ac;
+  --hairline-mid: #c3c3c9;
+  --hairline-lo: #e0e0e4;
   /* Layout */
   --header-h: 3.5rem;
-  --radius: 0.5rem;
-  --radius-sm: 0.3125rem;
-  --shadow: 0 1px 2px rgba(10, 24, 48, 0.06), 0 4px 16px rgba(10, 24, 48, 0.06);
+  --radius: 0.625rem;
+  --radius-sm: 0.375rem;
+  --shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.04);
   --shadow-lift:
-    0 2px 4px rgba(10, 24, 48, 0.08), 0 10px 28px rgba(10, 24, 48, 0.12);
+    0 0 0 1px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.03),
+    0 10px 28px -16px rgba(0, 0, 0, 0.14);
   /* Type */
-  --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --display: "Exo 2", "Inter", system-ui, sans-serif;
+  /* Geist has no Japanese: Noto Sans JP fills in, glyph by glyph (Google
+     Fonts splits it by unicode-range, so only pages with Japanese load it). */
+  --font:
+    "Geist", "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: var(--font);
+  --serif: "Instrument Serif", Georgia, "Times New Roman", serif;
   --mono:
-    "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
-    monospace;
+    "Geist Mono", ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
+    "Noto Sans JP", monospace;
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #070b10;
-    --bg-grid: rgba(77, 163, 255, 0.05);
-    --bg-via: rgba(232, 166, 93, 0.12);
-    --surface: #0d141c;
-    --surface-2: #121b25;
-    --surface-3: #18232f;
-    --text: #e3ecf5;
-    --muted: #8899ab;
-    --border: #1d2a37;
-    --border-strong: #2c3e51;
-    --accent: #4da3ff;
-    --copper: #e8a65d;
-    --link: #7cc4ff;
-    --on-accent: #04101f;
-    --focus: #7cc4ff;
-    --ok: #34e08a;
-    --error: #ff6b6b;
-    --glow:
-      0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent),
-      0 0 18px color-mix(in srgb, var(--accent) 22%, transparent);
-    --p-type: #4f2f26;
-    --n-type: #23364f;
-    --oxide: #5c5636;
-    --metal: #a3a7ad;
-    --on-metal: #15140f;
-    --channel: #f59e0b;
-    --analog: #fbbf24;
-    --digital: #5fd4ff;
-    --zone-ok: rgba(52, 224, 138, 0.12);
-    --zone-bad: rgba(255, 107, 107, 0.12);
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.35);
-    --shadow-lift:
-      0 2px 4px rgba(0, 0, 0, 0.45), 0 12px 32px rgba(0, 0, 0, 0.5);
-    color-scheme: dark;
-  }
+:root[data-theme="dark"] {
+  --bg: #0a0a0a;
+  --surface: #0f0f0f;
+  --surface-2: #151515;
+  --surface-3: #1d1d1d;
+  --text: #ededed;
+  --muted: #a1a1a1;
+  --faint: #6b6b6b;
+  --border: #232323;
+  --border-strong: #353535;
+  --accent: #ededed;
+  --copper: #a1a1a1;
+  --link: #ededed;
+  --on-accent: #0a0a0a;
+  --focus: #ededed;
+  --ok: #ededed;
+  --error: #f97066;
+  --p-type: #3a3a3a;
+  --n-type: #1f1f1f;
+  --oxide: #141414;
+  --metal: #bdbdbd;
+  --on-metal: #0a0a0a;
+  --channel: #fafafa;
+  --analog: #a1a1a1;
+  --digital: #fafafa;
+  --zone-ok: rgba(255, 255, 255, 0.04);
+  --zone-bad: rgba(249, 112, 102, 0.1);
+  --hairline-hi: #ededed;
+  --hairline-edge: #6b6b72;
+  --hairline-mid: #48484e;
+  --hairline-lo: #2a2a2e;
+  --shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-lift:
+    0 0 0 1px rgba(255, 255, 255, 0.08), 0 12px 32px -16px rgba(0, 0, 0, 0.7);
+  color-scheme: dark;
 }
 
 * {
@@ -97,23 +111,10 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  /* A circuit board: a fine grid of traces with a via every few cells. */
-  background-color: var(--bg);
-  background-image:
-    radial-gradient(circle, var(--bg-via) 1.5px, transparent 2px),
-    linear-gradient(var(--bg-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
-  background-size:
-    96px 96px,
-    24px 24px,
-    24px 24px;
-  background-position:
-    -12px -12px,
-    0 0,
-    0 0;
-  background-attachment: fixed;
+  background: var(--bg);
   color: var(--text);
-  font: 1.0625rem/1.65 var(--font);
+  font: 1rem/1.65 var(--font);
+  font-feature-settings: "ss01";
   -webkit-font-smoothing: antialiased;
 }
 
@@ -130,7 +131,6 @@ pre {
   line-height: 1.55;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
   border-radius: var(--radius-sm);
 }
 
@@ -298,6 +298,31 @@ s2t-core-status[data-state="error"] {
   }
   .core-status:not([data-state="error"]) {
     display: none;
+  }
+}
+
+/* Phones: the levels meter goes (the Build page shows progress), and the
+   nav tightens, so the header never scrolls sideways. */
+@media (max-width: 480px) {
+  .site-header {
+    gap: 0.5rem;
+  }
+  .site-header .hud-xp {
+    display: none;
+  }
+  .site-nav {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .site-nav a {
+    padding: 0.375rem 0.4rem;
+    font-size: 0.875rem;
+  }
+  .lang-switch {
+    flex: none;
   }
 }
 
@@ -697,8 +722,7 @@ button.primary:hover:not(:disabled),
 
 .course-nav a[aria-current="page"] {
   color: var(--text);
-  font-weight: 600;
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  font-weight: 500;
 }
 
 .course-nav li.soon {
@@ -844,9 +868,9 @@ sup.cite a {
 .chapter-page aside {
   margin: 1.5rem 0;
   padding: 0.875rem 1.125rem;
-  border-left: 4px solid var(--accent);
-  background: var(--surface);
-  border-radius: 0 var(--radius) var(--radius) 0;
+  border-left: 1px solid var(--text);
+  background: var(--surface-2);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 .chapter-page aside > :first-child {
@@ -866,8 +890,8 @@ sup.cite a {
 }
 
 .chapter-page aside.summary {
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
-  border-top: 4px solid var(--accent);
+  border: 1px solid var(--border);
+  background: var(--surface);
   border-radius: var(--radius);
   padding: 1.25rem 1.5rem;
   margin-top: 3rem;
@@ -877,14 +901,14 @@ sup.cite a {
 details.deeper {
   margin: 1.5rem 0;
   padding: 0.75rem 1rem;
-  border-left: 4px solid var(--focus);
-  background: var(--surface);
-  border-radius: 0 var(--radius) var(--radius) 0;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  border-radius: var(--radius);
 }
 
 details.deeper summary {
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 table {
@@ -1072,21 +1096,21 @@ th {
 
 /* ---- Levels and the circuit editor ---------------------------------------- */
 
-/* A wire carrying 1 lights up like a powered trace; 0 stays dim. */
+/* Wires in ink: 1 is a solid dark line, 0 a light one, Z dotted and X
+   dashed (each also labelled with its value). Real trouble (a short, a
+   flagged part) uses --error. */
 :root {
-  --wire-1: #0b9a55;
-  --wire-0: #64748b;
-  --wire-z: #9aa8b5;
-  --wire-x: #d32f2f;
+  --wire-1: #0a0a0a;
+  --wire-0: #b5b5b5;
+  --wire-z: #cfcfcf;
+  --wire-x: #8a8a8a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --wire-1: #34e08a;
-    --wire-0: #52667b;
-    --wire-z: #74879a;
-    --wire-x: #ff6b6b;
-  }
+:root[data-theme="dark"] {
+  --wire-1: #ededed;
+  --wire-0: #5a5a5a;
+  --wire-z: #444444;
+  --wire-x: #8a8a8a;
 }
 
 .visually-hidden {
@@ -1213,17 +1237,221 @@ th {
   color: var(--muted);
 }
 
-.level-card[data-status="passed"] {
-  border-color: color-mix(in srgb, var(--ok) 45%, var(--border));
-}
-
 .level-card[data-status="open"] {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: var(--text);
 }
 
 .level-card[data-status="broken"] {
   border-color: var(--error);
+}
+
+/* ---- Roadmap: stages of numbered steps along a rail ------------------ */
+
+.continue {
+  margin: 1rem 0 0;
+}
+
+.roadmap .layer {
+  margin-bottom: 2.5rem;
+}
+
+.stage {
+  margin: 0 0 1.75rem;
+  max-width: 52rem;
+}
+
+.stage-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.stage-head h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.125rem;
+}
+
+.stage-count {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.stage-intro {
+  margin: 0.25rem 0 0.875rem;
+  color: var(--muted);
+  max-width: 44rem;
+}
+
+/* One column of steps; a rail runs through the step numbers. */
+.road-steps {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 3rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.road-steps::before {
+  content: "";
+  position: absolute;
+  left: 1.0625rem;
+  top: 1.25rem;
+  bottom: 1.25rem;
+  width: 2px;
+  background: var(--border-strong);
+}
+
+.road-n {
+  position: absolute;
+  left: -3rem;
+  top: 0.875rem;
+  width: 2.125rem;
+  height: 2.125rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.road-step[data-status="passed"] .road-n {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.road-step[data-status="open"] .road-n,
+.road-step.next .road-n {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+}
+
+.level-card.road-step h4 {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.35;
+}
+
+.level-card.road-step h4 a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.level-card.road-step h4 a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+}
+
+.level-card.road-step.next {
+  border-width: 2px;
+}
+
+.step-tags {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pill-next {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent, #fff);
+}
+
+/* "Built from" chips: the parts a step uses; fresh = made one step ago. */
+.built-from {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin-top: 0.625rem;
+  font-size: 0.8125rem;
+}
+
+.built-from .chip,
+.built-from a {
+  display: inline-block;
+  padding: 0.125rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: inherit;
+  text-decoration: none;
+}
+
+.built-from .chip[data-status="passed"] {
+  border-color: color-mix(in srgb, var(--ok) 50%, var(--border));
+}
+
+.built-from .fresh {
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.built-from .fresh::before {
+  content: "↳ ";
+  color: var(--accent);
+}
+
+.level-card .used-in {
+  margin-top: 0.375rem;
+  font-size: 0.8125rem;
+}
+
+/* Hints: revealed one press at a time under the goal. */
+.hint-box {
+  margin-top: 0.75rem;
+}
+
+.hint-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.hint-list:not(:empty) {
+  margin-bottom: 0.625rem;
+}
+
+.hint-list li {
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--copper);
+  background: color-mix(in srgb, var(--copper) 8%, transparent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.hint-list li:focus {
+  outline: 2px solid var(--focus);
+}
+
+.hint-button {
+  font-size: 0.875rem;
+}
+
+.goal-box .built-from {
+  margin: 0.375rem 0 1rem;
+}
+
+.goal-box .panel-kicker {
+  margin: 0;
 }
 
 .file-button {
@@ -1340,6 +1568,40 @@ th {
   background: color-mix(in srgb, var(--accent) 7%, var(--surface));
 }
 
+/* Parts this level isn't built from wait behind "More parts". */
+.toolbar:not(.show-more) .tool.extra {
+  display: none;
+}
+
+.tool.extra {
+  opacity: 0.85;
+}
+
+.more-tools {
+  border-style: dashed;
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.tool-icon {
+  width: 1.75rem;
+  height: 1.25rem;
+  flex: none;
+}
+
+.tool-icon .sym {
+  stroke-width: 3;
+}
+
+.tool-icon .box {
+  fill: var(--surface);
+  stroke-width: 3;
+}
+
 .ghost {
   position: fixed;
   pointer-events: none;
@@ -1394,11 +1656,19 @@ svg.circuit:focus-visible {
   pointer-events: none;
 }
 
-.editor-status {
+.canvas-dock {
   position: absolute;
   left: 0.75rem;
   bottom: 0.75rem;
   max-width: calc(100% - 16rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.375rem;
+  pointer-events: none;
+}
+
+.editor-status {
   margin: 0;
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
@@ -1412,6 +1682,60 @@ svg.circuit:focus-visible {
 
 .editor-status:empty {
   display: none;
+}
+
+/* Why the circuit can't run (every wire shows X until it's fixed). */
+.canvas-blocked {
+  margin: 0;
+  max-width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  background: var(--surface);
+  border: 1px solid var(--error);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.canvas-blocked strong {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.canvas-blocked:empty {
+  display: none;
+}
+
+/* Suggested fixes (Repeat ×16, Share sel): clickable, unlike the dock. */
+.canvas-fixes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.canvas-fixes:empty {
+  display: none;
+}
+
+.canvas-fixes li {
+  max-width: 100%;
+  padding: 0.375rem 0.5rem 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  pointer-events: auto;
+}
+
+.canvas-fixes button {
+  margin-right: 0.25rem;
+  font-weight: 600;
 }
 
 .zoom {
@@ -1610,7 +1934,7 @@ svg.circuit.wiring .pin-hit {
 .sym {
   fill: none;
   stroke: var(--text);
-  stroke-width: 2;
+  stroke-width: 1.25;
 }
 
 .part .channel {
@@ -1643,12 +1967,12 @@ svg.circuit.wiring .pin-hit {
 
 .part.flagged .part-hit,
 .part.shorted .part-hit {
-  stroke: var(--wire-x);
+  stroke: var(--error);
   stroke-width: 2.5;
 }
 
 .flag-mark {
-  fill: var(--wire-x) !important;
+  fill: var(--error) !important;
   font-weight: 800;
   font-size: 16px;
 }
@@ -1656,7 +1980,30 @@ svg.circuit.wiring .pin-hit {
 .box {
   fill: var(--bg);
   stroke: var(--text);
-  stroke-width: 2;
+  stroke-width: 1.25;
+}
+
+.box.copy {
+  stroke: var(--faint);
+  stroke-width: 1;
+}
+
+/* Schematic symbols: gate bodies use .box; leads run from pins to them. */
+.sym.lead {
+  stroke-linecap: round;
+}
+
+.sym.clock {
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.sym-text {
+  fill: var(--muted) !important;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  pointer-events: none;
 }
 
 .part-label {
@@ -1689,7 +2036,7 @@ svg.circuit.wiring .pin-hit {
 
 .wire-line {
   fill: none;
-  stroke-width: 2.5;
+  stroke-width: 1.5;
 }
 
 .wire-hit {
@@ -1700,12 +2047,12 @@ svg.circuit.wiring .pin-hit {
 }
 
 .wire.selected .wire-line {
-  stroke-width: 5;
+  stroke-width: 3.5;
 }
 
 .wire-tag {
   fill: var(--surface);
-  stroke-width: 1.5;
+  stroke-width: 1;
 }
 
 .wire-value {
@@ -1755,7 +2102,7 @@ svg.circuit.wiring .pin-hit {
 .port-box {
   fill: var(--bg);
   stroke: var(--text);
-  stroke-width: 1.5;
+  stroke-width: 1.25;
 }
 
 .port .port-box {
@@ -1775,11 +2122,11 @@ svg.circuit.wiring .pin-hit {
 
 .port.v1 .port-box {
   stroke: var(--wire-1);
-  stroke-width: 2.5;
+  stroke-width: 2;
 }
 
 .port.flagged .port-box {
-  stroke: var(--wire-x);
+  stroke: var(--error);
   stroke-width: 3;
 }
 
@@ -1974,7 +2321,7 @@ svg.circuit.read-only .pin-hit {
 /* ---- Buses, properties, fast models --------------------------------------- */
 
 .wire.bus .wire-line {
-  stroke-width: 5;
+  stroke-width: 3;
 }
 
 .wire.vbus .wire-line,
@@ -2040,6 +2387,58 @@ svg.circuit.read-only .pin-hit {
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 0.875rem;
   color: var(--muted);
+}
+
+/* A bus up to 16 bits wide, bit by bit (most significant first): buttons
+   for inputs, plain text for outputs. A gap after every fourth bit. */
+.bus-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  width: 100%;
+}
+
+.output-bits {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+}
+
+.bits .bit {
+  min-width: 1rem;
+  min-height: 1.5rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font: inherit;
+  color: var(--muted);
+}
+
+.bits .bit:nth-child(4n):not(:last-child) {
+  margin-right: 0.3rem;
+}
+
+.bits .bit.v1 {
+  color: var(--text);
+  font-weight: 700;
+  border-color: var(--wire-1);
+}
+
+.bits .bit.vZ,
+.bits .bit.vX {
+  color: var(--wire-x);
+  border-style: dashed;
 }
 
 .runs-as {
@@ -2300,6 +2699,7 @@ svg.waveform text {
 }
 
 .levels-head {
+  grid-template-columns: minmax(0, 1fr) auto 19rem;
   align-items: end;
   margin-bottom: 1.5rem;
 }
@@ -2316,6 +2716,9 @@ svg.waveform text {
   .levels-head,
   .tree-wrap {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .levels-head .hl-figure.head {
+    display: none;
   }
   .tree-detail .button.block {
     display: inline-flex;
@@ -2544,100 +2947,110 @@ svg.waveform text {
   }
 }
 
-/* ==== Game HUD look ========================================================
-   The site as a circuit board seen through a game's HUD: display type for
-   headings, corner brackets on panels, status lights, glowing actions and
-   copper traces. Kept together here so the look can be changed in one
-   place; layout lives in the sections above. */
+/* ==== The look ============================================================
+   Black and white, quiet and exact: one sans for everything, a serif
+   italic for the odd emphasis, hairline borders and soft shadows instead
+   of glows. Kept together here so the look can change in one place;
+   layout lives in the sections above. */
 
 h1,
 h2,
 h3,
-.brand,
-.eyebrow,
-.side-title,
-.step-n,
-.chapter-number {
+h4,
+.brand {
   font-family: var(--display);
 }
 
 h1 {
-  font-weight: 800;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
 h2,
-h3 {
-  font-weight: 700;
+h3,
+h4 {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+/* Emphasis in headings reads as a serif italic, as on the hairline site. */
+h1 em,
+h2 em,
+.lead em {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-style: italic;
   letter-spacing: 0;
 }
 
-.eyebrow {
-  color: var(--copper);
-  letter-spacing: 0.14em;
+.eyebrow,
+.panel-kicker,
+.toolbar-label,
+.tree-band h2,
+.side-section h2,
+.save-box h2 {
+  font-family: var(--mono);
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 code,
 kbd,
 .hud-xp,
-.core-status {
+.core-status,
+.chapter-number,
+.step-n,
+.chip-n {
   font-family: var(--mono);
 }
 
-/* ---- Header: the HUD bar ---- */
+a {
+  text-decoration-color: var(--border-strong);
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* ---- Header ---- */
 
 .site-header {
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: saturate(1.2) blur(10px);
   border-bottom: 1px solid var(--border);
 }
 
-.site-header::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--copper) 20%,
-    var(--accent) 50%,
-    var(--copper) 80%,
-    transparent
-  );
-  opacity: 0.6;
-}
-
 .brand {
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   font-size: 0.9375rem;
 }
 
 .brand-mark {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
   overflow: visible;
 }
 
 .brand-mark .pins {
-  stroke: var(--copper);
-  stroke-width: 1.6;
+  stroke: var(--faint);
+  stroke-width: 1;
   stroke-linecap: round;
   fill: none;
 }
 
 .brand-mark .die {
-  fill: var(--surface-3);
-  stroke: var(--accent);
-  stroke-width: 1.4;
+  fill: var(--bg);
+  stroke: var(--text);
+  stroke-width: 1.1;
 }
 
 .brand-mark .core {
-  fill: var(--accent);
-  filter: drop-shadow(0 0 3px var(--accent));
+  fill: var(--text);
 }
 
 .site-nav {
@@ -2645,44 +3058,73 @@ kbd,
 }
 
 .site-nav a {
-  font-family: var(--display);
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-weight: 500;
+  color: var(--muted);
   border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.site-nav a:hover {
+  color: var(--text);
 }
 
 .site-nav a[aria-current="page"] {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  box-shadow: inset 0 -2px 0 var(--accent);
+  color: var(--text);
+  background: var(--surface-2);
 }
 
 .lang-switch {
   margin-left: 0;
 }
 
+/* Light/dark: a thin sun in light mode, a moon in dark. */
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 999px;
+  border-color: var(--border);
+  flex: none;
+}
+
+.theme-toggle svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+:root[data-theme="dark"] .theme-toggle :is(.sun, .rays),
+:root:not([data-theme="dark"]) .theme-toggle .moon {
+  display: none;
+}
+
 .lang-switch button[aria-pressed="true"] {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--text);
+  background: var(--surface-3);
 }
 
 .hud-xp {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.25rem 0.75rem;
-  border: 1px solid var(--border-strong);
+  padding: 0.2rem 0.7rem;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: var(--surface-2);
+  background: var(--surface);
   color: var(--text);
   text-decoration: none;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   white-space: nowrap;
 }
 
 .hud-xp:hover {
-  border-color: var(--accent);
-  box-shadow: var(--glow);
+  border-color: var(--border-strong);
 }
 
 .hud-xp-label {
@@ -2693,47 +3135,41 @@ kbd,
 }
 
 .hud-xp-count {
-  font-weight: 600;
-  color: var(--accent);
+  font-weight: 500;
 }
 
 .hud-xp-bar {
-  width: 4.5rem;
-  height: 0.375rem;
+  width: 4rem;
+  height: 2px;
   border-radius: 999px;
-  background: var(--surface-3);
+  background: var(--border);
   overflow: hidden;
 }
 
 .hud-xp-bar > span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--copper), var(--accent));
-  box-shadow: 0 0 8px var(--accent);
+  background: var(--text);
 }
 
 .core-status {
   font-size: 0.75rem;
+  color: var(--muted);
 }
 
-/* The simulator's status light. */
+/* The simulator's status: a small dot, no light. */
 s2t-core-status[data-state="ok"]::before {
   content: "";
   display: inline-block;
-  width: 0.5rem;
-  height: 0.5rem;
+  width: 0.4rem;
+  height: 0.4rem;
   margin-right: 0.4rem;
   border-radius: 50%;
-  background: var(--ok);
-  box-shadow: 0 0 6px var(--ok);
-  vertical-align: 0.05em;
+  background: var(--text);
+  vertical-align: 0.1em;
 }
 
-.site-nav a {
-  white-space: nowrap;
-}
-
-/* Narrower windows: the simulator status keeps only its light, then the
+/* Narrower windows: the simulator status keeps only its dot, then the
    levels meter only its count. */
 @media (max-width: 1200px) {
   .site-header {
@@ -2754,93 +3190,65 @@ s2t-core-status[data-state="ok"]::before {
   }
 }
 
-/* ---- Panels: HUD corner brackets ---- */
+/* ---- Panels: a hairline ring and a soft shadow ---- */
 
 :is(.save-box, .tree-detail, .steps > div, .side, .chapter[data-ready="true"]) {
-  /* Brackets sit on the border's corners: square corners, border-box. */
-  border-radius: 3px;
-  background-origin: border-box;
-  --corner: color-mix(in srgb, var(--accent) 65%, transparent);
-  background:
-    linear-gradient(var(--corner), var(--corner)) top left / 12px 2px no-repeat,
-    linear-gradient(var(--corner), var(--corner)) top left / 2px 12px no-repeat,
-    linear-gradient(var(--corner), var(--corner)) top right / 12px 2px no-repeat,
-    linear-gradient(var(--corner), var(--corner)) top right / 2px 12px no-repeat,
-    linear-gradient(var(--corner), var(--corner)) bottom left / 12px 2px
-      no-repeat,
-    linear-gradient(var(--corner), var(--corner)) bottom left / 2px 12px
-      no-repeat,
-    linear-gradient(var(--corner), var(--corner)) bottom right / 12px 2px
-      no-repeat,
-    linear-gradient(var(--corner), var(--corner)) bottom right / 2px 12px
-      no-repeat,
-    linear-gradient(180deg, var(--surface-2), var(--surface));
+  border-radius: var(--radius);
+  background: var(--surface);
 }
 
 /* ---- Buttons ---- */
 
 button,
 .button {
-  background: var(--surface-2);
+  background: var(--surface);
+  border-color: var(--border-strong);
   transition:
     background 0.12s,
     border-color 0.12s,
-    box-shadow 0.12s;
+    color 0.12s;
 }
 
 button:hover:not(:disabled),
 .button:hover {
-  background: var(--surface-3);
-  border-color: color-mix(in srgb, var(--accent) 70%, var(--border-strong));
+  background: var(--surface-2);
+  border-color: color-mix(in srgb, var(--text) 35%, var(--border-strong));
 }
 
 button.primary,
 .button.primary {
-  font-family: var(--display);
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--accent) 88%, #ffffff),
-    var(--accent)
-  );
-  box-shadow: var(--glow);
+  font-weight: 500;
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
 }
 
 button.primary:hover:not(:disabled),
 .button.primary:hover {
-  background: var(--accent);
-  border-color: var(--accent);
-  box-shadow:
-    var(--glow),
-    0 0 26px color-mix(in srgb, var(--accent) 35%, transparent);
+  background: color-mix(in srgb, var(--text) 82%, var(--bg));
+  border-color: transparent;
 }
 
-/* ---- Status lights ---- */
+/* ---- Status dots ---- */
 
 .pill.level-status::before,
 .tn-status::before {
   content: "";
   display: inline-block;
   flex: none;
-  width: 0.4rem;
-  height: 0.4rem;
+  width: 0.35rem;
+  height: 0.35rem;
   margin-right: 0.35rem;
   border-radius: 50%;
   background: currentColor;
   vertical-align: 0.1em;
 }
 
-.pill-passed::before,
-.tree-node[data-status="passed"] .tn-status::before {
-  box-shadow: 0 0 6px currentColor;
-}
-
-/* ---- Home: hero and the chip stack ---- */
+/* ---- Home: hero ---- */
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr);
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 1.1fr);
   gap: 2rem 3.5rem;
   align-items: center;
   max-width: none;
@@ -2848,182 +3256,143 @@ button.primary:hover:not(:disabled),
 }
 
 .hero h1 {
-  font-size: clamp(2.75rem, 6.5vw, 4.75rem);
+  font-size: clamp(2.5rem, 5.5vw, 4.25rem);
   line-height: 1.02;
-  background: linear-gradient(100deg, var(--text) 30%, var(--accent));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.stack {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-/* A pyramid: sand is the widest chip, Tetris the narrowest. */
-.stack-chip {
-  position: relative;
-  width: calc(100% - var(--i) * 4.5%);
-  margin-inline: auto;
-}
-
-.stack-chip > a,
-.stack-chip > .chip-n {
-  text-decoration: none;
-}
-
-.stack-chip > a,
-.stack-chip[data-ready="false"] {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.45rem 0.9rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 0.375rem;
-  background: var(--surface);
-  color: var(--text);
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: 0.9375rem;
-}
-
-/* Copper pins along each side of a chip. */
-.stack-chip::before,
-.stack-chip::after {
-  content: "";
-  position: absolute;
-  top: 25%;
-  bottom: 25%;
-  width: 6px;
-  background: repeating-linear-gradient(
-    180deg,
-    var(--copper) 0 2px,
-    transparent 2px 5px
-  );
-  opacity: 0.8;
-}
-
-.stack-chip::before {
-  left: -7px;
-}
-
-.stack-chip::after {
-  right: -7px;
-}
-
-.stack-chip[data-ready="true"] > a {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border-strong));
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--accent) 10%, var(--surface)),
-    var(--surface)
-  );
-}
-
-.stack-chip[data-ready="true"] > a:hover {
-  border-color: var(--accent);
-  box-shadow: var(--glow);
-}
-
-.stack-chip[data-ready="false"] {
-  border-style: dashed;
-  color: var(--muted);
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
-}
-
-.chip-n {
-  display: inline-grid;
-  place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 0.25rem;
-  font-family: var(--mono);
-  font-size: 0.8125rem;
-  background: var(--surface-3);
-  color: var(--muted);
-}
-
-.stack-chip[data-ready="true"] .chip-n {
-  background: var(--accent);
-  color: var(--on-accent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
+  letter-spacing: -0.04em;
 }
 
 @media (max-width: 860px) {
   .hero {
     grid-template-columns: minmax(0, 1fr);
   }
+  .hero .hl-figure {
+    max-width: 18rem;
+    margin-block: -2.5rem -1.5rem;
+  }
 }
 
-/* Hexagon step badges. */
+/* Step numbers: a thin circle. */
 .step-n {
-  width: 2rem;
-  height: 2.25rem;
-  border-radius: 0;
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  background: var(--accent);
-  color: var(--on-accent);
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
 }
 
 .chapter-number {
-  color: var(--accent);
-  text-shadow: 0 0 10px color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--muted);
 }
 
 .chapter[data-ready="true"]:hover {
-  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
-  box-shadow: var(--glow);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lift);
 }
 
-/* A diamond marker before section titles, like a board's silkscreen. */
-.section-head h2::before {
-  content: "";
-  display: inline-block;
-  width: 0.55rem;
-  height: 0.55rem;
-  margin-right: 0.6rem;
-  background: var(--accent);
-  transform: rotate(45deg) translateY(-0.15em);
-  box-shadow: 0 0 8px var(--accent);
+/* ---- Hairline figures: line drawings that answer the pointer ---- */
+
+.hl-figure {
+  width: 100%;
+  max-width: 26rem;
+  margin-inline: auto;
+}
+
+/* The home figure is the page's picture: as wide as its column. */
+.hero .hl-figure {
+  max-width: 44rem;
+  margin-block: -2rem;
+}
+
+/* The home figure with its button: take the computer apart, put it back. */
+.hero-figure {
+  display: grid;
+  justify-items: center;
+}
+
+/* The drawing's frame has room above it, none to spare below. */
+.hero .hero-figure .hl-figure {
+  margin-block: -2rem 0.5rem;
+}
+
+.figure-toggle {
+  font-size: 0.875rem;
+}
+
+/* Beside a page's title: thumbnail size (hairline figures read at 240px). */
+.page-head .hl-figure.head {
+  flex: none;
+  width: 15rem;
+  margin: -2.25rem 0 -1.75rem auto;
+}
+
+/* Title and figure share the first row; the Machine's pickers take the
+   next one. */
+.page-head:has(> .hl-figure.head) > div:first-child {
+  flex: 1 1 28rem;
+}
+
+.machine-head .machine-pickers {
+  flex-basis: 100%;
+}
+
+/* A figure inside a chapter's text: thumbnail-sized, centred. */
+line-figure {
+  display: block;
+}
+
+.chapter-page .hl-figure.inline {
+  max-width: 19rem;
+  margin: 0.5rem auto 1.25rem;
+}
+
+.narrow-page .hl-figure.lost {
+  max-width: 16rem;
+  margin: 0 0 -1rem;
+}
+
+@media (max-width: 640px) {
+  .page-head .hl-figure.head {
+    display: none;
+  }
+}
+
+.chapter-head.with-figure {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(10rem, 15rem);
+  gap: 1.5rem;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .chapter-head.with-figure {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .chapter-head .hl-figure {
+    max-width: 16rem;
+  }
 }
 
 /* ---- Chapters ---- */
 
-.chapter-page h2 {
-  padding-left: 0.75rem;
-  border-left: 3px solid var(--copper);
-}
-
 .course-nav a[aria-current="page"],
 .toc a.active,
 .toc a[aria-current] {
-  box-shadow: inset 2px 0 0 var(--accent);
+  box-shadow: inset 1px 0 0 var(--text);
 }
 
-/* ---- Level map: the tech tree as a board ---- */
+/* ---- Level map ---- */
 
 .tree-scroll {
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  backdrop-filter: blur(2px);
+  background: var(--surface);
 }
 
 .tree-band {
-  border-color: color-mix(in srgb, var(--copper) 35%, transparent);
-  background: color-mix(in srgb, var(--copper) 3%, transparent);
+  border-color: var(--border);
+  background: transparent;
 }
 
 .tree-band h2 {
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--copper);
+  font-size: 0.6875rem;
 }
 
 .tree-band h2 .muted {
@@ -3032,94 +3401,57 @@ button.primary:hover:not(:disabled),
 }
 
 .tree-edges path {
-  stroke: color-mix(in srgb, var(--copper) 16%, transparent);
+  stroke: var(--border-strong);
 }
 
 .tree-edges path.done {
-  stroke: color-mix(in srgb, var(--ok) 28%, transparent);
+  stroke: var(--faint);
 }
 
 .tree-edges path.hot {
-  stroke: var(--accent);
-  stroke-width: 2;
-  filter: drop-shadow(
-    0 0 2px color-mix(in srgb, var(--accent) 60%, transparent)
-  );
+  stroke: var(--text);
+  stroke-width: 1.5;
 }
 
 .tree-node {
-  background: var(--surface-3);
-  border-radius: 0.4rem;
-}
-
-.tn-name {
-  font-family: var(--display);
-}
-
-.tree-node[data-status="passed"] {
-  box-shadow: 0 0 12px color-mix(in srgb, var(--ok) 18%, transparent);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
 }
 
 .tree-node[data-status="open"] {
-  border-color: var(--link);
-}
-
-.tree-node[data-status="open"] .tn-status {
-  color: var(--link);
+  border-color: var(--text);
 }
 
 .tree-node[aria-pressed="true"] {
-  box-shadow:
-    0 0 0 2px var(--accent),
-    0 0 22px color-mix(in srgb, var(--accent) 40%, transparent);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .tree-node[data-status="open"] {
-    animation: s2t-ready 2.4s ease-in-out infinite;
-  }
-}
-
-@keyframes s2t-ready {
-  50% {
-    box-shadow: 0 0 16px color-mix(in srgb, var(--link) 45%, transparent);
-  }
+  box-shadow: 0 0 0 1.5px var(--text);
 }
 
 /* Pressed stays pressed under the pointer (the hover rule above would
    otherwise clear its fill and hide the label). */
 .view-toggle button[aria-pressed="true"],
 .view-toggle button[aria-pressed="true"]:hover:not(:disabled) {
-  font-family: var(--display);
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--text);
+  color: var(--bg);
   border-color: transparent;
-  box-shadow: var(--glow);
 }
 
 /* ---- Workbench ---- */
 
 .toolbar {
-  background: linear-gradient(180deg, var(--surface-3), var(--surface-2));
-}
-
-.toolbar-label {
-  font-family: var(--mono);
-  color: var(--copper);
+  background: var(--surface-2);
 }
 
 .tool.component {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
+  border-color: var(--border-strong);
+  background: var(--surface);
 }
 
-/* The canvas is a bare board: dark solder mask with a dotted grid. */
 .canvas-frame {
-  background: color-mix(in srgb, var(--bg) 70%, var(--surface));
+  background: var(--surface);
 }
 
 .grid-dot {
-  fill: color-mix(in srgb, var(--accent) 22%, transparent);
+  fill: var(--border-strong);
 }
 
 .play-head h1 {

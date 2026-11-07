@@ -3,6 +3,7 @@ name = "AND16"
 layer = 2
 goal = """
 Build a 16-bit AND: AND each bit of a with the same bit of b.
+A bus is a bundle of wires carrying a whole number. Use your AND with Repeat ×16: one gate, copied once per bit.
 """
 inputs = ["a", "b"]
 outputs = ["out"]
@@ -18,4 +19,5 @@ a b | out
 """
 
 [hints]
+nudge = "Don't place 16 ANDs: select one AND and set Repeat ×16 in its options. Then a, b and out each take one bus wire."
 wrong = "Use Repeat: one gate, repeated 16 times, works on all 16 bits at once."

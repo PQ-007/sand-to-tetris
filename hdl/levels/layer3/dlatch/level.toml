@@ -24,5 +24,6 @@ d en | q
 """
 
 [hints]
+nudge = "Put a front end on an SR latch: turn d and en into s and r, so it only changes while en is 1."
 wrong = "When en is 0, neither set nor reset may be 1, so the latch holds. When en is 1, exactly one of them is 1, depending on d."
 unknown = "The latch stays unknown until en is 1 at least once. Check that en reaches both AND gates."

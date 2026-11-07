@@ -13,5 +13,6 @@ truth_table = """
 """
 
 [hints]
+nudge = "A constant has no inputs at all: out just has to be tied to something that is always 1."
 wrong = "Which supply rail is always 1?"
 floating = "Connect out to a supply rail."

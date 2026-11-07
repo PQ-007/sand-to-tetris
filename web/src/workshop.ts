@@ -2,6 +2,7 @@
 // assembler, the VM translator) in TypeScript, part by part, and runs the
 // tests. Passing every test lets the Machine page use it.
 import { getLang, t, type Key, type Lang } from "./i18n";
+import { pageFigure } from "./figures";
 import { chapterHref } from "./router";
 import { loadCore } from "./sim/core";
 import { CM_STAGES } from "./compiler-tests";
@@ -140,6 +141,7 @@ class WorkshopPage {
           <p class="help">${esc(t(k("how"), { n: total }))}
             <a href="${chapterHref(def.chapter)}">${esc(t(k("chapter")))}</a></p>
         </div>
+        ${pageFigure(def.id, (n) => t(`figure.${n}` as Key), "head")}
       </div>
       <div class="workshop-grid">
         <section class="workshop-code" aria-label="${esc(t("workshop.codeLabel"))}">

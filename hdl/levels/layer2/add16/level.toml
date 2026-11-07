@@ -20,4 +20,5 @@ a b | out
 """
 
 [hints]
+nudge = "Add the way you do on paper, column by column from the right: each column's carry goes into the next column."
 wrong = "Bit i of a and bit i of b go into full adder i; its carry feeds full adder i+1's c. Did any carry skip a column?"

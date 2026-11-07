@@ -153,4 +153,9 @@ export function generate(program: Program, info: Info): string[] {
 }
 `;
 
-export const COMPILER_STARTERS: Record<Lang, string> = { en: EN, mn: MN };
+// Japanese: the English starter until it is translated (a later stage).
+export const COMPILER_STARTERS: Record<Lang, string> = {
+  en: EN,
+  mn: MN,
+  ja: EN,
+};

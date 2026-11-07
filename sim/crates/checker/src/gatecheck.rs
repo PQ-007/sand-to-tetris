@@ -198,11 +198,34 @@ pub(crate) fn prepare(
             parts: vec![],
             ports: vec![],
         }]),
+        Err(GateError::MultipleDrivers {
+            drivers,
+            parts,
+            listeners,
+            ports,
+        }) => {
+            let message = GateError::MultipleDrivers {
+                drivers: drivers.clone(),
+                parts: parts.clone(),
+                listeners: listeners.clone(),
+                ports: ports.clone(),
+            }
+            .to_string();
+            Err(vec![ReportProblem {
+                severity: "error",
+                message,
+                code: "two-drivers",
+                args: [
+                    ("drivers".to_string(), drivers.join(" and ")),
+                    ("listeners".to_string(), listeners.join(" and ")),
+                ]
+                .into(),
+                parts,
+                ports,
+            }])
+        }
         Err(e) => {
-            let parts = match &e {
-                GateError::MultipleDrivers { parts, .. } => parts.clone(),
-                _ => vec![],
-            };
+            let parts = vec![];
             let inner = matches!(&e, GateError::Invalid { .. } | GateError::Missing { .. });
             let message = if inner {
                 format!("a component inside this design is broken: {e}")

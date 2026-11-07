@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   memoryParts,
   needsRecheck,
+  nextLevel,
   orderLevels,
   playLibrary,
   statuses,
   toolbox,
+  usedIn,
   type LevelEntry,
   type Progress,
 } from "../src/game";
@@ -193,6 +195,59 @@ describe("what a level may use", () => {
       "join",
       "not",
       "nand",
+    ]);
+  });
+
+  it("suggests the parts a level is built from, and splitters only for buses", () => {
+    const wide = entry("and16", 2, ["nand"]);
+    wide.info.level.widths = { a: 16 };
+    const levels = [...LEVELS, entry("mux", 2, ["nand"]), wide];
+    const picked = (id: string) =>
+      toolbox(levels, s, id)
+        .filter((t) => t.suggested)
+        .map((t) => t.kind);
+    expect(picked("mux")).toEqual(["nand"]);
+    expect(picked("and16")).toEqual(["split", "join", "nand"]);
+    // Layer 1 is built from bare transistors; its requires only set the
+    // order (NOT is still there, behind "More parts").
+    expect(picked("nand")).toEqual(["pmos", "nmos", "vdd", "gnd"]);
+  });
+
+  it("says which levels a part is used in (Layer 1's order doesn't count)", () => {
+    const levels = [
+      { id: "not", layer: 1, requires: [] },
+      { id: "nand", layer: 1, requires: ["not"] },
+      { id: "and", layer: 2, requires: ["nand", "not"] },
+      { id: "mux", layer: 2, requires: ["and", "not"] },
+    ];
+    expect(usedIn(levels, "not")).toEqual(["and", "mux"]);
+    expect(usedIn(levels, "and")).toEqual(["mux"]);
+    expect(usedIn(levels, "mux")).toEqual([]);
+  });
+
+  it("skips side quests when picking the next level", () => {
+    const order = [
+      { id: "xor", optional: false },
+      { id: "not16", optional: true },
+      { id: "and16", optional: false },
+    ];
+    expect(nextLevel(order, "xor")).toBe("and16");
+    expect(nextLevel(order, "not16")).toBe("and16");
+    expect(nextLevel(order, "and16")).toBeUndefined();
+  });
+
+  it("follows the course roadmap, not the alphabet", () => {
+    const levels = [
+      entry("mux16", 2, ["mux"]),
+      entry("and16", 2, ["and"]),
+      entry("mux", 2, ["and"]),
+      entry("and", 2),
+    ];
+    expect(orderLevels(levels).map((l) => l.info.level.id)).toEqual([
+      "and",
+      "and16",
+      "mux",
+      "mux16",
     ]);
   });
 

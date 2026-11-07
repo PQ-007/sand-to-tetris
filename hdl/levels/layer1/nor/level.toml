@@ -17,6 +17,7 @@ a b | out
 """
 
 [hints]
+nudge = "NOR is NAND's mirror image: out is 1 only when both inputs are 0. What was in series becomes parallel, and the other way round."
 floating = "Every input combination must connect out to VDD or to GND. The output should be pulled up to VDD only when both inputs are 0: which arrangement of two PMOS transistors conducts only when both are on?"
 short = "The pull-up and pull-down networks must never be on at the same time. For NOR the NMOS pull-down is in parallel (either input pulls out to 0), so the PMOS pull-up must be in series."
 wrong = "NOR swaps NAND's arrangement: two PMOS in series to VDD, two NMOS in parallel to GND."

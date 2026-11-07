@@ -30,4 +30,5 @@ in sel | a b c d e f g h
 """
 
 [hints]
+nudge = "Let the top bit of sel choose a half, and a 4-way demultiplexer handle the low bits in each half."
 wrong = "Bit 2 of sel picks the half (a–d or e–h); bits 0 and 1, joined into a 2-bit number, pick within the half."

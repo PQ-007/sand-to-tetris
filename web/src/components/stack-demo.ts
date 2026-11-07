@@ -18,11 +18,11 @@ const CSS = sheet(`
   .cols > * { min-width: 0; }
   .code td { font-family: var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
   .code td.n { color: var(--muted); width: 2.5rem; }
-  tr[aria-current="step"] { background: color-mix(in srgb, var(--accent) 18%, transparent); font-weight: 700; }
+  tr[aria-current="step"] { background: color-mix(in srgb, var(--accent) 18%, transparent); font-weight: 600; }
   .stack td.v { font-family: var(--mono); }
   .stack tr.f0 td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
   .stack tr.f1 td:first-child { box-shadow: inset 3px 0 0 var(--copper); }
-  .stack tr.top td { font-weight: 700; }
+  .stack tr.top td { font-weight: 600; }
   .muted { color: var(--muted); }
 `);
 

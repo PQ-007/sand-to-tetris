@@ -284,6 +284,15 @@ fn check_all(root: &Path) -> Result<String, String> {
             lines.push(format!("✗ {}: no reference.json", title(&e.level)));
             continue;
         };
+        let mut listed = parts_match(&e.level, reference);
+        listed.extend(missing_hints(&e.level));
+        if !listed.is_empty() {
+            ok = false;
+            for problem in listed {
+                lines.push(format!("✗ {}: {problem}", title(&e.level)));
+            }
+            continue;
+        }
         let report = check_with(
             &e.level,
             reference,
@@ -299,12 +308,98 @@ fn check_all(root: &Path) -> Result<String, String> {
             }
         }
     }
+    let levels: Vec<&Level> = entries.iter().map(|e| &e.level).collect();
+    for problem in course_problems(&levels) {
+        ok = false;
+        lines.push(format!("✗ {problem}"));
+    }
     let text = lines.join("\n");
     if ok {
         Ok(text)
     } else {
         Err(text)
     }
+}
+
+/// The parts a level is built from (see `parts_match`).
+fn built_from(level: &Level) -> &[String] {
+    if level.layer < 2 {
+        &[]
+    } else {
+        &level.requires
+    }
+}
+
+/// Every level the course doesn't mark optional must be on the way to the
+/// finished computer: exactly one required level (the top) is built into
+/// nothing else, and every other required level is built into a required
+/// level. A required level never needs a side quest. (Dependencies have no
+/// cycles, so from any required level, following "is built into" upward
+/// always ends at the one top.)
+fn course_problems(levels: &[&Level]) -> Vec<String> {
+    let required = |id: &str| levels.iter().any(|l| l.id == id && !l.optional);
+    let mut problems = Vec::new();
+    let mut tops = Vec::new();
+    for l in levels.iter().filter(|l| !l.optional) {
+        let used = levels
+            .iter()
+            .any(|u| !u.optional && built_from(u).contains(&l.id));
+        if !used {
+            tops.push(l.id.as_str());
+        }
+        for r in built_from(l) {
+            if levels.iter().any(|o| &o.id == r) && !required(r) {
+                problems.push(format!(
+                    "{}: it's required but built from the side quest `{r}`",
+                    title(l)
+                ));
+            }
+        }
+    }
+    if tops.len() > 1 {
+        problems.push(format!(
+            "only the finished computer should be built into nothing, but so are: {}. Use each in a later level, or mark it `optional = true`",
+            tops.join(", ")
+        ));
+    }
+    problems
+}
+
+/// The Hint button on every level shows `nudge` first, then `wrong`.
+fn missing_hints(level: &Level) -> Vec<String> {
+    ["nudge", "wrong"]
+        .iter()
+        .filter(|k| level.hints.get(**k).is_none_or(|h| h.trim().is_empty()))
+        .map(|k| format!("no `{k}` hint (the Hint button shows `nudge`, then `wrong`)"))
+        .collect()
+}
+
+/// From Layer 2 up, a level's `requires` is also the list of parts it's
+/// built from: the editor offers exactly those first and the roadmap shows
+/// them as "Built from". So the reference must use every listed part and
+/// nothing else (splitters and joiners aside). In Layer 1 everything is
+/// built from transistors, and `requires` only sets the order levels open.
+fn parts_match(level: &Level, reference: &Design) -> Vec<String> {
+    if level.layer < 2 {
+        return vec![];
+    }
+    let used: BTreeSet<&str> = reference
+        .parts
+        .iter()
+        .map(|p| p.kind.as_str())
+        .filter(|k| !matches!(*k, "split" | "join"))
+        .collect();
+    let listed: BTreeSet<&str> = level.requires.iter().map(String::as_str).collect();
+    let mut problems: Vec<String> = used
+        .difference(&listed)
+        .map(|k| format!("the reference uses `{k}`, but `requires` doesn't list it"))
+        .collect();
+    problems.extend(
+        listed
+            .difference(&used)
+            .map(|k| format!("`requires` lists `{k}`, but the reference doesn't use it")),
+    );
+    problems
 }
 
 /// Assembles a program: a listing (address, word, source line), or the
@@ -407,6 +502,79 @@ pub fn run(args: &[String]) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_reference_uses_exactly_the_parts_its_level_lists() {
+        use s2t_netlist::builder::{design, level};
+        let mut mux = level("mux", 2, &["a", "b", "sel"], &["out"]);
+        mux.requires = vec!["and".into(), "or".into()];
+        let uses = |kinds: &[(&str, &str)]| design("mux", kinds, &[]);
+        let fine = uses(&[("x", "and"), ("y", "or"), ("s", "split")]);
+        assert!(parts_match(&mux, &fine).is_empty());
+        let extra = uses(&[("x", "and"), ("y", "or"), ("n", "not")]);
+        assert_eq!(
+            parts_match(&mux, &extra),
+            vec!["the reference uses `not`, but `requires` doesn't list it"]
+        );
+        let short = uses(&[("x", "and")]);
+        assert_eq!(
+            parts_match(&mux, &short),
+            vec!["`requires` lists `or`, but the reference doesn't use it"]
+        );
+        // Layer 1 is built from transistors; its requires only set the order.
+        let mut nand = level("nand", 1, &["a", "b"], &["out"]);
+        nand.requires = vec!["not".into()];
+        assert!(parts_match(&nand, &uses(&[("p", "pmos")])).is_empty());
+    }
+
+    #[test]
+    fn every_required_level_leads_to_the_top() {
+        use s2t_netlist::builder::level;
+        let lv = |id: &str, layer: u8, req: &[&str], optional: bool| {
+            let mut l = level(id, layer, &["a"], &["out"]);
+            l.requires = req.iter().map(|r| r.to_string()).collect();
+            l.optional = optional;
+            l
+        };
+        let not = lv("not", 1, &[], false);
+        let nand = lv("nand", 1, &["not"], false);
+        let and = lv("and", 2, &["nand", "not"], false);
+        let top = lv("top", 2, &["and"], false);
+        assert!(course_problems(&[&not, &nand, &and, &top]).is_empty());
+        // A required level nothing is built from is a second top.
+        let stray = lv("not16", 2, &["not"], false);
+        let found = course_problems(&[&not, &nand, &and, &top, &stray]);
+        assert_eq!(found.len(), 1);
+        assert!(found[0].contains("top, not16"), "{found:?}");
+        // As a side quest it's fine...
+        let side = lv("not16", 2, &["not"], true);
+        assert!(course_problems(&[&not, &nand, &and, &top, &side]).is_empty());
+        // ...but a required level can't need it.
+        let top2 = lv("top", 2, &["and", "not16"], false);
+        let found = course_problems(&[&not, &nand, &and, &top2, &side]);
+        assert!(found[0].contains("side quest `not16`"), "{found:?}");
+        // Layer 1's requires only set the order: NAND isn't "used" by it.
+        let only_order = lv("top", 2, &["and"], false);
+        let lonely = lv("nor", 1, &["not"], false);
+        let found = course_problems(&[&not, &nand, &and, &only_order, &lonely]);
+        assert!(found[0].contains("top, nor"), "{found:?}");
+    }
+
+    #[test]
+    fn every_level_has_a_nudge_and_an_approach() {
+        use s2t_netlist::builder::level;
+        let mut l = level("x", 2, &["a"], &["out"]);
+        assert_eq!(missing_hints(&l).len(), 2);
+        l.hints.insert("wrong".into(), "Use an AND.".into());
+        l.hints.insert("nudge".into(), "  ".into());
+        assert_eq!(
+            missing_hints(&l),
+            vec!["no `nudge` hint (the Hint button shows `nudge`, then `wrong`)"]
+        );
+        l.hints
+            .insert("nudge".into(), "Think about when out is 1.".into());
+        assert!(missing_hints(&l).is_empty());
+    }
 
     #[test]
     fn version_command_reports_format() {

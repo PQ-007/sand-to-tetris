@@ -19,8 +19,8 @@ const CSS = sheet(`
   caption { text-align: left; font-weight: 600; padding-bottom: 0.25rem; }
   td, th { padding: 0.15rem 0.5rem; border-bottom: 1px solid var(--border); text-align: left; }
   td.code { font-family: var(--font-mono, ui-monospace, monospace); white-space: nowrap; }
-  tr[aria-current="step"] { background: color-mix(in srgb, var(--accent) 18%, transparent); font-weight: 700; }
-  tr.changed td { font-weight: 700; }
+  tr[aria-current="step"] { background: color-mix(in srgb, var(--accent) 18%, transparent); font-weight: 600; }
+  tr.changed td { font-weight: 600; }
   .mark { color: var(--accent); }
   .pixels { display: grid; grid-template-columns: repeat(16, 1fr); gap: 2px; max-width: 16rem; }
   .pixels span { aspect-ratio: 1; background: var(--bg); border: 1px solid var(--border); }

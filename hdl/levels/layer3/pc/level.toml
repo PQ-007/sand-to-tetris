@@ -35,5 +35,6 @@ d load inc reset clk | q
 """
 
 [hints]
+nudge = "The next value is one of: the same, +1, d, or 0. Build them all, let MUX16s pick one, and store it in a register."
 wrong = "The priority is reset, then load, then inc. In a chain of multiplexers the last one decides, so put reset's multiplexer at the end, right before the register."
 unknown = "The counter is unknown until its first reset or load. If it stays unknown after a reset, check that the register loads on every edge (load = 1)."

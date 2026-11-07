@@ -1,23 +1,29 @@
 // The site's languages. `t(key)` gives the text for the current language;
-// the Mongolian dictionary is typed against the English keys, so a missing
-// translation is a type error. Chapter and level content have their own
+// the Mongolian and Japanese dictionaries are typed against the English
+// keys, so a missing translation is a type error. Chapter and level content have their own
 // translated files (see web/content).
 import { en, type Messages, type Vars } from "./en";
+import { ja } from "./ja";
 import { mn } from "./mn";
 
-export type Lang = "en" | "mn";
-export const LANGS: Lang[] = ["en", "mn"];
+export type Lang = "en" | "mn" | "ja";
+export const LANGS: Lang[] = ["en", "mn", "ja"];
 const STORE = "s2t-lang";
 
-const DICTS: Record<Lang, Messages> = { en, mn };
+const DICTS: Record<Lang, Messages> = { en, mn, ja };
 
 /** The learner's saved choice wins; otherwise the browser's languages. */
 export function detectLang(
   saved: string | null,
   browser: readonly string[],
 ): Lang {
-  if (saved === "en" || saved === "mn") return saved;
-  return browser.some((l) => l.toLowerCase().startsWith("mn")) ? "mn" : "en";
+  if (LANGS.includes(saved as Lang)) return saved as Lang;
+  // The first of the browser's languages that the site has.
+  for (const l of browser) {
+    const code = l.toLowerCase().slice(0, 2);
+    if (LANGS.includes(code as Lang)) return code as Lang;
+  }
+  return "en";
 }
 
 function initial(): Lang {

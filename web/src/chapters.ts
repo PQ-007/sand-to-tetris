@@ -36,23 +36,30 @@ export const CHAPTERS: readonly PlannedChapter[] = [
   },
   {
     number: 5,
-    title: "Assembler",
-    summary: "Turn readable assembly into the machine's binary.",
+    title: "The assembler",
+    summary:
+      "Write programs with names instead of numbers, and the program that turns them into binary.",
   },
   {
     number: 6,
-    title: "VM and a language",
+    title: "The virtual machine",
     summary:
-      "A virtual machine, then a small high-level language compiled to it.",
+      "A stack machine of our own, and the translator that turns it into assembly.",
   },
   {
     number: 7,
-    title: "Mini OS",
-    summary: "Screen, keyboard, timer and random numbers.",
+    title: "The compiler",
+    summary: "C Shard, a language we design together, and its compiler.",
   },
   {
     number: 8,
-    title: "Tetris",
-    summary: "Write Tetris in your language and play it on your computer.",
+    title: "The operating system",
+    summary: "Screen, text, keyboard, timer and random numbers, in C Shard.",
+  },
+  {
+    number: 9,
+    title: "Bitfall",
+    summary:
+      "An original falling-block game, played on the computer you built.",
   },
 ];

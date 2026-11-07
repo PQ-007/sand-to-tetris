@@ -21,4 +21,5 @@ a b c d e f g h sel | out
 """
 
 [hints]
+nudge = "You have a 4-way MUX16: split the eight inputs into two groups of four."
 wrong = "sel's top bit (bit 2) chooses between the a–d half and the e–h half."

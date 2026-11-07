@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { detectLang, format, setLang, t } from "../src/i18n";
 import { en } from "../src/i18n/en";
+import { ja } from "../src/i18n/ja";
 import { mn } from "../src/i18n/mn";
 import { compare, SWITCHES } from "../src/demos/switches";
 
@@ -21,6 +22,26 @@ describe("translations", () => {
       if (typeof v === "string" && typeof m === "string")
         expect([...new Set(holes(m))], k).toEqual([...new Set(holes(v))]);
     }
+  });
+
+  it("has a Japanese text for every English key, with the same placeholders", () => {
+    expect(Object.keys(ja).sort()).toEqual(Object.keys(en).sort());
+    for (const [k, v] of Object.entries(en)) {
+      const j = ja[k as keyof typeof en];
+      if (typeof j === "string") expect(j.trim(), k).not.toBe("");
+      if (typeof v === "string" && typeof j === "string")
+        expect([...new Set(holes(j))], k).toEqual([...new Set(holes(v))]);
+    }
+  });
+
+  it("compares two switches in Japanese as a list (no conjugated adjectives)", () => {
+    const relay = SWITCHES.find((s) => s.id === "relay")!;
+    const today = SWITCHES.find((s) => s.id === "transistor-today")!;
+    setLang("ja");
+    expect(compare(relay, today)).toBe(
+      "リレー と 現在のトランジスタ: 大きさは約百万倍大きい、速さは約十億倍遅い。",
+    );
+    setLang("en");
   });
 
   it("compares two switches in Mongolian without case suffixes", () => {
@@ -53,5 +74,8 @@ describe("translations", () => {
     expect(detectLang("en", ["mn"])).toBe("en");
     expect(detectLang("mn", ["en"])).toBe("mn");
     expect(detectLang("fr", ["en"])).toBe("en");
+    expect(detectLang(null, ["ja-JP", "en"])).toBe("ja");
+    expect(detectLang(null, ["fr-FR", "ja"])).toBe("ja");
+    expect(detectLang("ja", ["mn"])).toBe("ja");
   });
 });

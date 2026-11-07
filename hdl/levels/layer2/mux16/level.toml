@@ -18,4 +18,5 @@ a b sel | out
 """
 
 [hints]
+nudge = "Repeat ×16 again, but every copy must read the same sel. One option of a repeated part does exactly that."
 wrong = "Repeat the MUX ×16 and mark sel as shared, so every copy reads the same select bit."

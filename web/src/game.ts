@@ -2,6 +2,7 @@
 // Pure: the check function is passed in, so this is testable without WASM.
 import { PRIMITIVES } from "./editor/model";
 import type { Design, LevelInfo, LibraryInput, Report } from "./sim/types";
+import { ROADMAP_INDEX } from "./roadmap";
 
 export interface LevelProgress {
   design: Design;
@@ -19,11 +20,18 @@ export interface LevelEntry {
   toml: string;
 }
 
-/** Levels in play order: by layer, then so that requirements come first. */
+/**
+ * Levels in play order: the course roadmap (by layer, then stage by
+ * stage; side quests stay where the roadmap puts them), with requirements
+ * always first; levels the roadmap doesn't list come after it, side
+ * quests last, by name.
+ */
 export function orderLevels(levels: LevelEntry[]): LevelEntry[] {
   const byId = new Map(levels.map((l) => [l.info.level.id, l]));
   const out: LevelEntry[] = [];
   const seen = new Set<string>();
+  const place = (l: LevelEntry) =>
+    ROADMAP_INDEX.get(l.info.level.id) ?? Infinity;
   const visit = (l: LevelEntry) => {
     if (seen.has(l.info.level.id)) return;
     seen.add(l.info.level.id);
@@ -37,6 +45,7 @@ export function orderLevels(levels: LevelEntry[]): LevelEntry[] {
     .sort(
       (a, b) =>
         a.info.level.layer - b.info.level.layer ||
+        place(a) - place(b) ||
         Number(a.info.level.optional) - Number(b.info.level.optional) ||
         a.info.level.id.localeCompare(b.info.level.id),
     )
@@ -148,10 +157,42 @@ export function playLibrary(
   };
 }
 
+/**
+ * The parts a level is built from: its `requires` from Layer 2 up (check-all
+ * makes each reference use exactly those). Layer 1 is built from
+ * transistors; there `requires` only sets the order levels open.
+ */
+export function builtFrom(level: { layer: number; requires: string[] }) {
+  return level.layer === 1 ? [] : level.requires;
+}
+
+/**
+ * The levels built from `id`: what the part is for. check-all makes sure
+ * every required level is used by a required level, up to the computer.
+ */
+export function usedIn(
+  levels: { id: string; layer: number; requires: string[] }[],
+  id: string,
+): string[] {
+  return levels.filter((l) => builtFrom(l).includes(id)).map((l) => l.id);
+}
+
+/** The next level to play after `id` in `order`, skipping side quests. */
+export function nextLevel(
+  order: { id: string; optional: boolean }[],
+  id: string,
+): string | undefined {
+  const at = order.findIndex((l) => l.id === id);
+  return order.slice(at + 1).find((l) => !l.optional)?.id;
+}
+
 export interface ToolboxItem {
   kind: string;
   label: string;
   primitive: boolean;
+  /** One of the parts this level is meant to be built from (shown first;
+   * the rest wait behind "More parts"). */
+  suggested: boolean;
 }
 
 const PRIMITIVE_LABEL: Record<string, string> = {
@@ -178,17 +219,28 @@ export function toolbox(
           kind: k,
           label: PRIMITIVE_LABEL[k] ?? k,
           primitive: true,
+          suggested: true,
         }))
       : [];
   if (me.layer >= 2) {
     // Buses arrive in Layer 2: wiring parts route bits, they add no logic.
-    items.push({ kind: "split", label: "Splitter", primitive: false });
-    items.push({ kind: "join", label: "Joiner", primitive: false });
+    // They're suggested where the level has a bus to take apart.
+    const bus = Object.values(me.widths ?? {}).some((w) => w > 1);
+    for (const [kind, label] of [
+      ["split", "Splitter"],
+      ["join", "Joiner"],
+    ] as const)
+      items.push({ kind, label, primitive: false, suggested: bus });
   }
   for (const l of orderLevels(levels)) {
     const c = l.info.level;
     if (c.id !== level && c.layer <= me.layer && status[c.id] === "passed") {
-      items.push({ kind: c.id, label: c.name, primitive: false });
+      items.push({
+        kind: c.id,
+        label: c.name,
+        primitive: false,
+        suggested: builtFrom(me).includes(c.id),
+      });
     }
   }
   return items;

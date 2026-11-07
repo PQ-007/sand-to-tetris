@@ -223,7 +223,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   "ripple.caption": "Дамжин урсах carry",
   "ripple.captionHtml":
     'Багана бүр бүтэн нэмэгч. Хоёр бит нь тэнцүү багана гарах carry-гээ шууд мэднэ. Эс бөгөөс баруун талын баганаас ирэх carry-г хүлээх ёстой. <span class="muted">?</span> нь «хараахан тодорхойгүй» гэсэн үг.',
-  "ripple.step": "Алхам",
+  "ripple.step": "Step",
   "ripple.play": "Тоглуулах",
   "ripple.reset": "Эхлүүлэх",
   "ripple.longCarry": "255 + 1 (урт carry)",
@@ -233,11 +233,10 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   "ripple.bit": "{n}-р бит",
   "ripple.carryIn": "орох carry",
   "ripple.sum": "нийлбэр",
-  "ripple.done": "{n} алхмын дараа дууслаа: {a} + {b} = {sum}{dropped}.",
+  "ripple.done": "{n} step-ийн дараа дууслаа: {a} + {b} = {sum}{dropped}.",
   "ripple.dropped":
     " (гарах carry хаягдана: 8 бит {total}-ийг багтааж чадахгүй)",
-  "ripple.waiting":
-    "{total}-аас {step}-р алхам: carry дамжихыг хүлээсээр байна.",
+  "ripple.waiting": "Step {step}/{total}: carry дамжихыг хүлээсээр байна.",
 
   // ---- latch ----
   "latch.caption": "Санаж үлддэг гогцоо",
@@ -266,12 +265,12 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   // ---- CPU ----
   "cpu.caption": "Төв процессор, нэг удаад нэг заавар",
   "cpu.captionText":
-    "Бидний зохиосон төв процессор жижиг програм ажиллуулж байна. Алхам бүр PC дээрх зааврыг уншиж, decode хийж, нэг clock циклд гүйцэтгэнэ.",
+    "Бидний зохиосон төв процессор жижиг програм ажиллуулж байна. Step бүр PC дээрх зааврыг уншиж, decode хийж, нэг clock циклд гүйцэтгэнэ.",
   "cpu.program": "Програм",
   "cpu.sum": "10 + 9 + … + 1-ийн нийлбэр",
   "cpu.call": "Дуудах ба буцах",
   "cpu.screen": "Дэлгэц дээр зурах",
-  "cpu.step": "Алхам",
+  "cpu.step": "Step",
   "cpu.run": "Ажиллуулах",
   "cpu.reset": "Эхлүүлэх",
   "cpu.listing": "Програмын ROM",
@@ -284,8 +283,8 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   "cpu.screenLabel": "Дэлгэцийн зүүн дээд булан (16 × 2 пиксел):",
   "cpu.pixelRow": "{y}-р мөр: {bits}",
   "cpu.start":
-    "Reset: PC нь 0. Эхний зааврыг ажиллуулахын тулд «Алхам» дарна уу.",
-  "cpu.did": "{n}-р алхам: {asm}.",
+    "Reset: PC нь 0. Эхний зааврыг ажиллуулахын тулд «Step» дарна уу.",
+  "cpu.did": "Step {n}: {asm}.",
   "cpu.group.alu":
     "Register file хоёр регистр уншиж, ALU тэдгээрийг нэгтгэж, үр дүн регистрт буцаж бичигдэнэ. Flag-ууд хадгалагдана.",
   "cpu.group.cmp":
@@ -374,7 +373,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   "stk.expr": "x = (3 + 4) × 2",
   "stk.call": "Дуудлага: area(5, 3)",
   "stk.fact": "Рекурс: 3!",
-  "stk.step": "Алхам",
+  "stk.step": "Step",
   "stk.back": "Буцах",
   "stk.run": "Ажиллуулах",
   "stk.reset": "Эхлүүлэх",
@@ -391,7 +390,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   "stk.result": "main-ийн үр дүн",
   "stk.empty": "Stack хоосон.",
   "stk.current": "дараагийн команд",
-  "stk.start": "Эхний командыг ажиллуулахын тулд «Алхам»-ыг дар.",
-  "stk.next": "{n}-р алхам. Дараа нь: {line}-р мөр.",
+  "stk.start": "Эхний командыг ажиллуулахын тулд «Step» дарна уу.",
+  "stk.next": "Step {n}. Дараа нь: {line}-р мөр.",
   "stk.done": "Дууслаа: main {value} буцаалаа.",
 };

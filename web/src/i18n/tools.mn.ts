@@ -57,7 +57,7 @@ export const toolsMn: Record<keyof typeof toolsEn, Message> = {
   "machine.source": "Ассемблер эх код",
   "machine.run": "Хөрвүүлж ажиллуулах",
   "machine.pause": "Түр зогсоох",
-  "machine.step": "Алхам",
+  "machine.step": "Step",
   "machine.reset": "Эхлүүлэх",
   "machine.speed": "Хурд",
   "machine.speed.slow": "Удаан (секундэд 60)",

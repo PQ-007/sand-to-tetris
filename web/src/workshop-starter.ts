@@ -148,4 +148,5 @@ export function encode(body: Body, symbols: Record<string, Symbol>, placed: Plac
 }
 `;
 
-export const STARTERS: Record<Lang, string> = { en: EN, mn: MN };
+// Japanese: the English starter until it is translated (a later stage).
+export const STARTERS: Record<Lang, string> = { en: EN, mn: MN, ja: EN };
