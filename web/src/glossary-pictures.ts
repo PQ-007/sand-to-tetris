@@ -1613,17 +1613,89 @@ const PICTURES: Record<string, () => string> = {
     text(80, 70, "load"),
   address: () => words(2),
   ram: () => words(3, ["0007", "4a10", "0000", "beef", "0123"]),
+  // A DDR5 memory module, generic: the board with its retention notches,
+  // 288 gold contacts with the key notch just off centre, eight DRAM chips
+  // in two groups, the power chip (PMIC) and SPD hub that DDR5 moved onto
+  // the module, rows of tiny capacitors; one chip opened up into its grid
+  // of cells, one bit each.
   memory: () => {
-    let out = "";
-    for (let r = 0; r < 4; r++)
-      for (let c = 0; c < 8; c++)
-        out += rect(
-          20 + c * 15,
-          14 + r * 16,
-          13,
-          14,
-          (r * 8 + c) % 5 ? "f" : "g",
+    let out = path(
+      "M6,6 H154 Q156,6 156,8 V22 A3,3 0 0 0 156,28 V46 H79 V42 H75 V46 H4 V28 A3,3 0 0 0 4,22 V8 Q4,6 6,6 Z",
+      "g2",
+    );
+    // Gold contacts (one side: 144), skipping the key notch.
+    for (let i = 0; i < 144; i++) {
+      const x = 7.5 + i * 1.003;
+      if (x > 74 && x < 80) continue;
+      out += line(
+        [
+          [x, 41.5],
+          [x, 45.5],
+        ],
+        "h",
+      );
+    }
+    // Eight DRAM packages, four each side of the power circuitry.
+    const chips = [9, 25, 41, 57, 90, 106, 122, 138];
+    chips.forEach((x) => {
+      out +=
+        rect(x, 10, 13, 14, "f", 1) +
+        circle(x + 1.8, 11.8, 0.6, "k") +
+        line(
+          [
+            [x + 3, 16],
+            [x + 10, 16],
+          ],
+          "h",
+        ) +
+        line(
+          [
+            [x + 3, 18.5],
+            [x + 8, 18.5],
+          ],
+          "h",
         );
+      out += line(
+        [
+          [x + 2, 26],
+          [x + 11, 26],
+        ],
+        "h",
+      );
+    });
+    // PMIC, its inductors and the SPD hub.
+    out += rect(73.5, 9, 9, 9, "f", 0.8) + circle(74.8, 10.3, 0.5, "k");
+    out += rect(85, 10, 3, 3, "f") + rect(85, 15, 3, 3, "f");
+    out += rect(75, 22, 6, 5, "f", 0.6);
+    // Rows of small capacitors and resistors.
+    for (let x = 10; x < 150; x += 4.3) {
+      if (x > 70 && x < 90) continue;
+      out += rect(x, 31.5, 1.8, 1, "k");
+    }
+    for (let x = 72; x < 89; x += 3) out += rect(x, 30, 1.2, 2, "k");
+    out += text(10, 38.5, "DDR5", "s", "sm tk");
+    // One chip, magnified into its cells.
+    out +=
+      line(
+        [
+          [25, 24],
+          [42, 58],
+        ],
+        "m d",
+      ) +
+      line(
+        [
+          [38, 24],
+          [118, 58],
+        ],
+        "m d",
+      );
+    out += rect(40, 58, 80, 30, "f", 2);
+    for (let r = 0; r < 5; r++)
+      for (let c = 0; c < 14; c++) {
+        const on = (r * 7 + c * 3 + ((r * c) % 4)) % 5 < 2;
+        out += rect(43 + c * 5.4, 61 + r * 5.3, 3.6, 3.6, on ? "k" : "h");
+      }
     return out;
   },
   "program-counter": () =>
