@@ -740,22 +740,28 @@ const PICTURES: Record<string, () => string> = {
     text(54, 48, "G", "e") +
     text(100, 16, "D", "s") +
     text(100, 80, "S", "s"),
+  // Energy bands side by side: an insulator's gap is wide, a metal's bands
+  // overlap, a semiconductor's gap is small enough for a few electrons to
+  // cross (and for doping and voltage to control how many).
   semiconductor: () =>
-    line(
-      [
-        [14, 50],
-        [146, 50],
-      ],
-      "m",
-    ) +
-    rect(14, 44, 30, 12, "g2") +
-    rect(116, 44, 30, 12, "k") +
-    rect(62, 40, 36, 20, "f", 3) +
-    text(29, 34, "SiO₂") +
-    text(80, 53.5, "Si Ge", "m", "tk") +
-    text(131, 34, "Cu") +
-    arrow([40, 76], [120, 76]) +
-    text(80, 70, "I", "m", "tk"),
+    rect(13, 6, 34, 14, "f") +
+    rect(13, 56, 34, 14, "g") +
+    text(30, 85, "SiO₂") +
+    rect(63, 22, 34, 14, "f") +
+    rect(63, 48, 34, 14, "g") +
+    dot(73, 29) +
+    dot(88, 30) +
+    circle(75, 55, 2.4, "f") +
+    circle(87, 54, 2.4, "f") +
+    arrow([80, 47], [80, 37], "m") +
+    text(80, 85, "Si", "m", "tk") +
+    line([
+      [66, 89],
+      [94, 89],
+    ]) +
+    rect(113, 22, 34, 40, "f") +
+    rect(113, 42, 34, 20, "g") +
+    text(130, 85, "Cu"),
   silicon: () => lattice(),
   germanium: () => lattice().replace(/>Si</g, ">Ge<"),
   "silicon-dioxide": () =>
