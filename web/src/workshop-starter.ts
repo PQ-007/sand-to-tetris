@@ -148,5 +148,54 @@ export function encode(body: Body, symbols: Record<string, Symbol>, placed: Plac
 }
 `;
 
-// Japanese: the English starter until it is translated (a later stage).
-export const STARTERS: Record<Lang, string> = { en: EN, mn: MN, ja: EN };
+const JA = `// あなたのアセンブラ。四つの段階からなります。どの段階にも専用のテストがあり、
+// 前の段階の正しい出力を入力としてテストされるので、順番に作っていけます。
+// 言語は docs/ASSEMBLY.md、ビットは docs/ISA.md にあります。
+// ソースに誤りがあれば、仕様の code をもつ AsmError を throw します。
+// テストが確かめるのは code で、メッセージではありません。
+
+${TYPES}
+
+// 段階 1:テキスト 1 行をトークンにする。空白は飛ばし、";" からはコメント。
+// "name:" はラベルのトークン。数は 42、-5、0x2A、0b1010(桁の間に _ を入れて
+// よい)、または 'A'。code: bad-char, bad-number。
+export function tokenize(line: string): Token[] {
+  throw new AsmError("todo", "TODO: tokenize を書く");
+}
+
+// 段階 2:トークンを 1 行にする。省略できるラベル、次に命令(ident)か
+// ディレクティブ、次にコンマで区切ったオペランド。".equ NAME value" には
+// コンマがない。レジスタ r0..r7(大文字小文字は問わない)は { kind: "reg" }、
+// ほかの ident は { kind: "sym" }。code: expected, bad-name。
+export function parse(tokens: Token[]): Line {
+  throw new AsmError("todo", "TODO: parse を書く");
+}
+
+// 段階 3(1 回目のパス):各行にセクションとアドレスを与え、シンボルを集める。
+// .code から始め、ラベルはそのセクションの今のアドレスを取る。どの命令も
+// 1 ワード。ただし SET16 は、値が 0 から 255 の数(または上で定義した定数)なら
+// 1 ワード、そうでなければ 2 ワード。throw するときは、行番号(index + 1)を
+// 4 番目の引数に渡す。
+// code: duplicate-symbol, code-in-data, data-in-code, unknown-directive,
+// unknown-symbol(.equ / .space で), operand-count, out-of-range。
+export function layout(lines: Line[]): Layout {
+  throw new AsmError("todo", "TODO: layout を書く");
+}
+
+// 段階 4(2 回目のパス):配置済みの 1 行をワードにする。
+//   .word の値 -> そのまま(-32768..65535 を 16 ビットで)。.space n -> 0 を n 個。
+//   命令 -> docs/ISA.md。ビット 15-13 がグループ:
+//     000 ALU   rd ra rb f f invb cin       001 CMP   - ra rb f f invb cin
+//     010 IMM   rd k k imm8 (SET SETH ADDI SUBI = k 0..3)
+//     011 SHIFT rd ra reg right arith amount(レジスタで:rb はビット 2-0)
+//     100 LOAD  rd ra off7                  101 STORE rs ra off7
+//     110 JUMP  cond off10                  111 CALL 0 off12 / JR 1 link ra
+//   コードのラベルへのジャンプは(ラベル - このアドレス)を符号化する。数ならそれがオフセット。
+// code: unknown-mnemonic, operand-count, not-a-register, bad-operand,
+// out-of-range, unknown-symbol, jump-to-data, jump-too-far。
+export function encode(body: Body, symbols: Record<string, Symbol>, placed: Placed): number[] {
+  throw new AsmError("todo", "TODO: encode を書く");
+}
+`;
+
+export const STARTERS: Record<Lang, string> = { en: EN, mn: MN, ja: JA };

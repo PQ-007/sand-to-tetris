@@ -99,6 +99,38 @@ const MN: Words = {
   below: "// 0 .. n - 1 (n <= 0 бол 0): random() % n.",
 };
 
+const JA: Words = {
+  head: `// あなたの OS。C Shard で書きます(docs/OS.md)。テストにすべて合格すると、
+// マシンのページはこれをどの C Shard プログラムの前にも置きます。テストは
+// 小さなプログラムをあなたの OS と組み込みの OS の上で動かし、画面と結果を
+// 比べます。文字はあなたの plot と fill_rect を使うので、順番に進めましょう。`,
+  helpers: "// ---- 小さな補助関数 ----",
+  screen:
+    "// ---- 画面:128 x 96。行 y は OS_SCREEN + 8y からの 8 ワードで、ワードの\n// いちばん左のピクセルはビット 15 ----",
+  clear: "// すべてのピクセルを消す:768 ワードすべてを 0 に。",
+  plot: "// ピクセル 1 個を点けるか消す。画面の外(x 0..127、y 0..95 以外)なら何もしない。",
+  fillRect:
+    "// (x, y) から w x h ピクセルを点けるか消す。画面からはみ出す分は切る。ヒント:\n// 1 ワードずつ、そのワードの中のピクセルのマスクで。",
+  drawRect: "// w x h の長方形の枠(点灯)。",
+  text: "// ---- 文字:4 x 6 のセルに 3 x 5 の字形、32 列 x 16 行 ----",
+  font: "// ' '(32)から '_'(95)まで、1 文字に 1 ワード:3 ビットの行が 5 つ。\n// いちばん上の行がビット 14-12、行のいちばん左のピクセルがその最上位ビット。",
+  drawChar:
+    "// c をセル (col, row) に:4 x 6 のセルを消してから、(4 col, 6 row) から字形を\n// 描く。小文字は大文字として、32..95 の外のものは '?' として描く。",
+  drawText: "// s の n 文字を、セル (col, row) から右へ。",
+  drawInt:
+    "// v を 10 進数で(負なら '-' 付きで)セル (col, row) から描き、使ったセルの\n// 数を返す。注意:-32768 には正の相方がない。",
+  time: "// ---- キーボードと時間 ----",
+  key: "// 今押されているキー(mem[OS_KEYBOARD])。なければ 0。",
+  ticks: "// 始まってからのフレーム数(mem[OS_TIMER])。1 秒に 60。",
+  wait: "// この数のフレームだけ待つ。",
+  waitKey:
+    "// キーが押され、それから離されるのを待ち、そのコードを返す。最初の押下では\n// seed_random(os_seed ^ ticks()) も行い、os_seeded を設定する。",
+  random: "// ---- 乱数:16 ビットの xorshift ----",
+  seed: "// 数列を s から始める(0 は 1 として扱う)。",
+  next: "// os_seed = os_seed ^ (os_seed << 7)、次に ^ (>> 9)、次に ^ (<< 8)。\n// os_seed & 0x7FFF を返す。",
+  below: "// 0 .. n - 1(n <= 0 なら 0):random() % n。",
+};
+
 function starter(w: Words): string {
   const font = fontBlock().replace(
     /^const OS_FONT/,
@@ -204,9 +236,8 @@ fn random_below(n: int) -> int {
 `;
 }
 
-// Japanese: the English starter until it is translated (a later stage).
 export const OS_STARTERS: Record<Lang, string> = {
   en: starter(EN),
   mn: starter(MN),
-  ja: starter(EN),
+  ja: starter(JA),
 };

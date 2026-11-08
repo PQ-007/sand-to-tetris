@@ -10,7 +10,8 @@ Japanese is complete (2026-11-08): the interface, demos, tools, levels,
 checker messages, glossary, sources, chapters and Programs pages are all in
 `docs/ja/` and `web/src/i18n/`. Like Mongolian, the content build now fails
 if any of them is missing, so new text needs its Japanese in the same change.
-Only the four workshop starters are still English (`ja: EN`).
+The four workshop starters have Japanese comments too (the code is the same in
+every language).
 
 Style: plain polite form (です・ます) in the interface and chapters; hints and
 level goals may use the plain form (である・だ調, or the bare dictionary form

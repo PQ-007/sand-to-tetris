@@ -121,9 +121,56 @@ export function runtime(): string[] {
 }
 `;
 
-// Japanese: the English starter until it is translated (a later stage).
+const JA = `// あなたの VM トランスレータ。どの段階にも専用のテストがあります。その段階の
+// コマンドはあなたのコードで、それ以外は参照のコードで翻訳されるので、どの順番で
+// 作ってもかまいません。VM は docs/VM.md、アセンブリ言語は docs/ASSEMBLY.md に
+// あります。行に誤りがあれば、仕様の code をもつ VmError を throw します。
+// テストが確かめるのは code で、メッセージではありません。
+
+${TYPES}
+
+// 呼び出し規約(docs/VM.md)。どの翻訳もこれに従う:
+//   r6 = SP:スタックの一番上は [r6]、その一つ下は [r6 + 1]。
+//        スタックは下へ伸びる:push = SUBI r6, 1 のあと STORE。0x4000 から始まる。
+//   r5 = FP:local i は [r5 + i]、呼び出し元の FP は [r5 + k]、
+//        戻りアドレスは [r5 + k + 1]、arg i は [r5 + k + 2 + (n - 1 - i)]。
+//   r7 = 戻りアドレス(CALLR が書く)。 r0..r4 = どのコマンドでも自由に使える。
+//   global i = RAM[i]。 true = -1、false = 0。
+//   関数 f はラベル "f"、関数 f の中のラベル L は "f__L"。
+//   自分で作るラベルは "__" で始める(例:"__eq" + ctx.line)。
+
+// 段階 1:1 行をコマンドにする。空行やコメントなら null。
+// コマンドの語は大文字でも小文字でもよい。数は 42、-5、0x2A、0b1010(桁の間に
+// _ を入れてよい)。code: unknown-command, operand-count, bad-number,
+// out-of-range, bad-segment, set-constant, bad-name, too-many-variables。
+export function parse(line: string): Command | null {
+  throw new VmError("todo", "TODO: parse を書く");
+}
+
+// 段階 2〜6:1 つのコマンドをアセンブリの行にする。たとえば "add" は:
+//   ["LOAD r1, [r6]", "ADDI r6, 1", "LOAD r0, [r6]", "ADD r0, r0, r1", "STORE r0, [r6]"]
+// func:ラベル、次に r7 と r5 を保存し、ローカル変数の場所を空けて(0 にして)、
+// FP を設定する。 call:SET16 r0, f のあと CALLR r0。 return:結果を arg 0 が
+// あった場所に置き、FP を戻し、RET で戻る。 mul, div, mod:__mul / __div を呼ぶ。
+export function translate(cmd: Command, ctx: Ctx): string[] {
+  throw new VmError("todo", "TODO: translate を書く");
+}
+
+// どのプログラムも最初はこれ:SP = 0x4000、FP = SP、main を呼び、そのあと HALT。
+export function bootstrap(): string[] {
+  throw new VmError("todo", "TODO: bootstrap を書く");
+}
+
+// __mul:r0 = r0 * r1。 __div:r0 = r0 / r1 と r1 = r0 mod r1、符号付きで、
+// 0 の方向へ丸める。0 で割ると -1 と r0。使うのは r0..r4(と SP より下の
+// スタック)だけにし、RET で戻る。
+export function runtime(): string[] {
+  throw new VmError("todo", "TODO: runtime を書く");
+}
+`;
+
 export const TRANSLATOR_STARTERS: Record<Lang, string> = {
   en: EN,
   mn: MN,
-  ja: EN,
+  ja: JA,
 };

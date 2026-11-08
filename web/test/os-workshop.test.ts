@@ -38,9 +38,9 @@ describe("OS workshop", () => {
     expect(failed).toEqual([]);
   });
 
-  it("the starter compiles in both languages and fails every test", () => {
+  it("the starter compiles in every language and fails every test", () => {
     const tests = buildOsTests(tc, BUILTIN_OS);
-    for (const lang of ["en", "mn"] as const) {
+    for (const lang of ["en", "mn", "ja"] as const) {
       const results = tests.map((t) => runOsTest(tc, OS_STARTERS[lang], t));
       expect(results.filter((r) => r.ok).map((r) => r.name)).toEqual([]);
       // Failing by result, not by a compile error in the starter.
