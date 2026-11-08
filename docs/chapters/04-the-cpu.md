@@ -75,7 +75,7 @@ It is ordinary combinational logic, built from gates you already have. The handi
 The rest of the CPU is the **[[datapath]]**: the parts that hold and move the data.
 
 - The **[[register file|register-file]]** holds r0 to r7. It reads two registers at once (for `ADD r3, r1, r2` the ALU needs r1 and r2 together) and writes one on the clock edge. It's eight Registers, a DMUX8WAY and two MUX8WAY16s.
-- The **[[barrel shifter|barrel-shifter]]** shifts a word by any amount from 0 to 15 in one step. It has four stages that shift by 1, 2, 4 and 8, each either on or off: shifting by 5 is stages 1 and 3. Each stage is one MUX16, and the shifting itself is only wiring.
+- The **[[barrel shifter|barrel-shifter]]** shifts a word by any amount from 0 to 15 in one step. It has four stages that shift by 1, 2, 4 and 8, each either on or off: shifting by 5 is stages 1 and 3. Each stage is one MUX16, and the shifting itself is only wiring. There's one chain of stages for each direction, and a last MUX16 picks the left or the right result.
 - Your ALU, a MUX16 that picks its second input, a MUX8WAY16 that picks the result to write, three Bits for the flags, an adder for jump targets (PC + offset), and your program counter.
 
 **[Build the register file →](#/play/regfile)** · **[Build the barrel shifter →](#/play/shifter)** · **[Build the CPU →](#/play/cpu)**

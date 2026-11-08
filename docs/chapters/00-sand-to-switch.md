@@ -21,7 +21,7 @@ A [[computer]] is a machine that does four things:
 
 A pocket calculator does all four, but it can only ever do the jobs it was built for. What makes the machines in your phone and laptop special is that they are [[general-purpose]]. The same hardware can edit a video, play chess or run Tetris, depending only on the [[program]] it is given. A program is just a list of instructions, an [[algorithm]] written down precisely enough that a machine can follow it without understanding it.
 
-One more idea makes modern computers what they are. The program is stored in the same memory as the data. To the machine, instructions are just more numbers. Loading a new program is as easy as loading a new file, and a program can even produce another program (that is what a compiler does, and you will write one in Chapter 6). This is the **[[stored-program|stored-program]]** idea, and you'll see where it came from later in this chapter.
+One more idea makes modern computers what they are. The program is stored in the same memory as the data. To the machine, instructions are just more numbers. Loading a new program is as easy as loading a new file, and a program can even produce another program (that is what a compiler does, and you will write one in Chapter 7). This is the **[[stored-program|stored-program]]** idea, and you'll see where it came from later in this chapter.
 
 ## Computing before electricity
 
@@ -67,7 +67,7 @@ Four ideas from the mathematics and engineering of the 1800s and 1900s explain w
 
 **Shannon: logic is switches.** In his 1937 master's thesis, Claude Shannon showed that circuits of [[switches|switch]] obey Boolean algebra[@shannon]. Two switches in series form an AND: current flows only if both are closed. Two switches in parallel form an OR. So any logical function can be built from switches, and switch circuits can be simplified with algebra. Chapter 1 builds exactly this: switches into [[logic gates|logic-gate]].
 
-**von Neumann: keep the program in memory.** In June 1945 John von Neumann wrote a report describing a computer that keeps its program in the same memory as its data[@von-neumann-edvac]. Almost every computer since has worked this way, including the one you'll build in Chapter 4. Only his name was on the report, but the ideas grew out of discussions with J. Presper Eckert, John Mauchly and others who were building the ENIAC computer, and how to share the credit is still debated.
+**von Neumann: keep the program in memory.** In June 1945 John von Neumann wrote a report describing a computer that keeps its program in the same memory as its data[@von-neumann-edvac]. Almost every computer since has worked this way. The one you'll build in Chapter 4 makes a different choice on purpose, a separate memory for the program, and that chapter explains why. Only his name was on the report, but the ideas grew out of discussions with J. Presper Eckert, John Mauchly and others who were building the ENIAC computer, and how to share the credit is still debated.
 
 ## Switches through history
 
