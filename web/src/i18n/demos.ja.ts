@@ -281,12 +281,11 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   // ---- 1 つの命令をビットごとに ----
   "asmd.caption": "1 つの命令をビットごとに",
   "asmd.captionText":
-    "命令を入力するか選ぶと、アセンブラがそこから作る 16 ビットをフィールドごとに見られます。",
+    "命令を選ぶか入力すると、各部分が 16 ビットのワードのどのフィールドになるかが分かります。",
   "asmd.try": "試す",
   "asmd.instruction": "命令",
   "asmd.group": "グループ",
   "asmd.unused": "未使用",
-  "asmd.readsBack": "逆アセンブラで読み戻すと:",
 
   // ---- Bitfall の行 ----
   "brow.caption": "盤面は数でできている",

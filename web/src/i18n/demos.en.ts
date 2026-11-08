@@ -284,12 +284,11 @@ export const demosEn = {
   // ---- one instruction, bit by bit ----
   "asmd.caption": "One instruction, bit by bit",
   "asmd.captionText":
-    "Type an instruction, or pick one, and see the 16 bits the assembler makes from it, field by field.",
+    "Pick or type an instruction: each part becomes a field of the 16-bit word.",
   "asmd.try": "Try",
   "asmd.instruction": "Instruction",
   "asmd.group": "group",
   "asmd.unused": "unused",
-  "asmd.readsBack": "Read back by the disassembler:",
 
   // ---- Bitfall rows ----
   "brow.caption": "The board is numbers",

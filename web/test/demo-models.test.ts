@@ -1,4 +1,4 @@
-import { bits, fieldsOf } from "../src/demos/asm";
+import { bits, fieldsOf, links, tokensOf } from "../src/demos/asm";
 import { describe, expect, it } from "vitest";
 import {
   buffer,
@@ -309,5 +309,32 @@ describe("instruction fields", () => {
     ); // SAR r6, r4, r1
     expect(names(0xcbfe)).toBe("group=6 cond=2 off=1022"); // JNZ -2
     expect(names(0xf700)).toBe("group=7 kind=1 link=0 ra=7 unused=0"); // RET
+  });
+});
+
+describe("assembler demo: parts to fields", () => {
+  it("splits an instruction into its mnemonic and operands", () => {
+    expect(tokensOf("ADD r3, r1, r2")).toEqual(["ADD", "r3", "r1", "r2"]);
+    expect(tokensOf("LOAD r2, [r1 + 3]")).toEqual(["LOAD", "r2", "r1", "3"]);
+    expect(tokensOf("RET")).toEqual(["RET"]);
+    expect(tokensOf("  ")).toEqual([]);
+  });
+
+  it("links the mnemonic to the group and operands to data fields in order", () => {
+    const names = (word: number, asm: string) => {
+      const fields = fieldsOf(word);
+      return links(fields, tokensOf(asm)).map(
+        ([tok, f]) => `${tokensOf(asm)[tok]}>${fields[f]?.name}`,
+      );
+    };
+    // ADD r3, r1, r2 = 0x0ca0; SET r1, 5 = 0x4405 (from s2t asm).
+    expect(names(0x0ca0, "ADD r3, r1, r2")).toEqual([
+      "ADD>group",
+      "r3>rd",
+      "r1>ra",
+      "r2>rb",
+    ]);
+    expect(names(0x4405, "SET r1, 5")).toEqual(["SET>group", "r1>rd", "5>imm"]);
+    expect(names(0xcbfe, "JNZ -2")).toEqual(["JNZ>group", "-2>off"]);
   });
 });

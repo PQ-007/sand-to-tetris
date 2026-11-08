@@ -286,12 +286,11 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   // ---- нэг заавар, бит бүрээр ----
   "asmd.caption": "Нэг заавар, бит бүрээр",
   "asmd.captionText":
-    "Заавар бичих эсвэл сонгож, ассемблер үүнээс гаргадаг 16 битийг талбар бүрээр хар.",
+    "Заавар сонгох эсвэл бичих: хэсэг бүр нь 16 битийн үгийн нэг талбар болно.",
   "asmd.try": "Турших",
   "asmd.instruction": "Заавар",
   "asmd.group": "бүлэг",
   "asmd.unused": "ашиглагдаагүй",
-  "asmd.readsBack": "Disassembler буцааж уншвал:",
 
   "brow.caption": "Талбай бол тоо",
   "brow.captionText":
