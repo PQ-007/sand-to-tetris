@@ -334,6 +334,32 @@ s2t-core-status[data-state="error"] {
   }
 }
 
+/* Phones: the menu folds behind a button and drops down as a panel of
+   large links, instead of a strip you'd have to swipe. */
+@media (max-width: 640px) {
+  .site-nav {
+    display: none;
+  }
+  .site-header[data-menu-open] .site-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    overflow: visible;
+    padding: 0.5rem 1rem 1rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .site-header[data-menu-open] .site-nav a {
+    padding: 0.75rem 0.75rem;
+    font-size: 1rem;
+  }
+}
+
 @media (max-width: 640px) {
   .site-header {
     gap: 0.75rem;
@@ -359,17 +385,7 @@ s2t-core-status[data-state="error"] {
   .site-header .hud-xp {
     display: none;
   }
-  .site-nav {
-    flex: 1 1 auto;
-    min-width: 0;
-    display: flex;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .site-nav a {
-    padding: 0.375rem 0.4rem;
-    font-size: 0.875rem;
-  }
+
   .lang-switch {
     flex: none;
   }
@@ -3563,6 +3579,46 @@ a:hover {
 }
 
 /* Light/dark: a thin sun in light mode, a moon in dark. */
+/* The phone menu's button: hidden until the menu folds away (≤640px). */
+.menu-toggle {
+  display: none;
+  flex: none;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  border-color: var(--border);
+}
+
+.menu-toggle svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.menu-toggle .cross,
+.site-header[data-menu-open] .menu-toggle .bars {
+  display: none;
+}
+
+.site-header[data-menu-open] .menu-toggle .cross {
+  display: inline;
+}
+
+@media (max-width: 640px) {
+  .menu-toggle {
+    display: inline-grid;
+  }
+  /* With the menu folded away, the controls sit at the right edge. */
+  .lang-switch {
+    margin-left: auto;
+  }
+}
+
 .theme-toggle {
   flex-shrink: 0;
   display: inline-grid;

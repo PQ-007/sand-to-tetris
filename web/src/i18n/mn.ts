@@ -15,6 +15,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "nav.glossary": "Нэр томьёо",
   "nav.programs": "Програмууд",
   "nav.language": "Хэл",
+  "nav.menu": "Цэс",
   "theme.toDark": "Харанхуй загвар",
   "theme.toLight": "Гэгээлэг загвар",
   "hud.levels": "Level",
@@ -71,7 +72,7 @@ export const mn: Record<keyof typeof en, Message> = {
   "home.eyebrow": "{n} бүлэгтэй хичээл",
   "home.title": "Элснээс Тетрис хүртэл",
   "home.tagline":
-    "There is no magic, just abstraction layers built on top of one another.",
+    "Ид шид гэж байхгүй, зөвхөн бие биен дээрээ давхарласан хийсвэрлэлийн давхаргууд л бий.",
   "figure.hourglass":
     "Элсэн цагны шугаман зураг: дээд бөмбөлгийн элс хүзүүгээр урсаж, доод бөмбөлөгт ширхэгүүд блок болон тогтоно: шоонуудын мөрүүд, урсгалын доор унаж буй хэсэг. Курсор нэг мөрийг сонгож өргөнө; товч элсийг урсгаж дуусгаад, цагийг эргүүлнэ.",
   "figure.computer":

@@ -16,6 +16,7 @@ export const ja: Record<keyof typeof en, Message> = {
   "nav.glossary": "用語集",
   "nav.programs": "プログラム",
   "nav.language": "言語",
+  "nav.menu": "メニュー",
   "theme.toDark": "ダークテーマ",
   "theme.toLight": "ライトテーマ",
   "hud.levels": "レベル",

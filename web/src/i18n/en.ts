@@ -21,6 +21,7 @@ export const en = {
   "nav.glossary": "Glossary",
   "nav.programs": "Programs",
   "nav.language": "Language",
+  "nav.menu": "Menu",
   "theme.toDark": "Dark theme",
   "theme.toLight": "Light theme",
   "hud.levels": "Levels",
