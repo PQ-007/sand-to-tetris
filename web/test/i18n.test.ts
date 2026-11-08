@@ -3,7 +3,6 @@ import { detectLang, format, setLang, t } from "../src/i18n";
 import { en } from "../src/i18n/en";
 import { ja } from "../src/i18n/ja";
 import { mn } from "../src/i18n/mn";
-import { compare, SWITCHES } from "../src/demos/switches";
 
 const holes = (text: string) =>
   [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
@@ -32,26 +31,6 @@ describe("translations", () => {
       if (typeof v === "string" && typeof j === "string")
         expect([...new Set(holes(j))], k).toEqual([...new Set(holes(v))]);
     }
-  });
-
-  it("compares two switches in Japanese as a list (no conjugated adjectives)", () => {
-    const relay = SWITCHES.find((s) => s.id === "relay")!;
-    const today = SWITCHES.find((s) => s.id === "transistor-today")!;
-    setLang("ja");
-    expect(compare(relay, today)).toBe(
-      "リレー と 現在のトランジスタ: 大きさは約百万倍大きい、速さは約十億倍遅い。",
-    );
-    setLang("en");
-  });
-
-  it("compares two switches in Mongolian without case suffixes", () => {
-    const relay = SWITCHES.find((s) => s.id === "relay")!;
-    const today = SWITCHES.find((s) => s.id === "transistor-today")!;
-    setLang("mn");
-    expect(compare(relay, today)).toBe(
-      "Реле ба өнөөгийн транзистор: эхнийх нь сая орчим дахин урт, тэрбум орчим дахин удаан.",
-    );
-    setLang("en");
   });
 
   it("fills in {placeholders} and calls message functions", () => {

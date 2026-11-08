@@ -8,60 +8,45 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   // ---- スイッチの歴史 ----
   "sw.caption": "時代とともに変わったスイッチ",
   "sw.captionText":
-    "スイッチを選ぶと、そのおおよその大きさと速さが分かります。どちらの軸も対数目盛りで、一目盛り進むごとに 100 倍か 1,000 倍になります。",
+    "どちらの軸も対数目盛りで、一目盛りごとに 100 倍か 1,000 倍になります。",
   "sw.choose": "スイッチを選ぶ",
   "sw.sizeAxis": "スイッチ 1 個の大きさ",
   "sw.timeAxis": "1 回切り替わる時間",
-  "sw.compareWith": "比べる相手: ",
+  "sw.vsToday": "現在のトランジスタと比べて",
+  "sw.vsGear": "歯車と比べて",
+  "sw.bigger": "大きい",
+  "sw.smaller": "小さい",
+  "sw.slowerWord": "遅い",
+  "sw.fasterWord": "速い",
   "sw.plotLabel": "{name}: 大きさ {size}、切り替え時間 {time}",
-  "sw.example": "例: {example}。大きさ {size}、{time} で切り替わる。",
-  "sw.pickOther": "比べるには別のスイッチを選んでください。",
-  "sw.compare": "{a} と {b}: 大きさは{size}、速さは{speed}。",
-  "sw.same": "ほぼ同じ",
-  "sw.times": "約{n}倍",
-  "sw.longer": "{ratio}大きい",
-  "sw.shorter": "{ratio}小さい",
-  "sw.slower": "{ratio}遅い",
-  "sw.faster": "{ratio}速い",
-  "sw.thousand": "千",
-  "sw.million": "百万",
-  "sw.billion": "十億",
-  "sw.trillion": "一兆",
   "sw.gear.era": "1640 年代–1940 年代",
   "sw.gear.name": "歯車",
-  "sw.gear.example": "パスカリーヌ、微分解析機",
   "sw.gear.how":
     "歯の付いた車輪が 1 段回る。桁上がりは、一つの車輪が次の車輪を押すこと。",
   "sw.relay.era": "1930 年代–1940 年代",
   "sw.relay.name": "リレー",
-  "sw.relay.example": "Harvard Mark I",
   "sw.relay.how":
     "電磁石が金属のアームを引き寄せ、接点を閉じたり開いたりする。",
   "sw.tube.era": "1940 年代–1950 年代",
   "sw.tube.name": "真空管",
-  "sw.tube.example": "ENIAC",
   "sw.tube.how":
     "金網(グリッド)にかけた電圧が、真空中を流れる電子を通したり止めたりする。",
   "sw.transistor-1947.era": "1947 年",
   "sw.transistor-1947.name": "最初のトランジスタ",
-  "sw.transistor-1947.example": "ベル研究所の点接触トランジスタ",
   "sw.transistor-1947.how":
     "ゲルマニウムの上の 2 つの金の接点: 一方に流す電流が、もう一方を通る電流を制御する。",
   "sw.transistor-1971.era": "1971 年",
   "sw.transistor-1971.name": "チップ上のトランジスタ",
-  "sw.transistor-1971.example": "Intel 4004",
   "sw.transistor-1971.how":
     "MOSFET: ゲートの電圧が、シリコンの中に電気を通すチャネルを作ったり消したりする。",
   "sw.transistor-today.era": "2020 年代",
   "sw.transistor-today.name": "現在のトランジスタ",
-  "sw.transistor-today.example": "スマートフォンやノートパソコンのプロセッサ",
   "sw.transistor-today.how":
     "同じ MOSFET の考えを、爪ほどのチップに何十億個も載るまで小さくしたもの。",
 
   // ---- 砂からウエハへ ----
   "wafer.caption": "砂からウエハへ",
-  "wafer.captionText":
-    "6 つの工程で、石英がほぼ完全な結晶の円盤になります。工程を選んでください。",
+  "wafer.captionText": "石英がほぼ完全な結晶の円盤になるまでの 6 つの工程。",
   "wafer.prev": "← 前の工程",
   "wafer.next": "次の工程 →",
   "wafer.step": "工程 {n}: {title}",
@@ -71,33 +56,21 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   "wafer.source": "出典",
   "wafer.sand.title": "珪砂",
   "wafer.sand.what": "二酸化ケイ素(SiO₂): 酸素と結びついたシリコン。",
-  "wafer.sand.detail":
-    "ふつうの海辺の砂は不純物が多すぎるため、産業では高純度の石英を使います。シリコンは岩石のどこにでもありますが、いつも酸素と結びついています。",
   "wafer.furnace.title": "アーク炉",
   "wafer.furnace.what": "炭素がシリコンから酸素を引きはがす。",
-  "wafer.furnace.detail":
-    "石英と炭素を電気アークで加熱します。炭素が酸素を奪い(一酸化炭素として出ていく)、液体のシリコンが底にたまります: 金属グレードのシリコンです。",
   "wafer.furnace.temperature": "約 1900 °C 以上",
   "wafer.trichlorosilane.title": "液体にして蒸留する",
   "wafer.trichlorosilane.what":
     "シリコンを、蒸留できるトリクロロシラン(SiHCl₃)に変える。",
-  "wafer.trichlorosilane.detail":
-    "シリコンを塩化水素と反応させると液体になります。液体は、純度の高いアルコールを作るときのように蒸留で精製でき、残りの不純物のほとんどが取り除かれます。",
   "wafer.siemens.title": "シーメンス法",
   "wafer.siemens.what": "純粋なシリコンを多結晶シリコンとして析出させる。",
-  "wafer.siemens.detail":
-    "精製したトリクロロシランを、熱したシリコン棒の上で分解します。シリコンが層ごとに積み重なり、電子グレードの多結晶シリコンになります: 小さな結晶の集まりですが、非常に純粋です。",
   "wafer.siemens.temperature": "約 1100 °C(棒の温度)",
   "wafer.czochralski.title": "一つの結晶を育てる",
   "wafer.czochralski.what": "溶けたシリコンから、種結晶をゆっくり引き上げる。",
-  "wafer.czochralski.detail":
-    "多結晶シリコンを石英のるつぼで溶かします。ウエハを p 型か n 型にするなら、慎重に量ったごく少量のドーパントを加えます。小さな種結晶を融液に触れさせ、回しながらゆっくり引き上げます。原子が種結晶にそろって並ぶので、インゴット全体が一つの単結晶になります。",
   "wafer.czochralski.temperature":
     "1400 °C 以上(シリコンは約 1414 °C で溶ける)",
   "wafer.slice.title": "切って磨く",
   "wafer.slice.what": "インゴットを薄い円盤に切り、鏡のように滑らかに磨く。",
-  "wafer.slice.detail":
-    "ワイヤーソーでインゴットを厚さ 1 ミリ未満のウエハに切ります。研削、エッチング、研磨で、細菌よりはるかに小さな模様を焼き付けられるほど平らな表面にします。",
 
   // ---- pn 接合 ----
   "pn.caption": "pn 接合の内部",
