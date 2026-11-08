@@ -1,5 +1,5 @@
 // The glossary page's logic, pure and tested: each term in the other
-// languages, letter groups, and what the filter matches.
+// languages, chapter groups, and what the filter matches.
 import type { GlossaryItem, Lang } from "../content/load";
 
 /** Each language's name in that language (how a speaker looks for it). */
@@ -84,66 +84,63 @@ export function matches(key: string, query: string): boolean {
   return q === "" || key.includes(q);
 }
 
-/** The kana rows of a Japanese index (あ行, か行, …), small kana included. */
-const KANA_ROWS = [
-  "あいうえおぁぃぅぇぉ",
-  "かきくけこゕゖ",
-  "さしすせそ",
-  "たちつてとっ",
-  "なにぬねの",
-  "はひふへほ",
-  "まみむめも",
-  "やゆよゃゅょ",
-  "らりるれろ",
-  "わゐゑをんゎ",
-];
+/** Where a group of terms comes from: a chapter, the Programs pages, or
+ * nowhere yet. */
+export type Section =
+  | { kind: "chapter"; number: number }
+  | { kind: "programs" }
+  | { kind: "other" };
 
-/**
- * The letter a term is filed under: its first letter in capitals for an
- * alphabet (Latin, Cyrillic), the head of its row for kana (ガ → か, as a
- * Japanese index does), `#` for a digit or symbol, and `null` for a kanji,
- * which can't be filed without its reading.
- */
-export function initialOf(term: string): string | null {
-  const first = [...fold(term)][0];
-  if (first === undefined) return "#";
-  if (/[\p{Script=Latin}\p{Script=Cyrillic}\p{Script=Greek}]/u.test(first))
-    return first.toUpperCase();
-  const code = first.codePointAt(0) ?? 0;
-  // Katakana → hiragana: the two blocks line up 0x60 apart.
-  const kana =
-    code >= 0x30a1 && code <= 0x30f6
-      ? String.fromCodePoint(code - 0x60)
-      : first;
-  const row = KANA_ROWS.find((r) => r.includes(kana));
-  if (row) return row[0] ?? null;
-  if (/\p{L}/u.test(first)) return null;
-  return "#";
-}
-
-export interface LetterGroup<T> {
-  /** `null`: one list without letters. */
-  letter: string | null;
+export interface SectionGroup<T> {
+  section: Section;
   items: T[];
 }
 
+/** The glossary ids a rendered page links, in reading order. */
+export function linkedTerms(html: string): string[] {
+  return [...html.matchAll(/data-term="([^"]+)"/g)].map((m) => m[1] ?? "");
+}
+
 /**
- * Groups items (already sorted) by their term's letter (a Japanese term by
- * its reading), in order of first appearance. If any term has no letter, the page is one plain list: half a
- * letter index would hide the rest.
+ * Groups terms the way the course meets them: each under the chapter that
+ * first links it, in the order a reader comes to them; then those only the
+ * Programs pages link; then any no page links (none today, a test checks).
  */
-export function groupByLetter<T extends { term: string; reading?: string }>(
+export function groupByChapter<T extends { id: string }>(
   items: readonly T[],
-): LetterGroup<T>[] {
-  const letters = items.map((i) => initialOf(i.reading ?? i.term));
-  if (letters.some((l) => l === null))
-    return items.length ? [{ letter: null, items: [...items] }] : [];
-  const groups = new Map<string, T[]>();
-  items.forEach((item, i) => {
-    const l = letters[i] ?? "#";
-    const g = groups.get(l) ?? [];
-    g.push(item);
-    groups.set(l, g);
-  });
-  return [...groups].map(([letter, items]) => ({ letter, items }));
+  chapters: readonly { number: number; html: string }[],
+  programs: readonly { html: string }[],
+): SectionGroup<T>[] {
+  const pages: { section: Section; html: string }[] = [
+    ...[...chapters]
+      .sort((a, b) => a.number - b.number)
+      .map((c) => ({
+        section: { kind: "chapter", number: c.number } as Section,
+        html: c.html,
+      })),
+    {
+      section: { kind: "programs" },
+      html: programs.map((p) => p.html).join(""),
+    },
+  ];
+  // id → [page, position on it] of its first link.
+  const first = new Map<string, [number, number]>();
+  pages.forEach((page, i) =>
+    linkedTerms(page.html).forEach((id, at) => {
+      if (!first.has(id)) first.set(id, [i, at]);
+    }),
+  );
+  const groups = pages.map((p) => ({ section: p.section, items: [] as T[] }));
+  const other: T[] = [];
+  for (const item of items) {
+    const where = first.get(item.id);
+    if (where) groups[where[0]]?.items.push(item);
+    else other.push(item);
+  }
+  for (const g of groups)
+    g.items.sort(
+      (a, b) => (first.get(a.id)?.[1] ?? 0) - (first.get(b.id)?.[1] ?? 0),
+    );
+  if (other.length) groups.push({ section: { kind: "other" }, items: other });
+  return groups.filter((g) => g.items.length > 0);
 }

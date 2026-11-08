@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { GlossaryItem } from "../content/load";
 import { ContentError, parseGlossary } from "../content/data";
 import { loadContent } from "../content/load";
+import { PICTURE_IDS, glossaryPicture } from "../src/glossary-pictures";
 import {
   fold,
-  groupByLetter,
-  initialOf,
+  groupByChapter,
+  linkedTerms,
   matches,
   otherTerms,
   searchKey,
@@ -68,50 +69,27 @@ describe("filter", () => {
   });
 });
 
-describe("letters", () => {
-  it("files alphabet terms by letter, symbols under #", () => {
-    expect(initialOf("bit")).toBe("B");
-    expect(initialOf("Ömnö")).toBe("O");
-    expect(initialOf("санах ой")).toBe("С");
-    expect(initialOf("6502")).toBe("#");
-  });
+describe("chapter groups", () => {
+  const link = (id: string) => `<a class="term" data-term="${id}">x</a>`;
+  const items = ["bit", "latch", "gate", "fps", "lonely"].map((id) => ({ id }));
+  const chapters = [
+    { number: 3, html: link("latch") + link("bit") },
+    { number: 0, html: link("gate") + link("bit") + link("gate") },
+  ];
+  const programs = [{ html: link("fps") }, { html: link("latch") }];
 
-  it("files kana by row, as a Japanese index does, and kanji not at all", () => {
-    expect(initialOf("ラッチ")).toBe("ら");
-    expect(initialOf("ゲート")).toBe("か");
-    expect(initialOf("ぜんかさんき")).toBe("さ");
-    expect(initialOf("バス")).toBe("は");
-    expect(initialOf("ヴ")).toBe("あ");
-    expect(initialOf("ンー")).toBe("わ");
-    expect(initialOf("論理ゲート")).toBeNull();
-  });
-
-  it("files a term by its reading when it has one", () => {
-    const groups = groupByLetter([
-      { term: "論理ゲート", reading: "ろんりげーと" },
-      { term: "ラッチ" },
-    ]);
-    expect(groups.map((g) => g.letter)).toEqual(["ら"]);
-  });
-
-  it("groups in order of first appearance", () => {
-    const groups = groupByLetter([
-      { term: "Adder" },
-      { term: "ALU" },
-      { term: "Bit" },
-    ]);
-    expect(groups.map((g) => [g.letter, g.items.length])).toEqual([
-      ["A", 2],
-      ["B", 1],
+  it("puts each term under the chapter that first links it, in reading order", () => {
+    const groups = groupByChapter(items, chapters, programs);
+    expect(groups.map((g) => [g.section, g.items.map((i) => i.id)])).toEqual([
+      [{ kind: "chapter", number: 0 }, ["gate", "bit"]],
+      [{ kind: "chapter", number: 3 }, ["latch"]],
+      [{ kind: "programs" }, ["fps"]],
+      [{ kind: "other" }, ["lonely"]],
     ]);
   });
 
-  it("is one plain list when a term has no letter", () => {
-    const groups = groupByLetter([{ term: "Bit" }, { term: "論理" }]);
-    expect(groups).toEqual([
-      { letter: null, items: [{ term: "Bit" }, { term: "論理" }] },
-    ]);
-    expect(groupByLetter([])).toEqual([]);
+  it("reads the links out of rendered HTML", () => {
+    expect(linkedTerms(link("a") + "text" + link("b-c"))).toEqual(["a", "b-c"]);
   });
 });
 
@@ -142,12 +120,24 @@ describe("the real glossary", () => {
     }
   });
 
-  it("files the Japanese glossary under kana rows, あ to わ", () => {
-    const letters = groupByLetter(content.ja.glossary).map((g) => g.letter);
-    expect(letters).not.toContain(null);
-    const kana = letters.filter((l) => l && /\p{Script=Hiragana}/u.test(l));
-    expect(kana).toEqual([...kana].sort((a, b) => a!.localeCompare(b!, "ja")));
-    expect(kana[0]).toBe("あ");
+  it("gives every term a chapter or a Programs page, in every language", () => {
+    for (const lang of ["en", "mn", "ja"] as const) {
+      const site = content[lang];
+      const groups = groupByChapter(
+        site.glossary,
+        site.chapters,
+        site.programs,
+      );
+      expect(
+        groups
+          .filter((g) => g.section.kind === "other")
+          .flatMap((g) => g.items.map((i) => i.id)),
+        lang,
+      ).toEqual([]);
+      expect(groups.reduce((n, g) => n + g.items.length, 0)).toBe(
+        site.glossary.length,
+      );
+    }
   });
 });
 
@@ -160,5 +150,39 @@ describe("readings", () => {
       "ろんりげーと",
     );
     expect(() => parseGlossary(yaml("ronri"))).toThrow(ContentError);
+  });
+});
+
+describe("pictures", () => {
+  const { content } = loadContent(
+    new URL("../../docs", import.meta.url).pathname,
+  );
+  const ids = new Set(content.en.glossary.map((g) => g.id));
+
+  it("are only for real glossary terms", () => {
+    for (const id of PICTURE_IDS) expect(ids.has(id), id).toBe(true);
+    expect(glossaryPicture("no-such-term")).toBe("");
+  });
+
+  it("are well-formed SVG with finite numbers, hidden from screen readers", () => {
+    for (const id of PICTURE_IDS) {
+      const svg = glossaryPicture(id, (w) => `[${w}]`);
+      expect(svg, id).toMatch(/^<svg class="gloss-pic"[^>]*aria-hidden="true"/);
+      expect(svg, id).not.toMatch(/NaN|undefined|Infinity/);
+      // Every opened element is closed, in order.
+      const open: string[] = [];
+      for (const m of svg.matchAll(/<(\/?)([a-z]+)[^>]*?(\/?)>/g)) {
+        if (m[3]) continue;
+        if (m[1]) expect(open.pop(), `${id}: </${m[2]}>`).toBe(m[2]);
+        else open.push(m[2] ?? "");
+      }
+      expect(open, id).toEqual([]);
+    }
+  });
+
+  it("show their words in the learner's language", () => {
+    const svg = glossaryPicture("switch", (w) => `«${w}»`);
+    expect(svg).toContain("«on»");
+    expect(svg).toContain("«off»");
   });
 });

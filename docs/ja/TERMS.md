@@ -75,6 +75,6 @@ half-width space between Japanese and Latin words or numbers (「NAND ゲート�
 | Tech tree, roadmap | テックツリー、ロードマップ |
 
 Glossary: definitions in the plain form (である調) or ending on a noun. A
-term that starts with a kanji needs a `reading:` in hiragana (a test checks):
-the glossary page sorts by it and files the term under its kana row (あ, か,
-さ, …); katakana and Latin terms need none.
+term that starts with a kanji needs a `reading:` in hiragana (a test checks),
+so a learner can find it by typing its reading (ろんり finds 論理ゲート);
+katakana and Latin terms need none.

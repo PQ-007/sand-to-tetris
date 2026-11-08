@@ -86,7 +86,7 @@ The sizes and speeds in this demo are rough orders of magnitude for comparison, 
 
 On 16 December 1947, at Bell Labs, John Bardeen and Walter Brattain pressed two gold contacts onto a slab of **[[germanium]]**. A small signal on one contact controlled a much bigger current through the other, amplifying the signal up to 100 times. They showed it to Bell Labs management on 23 December, in William Shockley's group, and Bell Labs announced the "transistor" to the world on 30 June 1948[@point-contact-transistor].
 
-Germanium and silicon are both **[[semiconductors|semiconductor]]**: materials whose ability to conduct sits between a metal and an insulator, and can be controlled. Germanium came first for a practical reason: in the 1940s it was easier to purify to the extreme level transistors need[@germanium-vs-silicon].
+Germanium and [[silicon]] are both **[[semiconductors|semiconductor]]**: materials whose ability to conduct sits between a metal and an insulator, and can be controlled. Germanium came first for a practical reason: in the 1940s it was easier to purify to the extreme level transistors need[@germanium-vs-silicon].
 
 Germanium lost, for three reasons:
 
