@@ -907,12 +907,19 @@ body[data-page="programs"] #app {
   border-left: 1px solid var(--border);
 }
 
-.toc summary {
+.toc summary,
+.course-nav summary {
   list-style: none;
   cursor: default;
 }
 
-.toc summary::-webkit-details-marker {
+.toc summary::-webkit-details-marker,
+.course-nav summary::-webkit-details-marker {
+  display: none;
+}
+
+/* The current page's name, shown only while the list is folded away. */
+.course-nav .here {
   display: none;
 }
 
@@ -944,21 +951,62 @@ body[data-page="programs"] #app {
   padding-left: 0;
 }
 
+/* Below 1280px the course list folds into a bar above the article: closed,
+   it names the current page; open, it lists them all. */
 @media (max-width: 1280px) {
   .doc-layout {
     grid-template-columns: minmax(0, 1fr) 14rem;
-    grid-template-areas: "article toc";
+    grid-template-areas: "nav toc" "article toc";
+    row-gap: 1.5rem;
   }
   .course-nav {
-    display: none;
+    position: static;
+    max-height: none;
+    width: 100%;
+    max-width: 48rem;
+    justify-self: center;
+    padding: 0.75rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .course-nav summary {
+    cursor: pointer;
+    margin: 0;
+  }
+  .course-nav summary::after {
+    content: " ▾";
+  }
+  .course-nav details[open] summary {
+    margin-bottom: 0.5rem;
+  }
+  .course-nav details[open] summary::after {
+    content: " ▴";
+  }
+  .course-nav details:not([open]) .here {
+    display: inline;
+    color: var(--text);
+    font: 500 0.875rem var(--font);
+    letter-spacing: normal;
+    text-transform: none;
+  }
+  .toc {
+    grid-row: 1 / span 2;
   }
 }
 
 @media (max-width: 900px) {
   .doc-layout {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "toc" "article";
-    gap: 1.5rem;
+    grid-template-areas: "nav" "toc" "article";
+    gap: 0.75rem;
+  }
+  .toc {
+    grid-row: auto;
+  }
+  .chapter-page,
+  .program-page {
+    margin-top: 0.75rem;
   }
   .toc {
     position: static;
