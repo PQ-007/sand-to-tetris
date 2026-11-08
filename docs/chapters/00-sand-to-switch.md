@@ -4,7 +4,7 @@ title: From sand to switch
 summary: What a computer is, how people computed before electronics, and how a grain of sand becomes the switch that every computer is built from.
 ---
 
-This course ends with you playing Tetris on a computer you built yourself, layer by layer. Before you build anything, this chapter answers two questions. What exactly is a computer? And why are computers made of silicon switches?
+This course ends with you playing Bitfall, a falling-block game, on a computer you built yourself, layer by layer. Before you build anything, this chapter answers two questions. What exactly is a computer? And why are computers made of silicon switches?
 
 You won't wire anything yet. Instead you'll meet the ideas and the history behind every later chapter, and you'll play with the physics of the switch you'll use from Chapter 1 onward.
 
@@ -19,7 +19,7 @@ A [[computer]] is a machine that does four things:
 3. **Processing**: it changes the information by following instructions: adding, comparing, choosing.
 4. **[[Output]]**: it gives back results (pixels, sound, a number).
 
-A pocket calculator does all four, but it can only ever do the jobs it was built for. What makes the machines in your phone and laptop special is that they are [[general-purpose]]. The same hardware can edit a video, play chess or run Tetris, depending only on the [[program]] it is given. A program is just a list of instructions, an [[algorithm]] written down precisely enough that a machine can follow it without understanding it.
+A pocket calculator does all four, but it can only ever do the jobs it was built for. What makes the machines in your phone and laptop special is that they are [[general-purpose]]. The same hardware can edit a video, play chess or run a game, depending only on the [[program]] it is given. A program is just a list of instructions, an [[algorithm]] written down precisely enough that a machine can follow it without understanding it.
 
 One more idea makes modern computers what they are. The program is stored in the same memory as the data. To the machine, instructions are just more numbers. Loading a new program is as easy as loading a new file, and a program can even produce another program (that is what a compiler does, and you will write one in Chapter 7). This is the **[[stored-program|stored-program]]** idea, and you'll see where it came from later in this chapter.
 

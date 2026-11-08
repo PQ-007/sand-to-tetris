@@ -21,7 +21,7 @@ loop:   ADD  r0, r0, r1   ; sum = sum + i
 done:   JMP  done         ; stop: r0 = 55
 ```
 
-The full list of instructions, exactly how each is written in bits and what it does, is the **[[instruction set|instruction-set]]**. It's a contract: the hardware promises to do what it says, and every program from here to Tetris is written in it. That's why we designed ours together, one decision at a time. It's written out in full in `docs/ISA.md`.
+The full list of instructions, exactly how each is written in bits and what it does, is the **[[instruction set|instruction-set]]**. It's a contract: the hardware promises to do what it says, and every program from here to Bitfall is written in it. That's why we designed ours together, one decision at a time. It's written out in full in `docs/ISA.md`.
 
 ## The decisions we made
 
@@ -106,7 +106,7 @@ On the screen, row y is the 8 words starting at 0x4000 + 8y, and the leftmost pi
 
 ## Fast models for the CPU
 
-Tetris will need hundreds of thousands of instructions every second, far more than a simulation of every gate can manage. So the CPU and the memory map get fast models, like the RAMs in Chapter 3. Once your CPU passes, it can be compared with the fast model on 10,000 random clock cycles; if they agree on every cycle, you can switch it on the level map and your computer runs at full speed. The checks already use the fast models for memory parts, because a RAM16K built from gates is millions of gates.
+Bitfall, the game at the end of the course, will need hundreds of thousands of instructions every second, far more than a simulation of every gate can manage. So the CPU and the memory map get fast models, like the RAMs in Chapter 3. Once your CPU passes, it can be compared with the fast model on 10,000 random clock cycles; if they agree on every cycle, you can switch it on the level map and your computer runs at full speed. The checks already use the fast models for memory parts, because a RAM16K built from gates is millions of gates.
 
 <aside class="summary">
 
