@@ -259,6 +259,8 @@ export const en = {
     "Levels as a tech tree: each level sits below the levels it needs",
   "levels.treeHelp":
     "Each level sits below the parts it needs. Select one to see what it needs and unlocks; arrow keys move between levels.",
+  "levels.details": "Details",
+  "levels.lessDetails": "Less",
   "levels.needs": "Needs",
   "levels.unlocks": "Unlocks",
   "levels.needsNothing": "Nothing: start here.",

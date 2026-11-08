@@ -252,6 +252,8 @@ export const mn: Record<keyof typeof en, Message> = {
     "Level-үүд tech tree хэлбэрээр: level бүр өөрт хэрэгтэй level-үүдийн доор байрлана",
   "levels.treeHelp":
     "Level бүр өөрт хэрэгтэй хэсгүүдийн доор байрлана. Аль нэгийг сонгож юу хэрэгтэй, юуг нээдгийг хар; сумтай товчоор level-үүдийн хооронд шилжинэ.",
+  "levels.details": "Дэлгэрэнгүй",
+  "levels.lessDetails": "Хураах",
   "levels.needs": "Хэрэгтэй",
   "levels.unlocks": "Нээдэг",
   "levels.needsNothing": "Юу ч хэрэггүй: эндээс эхэл.",

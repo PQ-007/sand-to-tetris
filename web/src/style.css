@@ -3225,8 +3225,79 @@ svg.waveform text {
     display: inline-flex;
     width: auto;
   }
-  .tree-detail {
+  .tree-wrap > .tree-detail {
     order: -1;
+    position: static;
+  }
+  /* The tree is far wider than the screen: show it in a window that
+     pans both ways, centred on the selected level. */
+  .tree-wrap > .tree-scroll {
+    height: min(75vh, 44rem);
+    overscroll-behavior: contain;
+  }
+}
+
+/* The "Details" toggle only matters on a phone. */
+.detail-toggle {
+  display: none;
+}
+
+/* Phones: the detail panel is a sheet at the bottom of the screen with the
+   essentials (name, status, Play); the rest opens with "Details". The tree
+   fills the window above it. */
+@media (max-width: 700px) {
+  .tree-wrap > .tree-detail {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    max-height: 60vh;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+    border: 0;
+    border-top: 1px solid var(--border-strong);
+    border-radius: 1rem 1rem 0 0;
+    box-shadow: 0 -8px 24px rgb(0 0 0 / 0.08);
+  }
+  .tree-wrap > .tree-detail .panel-kicker {
+    margin: 0;
+  }
+  .tree-wrap > .tree-detail h2 {
+    margin: 0.125rem 0 0.25rem;
+    font-size: 1.125rem;
+  }
+  .detail-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin: 0;
+  }
+  .detail-toggle {
+    display: inline-flex;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  .detail-play {
+    margin: 0.5rem 0 0;
+  }
+  .detail-play .button.block {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
+  .tree-detail:not([data-open]) .detail-more {
+    display: none;
+  }
+  .tree-wrap > .tree-scroll {
+    height: calc(100svh - var(--header-h) - 12rem);
+    min-height: 18rem;
+  }
+  body[data-page="levels"]:has(.tree-detail) #app {
+    padding-bottom: 12rem;
   }
 }
 
@@ -3256,6 +3327,13 @@ svg.waveform text {
   font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+  /* Stays at the window's left edge as the tree pans sideways, so the
+     layer's name is never cut off. */
+  position: sticky;
+  left: 0.75rem;
+  width: max-content;
+  max-width: calc(100vw - 4rem);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
 }
 
 .tree-band h2 .muted {
