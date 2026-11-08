@@ -1,6 +1,16 @@
 import { FIGURES, figureSlot, pageFigure } from "./figures";
 import { CHAPTERS } from "./chapters";
-import { getLang, t, type Key } from "./i18n";
+import { content } from "virtual:s2t-content";
+import {
+  LANG_NAMES,
+  groupByLetter,
+  matches,
+  otherTerms,
+  searchKey,
+  termIndex,
+  type TermIndex,
+} from "./glossary";
+import { LANGS, getLang, t, type Key } from "./i18n";
 import { PROGRAMS } from "./programs";
 import { chapterHref, machineHref, programHref, type Route } from "./router";
 import { site } from "./text";
@@ -273,22 +283,53 @@ export function trackSections(root: HTMLElement): void {
   );
 }
 
-function glossaryPage(): string {
+let terms: TermIndex | undefined;
+
+function glossaryPage(current?: string): string {
+  const lang = getLang();
   const glossary = site().glossary;
   const byId = new Map(glossary.map((g) => [g.id, g]));
-  const items = glossary
-    .map((g) => {
-      const see = g.see
-        .map((id) => byId.get(id))
-        .filter((s) => s !== undefined)
-        .map((s) => `<a href="#/glossary/${s.id}">${esc(s.term)}</a>`)
-        .join(", ");
-      return `<div class="gloss-entry" id="term-${g.id}" data-search="${esc(g.term.toLowerCase())}">
-        <dt>${esc(g.term)}</dt>
-        <dd><p>${g.shortHtml}</p>${g.longHtml ? `<p>${g.longHtml}</p>` : ""}
-        ${see ? `<p class="see">${esc(t("glossary.seeAlso"))} ${see}</p>` : ""}</dd>
+  terms ??= termIndex(content);
+  const index = terms;
+  const entry = (g: (typeof glossary)[number]) => {
+    const see = g.see
+      .map((id) => byId.get(id))
+      .filter((s) => s !== undefined)
+      .map((s) => `<a href="#/glossary/${s.id}">${esc(s.term)}</a>`)
+      .join("");
+    const others = otherTerms(index, g.id, lang, g.term, LANGS);
+    // Each name in its own language, so it gets the right voice and font.
+    const tr = others
+      .map(
+        (o) =>
+          `<span class="gloss-tr"><span class="gloss-lang" aria-hidden="true">${o.lang.toUpperCase()}</span><span class="visually-hidden">${esc(LANG_NAMES[o.lang])}: </span><span lang="${o.lang}">${esc(o.term)}</span></span>`,
+      )
+      .join("");
+    const key = searchKey(g.id, [g.term, ...others.map((o) => o.term)]);
+    return `<div class="gloss-entry" id="term-${g.id}" data-search="${esc(key)}"${g.id === current ? " data-current" : ""}>
+        <dt><span class="gloss-term"${g.untranslated ? ' lang="en"' : ""}>${esc(g.term)}</span>${tr ? `<span class="gloss-trs">${tr}</span>` : ""}</dt>
+        <dd><p>${g.shortHtml}</p>${g.longHtml ? `<p class="gloss-long">${g.longHtml}</p>` : ""}
+        ${see ? `<p class="see"><span>${esc(t("glossary.seeAlso"))}</span> ${see}</p>` : ""}</dd>
       </div>`;
-    })
+  };
+  const groups = groupByLetter(glossary);
+  const lettered = groups.some((g) => g.letter !== null);
+  const letters = lettered
+    ? `<nav class="gloss-letters" aria-label="${esc(t("glossary.letters"))}">${groups
+        .map(
+          (g, i) =>
+            `<button type="button" data-gloss-letter="${i}">${esc(g.letter ?? "")}</button>`,
+        )
+        .join("")}</nav>`
+    : "";
+  const sections = groups
+    .map(
+      (g, i) =>
+        `<section class="gloss-group" data-gloss-group="${i}"${g.letter ? ` aria-labelledby="gloss-letter-${i}"` : ""}>
+        ${g.letter ? `<h2 class="gloss-letter" id="gloss-letter-${i}" tabindex="-1">${esc(g.letter)}</h2>` : ""}
+        <dl class="glossary">${g.items.map(entry).join("")}</dl>
+      </section>`,
+    )
     .join("");
   return `<div class="page-head">
       <div>
@@ -296,37 +337,107 @@ function glossaryPage(): string {
         <p class="lead">${esc(t("glossary.lead"))}</p>
       </div>
       ${pageFigure("glossary", (n) => t(`figure.${n}`), "head")}
+    </div>
+    <div class="gloss-bar">
       <label class="search">
         <span class="visually-hidden">${esc(t("glossary.filterLabel"))}</span>
-        <input type="search" placeholder="${esc(t("glossary.filter", { n: glossary.length }))}" data-gloss-filter />
+        <input type="search" placeholder="${esc(t("glossary.filter", { n: glossary.length }))}" aria-keyshortcuts="/" autocomplete="off" spellcheck="false" data-gloss-filter />
+        <kbd aria-hidden="true">/</kbd>
+        <button type="button" class="search-clear" aria-label="${esc(t("glossary.clear"))}" data-gloss-clear>×</button>
       </label>
+      ${letters}
     </div>
-    <p class="muted" data-gloss-count aria-live="polite"></p>
-    <dl class="glossary">${items}</dl>`;
+    <p class="muted gloss-count" data-gloss-count aria-live="polite"></p>
+    <div class="gloss-groups">${sections}</div>`;
 }
 
-/** Hides glossary entries whose term doesn't contain the typed text. */
+/**
+ * The glossary's filter (any language, `/` to focus, Escape to clear) and
+ * its letter bar.
+ */
 export function installGlossaryFilter(root: HTMLElement): void {
   const input = root.querySelector<HTMLInputElement>("[data-gloss-filter]");
   const count = root.querySelector<HTMLElement>("[data-gloss-count]");
-  const entries = [...root.querySelectorAll<HTMLElement>(".gloss-entry")];
-  input?.addEventListener("input", () => {
-    const q = input.value.trim().toLowerCase();
+  const groups = [...root.querySelectorAll<HTMLElement>("[data-gloss-group]")];
+  const buttons = new Map(
+    [...root.querySelectorAll<HTMLButtonElement>("[data-gloss-letter]")].map(
+      (b) => [b.dataset.glossLetter ?? "", b],
+    ),
+  );
+  const entries = groups.map((g) => [
+    g,
+    [...g.querySelectorAll<HTMLElement>(".gloss-entry")],
+  ]) as [HTMLElement, HTMLElement[]][];
+  const total = entries.reduce((n, [, es]) => n + es.length, 0);
+  const apply = () => {
+    if (!input) return;
+    const q = input.value.trim();
     let shown = 0;
-    for (const e of entries) {
-      const match = !q || (e.dataset.search ?? "").includes(q);
-      e.hidden = !match;
-      if (match) shown++;
+    for (const [group, es] of entries) {
+      let here = 0;
+      for (const e of es) {
+        const match = matches(e.dataset.search ?? "", q);
+        e.hidden = !match;
+        if (match) here++;
+      }
+      group.hidden = here === 0;
+      const button = buttons.get(group.dataset.glossGroup ?? "");
+      if (button) button.disabled = here === 0;
+      shown += here;
     }
     if (count)
-      count.textContent = q
-        ? t("glossary.matches", {
-            shown,
-            total: entries.length,
-            q: input.value.trim(),
-          })
-        : "";
+      count.textContent = !q
+        ? ""
+        : shown
+          ? t("glossary.matches", { shown, total, q })
+          : t("glossary.none", { q });
+  };
+  input?.addEventListener("input", apply);
+  root.querySelector("[data-gloss-clear]")?.addEventListener("click", () => {
+    if (!input) return;
+    input.value = "";
+    apply();
+    input.focus();
   });
+  input?.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && input.value) {
+      e.preventDefault();
+      input.value = "";
+      apply();
+    }
+  });
+  root.querySelector(".gloss-letters")?.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>(
+      "[data-gloss-letter]",
+    );
+    const heading = b
+      ? document.getElementById(`gloss-letter-${b.dataset.glossLetter}`)
+      : null;
+    if (!heading) return;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    heading.scrollIntoView({ behavior: still ? "auto" : "smooth" });
+    heading.focus({ preventScroll: true });
+  });
+  // "/" jumps to the filter, as on many reference sites.
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey || !input) return;
+    const el = document.activeElement;
+    if (
+      el instanceof HTMLInputElement ||
+      el instanceof HTMLTextAreaElement ||
+      (el instanceof HTMLElement && el.isContentEditable)
+    )
+      return;
+    e.preventDefault();
+    input.focus();
+    input.select();
+  };
+  document.addEventListener("keydown", onKey);
+  window.addEventListener(
+    "hashchange",
+    () => document.removeEventListener("keydown", onKey),
+    { once: true },
+  );
 }
 
 function notFound(message = t("notFound.text")): string {
@@ -353,7 +464,7 @@ export function renderRoute(route: Route): {
     }
     case "glossary":
       return {
-        html: glossaryPage(),
+        html: glossaryPage(route.term),
         title: titled(t("title.glossary")),
         anchor: route.term ? `term-${route.term}` : undefined,
       };

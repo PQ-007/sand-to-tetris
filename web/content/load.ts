@@ -21,6 +21,8 @@ export interface GlossaryItem {
   shortHtml: string;
   longHtml?: string;
   see: string[];
+  /** Still the English term (a staged translation without this entry). */
+  untranslated?: boolean;
 }
 
 export interface LevelFile {
@@ -243,7 +245,9 @@ export function loadContent(docsDir: string): LoadResult {
         );
     const glossaryTr = glossary.map((g) => {
       const tr = terms.get(g.id);
-      return tr ? { ...g, term: tr.term, short: tr.short, long: tr.long } : g;
+      return tr
+        ? { ...g, term: tr.term, short: tr.short, long: tr.long }
+        : { ...g, untranslated: true };
     });
     const trSources = optional("sources.yaml")
       ? []
@@ -426,6 +430,7 @@ function renderLanguage(
       shortHtml: short.html,
       longHtml: long?.html,
       see: g.see ?? [],
+      ...(g.untranslated ? { untranslated: true } : {}),
     };
   });
   // Sorted by the term as shown in this language.

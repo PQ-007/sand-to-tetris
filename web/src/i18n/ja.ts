@@ -150,11 +150,15 @@ export const ja: Record<keyof typeof en, Message> = {
     "この章はまだ日本語に翻訳されていません。英語の原文を表示しています。",
 
   // ---- 用語集 ----
-  "glossary.lead": "各章で使う技術用語を、やさしい言葉で。",
+  "glossary.lead":
+    "各章で使う技術用語を、やさしい言葉で。ほかの言語での呼び名も並べています。",
   "glossary.filterLabel": "用語を絞り込む",
-  "glossary.filter": "{n} 個の用語を絞り込む…",
+  "glossary.filter": "{n} 個の用語を絞り込む(どの言語でも)…",
   "glossary.matches": "{total} 個中 {shown} 個の用語が「{q}」に一致します。",
   "glossary.seeAlso": "関連項目:",
+  "glossary.letters": "頭文字へ移動",
+  "glossary.clear": "絞り込みを解除",
+  "glossary.none": "「{q}」に一致する用語はありません。",
   "notFound.text": "このアドレスにはページがありません。",
   "notFound.back": "章の一覧へ戻る",
 

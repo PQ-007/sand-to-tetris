@@ -149,11 +149,15 @@ export const mn: Record<keyof typeof en, Message> = {
     "Энэ бүлэг хараахан орчуулагдаагүй тул англи хэлээр харуулж байна.",
 
   // ---- нэр томьёо ----
-  "glossary.lead": "Бүлгүүдэд гардаг бүх техникийн нэр томьёо, энгийн үгээр.",
+  "glossary.lead":
+    "Бүлгүүдэд гардаг бүх техникийн нэр томьёо, энгийн үгээр, бусад хэл дээрх нэрийн хамт.",
   "glossary.filterLabel": "Нэр томьёо шүүх",
-  "glossary.filter": "{n} нэр томьёоноос шүүх…",
+  "glossary.filter": "{n} нэр томьёоноос аль ч хэлээр шүүх…",
   "glossary.matches": "{total}-аас {shown} нь “{q}”-д тохирч байна.",
   "glossary.seeAlso": "Мөн үзэх:",
+  "glossary.letters": "Үсгээр очих",
+  "glossary.clear": "Шүүлтүүрийг арилгах",
+  "glossary.none": "“{q}”-д тохирох нэр томьёо алга.",
   "notFound.text": "Энэ хаягт хуудас алга.",
   "notFound.back": "Бүлгүүд рүү буцах",
 

@@ -157,11 +157,14 @@ export const en = {
 
   // ---- glossary ----
   "glossary.lead":
-    "Every technical term used in the chapters, in plain language.",
+    "Every technical term used in the chapters, in plain language, with its name in the site's other languages.",
   "glossary.filterLabel": "Filter terms",
-  "glossary.filter": "Filter {n} terms…",
+  "glossary.filter": "Filter {n} terms, in any language…",
   "glossary.matches": "{shown} of {total} terms match “{q}”.",
   "glossary.seeAlso": "See also:",
+  "glossary.letters": "Jump to letter",
+  "glossary.clear": "Clear the filter",
+  "glossary.none": "No term matches “{q}”.",
   "notFound.text": "There's no page at this address.",
   "notFound.back": "Back to the chapters",
 

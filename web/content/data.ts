@@ -10,6 +10,9 @@ export interface GlossaryEntry {
   /** Optional longer explanation (Markdown, may link other terms). */
   long?: string;
   see?: string[];
+  /** Shown in English because this language has no translation yet (only
+   * in a staged translation). */
+  untranslated?: boolean;
 }
 
 export interface SourceRef {
