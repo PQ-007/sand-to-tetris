@@ -135,15 +135,16 @@ const LABELS: Record<
 };
 
 /**
- * Translations of the original. A complete one (Mongolian) must translate
- * every chapter, glossary entry and source, or the build fails. A staged
- * one (Japanese, being translated) falls back to the English original for
- * what's missing, and that chapter is marked `untranslated`; whatever it
- * does translate is checked just as strictly.
+ * Translations of the original. A complete one (Mongolian, and Japanese
+ * since 2026-11-08) must translate every chapter, program page, glossary
+ * entry and source, or the build fails. A staged one (a language still
+ * being translated) falls back to the English original for what's missing,
+ * and that chapter is marked `untranslated`; whatever it does translate is
+ * checked just as strictly.
  */
 const TRANSLATIONS: { lang: Exclude<Lang, "en">; complete: boolean }[] = [
   { lang: "mn", complete: true },
-  { lang: "ja", complete: false },
+  { lang: "ja", complete: true },
 ];
 
 /** The demo tags a chapter uses, in order (a figure with its name). */
