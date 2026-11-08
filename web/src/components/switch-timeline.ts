@@ -1,15 +1,47 @@
-import { compare, logPosition, SWITCHES, switchText } from "../demos/switches";
+import { switchPicture } from "../demos/pictures";
+import {
+  comparedWith,
+  factorOf,
+  formatFactor,
+  logPosition,
+  SWITCHES,
+  switchText,
+} from "../demos/switches";
 import { t } from "../i18n";
-import { Demo, chips, formatLength, formatTime, sheet, svg, wide } from "./kit";
+import { Demo, formatLength, formatTime, sheet, svg, wide } from "./kit";
 
 const CSS = sheet(`
-  .card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 3px; padding: 0.85rem 1rem; margin-top: 0.75rem; }
-  .card h3 { margin: 0 0 0.25rem; font-size: 1.0625rem; }
-  .card p { margin: 0.25rem 0; }
-  .compare { margin-top: 0.75rem; }
-  .axis line { stroke: var(--border); }
-  .dot { fill: var(--muted); }
-  .dot.on { fill: var(--accent); }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.5rem; border: 0; padding: 0; margin: 0 0 1rem; }
+  @container (max-width: 560px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .tile { position: relative; display: block; }
+  .tile input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .face { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; height: 100%; padding: 0.5rem 0.25rem 0.45rem; border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: center; }
+  .tile:hover .face { border-color: var(--border-strong); background: var(--surface-2); }
+  .tile input:checked + .face { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); background: var(--surface-2); }
+  .tile input:focus-visible + .face { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .face svg { width: 100%; max-width: 5rem; }
+  .name { font-size: 0.8125rem; font-weight: 600; line-height: 1.25; }
+  .era { font: 0.6875rem var(--mono); color: var(--muted); }
+  .pic { fill: none; stroke: var(--text); stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; }
+  .pic * { vector-effect: non-scaling-stroke; }
+  .pic .f { fill: var(--surface); }
+  .pic .g { fill: var(--surface-3); }
+  .pic .g2 { fill: var(--surface-2); }
+  .pic .k { fill: var(--text); stroke: none; }
+  .pic .m { stroke: var(--faint); }
+  .pic .h { stroke-width: 0.5; stroke: var(--faint); }
+  .pic .d { stroke-dasharray: 3 2.5; }
+  .pic .b { stroke-width: 2.5; }
+  .axis line { stroke: var(--border-strong); }
+  .dot { fill: var(--faint); }
+  .dot.on { fill: var(--text); }
+  .how { margin: 0.5rem 0 0; font-size: 0.9375rem; }
+  .vs { margin-top: 1rem; padding-top: 0.875rem; border-top: 1px solid var(--border); }
+  .vs-label { font-size: 0.8125rem; color: var(--muted); }
+  .stats { display: flex; flex-wrap: wrap; gap: 0.5rem 2.5rem; margin-top: 0.25rem; }
+  .stat b { font: 600 1.5rem/1.2 var(--mono); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .stat span { margin-left: 0.4rem; color: var(--muted); }
 `);
 
 const W = 640;
@@ -47,7 +79,6 @@ const tickLabel: Record<number, string> = {
 /** <switch-timeline>: gears → relays → tubes → transistors, on log scales. */
 export class SwitchTimeline extends Demo {
   private selected = SWITCHES[1]!;
-  private other = SWITCHES[SWITCHES.length - 1]!;
 
   constructor() {
     super(CSS);
@@ -60,47 +91,63 @@ export class SwitchTimeline extends Demo {
     strong.textContent = t("sw.caption");
     caption.append(strong, " ", t("sw.captionText"));
     fig.append(caption);
-    fig.append(
-      chips(
-        t("sw.choose"),
-        "switch",
-        SWITCHES.map((s) => ({
-          value: s.id,
-          label: `${switchText(s, "name")} (${switchText(s, "era")})`,
-        })),
-        this.selected.id,
-        (id) => {
-          this.selected = SWITCHES.find((s) => s.id === id) ?? this.selected;
-          this.update();
-        },
-      ),
-    );
-    const plot = svg("svg", { viewBox: `0 0 ${W} 180`, role: "img" });
-    fig.append(wide(plot));
-    const card = document.createElement("div");
-    card.className = "card";
-    card.setAttribute("aria-live", "polite");
-    fig.append(card);
 
-    const cmp = document.createElement("p");
-    cmp.className = "compare";
-    const label = document.createElement("label");
-    label.textContent = t("sw.compareWith");
-    const select = document.createElement("select");
-    for (const s of SWITCHES)
-      select.add(
-        new Option(switchText(s, "name"), s.id, false, s === this.other),
-      );
-    select.addEventListener("change", () => {
-      this.other = SWITCHES.find((s) => s.id === select.value) ?? this.other;
-      this.update();
-    });
-    label.append(select);
-    const sentence = document.createElement("output");
-    sentence.style.display = "block";
-    sentence.style.marginTop = "0.5rem";
-    cmp.append(label, sentence);
-    fig.append(cmp);
+    // One tile per switch: its picture, name and era.
+    const tiles = document.createElement("fieldset");
+    tiles.className = "tiles";
+    const legend = document.createElement("legend");
+    legend.className = "visually-hidden";
+    legend.textContent = t("sw.choose");
+    tiles.append(legend);
+    for (const s of SWITCHES) {
+      const label = document.createElement("label");
+      label.className = "tile";
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = "switch";
+      input.value = s.id;
+      input.checked = s === this.selected;
+      input.addEventListener("change", () => {
+        this.selected = s;
+        this.update();
+      });
+      const face = document.createElement("span");
+      face.className = "face";
+      const pic = svg("svg", {
+        viewBox: "0 0 80 56",
+        class: "pic",
+        "aria-hidden": "true",
+      });
+      pic.innerHTML = switchPicture(s.id);
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = switchText(s, "name");
+      const era = document.createElement("span");
+      era.className = "era";
+      era.textContent = switchText(s, "era");
+      face.append(pic, name, era);
+      label.append(input, face);
+      tiles.append(label);
+    }
+    fig.append(tiles);
+
+    const plot = svg("svg", { viewBox: `0 0 ${W} 180`, role: "img" });
+    const frame = wide(plot);
+    fig.append(frame);
+    const how = document.createElement("p");
+    how.className = "how";
+    how.setAttribute("aria-live", "polite");
+    fig.append(how);
+
+    // The comparison as two numbers, not a sentence.
+    const vs = document.createElement("div");
+    vs.className = "vs";
+    const vsLabel = document.createElement("div");
+    vsLabel.className = "vs-label";
+    const stats = document.createElement("div");
+    stats.className = "stats";
+    vs.append(vsLabel, stats);
+    fig.append(vs);
     this.root.append(fig);
 
     this.update = () => {
@@ -129,27 +176,24 @@ export class SwitchTimeline extends Demo {
           { x1: x0, x2: x1, y1: axis.y, y2: axis.y, "stroke-width": 1.25 },
           g,
         );
-        for (const t of axis.ticks) {
-          const x = x0 + logPosition(t, axis.min, axis.max) * (x1 - x0);
+        for (const tick of axis.ticks) {
+          const x = x0 + logPosition(tick, axis.min, axis.max) * (x1 - x0);
           svg("line", { x1: x, x2: x, y1: axis.y - 4, y2: axis.y + 4 }, g);
           svg(
             "text",
             { x, y: axis.y + 18, "text-anchor": "middle", class: "muted" },
             g,
-            tickLabel[t] ?? "",
+            tickLabel[tick] ?? "",
           );
         }
         for (const sw of SWITCHES) {
+          if (sw === s) continue;
           const x =
             x0 + logPosition(sw[axis.key], axis.min, axis.max) * (x1 - x0);
-          const on = sw === s;
-          svg(
-            "circle",
-            { cx: x, cy: axis.y, r: on ? 9 : 5, class: on ? "dot on" : "dot" },
-            g,
-          );
+          svg("circle", { cx: x, cy: axis.y, r: 4, class: "dot" }, g);
         }
         const x = x0 + logPosition(s[axis.key], axis.min, axis.max) * (x1 - x0);
+        svg("circle", { cx: x, cy: axis.y, r: 8, class: "dot on" }, g);
         svg(
           "text",
           { x, y: axis.y + 36, "text-anchor": "middle", "font-weight": 600 },
@@ -157,21 +201,36 @@ export class SwitchTimeline extends Demo {
           axis.fmt(s[axis.key]),
         );
       }
-      card.innerHTML = "";
-      const h = document.createElement("h3");
-      h.textContent = `${switchText(s, "name")} · ${switchText(s, "era")}`;
-      const how = document.createElement("p");
       how.textContent = switchText(s, "how");
-      const ex = document.createElement("p");
-      ex.className = "muted";
-      ex.textContent = t("sw.example", {
-        example: switchText(s, "example"),
-        size: formatLength(s.sizeM),
-        time: formatTime(s.switchTimeS),
-      });
-      card.append(h, how, ex);
-      sentence.textContent =
-        s === this.other ? t("sw.pickOther") : compare(s, this.other);
+      // On a narrow screen the chart scrolls sideways: bring the chosen
+      // switch's dots into view.
+      if (frame.scrollWidth > frame.clientWidth) {
+        const p = logPosition(s.sizeM, AXES[0]!.min, AXES[0]!.max);
+        const q = logPosition(s.switchTimeS, AXES[1]!.min, AXES[1]!.max);
+        const mid = ((40 + ((p + q) / 2) * (W - 80)) / W) * frame.scrollWidth;
+        frame.scrollLeft = mid - frame.clientWidth / 2;
+      }
+
+      const other = comparedWith(s);
+      vsLabel.textContent = t(
+        other === SWITCHES[0] ? "sw.vsGear" : "sw.vsToday",
+      );
+      const size = factorOf(s.sizeM, other.sizeM);
+      const time = factorOf(s.switchTimeS, other.switchTimeS);
+      stats.replaceChildren();
+      for (const [f, word] of [
+        [size, size.more ? "sw.bigger" : "sw.smaller"],
+        [time, time.more ? "sw.slowerWord" : "sw.fasterWord"],
+      ] as const) {
+        const stat = document.createElement("div");
+        stat.className = "stat";
+        const b = document.createElement("b");
+        b.textContent = formatFactor(f.factor);
+        const span = document.createElement("span");
+        span.textContent = t(word);
+        stat.append(b, span);
+        stats.append(stat);
+      }
     };
     this.update();
   }

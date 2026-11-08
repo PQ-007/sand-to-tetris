@@ -7,60 +7,46 @@ export const demosEn = {
   // ---- switch timeline ----
   "sw.caption": "Switches through time",
   "sw.captionText":
-    "Pick a switch to see its rough size and speed. Both scales are logarithmic: each step along an axis is 100 or 1,000 times bigger than the last.",
+    "Both scales are logarithmic: each tick is 100 or 1,000 times the last.",
   "sw.choose": "Choose a switch",
   "sw.sizeAxis": "Size of one switch",
   "sw.timeAxis": "Time to flip once",
-  "sw.compareWith": "Compare with ",
+  "sw.vsToday": "Compared with a transistor today",
+  "sw.vsGear": "Compared with a gear",
+  "sw.bigger": "bigger",
+  "sw.smaller": "smaller",
+  "sw.slowerWord": "slower",
+  "sw.fasterWord": "faster",
   "sw.plotLabel": "{name}: size {size}, switching time {time}",
-  "sw.example": "Example: {example}. Size {size}, flips in {time}.",
-  "sw.pickOther": "Pick a different switch to compare.",
-  "sw.compare": "A {a} is {size} and {speed} than a {b}.",
-  "sw.same": "about the same",
-  "sw.times": "about {n} times",
-  "sw.longer": "{ratio} longer",
-  "sw.shorter": "{ratio} shorter",
-  "sw.slower": "{ratio} slower",
-  "sw.faster": "{ratio} faster",
-  "sw.thousand": "a thousand",
-  "sw.million": "a million",
-  "sw.billion": "a billion",
-  "sw.trillion": "a trillion",
   "sw.gear.era": "1640s–1940s",
   "sw.gear.name": "Gear",
-  "sw.gear.example": "Pascaline, differential analyzer",
   "sw.gear.how":
     "A toothed wheel turns one step. Carrying a digit means one wheel nudging the next.",
   "sw.relay.era": "1930s–1940s",
   "sw.relay.name": "Relay",
-  "sw.relay.example": "Harvard Mark I",
   "sw.relay.how":
     "An electromagnet pulls a metal arm, closing or opening a contact.",
   "sw.tube.era": "1940s–1950s",
   "sw.tube.name": "Vacuum tube",
-  "sw.tube.example": "ENIAC",
   "sw.tube.how":
     "A voltage on a wire mesh (the grid) lets electrons flow across a vacuum, or blocks them.",
   "sw.transistor-1947.era": "1947",
   "sw.transistor-1947.name": "First transistor",
-  "sw.transistor-1947.example": "Bell Labs point-contact transistor",
   "sw.transistor-1947.how":
     "Two gold contacts on germanium: current into one controls the current through the other.",
   "sw.transistor-1971.era": "1971",
   "sw.transistor-1971.name": "Transistor on a chip",
-  "sw.transistor-1971.example": "Intel 4004",
   "sw.transistor-1971.how":
     "A MOSFET: voltage on the gate creates or removes a conducting channel in silicon.",
   "sw.transistor-today.era": "2020s",
   "sw.transistor-today.name": "Transistor today",
-  "sw.transistor-today.example": "A phone or laptop processor",
   "sw.transistor-today.how":
     "The same MOSFET idea, shrunk until billions fit on a chip the size of a fingernail.",
 
   // ---- sand to wafer ----
   "wafer.caption": "From sand to wafer",
   "wafer.captionText":
-    "Six steps turn quartz into a disc of nearly perfect crystal. Select a step.",
+    "Six steps from quartz to a disc of almost perfect crystal.",
   "wafer.prev": "← Previous step",
   "wafer.next": "Next step →",
   "wafer.step": "Step {n}: {title}",
@@ -70,35 +56,23 @@ export const demosEn = {
   "wafer.source": "Source",
   "wafer.sand.title": "Quartz sand",
   "wafer.sand.what": "Silicon dioxide (SiO₂): silicon locked up with oxygen.",
-  "wafer.sand.detail":
-    "Ordinary beach sand is too impure; industry uses high-purity quartz. Silicon is everywhere in rocks, but always bonded to oxygen.",
   "wafer.furnace.title": "Arc furnace",
   "wafer.furnace.what": "Carbon pulls the oxygen off the silicon.",
-  "wafer.furnace.detail":
-    "Quartz and carbon are heated by an electric arc. The carbon grabs the oxygen (leaving as carbon monoxide), and liquid silicon collects at the bottom: metallurgical-grade silicon.",
   "wafer.furnace.temperature": "≈ 1900 °C or more",
   "wafer.trichlorosilane.title": "Make a liquid, then distil it",
   "wafer.trichlorosilane.what":
     "Silicon becomes trichlorosilane (SiHCl₃), which can be distilled.",
-  "wafer.trichlorosilane.detail":
-    "Reacting the silicon with hydrogen chloride turns it into a liquid. Liquids can be purified by distillation, like making very pure alcohol, which removes most remaining impurities.",
   "wafer.siemens.title": "Siemens process",
   "wafer.siemens.what": "Pure silicon is deposited back out as polysilicon.",
-  "wafer.siemens.detail":
-    "The purified trichlorosilane is decomposed onto hot silicon rods. Silicon builds up layer by layer into electronic-grade polysilicon: many small crystals, but extremely pure.",
   "wafer.siemens.temperature": "≈ 1100 °C (the rods)",
   "wafer.czochralski.title": "Grow one crystal",
   "wafer.czochralski.what":
     "A seed crystal is pulled slowly from melted silicon.",
-  "wafer.czochralski.detail":
-    "The polysilicon is melted in a quartz crucible, with a carefully measured trace of dopant if the wafer should be p-type or n-type. A tiny seed crystal touches the melt and is slowly pulled up while turning. Atoms line up with the seed, so the whole ingot becomes one single crystal.",
   "wafer.czochralski.temperature":
     "above 1400 °C (silicon melts at about 1414 °C)",
   "wafer.slice.title": "Slice and polish",
   "wafer.slice.what":
     "The ingot is sawn into thin discs and polished mirror-smooth.",
-  "wafer.slice.detail":
-    "Wire saws cut the ingot into wafers less than a millimetre thick. Grinding, etching and polishing leave a surface flat enough to print features far smaller than a bacterium.",
 
   // ---- p-n junction ----
   "pn.caption": "Inside a p-n junction",
@@ -310,12 +284,11 @@ export const demosEn = {
   // ---- one instruction, bit by bit ----
   "asmd.caption": "One instruction, bit by bit",
   "asmd.captionText":
-    "Type an instruction, or pick one, and see the 16 bits the assembler makes from it, field by field.",
+    "Pick or type an instruction: each part becomes a field of the 16-bit word.",
   "asmd.try": "Try",
   "asmd.instruction": "Instruction",
   "asmd.group": "group",
   "asmd.unused": "unused",
-  "asmd.readsBack": "Read back by the disassembler:",
 
   // ---- Bitfall rows ----
   "brow.caption": "The board is numbers",

@@ -35,7 +35,7 @@ To write text, the OS needs a picture of every letter. Ours is a **[[bitmap font
 
 ## Keys and time
 
-`key()` reads the keyboard word at 0x6000. `wait_key()` waits for a key to go down and then up again, so one press counts once however long it's held. `ticks()` reads the frame counter at 0x6001, and `wait(n)` loops until n more frames have passed. Because the counter comes from outside the CPU, a falling Tetris piece moves at the same speed on the slow and fast settings.
+`key()` reads the keyboard word at 0x6000. `wait_key()` waits for a key to go down and then up again, so one press counts once however long it's held. `ticks()` reads the frame counter at 0x6001, and `wait(n)` loops until n more frames have passed. Because the counter comes from outside the CPU, a falling Bitfall piece moves at the same speed on the slow and fast settings.
 
 ## Random numbers from a formula
 

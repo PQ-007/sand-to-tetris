@@ -21,6 +21,10 @@ export interface GlossaryItem {
   shortHtml: string;
   longHtml?: string;
   see: string[];
+  /** How a Japanese term is read, in kana (sorts and groups it). */
+  reading?: string;
+  /** Still the English term (a staged translation without this entry). */
+  untranslated?: boolean;
 }
 
 export interface LevelFile {
@@ -131,15 +135,16 @@ const LABELS: Record<
 };
 
 /**
- * Translations of the original. A complete one (Mongolian) must translate
- * every chapter, glossary entry and source, or the build fails. A staged
- * one (Japanese, being translated) falls back to the English original for
- * what's missing, and that chapter is marked `untranslated`; whatever it
- * does translate is checked just as strictly.
+ * Translations of the original. A complete one (Mongolian, and Japanese
+ * since 2026-11-08) must translate every chapter, program page, glossary
+ * entry and source, or the build fails. A staged one (a language still
+ * being translated) falls back to the English original for what's missing,
+ * and that chapter is marked `untranslated`; whatever it does translate is
+ * checked just as strictly.
  */
 const TRANSLATIONS: { lang: Exclude<Lang, "en">; complete: boolean }[] = [
   { lang: "mn", complete: true },
-  { lang: "ja", complete: false },
+  { lang: "ja", complete: true },
 ];
 
 /** The demo tags a chapter uses, in order (a figure with its name). */
@@ -243,7 +248,15 @@ export function loadContent(docsDir: string): LoadResult {
         );
     const glossaryTr = glossary.map((g) => {
       const tr = terms.get(g.id);
-      return tr ? { ...g, term: tr.term, short: tr.short, long: tr.long } : g;
+      return tr
+        ? {
+            ...g,
+            term: tr.term,
+            short: tr.short,
+            long: tr.long,
+            reading: tr.reading,
+          }
+        : { ...g, untranslated: true };
     });
     const trSources = optional("sources.yaml")
       ? []
@@ -426,9 +439,14 @@ function renderLanguage(
       shortHtml: short.html,
       longHtml: long?.html,
       see: g.see ?? [],
+      ...(g.reading ? { reading: g.reading } : {}),
+      ...(g.untranslated ? { untranslated: true } : {}),
     };
   });
-  // Sorted by the term as shown in this language.
-  items.sort((a, b) => a.term.localeCompare(b.term, lang));
+  // Sorted by the term as shown in this language (Japanese by its reading,
+  // so kanji terms fall in あいうえお order).
+  items.sort((a, b) =>
+    (a.reading ?? a.term).localeCompare(b.reading ?? b.term, lang),
+  );
   return { chapters, programs, glossary: items };
 }

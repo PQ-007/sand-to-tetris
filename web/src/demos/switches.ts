@@ -50,47 +50,35 @@ export function logPosition(value: number, min: number, max: number): number {
   return Math.min(1, Math.max(0, p));
 }
 
-const WORDS: [number, Key][] = [
-  [1e12, "sw.trillion"],
-  [1e9, "sw.billion"],
-  [1e6, "sw.million"],
-  [1e3, "sw.thousand"],
-];
-
-/** A switch's name, era, example or how it works, in the current language. */
+/** A switch's name, era or how it works, in the current language. */
 export function switchText(
   s: SwitchKind,
-  field: "name" | "era" | "example" | "how",
+  field: "name" | "era" | "how",
 ): string {
   return t(`sw.${s.id}.${field}` as Key);
 }
 
-/** "about 1,000 times" style wording for a ratio ≥ 1. */
-export function describeRatio(ratio: number): string {
-  if (ratio < 1.5) return t("sw.same");
-  const exp = Math.round(Math.log10(ratio));
-  const rounded = 10 ** exp;
-  if (exp <= 2) return t("sw.times", { n: Math.round(ratio) });
-  const word = WORDS.find(([v]) => v === rounded)?.[1];
-  return t("sw.times", { n: word ? t(word) : rounded.toLocaleString("en-US") });
+export interface Factor {
+  /** The ratio rounded to a power of ten (≥ 1). */
+  factor: number;
+  /** True when the first value is the larger one. */
+  more: boolean;
 }
 
-/** Sentence comparing two switches, e.g. for "relay vs today". */
-export function compare(a: SwitchKind, b: SwitchKind): string {
-  const size = a.sizeM / b.sizeM;
-  const time = a.switchTimeS / b.switchTimeS;
-  const sizePart =
-    size >= 1
-      ? t("sw.longer", { ratio: describeRatio(size) })
-      : t("sw.shorter", { ratio: describeRatio(1 / size) });
-  const speedPart =
-    time >= 1
-      ? t("sw.slower", { ratio: describeRatio(time) })
-      : t("sw.faster", { ratio: describeRatio(1 / time) });
-  return t("sw.compare", {
-    a: switchText(a, "name").toLowerCase(),
-    b: switchText(b, "name").toLowerCase(),
-    size: sizePart,
-    speed: speedPart,
-  });
+/** How many times one value is the other, as a power of ten. */
+export function factorOf(a: number, b: number): Factor {
+  const r = a / b;
+  const more = r >= 1;
+  return { factor: 10 ** Math.round(Math.log10(more ? r : 1 / r)), more };
+}
+
+/** "×1,000,000": a factor written out, the same in every language. */
+export const formatFactor = (f: number): string =>
+  `×${f.toLocaleString("en-US")}`;
+
+/** What a switch is compared with: today's transistor, or for that one,
+ * the gear it replaced. */
+export function comparedWith(s: SwitchKind): SwitchKind {
+  const today = SWITCHES[SWITCHES.length - 1] as SwitchKind;
+  return s === today ? (SWITCHES[0] as SwitchKind) : today;
 }

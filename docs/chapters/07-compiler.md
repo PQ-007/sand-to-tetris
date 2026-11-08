@@ -29,7 +29,7 @@ It looks like C and the languages that followed it, because we chose that: block
 |---|---|---|
 | Syntax | braces, C-family | familiar, and the easiest kind to read by program |
 | Types | `int`, `bool` and arrays, checked before code is made | `if 5 { }` or adding a bool to a number is caught, with its line |
-| Arrays | a fixed size, known when compiling | no memory manager needed; enough for a Tetris board |
+| Arrays | a fixed size, known when compiling | no memory manager needed; enough for a Bitfall board |
 | Screen and keys | `mem[addr]` reads and writes any address | the OS in the next chapter can be written in C Shard itself |
 | Logic | `and`, `or`, `not` for conditions; `& \| ^ ~` for bits | the two can't be mixed up, and `and`/`or` stop early |
 | Loops | `if`/`else`, `while`, `for i in 0..10`, `break`, `continue` | most game loops are a `for` over rows or columns |

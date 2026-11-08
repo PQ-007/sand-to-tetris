@@ -1,4 +1,4 @@
-import { bits, fieldsOf } from "../src/demos/asm";
+import { bits, fieldsOf, links, tokensOf } from "../src/demos/asm";
 import { describe, expect, it } from "vitest";
 import {
   buffer,
@@ -18,11 +18,18 @@ import {
   VDD,
 } from "../src/demos/semiconductor";
 import {
-  compare,
-  describeRatio,
+  comparedWith,
+  factorOf,
+  formatFactor,
   logPosition,
   SWITCHES,
 } from "../src/demos/switches";
+import {
+  SWITCH_PICTURES,
+  WAFER_PICTURES,
+  switchPicture,
+  waferPicture,
+} from "../src/demos/pictures";
 import { WAFER_STEPS } from "../src/demos/wafer";
 
 describe("switch timeline", () => {
@@ -34,19 +41,48 @@ describe("switch timeline", () => {
     }
   });
 
-  it("describes ratios in words", () => {
-    expect(describeRatio(1)).toBe("about the same");
-    expect(describeRatio(50)).toBe("about 50 times");
-    expect(describeRatio(1.1e6)).toBe("about a million times");
-    expect(describeRatio(1e4)).toBe("about 10,000 times");
-  });
-
-  it("compares two switches in one sentence", () => {
+  it("compares two switches as rounded powers of ten", () => {
     const relay = SWITCHES.find((s) => s.id === "relay")!;
     const today = SWITCHES.find((s) => s.id === "transistor-today")!;
-    expect(compare(relay, today)).toBe(
-      "A relay is about a million times longer and about a billion times slower than a transistor today.",
+    const size = factorOf(relay.sizeM, today.sizeM);
+    const time = factorOf(relay.switchTimeS, today.switchTimeS);
+    expect([formatFactor(size.factor), size.more]).toEqual([
+      "×1,000,000",
+      true,
+    ]);
+    expect([formatFactor(time.factor), time.more]).toEqual([
+      "×1,000,000,000",
+      true,
+    ]);
+    expect(factorOf(1, 1)).toEqual({ factor: 1, more: true });
+    expect(factorOf(1e-3, 1)).toEqual({ factor: 1000, more: false });
+  });
+
+  it("compares with today's transistor, and today's with the gear", () => {
+    const today = SWITCHES[SWITCHES.length - 1]!;
+    expect(comparedWith(SWITCHES[1]!)).toBe(today);
+    expect(comparedWith(today)).toBe(SWITCHES[0]);
+  });
+
+  it("has a well-formed picture for every switch and every wafer step", () => {
+    expect([...SWITCH_PICTURES].sort()).toEqual(
+      SWITCHES.map((s) => s.id).sort(),
     );
+    expect([...WAFER_PICTURES].sort()).toEqual(
+      WAFER_STEPS.map((s) => s.id).sort(),
+    );
+    const all = [
+      ...SWITCHES.map((s) => switchPicture(s.id)),
+      ...WAFER_STEPS.map((s) => waferPicture(s.id)),
+    ];
+    for (const svg of all) {
+      expect(svg.length).toBeGreaterThan(50);
+      expect(svg).not.toMatch(/NaN|undefined|Infinity/);
+      expect(svg.match(/<(path|rect|circle)\b/g)?.length).toBe(
+        svg.match(/\/>/g)?.length,
+      );
+    }
+    expect(switchPicture("nothing")).toBe("");
   });
 
   it("places values on a log axis", () => {
@@ -273,5 +309,32 @@ describe("instruction fields", () => {
     ); // SAR r6, r4, r1
     expect(names(0xcbfe)).toBe("group=6 cond=2 off=1022"); // JNZ -2
     expect(names(0xf700)).toBe("group=7 kind=1 link=0 ra=7 unused=0"); // RET
+  });
+});
+
+describe("assembler demo: parts to fields", () => {
+  it("splits an instruction into its mnemonic and operands", () => {
+    expect(tokensOf("ADD r3, r1, r2")).toEqual(["ADD", "r3", "r1", "r2"]);
+    expect(tokensOf("LOAD r2, [r1 + 3]")).toEqual(["LOAD", "r2", "r1", "3"]);
+    expect(tokensOf("RET")).toEqual(["RET"]);
+    expect(tokensOf("  ")).toEqual([]);
+  });
+
+  it("links the mnemonic to the group and operands to data fields in order", () => {
+    const names = (word: number, asm: string) => {
+      const fields = fieldsOf(word);
+      return links(fields, tokensOf(asm)).map(
+        ([tok, f]) => `${tokensOf(asm)[tok]}>${fields[f]?.name}`,
+      );
+    };
+    // ADD r3, r1, r2 = 0x0ca0; SET r1, 5 = 0x4405 (from s2t asm).
+    expect(names(0x0ca0, "ADD r3, r1, r2")).toEqual([
+      "ADD>group",
+      "r3>rd",
+      "r1>ra",
+      "r2>rb",
+    ]);
+    expect(names(0x4405, "SET r1, 5")).toEqual(["SET>group", "r1>rd", "5>imm"]);
+    expect(names(0xcbfe, "JNZ -2")).toEqual(["JNZ>group", "-2>off"]);
   });
 });

@@ -52,7 +52,7 @@ and `web/src/i18n/demos.mn.ts`.
 | Logarithm | Логарифм |
 | Slide rule | Slide rule |
 | Analog | Аналог |
-| Digital | Цифрлэг |
+| Digital | дижитал (not «цифрлэг»; Cyrillic is fine, the user said 2026-11-08) |
 | Bit | Бит |
 | Binary | Хоёртын тоолол |
 | Boolean algebra | Булийн алгебр |

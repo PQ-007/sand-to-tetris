@@ -63,3 +63,31 @@ export function fieldsOf(word: number): Field[] {
 export function bits(f: Field): string {
   return f.value.toString(2).padStart(f.width, "0");
 }
+
+/** Fields an operand fills (registers, numbers); the rest come from the
+ * mnemonic (group, ALU control, condition…). */
+const DATA = new Set(["rd", "rs", "ra", "rb", "imm", "off", "amount"]);
+
+/** An instruction's parts: the mnemonic, then each operand, with brackets
+ * and `+` dropped: "LOAD r2, [r1 + 3]" → LOAD, r2, r1, 3. */
+export function tokensOf(asm: string): string[] {
+  const [mnemonic = "", ...rest] = asm.trim().split(/\s+/);
+  const ops = rest
+    .join(" ")
+    .split(/[,[\]+]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return mnemonic ? [mnemonic, ...ops] : [];
+}
+
+/** Which field each part fills: the mnemonic the group (field 0), the
+ * operands the data fields in order. Pairs of [token, field] indexes. */
+export function links(fields: Field[], tokens: string[]): [number, number][] {
+  const out: [number, number][] = tokens.length ? [[0, 0]] : [];
+  const data = fields
+    .map((f, i) => (DATA.has(f.name) ? i : -1))
+    .filter((i) => i >= 0);
+  for (let i = 1; i < tokens.length && i - 1 < data.length; i++)
+    out.push([i, data[i - 1] ?? 0]);
+  return out;
+}

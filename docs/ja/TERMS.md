@@ -6,11 +6,11 @@ names (NOT, NAND, MUX16, RAM8, …), pin names (a, sel, clk, …), mnemonics and
 code always stay in Latin letters. Course names stay as they are: Sand to
 Tetris, Bitfall, C Shard.
 
-Japanese is being translated in stages: the interface, demos, tools, levels
-and checker messages are done; the glossary, sources and chapters follow. Until
-a chapter or glossary entry exists in `docs/ja/`, the site shows the English
-original with a note (the content build checks every Japanese file that does
-exist as strictly as Mongolian).
+Japanese is complete (2026-11-08): the interface, demos, tools, levels,
+checker messages, glossary, sources, chapters and Programs pages are all in
+`docs/ja/` and `web/src/i18n/`. Like Mongolian, the content build now fails
+if any of them is missing, so new text needs its Japanese in the same change.
+Only the four workshop starters are still English (`ja: EN`).
 
 Style: plain polite form (です・ます) in the interface and chapters; hints and
 level goals may use the plain form (である・だ調, or the bare dictionary form
@@ -73,3 +73,8 @@ half-width space between Japanese and Latin words or numbers (「NAND ゲート�
 | Toolbox, canvas, workbench | ツールボックス、キャンバス、作業台 |
 | Side quest | サイドクエスト |
 | Tech tree, roadmap | テックツリー、ロードマップ |
+
+Glossary: definitions in the plain form (である調) or ending on a noun. A
+term that starts with a kanji needs a `reading:` in hiragana (a test checks),
+so a learner can find it by typing its reading (ろんり finds 論理ゲート);
+katakana and Latin terms need none.

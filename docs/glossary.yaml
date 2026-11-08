@@ -5,7 +5,7 @@
 - id: computer
   term: "Computer"
   short: "A machine that takes in information, stores it, transforms it by following a list of instructions, and gives back results."
-  long: "The computers in this course are [[general-purpose|general-purpose]] and [[programmable|program]], and they keep their program in [[memory]] like any other data (the [[stored-program|stored-program]] idea)."
+  long: "The computers in this course are [[general-purpose|general-purpose]] and [[programmable|program]]: a program is just numbers in a [[memory]], so a new one loads as easily as data. Most computers keep program and data in one memory (the [[stored-program|stored-program]] design); the one you build keeps its program in a separate ROM (a [[Harvard architecture|harvard-architecture]])."
   see: [program, stored-program]
 
 - id: input

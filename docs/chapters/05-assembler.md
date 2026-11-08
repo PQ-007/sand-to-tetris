@@ -74,7 +74,7 @@ A good assembler doesn't stop at the first mistake: it reports every line with a
 
 ## Where assemblers come from
 
-Writing programs as numbers lasted only a few years. In 1947 Kathleen Booth described a "contracted notation" for the ARC2 computer at Birkbeck that wrote instructions with short symbols instead of binary; it is often called the first assembly language, though that name came later and is debated[@booth-contracted-notation]. In May 1949 David Wheeler wrote the "initial orders" for the EDSAC at Cambridge: a few dozen words that read a program punched on paper tape with letter mnemonics and put it into memory. It is often called the first assembler, again a claim about firsts that is debated, and a second version that September also adjusted addresses as it loaded[@edsac-initial-orders]. Every assembler since does the same job: names in, numbers out.
+Writing programs as numbers lasted only a few years. In 1947 Kathleen Booth described a "contracted notation" for the ARC2 computer at Birkbeck that wrote instructions with short symbols instead of binary; it is often called the first assembly language, though that name came later and is debated[@booth-contracted-notation]. In May 1949 David Wheeler wrote the "initial orders" for the EDSAC at Cambridge: a few dozen words that read a program punched on paper tape with letter mnemonics and put it into memory. It is often called the first assembler, again a claim about firsts that is debated, and a second version later that year also adjusted addresses as it loaded[@edsac-initial-orders]. Every assembler since does the same job: names in, numbers out.
 
 ## Running your programs
 

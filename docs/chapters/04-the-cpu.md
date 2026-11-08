@@ -21,7 +21,7 @@ loop:   ADD  r0, r0, r1   ; sum = sum + i
 done:   JMP  done         ; stop: r0 = 55
 ```
 
-The full list of instructions, exactly how each is written in bits and what it does, is the **[[instruction set|instruction-set]]**. It's a contract: the hardware promises to do what it says, and every program from here to Tetris is written in it. That's why we designed ours together, one decision at a time. It's written out in full in `docs/ISA.md`.
+The full list of instructions, exactly how each is written in bits and what it does, is the **[[instruction set|instruction-set]]**. It's a contract: the hardware promises to do what it says, and every program from here to Bitfall is written in it. That's why we designed ours together, one decision at a time. It's written out in full in `docs/ISA.md`.
 
 ## The decisions we made
 
@@ -75,7 +75,7 @@ It is ordinary combinational logic, built from gates you already have. The handi
 The rest of the CPU is the **[[datapath]]**: the parts that hold and move the data.
 
 - The **[[register file|register-file]]** holds r0 to r7. It reads two registers at once (for `ADD r3, r1, r2` the ALU needs r1 and r2 together) and writes one on the clock edge. It's eight Registers, a DMUX8WAY and two MUX8WAY16s.
-- The **[[barrel shifter|barrel-shifter]]** shifts a word by any amount from 0 to 15 in one step. It has four stages that shift by 1, 2, 4 and 8, each either on or off: shifting by 5 is stages 1 and 3. Each stage is one MUX16, and the shifting itself is only wiring.
+- The **[[barrel shifter|barrel-shifter]]** shifts a word by any amount from 0 to 15 in one step. It has four stages that shift by 1, 2, 4 and 8, each either on or off: shifting by 5 is stages 1 and 3. Each stage is one MUX16, and the shifting itself is only wiring. There's one chain of stages for each direction, and a last MUX16 picks the left or the right result.
 - Your ALU, a MUX16 that picks its second input, a MUX8WAY16 that picks the result to write, three Bits for the flags, an adder for jump targets (PC + offset), and your program counter.
 
 **[Build the register file →](#/play/regfile)** · **[Build the barrel shifter →](#/play/shifter)** · **[Build the CPU →](#/play/cpu)**
@@ -106,7 +106,7 @@ On the screen, row y is the 8 words starting at 0x4000 + 8y, and the leftmost pi
 
 ## Fast models for the CPU
 
-Tetris will need hundreds of thousands of instructions every second, far more than a simulation of every gate can manage. So the CPU and the memory map get fast models, like the RAMs in Chapter 3. Once your CPU passes, it can be compared with the fast model on 10,000 random clock cycles; if they agree on every cycle, you can switch it on the level map and your computer runs at full speed. The checks already use the fast models for memory parts, because a RAM16K built from gates is millions of gates.
+Bitfall, the game at the end of the course, will need hundreds of thousands of instructions every second, far more than a simulation of every gate can manage. So the CPU and the memory map get fast models, like the RAMs in Chapter 3. Once your CPU passes, it can be compared with the fast model on 10,000 random clock cycles; if they agree on every cycle, you can switch it on the level map and your computer runs at full speed. The checks already use the fast models for memory parts, because a RAM16K built from gates is millions of gates.
 
 <aside class="summary">
 
