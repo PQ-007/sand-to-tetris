@@ -338,10 +338,10 @@ body[data-page="home"] #app {
   max-width: 76rem;
 }
 
-/* Wide, with little side padding: three columns (term, definition,
-   picture) share the width. */
+/* As wide as the home page, with little side padding: three columns
+   (term, definition, picture) share the width. */
 body[data-page="glossary"] #app {
-  max-width: 92rem;
+  max-width: 76rem;
   padding-inline: 1.25rem;
 }
 
