@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
-import { exprText, tokenLabel, treeLines } from "../src/demos/compile";
+import {
+  exprText,
+  tokenLabel,
+  treeLayout,
+  treeLines,
+} from "../src/demos/compile";
 import type { LangProgram, LangToken } from "../src/sim/types";
 import * as wasm from "../src/sim/pkg/s2t_wasm.js";
 
@@ -37,6 +42,36 @@ describe("compiler demo", () => {
       "  return",
       "    x",
     ]);
+  });
+
+  it("lays the tree out: children a row below, parents centred, no overlaps", () => {
+    const src =
+      "var squares: [int; 5];\nfn main() { for i in 0..5 { squares[i] = i * i; } }";
+    const { nodes, edges, width, height } = treeLayout(treeLines(tree(src)));
+    for (const [p, c] of edges) {
+      expect(nodes[c]!.y).toBeGreaterThan(nodes[p]!.y);
+      expect(nodes[c]!.depth).toBe(nodes[p]!.depth + 1);
+    }
+    // A parent sits over the middle of its children.
+    const kids = (i: number) =>
+      edges.filter(([p]) => p === i).map(([, c]) => nodes[c]!);
+    nodes.forEach((n, i) => {
+      const k = kids(i);
+      if (k.length)
+        expect(n.x).toBeCloseTo(
+          Math.max((k[0]!.x + k[k.length - 1]!.x) / 2, n.w / 2 + 2),
+        );
+    });
+    // Boxes in one row never overlap, and all fit the drawing.
+    for (const a of nodes)
+      for (const b of nodes)
+        if (a !== b && a.depth === b.depth)
+          expect(Math.abs(a.x - b.x)).toBeGreaterThanOrEqual((a.w + b.w) / 2);
+    for (const n of nodes) {
+      expect(n.x - n.w / 2).toBeGreaterThanOrEqual(0);
+      expect(n.x + n.w / 2).toBeLessThanOrEqual(width);
+      expect(n.y).toBeLessThan(height);
+    }
   });
 
   it("outlines every kind of statement and declaration", () => {

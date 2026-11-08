@@ -1,8 +1,8 @@
-import { tokenLabel, treeLines } from "../demos/compile";
+import { tokenLabel, treeLayout, treeLines } from "../demos/compile";
 import { t, type Key } from "../i18n";
 import { langErrorText } from "../messages";
 import { langCompile, langStages, loadCore } from "../sim/core";
-import { chips, Demo, figcaption, sheet } from "./kit";
+import { chips, Demo, figcaption, sheet, svg } from "./kit";
 
 const CSS = sheet(`
   textarea { width: 100%; box-sizing: border-box; min-height: 7.5rem; resize: vertical;
@@ -20,6 +20,15 @@ const CSS = sheet(`
   pre { margin: 0; padding: 0.5rem 0.65rem; max-height: 20rem; overflow: auto; font: 0.8125rem/1.45 var(--mono);
     border: 1px solid var(--border); border-radius: 3px; background: var(--surface-2); white-space: pre; }
   .err { color: var(--error); margin: 0.75rem 0 0; }
+  /* The syntax tree, drawn: boxes for nodes, lines down to their parts. */
+  section:has(> .tree) { grid-column: 1 / -1; }
+  .tree { max-height: 22rem; overflow: auto; padding: 0.5rem; border: 1px solid var(--border); border-radius: 3px; background: var(--surface-2); }
+  .tree svg { max-width: none; font: 12px var(--mono); }
+  .tree .edge { stroke: var(--faint); stroke-width: 1; fill: none; }
+  .tree rect { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1; }
+  .tree .op rect { fill: var(--text); stroke: var(--text); }
+  .tree text { fill: var(--text); }
+  .tree .op text { fill: var(--bg); font-weight: 600; }
 `);
 
 const EXAMPLES: Record<string, string> = {
@@ -112,11 +121,48 @@ export class CompileDemo extends Demo {
     out.append(cols);
     const tree = langStages.parse(tokens.ok);
     if ("error" in tree) return fail(tree.error);
-    const pre = document.createElement("pre");
-    pre.textContent = treeLines(tree.ok)
-      .map((l) => "  ".repeat(l.depth) + l.text)
-      .join("\n");
-    section(t("cmp.tree"), pre);
+    const lines = treeLines(tree.ok);
+    const layout = treeLayout(lines);
+    const box = document.createElement("div");
+    box.className = "tree";
+    const pic = svg("svg", {
+      viewBox: `0 0 ${layout.width} ${layout.height}`,
+      role: "img",
+      "aria-label": lines.map((l) => l.text).join(", "),
+      style: `width: ${layout.width}px`,
+    });
+    for (const [a, b] of layout.edges) {
+      const p = layout.nodes[a];
+      const c = layout.nodes[b];
+      if (p && c)
+        svg(
+          "path",
+          {
+            d: `M${p.x},${p.y + 12} V${(p.y + c.y) / 2} H${c.x} V${c.y - 12}`,
+            class: "edge",
+          },
+          pic,
+        );
+    }
+    for (const n of layout.nodes) {
+      // Operators (one symbol or word with parts below) stand out in ink.
+      const op = /^([-+*/%&|^~<>=!]+|and|or|not)$/.test(n.text);
+      const g = svg("g", op ? { class: "op" } : {}, pic);
+      svg(
+        "rect",
+        {
+          x: n.x - n.w / 2,
+          y: n.y - 12,
+          width: n.w,
+          height: 24,
+          rx: op ? 12 : 4,
+        },
+        g,
+      );
+      svg("text", { x: n.x, y: n.y + 4, "text-anchor": "middle" }, g, n.text);
+    }
+    box.append(pic);
+    section(t("cmp.tree"), box);
     const compiled = langCompile(source);
     const first = compiled.errors[0];
     if (first) return fail(first);

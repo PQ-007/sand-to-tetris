@@ -19,10 +19,22 @@ const CSS = sheet(`
   .code td { font-family: var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
   .code td.n { color: var(--muted); width: 2.5rem; }
   tr[aria-current="step"] { background: color-mix(in srgb, var(--accent) 18%, transparent); font-weight: 600; }
-  .stack td.v { font-family: var(--mono); }
-  .stack tr.f0 td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
-  .stack tr.f1 td:first-child { box-shadow: inset 3px 0 0 var(--copper); }
-  .stack tr.top td { font-weight: 600; }
+  /* The stack, drawn as a pile of words, top first. A frame's words share
+     a thick left edge (ink, then grey, alternating per call). */
+  .stackviz h4 { margin: 0 0 0.25rem; font-size: 1rem; }
+  .sp { font: 600 0.75rem var(--mono); color: var(--muted); margin: 0 0 0.25rem; }
+  .pile { display: flex; flex-direction: column; }
+  .word { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) auto; gap: 0.75rem; align-items: center;
+    padding: 0.35rem 0.75rem; border: 1px solid var(--border-strong); border-top-width: 0; border-left-width: 5px; background: var(--surface); }
+  .word:first-child { border-top-width: 1px; border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+  .word:last-child { border-radius: 0 0 var(--radius-sm) var(--radius-sm); }
+  .word.f0 { border-left-color: var(--text); }
+  .word.f1 { border-left-color: var(--faint); }
+  .word.top { background: var(--surface-2); }
+  .word b { font: 600 1.125rem var(--mono); font-variant-numeric: tabular-nums; }
+  .word .what { font-size: 0.875rem; }
+  .word .addr { font: 0.75rem var(--mono); color: var(--muted); }
+  .empty { padding: 0.75rem; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); color: var(--muted); text-align: center; }
   .muted { color: var(--muted); }
 `);
 
@@ -164,32 +176,45 @@ export class StackDemo extends Demo {
       row.insertCell().textContent = text;
     });
 
-    const stack = document.createElement("table");
-    stack.className = "stack";
-    stack.innerHTML = `<caption>${t("stk.stack")}</caption><tr><th>${t("stk.addr")}</th><th>${t("stk.value")}</th><th>${t("stk.what")}</th></tr>`;
-    // Alternate a stripe per call, so frames stand apart (the text says
-    // which function too).
-    s.rows.forEach((r, i) => {
-      const row = stack.insertRow();
-      const stripe = r.depth === undefined ? "" : `f${r.depth % 2}`;
-      row.className = `${stripe}${i === 0 ? " top" : ""}`;
-      row.insertCell().textContent = `0x${r.addr.toString(16)}`;
-      const v = row.insertCell();
-      v.className = "v";
-      v.textContent =
-        r.role === "return"
-          ? "↩"
-          : r.role === "saved-fp"
-            ? `0x${r.value.toString(16)}`
-            : String(signed(r.value));
-      row.insertCell().textContent = this.what(r);
-    });
-    if (!s.rows.length) {
-      const row = stack.insertRow();
-      const c = row.insertCell();
-      c.colSpan = 3;
-      c.className = "muted";
-      c.textContent = t("stk.empty");
+    const stack = document.createElement("div");
+    stack.className = "stackviz";
+    const title = document.createElement("h4");
+    title.textContent = t("stk.stack");
+    stack.append(title);
+    if (s.rows.length) {
+      const sp = document.createElement("p");
+      sp.className = "sp";
+      sp.textContent = `SP → 0x${s.rows[0]?.addr.toString(16) ?? ""}`;
+      const pile = document.createElement("div");
+      pile.className = "pile";
+      pile.setAttribute("role", "list");
+      s.rows.forEach((r, i) => {
+        const word = document.createElement("div");
+        const stripe = r.depth === undefined ? "" : `f${r.depth % 2}`;
+        word.className = `word ${stripe}${i === 0 ? " top" : ""}`;
+        word.setAttribute("role", "listitem");
+        const v = document.createElement("b");
+        v.textContent =
+          r.role === "return"
+            ? "↩"
+            : r.role === "saved-fp"
+              ? `0x${r.value.toString(16)}`
+              : String(signed(r.value));
+        const what = document.createElement("span");
+        what.className = "what";
+        what.textContent = this.what(r);
+        const addr = document.createElement("span");
+        addr.className = "addr";
+        addr.textContent = `0x${r.addr.toString(16)}`;
+        word.append(v, what, addr);
+        pile.append(word);
+      });
+      stack.append(sp, pile);
+    } else {
+      const empty = document.createElement("p");
+      empty.className = "empty";
+      empty.textContent = t("stk.empty");
+      stack.append(empty);
     }
     this.cols.replaceChildren(code, stack);
 
