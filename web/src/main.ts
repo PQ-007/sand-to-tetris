@@ -74,8 +74,18 @@ function show(): void {
             ? "programs"
             : "learn";
   document.querySelectorAll<HTMLElement>("[data-nav]").forEach((a) => {
-    if (a.dataset.nav === section) a.setAttribute("aria-current", "page");
-    else a.removeAttribute("aria-current");
+    if (a.dataset.nav === section) {
+      a.setAttribute("aria-current", "page");
+      // When a narrow header makes the menu scroll, keep this page's link
+      // in view.
+      const nav = a.parentElement;
+      if (nav && nav.scrollWidth > nav.clientWidth) {
+        const left = a.offsetLeft - nav.offsetLeft;
+        if (left + a.offsetWidth > nav.scrollLeft + nav.clientWidth)
+          nav.scrollLeft = left + a.offsetWidth - nav.clientWidth;
+        else if (left < nav.scrollLeft) nav.scrollLeft = left;
+      }
+    } else a.removeAttribute("aria-current");
   });
   if (route.page === "chapter" || (route.page === "programs" && route.program))
     trackSections(app);
