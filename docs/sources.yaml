@@ -108,8 +108,8 @@
 - id: leibniz-stepped-reckoner
   claim: >-
     Gottfried Leibniz began designing his stepped reckoner in 1672; it could
-    multiply and divide, not just add. Working machines were built in 1694 and
-    1706.
+    multiply and divide, not just add. He completed a first working machine
+    in 1694.
   sources:
     - title: "Stepped reckoner (Wikipedia)"
       url: https://en.wikipedia.org/wiki/Stepped_reckoner
@@ -533,13 +533,13 @@
       url: https://en.wikipedia.org/wiki/Harvard_Mark_I
     - title: "Modified Harvard architecture (Wikipedia)"
       url: https://en.wikipedia.org/wiki/Modified_Harvard_architecture
-  checked: web search, 2026-11-01
+  checked: web search, 2026-11-01; the article's abstract read, 2026-11-08
   uncertain: >-
-    Where the name comes from is disputed: an article in the IEEE Annals of
-    the History of Computing, "The Myth of the Harvard Architecture", argues
-    the term was coined decades later, in microcontroller design, and doesn't
-    come from work at Harvard. (Reported by Wikipedia; the article itself was
-    not checked.)
+    Where the name comes from is disputed: Richard Pawson's article "The Myth
+    of the Harvard Architecture" (IEEE Annals of the History of Computing,
+    2022) argues the term was coined decades later, in microcontroller
+    design, and was applied to the Harvard machines afterwards. (Its abstract
+    was read; the full text is behind a paywall.)
 
 - id: risc
   claim: >-
@@ -599,8 +599,9 @@
   claim: >-
     In May 1949 David Wheeler wrote the "initial orders" for the EDSAC at
     Cambridge: a few dozen words that read a program from paper tape written
-    with letter mnemonics and put it in memory. Initial Orders 2 (September
-    1949) added a relocating loader in 41 instructions.
+    with letter mnemonics and put it in memory. Initial Orders 2, in place
+    later in 1949 (sources give August, September or October), combined an
+    assembler and a relocating loader in 41 instructions.
   sources:
     - title: "EDSAC (Wikipedia)"
       url: https://en.wikipedia.org/wiki/EDSAC
