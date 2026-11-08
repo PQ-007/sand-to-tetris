@@ -435,16 +435,17 @@ function junction(w: number, note?: "flow" | "block" | "region"): string {
 function words(
   at?: number,
   values = ["0012", "00ff", "7a31", "0000", "1c04"],
+  x = 68,
 ): string {
   let out = "";
   values.forEach((v, i) => {
     const y = 8 + i * 15;
-    out += text(62, y + 10, String(i), "e");
-    out += rect(68, y, 52, 15, i === at ? "g" : "f");
-    out += text(94, y + 10, v, "m", "tk");
+    out += text(x - 6, y + 10, String(i), "e");
+    out += rect(x, y, 52, 15, i === at ? "g" : "f");
+    out += text(x + 26, y + 10, v, "m", "tk");
   });
   if (at !== undefined)
-    out += arrow([20, 8 + at * 15 + 7.5], [52, 8 + at * 15 + 7.5]);
+    out += arrow([20, 8 + at * 15 + 7.5], [x - 16, 8 + at * 15 + 7.5]);
   return out;
 }
 
@@ -739,7 +740,22 @@ const PICTURES: Record<string, () => string> = {
     text(54, 48, "G", "e") +
     text(100, 16, "D", "s") +
     text(100, 80, "S", "s"),
-  semiconductor: () => lattice(),
+  semiconductor: () =>
+    line(
+      [
+        [14, 50],
+        [146, 50],
+      ],
+      "m",
+    ) +
+    rect(14, 44, 30, 12, "g2") +
+    rect(116, 44, 30, 12, "k") +
+    rect(62, 40, 36, 20, "f", 3) +
+    text(29, 34, "SiO₂") +
+    text(80, 53.5, "Si Ge", "m", "tk") +
+    text(131, 34, "Cu") +
+    arrow([40, 76], [120, 76]) +
+    text(80, 70, "I", "m", "tk"),
   silicon: () => lattice(),
   germanium: () => lattice().replace(/>Si</g, ">Ge<"),
   "silicon-dioxide": () =>
@@ -864,8 +880,26 @@ const PICTURES: Record<string, () => string> = {
     ]) +
     arrow([80, 22], [80, 8]) +
     path("M94,16 A14,5 0 1 1 66,16", "m"),
-  doping: () => lattice({ label: "P", extra: "electron" }),
-  dopant: () => lattice({ label: "B", extra: "hole" }),
+  doping: () =>
+    lattice({ label: "P", extra: "electron" }) +
+    circle(150, 10, 6, "f2") +
+    text(150, 12.5, "P", "m", "tk sm") +
+    arrow([144, 14], [89, 39], "d"),
+  dopant: () => {
+    const atom = (x: number, label: string, outer: number) => {
+      let out = circle(x, 42, 12, "f2") + text(x, 46, label, "m", "tk");
+      for (let i = 0; i < outer; i++) {
+        const [dx, dy] = around(x, 42, 21, i, outer);
+        out += dot(dx, dy);
+      }
+      return (
+        out +
+        circle(x, 42, 21, "m") +
+        text(x, 82, label === "P" ? "n" : "p", "m", "tk")
+      );
+    };
+    return atom(48, "P", 5) + atom(112, "B", 3);
+  },
   "n-type": () => lattice({ label: "P", extra: "electron" }),
   "p-type": () => lattice({ label: "B", extra: "hole" }),
   hole: () =>
@@ -1062,7 +1096,85 @@ const PICTURES: Record<string, () => string> = {
       [144, 44],
     ]) +
     text(122, 66, "≥1"),
+  input: () =>
+    rect(18, 30, 26, 26, "f", 4) +
+    text(31, 47, "A", "m", "tk") +
+    arrow([50, 43], [80, 43]) +
+    box(84, 26, 56, 34, "CPU"),
+  output: () => {
+    let out = box(14, 26, 50, 34, "CPU") + arrow([68, 43], [92, 43]);
+    out += rect(96, 22, 52, 38, "f", 3);
+    for (const [x, y] of [
+      [104, 30],
+      [110, 30],
+      [116, 36],
+      [122, 42],
+      [128, 48],
+      [134, 48],
+    ] as Pt[])
+      out += rect(x, y, 5, 5, "k");
+    return (
+      out +
+      line([
+        [114, 60],
+        [114, 70],
+      ]) +
+      line([
+        [104, 70],
+        [140, 70],
+      ])
+    );
+  },
+  program: () =>
+    ["SET r1, 5", "ADD r1, r1, r2", "SUBI r1, 1", "JNZ loop"]
+      .map(
+        (l, i) =>
+          text(26, 20 + i * 17, String(i), "e", "sm") +
+          text(34, 20 + i * 17, l, "s", "tk code"),
+      )
+      .join(""),
+  algorithm: () =>
+    rect(58, 4, 44, 14, "f", 7) +
+    arrow([80, 18], [80, 26]) +
+    rect(58, 26, 44, 16, "f", 2) +
+    arrow([80, 42], [80, 50]) +
+    path("M80,50 L98,62 L80,74 L62,62 Z", "f") +
+    text(80, 65, "?", "m", "tk") +
+    line([
+      [98, 62],
+      [124, 62],
+      [124, 34],
+    ]) +
+    arrow([124, 34], [102, 34]) +
+    arrow([80, 74], [80, 86]) +
+    text(128, 74, "1", "s", "sm") +
+    text(86, 86, "0", "s", "sm"),
+  "general-purpose": () =>
+    ["A", "B", "C"]
+      .map(
+        (c, i) =>
+          box(10, 8 + i * 27, 30, 20, c) +
+          arrow([40, 18 + i * 27], [92, 45], "m"),
+      )
+      .join("") + box(96, 30, 52, 30, "CPU"),
+  "boolean-algebra": () =>
+    text(80, 32, "¬(a ∧ b)", "m", "big") +
+    text(80, 52, "=", "m", "tk") +
+    text(80, 76, "¬a ∨ ¬b", "m", "big"),
   // ---- Chapter 1 --------------------------------------------------------
+  "fast-model": () => {
+    let out = rect(8, 18, 58, 54, "d", 4);
+    out +=
+      gate(26, 34, "and", true, 0.4).svg +
+      gate(48, 34, "or", false, 0.4).svg +
+      gate(37, 56, "and", false, 0.4).svg;
+    return (
+      out +
+      text(80, 49, "≡", "m", "big") +
+      rect(96, 18, 56, 54, "g", 4) +
+      text(124, 49, "f(x)", "m", "tk")
+    );
+  },
   "truth-table": () => {
     const rows = ["0 0  0", "0 1  0", "1 0  0", "1 1  1"];
     let out = text(66, 18, "a b", "m", "tk") + text(104, 18, "out", "m", "tk");
@@ -1624,12 +1736,77 @@ const PICTURES: Record<string, () => string> = {
   // ---- Chapter 4 --------------------------------------------------------
   instruction: () => fields(),
   "machine-code": () =>
-    ["1a42", "0f07", "c3f1", "7400"]
+    ["4405", "04a0", "4701", "cbfd"]
       .map((w, i) => text(80, 20 + i * 18, w, "m", "tk"))
       .join(""),
-  "assembly-language": () => code(["SET r1, 5", "ADD r1, r1, r2", "JNZ loop"]),
+  "assembly-language": () =>
+    code(["SET r1, 5", "ADD r1, r1, r2", "SUBI r1, 1", "JNZ loop"]),
   "instruction-cycle": () =>
     cycle([word("fetch"), word("decode"), word("execute")]),
+  "instruction-set": () =>
+    [
+      ["000", "ADD …"],
+      ["100", "LOAD …"],
+      ["101", "STORE …"],
+      ["110", "JMP …"],
+    ]
+      .map(
+        ([b, m], i) =>
+          text(56, 22 + i * 17, b ?? "", "e", "tk") +
+          text(70, 22 + i * 17, m ?? "", "s", "code"),
+      )
+      .join("") +
+    line(
+      [
+        [62, 8],
+        [62, 80],
+      ],
+      "m",
+    ),
+  "control-unit": () =>
+    text(14, 48, "instr", "s", "sm") +
+    arrow([40, 45], [56, 45]) +
+    box(56, 24, 46, 42, word("decode"), "g") +
+    ["ALU", "rd", "PC", "RAM"]
+      .map(
+        (l, i) =>
+          arrow([102, 30 + i * 10], [128, 18 + i * 18]) +
+          text(132, 21 + i * 18, l, "s", "sm"),
+      )
+      .join(""),
+  datapath: () =>
+    box(10, 26, 40, 38, "r0–r7") +
+    line([
+      [50, 36],
+      [72, 36],
+    ]) +
+    line([
+      [50, 54],
+      [72, 54],
+    ]) +
+    path("M72,22 L112,34 L112,56 L72,68 L72,50 L78,45 L72,40 Z", "f") +
+    text(92, 48, "ALU", "m", "tk sm") +
+    line([
+      [112, 45],
+      [140, 45],
+      [140, 82],
+      [30, 82],
+    ]) +
+    arrow([30, 82], [30, 64]),
+  risc: () => {
+    let out = "";
+    ["ADD", "LOAD", "SUB", "STORE"].forEach((m, i) => {
+      out +=
+        rect(10, 8 + i * 19, 72, 15, "f") +
+        text(46, 18.5 + i * 19, m, "m", "tk sm");
+      if (m === "LOAD" || m === "STORE")
+        out += arrow(
+          [82, 15.5 + i * 19],
+          [112, 15.5 + i * 19 + (i === 1 ? 14 : -8)],
+        );
+    });
+    return out + box(114, 22, 38, 44, "RAM");
+  },
   "register-file": () => {
     let out = "";
     for (let i = 0; i < 8; i++)
@@ -1665,15 +1842,61 @@ const PICTURES: Record<string, () => string> = {
     text(80, 22, "r7", "m", "tk") +
     arrow([30, 43], [54, 43]),
   // ---- Chapter 5 --------------------------------------------------------
+  "memory-mapped-io": () => {
+    let out = rect(8, 40, 64, 18, "f") + text(40, 52, "RAM", "m", "tk");
+    out +=
+      rect(72, 40, 34, 18, "g") +
+      rect(106, 40, 14, 18, "k") +
+      rect(120, 40, 32, 18, "", 0);
+    out +=
+      line(
+        [
+          [120, 40],
+          [152, 58],
+        ],
+        "o",
+      ) +
+      line(
+        [
+          [136, 40],
+          [152, 50],
+        ],
+        "o",
+      );
+    out +=
+      text(8, 72, "0000", "s", "sm") +
+      text(72, 72, "4000", "s", "sm") +
+      text(106, 82, "6000", "s", "sm");
+    out +=
+      rect(78, 14, 22, 16, "f", 2) +
+      line(
+        [
+          [89, 30],
+          [89, 40],
+        ],
+        "m",
+      );
+    out +=
+      rect(107, 16, 12, 12, "f", 2) +
+      text(113, 25, "A", "m", "sm") +
+      line(
+        [
+          [113, 28],
+          [113, 40],
+        ],
+        "m",
+      );
+    return out;
+  },
   assembler: () =>
-    rect(10, 22, 62, 40, "f", 3) +
+    rect(8, 22, 66, 40, "f", 3) +
     text(41, 39, "ADD", "m", "tk") +
-    text(41, 51, "r1,r2", "m", "sm") +
-    arrow([76, 42], [96, 42]) +
+    text(41, 51, "r1,r1,r2", "m", "sm") +
+    arrow([78, 42], [96, 42]) +
     rect(100, 22, 50, 40, "f", 3) +
-    text(125, 46, "1a42", "m", "tk"),
+    text(125, 46, "04a0", "m", "tk"),
   label: () =>
-    code(["loop:", "  SUB r1, 1", "  JNZ loop"]) +
+    code(["loop:", "  SUBI r1, 1", "  JNZ loop"]) +
     line([
       [86, 47],
       [112, 47],
@@ -1699,6 +1922,27 @@ const PICTURES: Record<string, () => string> = {
       ],
       "m",
     ),
+  "pseudo-instruction": () =>
+    text(14, 30, "HALT", "s", "tk code") +
+    arrow([54, 27], [74, 27]) +
+    text(80, 30, "JMP 0", "s", "code") +
+    text(14, 62, "INC r1", "s", "tk code") +
+    arrow([54, 59], [74, 59]) +
+    text(80, 62, "ADDI r1, 1", "s", "code"),
+  directive: () =>
+    text(12, 26, ".equ MAX 10", "s", "tk code") +
+    arrow([76, 23], [96, 23]) +
+    text(100, 26, "MAX = 10", "s", "sm") +
+    text(12, 58, ".word 7", "s", "tk code") +
+    arrow([76, 55], [96, 55]) +
+    rect(100, 47, 40, 15, "f") +
+    text(120, 58, "0007", "m", "tk"),
+  loader: () =>
+    rect(10, 18, 48, 54, "g2", 3) +
+    text(34, 40, ".data", "m", "tk code") +
+    text(34, 56, "3, 7", "m", "sm") +
+    arrow([62, 45], [84, 45], "d") +
+    words(undefined, ["0003", "0007", "0000", "0000", "0000"], 100),
   "two-pass-assembler": () =>
     code(["  JMP end", "  …", "end:"]) +
     arrow([140, 12], [140, 70]) +
@@ -1721,20 +1965,24 @@ const PICTURES: Record<string, () => string> = {
     stack(["5"], 80, 30) +
     text(130, 64, "2 + 3", "m"),
   "stack-frame": () =>
-    stack(["local", "ret", "arg"], 50, 56) +
+    stack(["local", "FP", "ret", "arg"], 50, 56) +
     line([
-      [116, 39],
-      [124, 39],
+      [116, 24],
+      [124, 24],
       [124, 84],
       [116, 84],
     ]) +
-    text(130, 64, "f", "s", "tk"),
+    text(130, 58, "f", "s", "tk"),
   "virtual-machine": () =>
     code(["push 2", "push 3", "add"]) +
     arrow([116, 45], [136, 45]) +
     text(148, 48, "5", "m", "big"),
   interpreter: () =>
     code(["push 2", "push 3", "add"]) + path("M8,16 L14,20 L8,24", "k"),
+  "calling-convention": () =>
+    stack(["local 0", "local 1", "FP'", "ret", "arg 0"], 70, 56) +
+    arrow([34, 16.5], [64, 16.5]) +
+    text(30, 19.5, "FP", "e", "tk"),
   recursion: () => {
     let out = "";
     for (let i = 0; i < 3; i++)
@@ -1771,6 +2019,15 @@ const PICTURES: Record<string, () => string> = {
       )
       .join(""),
   "high-level-language": () => code(["while (x < 10) {", "  x = x + 1;", "}"]),
+  "type-checker": () =>
+    text(10, 32, "var x: int = 7;", "s", "tk code") +
+    text(150, 32, "✓", "e", "tk") +
+    text(10, 62, "var y: int = true;", "s", "tk code") +
+    text(150, 62, "✗", "e", "tk") +
+    line([
+      [73, 66],
+      [92, 66],
+    ]),
   "short-circuit-evaluation": () =>
     text(40, 42, "a", "m", "big") +
     text(80, 42, "and", "m", "tk") +
@@ -1995,21 +2252,23 @@ function adder(full: boolean): string {
 
 /** An instruction word cut into fields. */
 function fields(): string {
+  // The ALU format (docs/ISA.md): 000 | rd | ra | rb | f₁ f₀ invb cin.
   const parts: [string, number][] = [
-    ["op", 4],
+    ["000", 3],
     ["rd", 3],
     ["ra", 3],
-    ["…", 6],
+    ["rb", 3],
+    ["f", 4],
   ];
   let x = 16;
   let out = text(16, 28, "15", "s", "sm") + text(144, 28, "0", "e", "sm");
   for (const [name, w] of parts) {
     out +=
-      rect(x, 34, w * 8, 24, name === "op" ? "g" : "f") +
+      rect(x, 34, w * 8, 24, name === "000" ? "g" : "f") +
       text(x + w * 4, 50, name, "m", "tk");
     x += w * 8;
   }
-  return out;
+  return out + text(80, 76, "ADD r1, r1, r2", "m", "code");
 }
 
 /** Lines of code in mono, left-aligned. */

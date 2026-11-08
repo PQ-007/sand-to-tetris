@@ -180,6 +180,19 @@ describe("pictures", () => {
     }
   });
 
+  it("cover every term, each with a picture of its own", () => {
+    for (const id of ids) expect(PICTURE_IDS, id).toContain(id);
+    const seen = new Map<string, string>();
+    for (const id of PICTURE_IDS) {
+      const svg = glossaryPicture(id);
+      expect(
+        seen.get(svg),
+        `${id} looks the same as ${seen.get(svg)}`,
+      ).toBeUndefined();
+      seen.set(svg, id);
+    }
+  });
+
   it("show their words in the learner's language", () => {
     const svg = glossaryPicture("switch", (w) => `«${w}»`);
     expect(svg).toContain("«on»");
