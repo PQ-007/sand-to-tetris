@@ -79,7 +79,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   // ---- p-n шилжилт ----
   "pn.caption": "p-n шилжилтийн дотор",
   "pn.captionHtml":
-    "p-төрлийн цахиур (зүүн) илүү <em>нүх</em>-тэй (+); n-төрөл (баруун) илүү <em>электрон</em>-той (−). Уулзсан газартаа тэд хоорондоо устаж, чөлөөт зөөгчгүй нимгэн <em>depletion region</em> үлдээнэ. Шилжилтийн хүчдэлийг өөрчилнө үү.",
+    "p-төрөл (<em>нүх</em>, +) ба n-төрөл (<em>электрон</em>, −) уулзсан газарт <em>depletion region</em> үүснэ. Хүчдэлийг өөрчил.",
   "pn.slider": "Шилжилтийн хүчдэл",
   "pn.voltage": "Хүчдэл",
   "pn.width": "Depletion region-ий өргөн",
@@ -106,7 +106,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   // ---- MOSFET ----
   "mos.caption": "MOSFET: хөдөлгөөнт хэсэггүй унтраалга",
   "mos.captionHtml":
-    "Шил шиг ислийн нимгэн үе gate-ийг цахиураас тусгаарлана. Gate дээрх хүчдэл зөөгчдийг гадаргуу руу татаж, source-ыг drain-тэй холбосон <em>суваг</em> үүсгэнэ. Gate-ийн хүчдэлийг чирнэ үү.",
+    "Gate дээрх хүчдэл source-оос drain хүртэл <em>суваг</em> нээнэ. Чирж үз.",
   "mos.type": "Транзисторын төрөл",
   "mos.nmos": "NMOS (n-суваг)",
   "mos.pmos": "PMOS (p-суваг)",
@@ -143,7 +143,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   // ---- шуугиантай гинж ----
   "noise.caption": "Аналог гулсалт ба дижитал сэргээлт",
   "noise.captionHtml":
-    "Бит шатуудын гинжээр явна. Шат бүр бага зэрэг санамсаргүй шуугиан нэмнэ. <em>Аналог</em> шат авсан хүчдэлээ тэр чигт нь дамжуулна. <em>Дижитал</em> шат эхлээд хүчдэлийг 0 эсвэл 1 рүү буцааж тааруулаад дараа нь дамжуулна.",
+    "Шат бүр шуугиан нэмнэ. <em>Аналог</em> шат түүнийг дамжуулна; <em>дижитал</em> шат 0 эсвэл 1 рүү буцааж тааруулна.",
   "noise.bit": "Илгээх бит",
   "noise.stages": "Шатууд",
   "noise.noise": "Шат бүрийн шуугиан",
@@ -153,7 +153,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   "noise.errors": "1,000 илгээлт дэх алдаа",
   "noise.whyTitle": "Дижитал яагаад ялдаг вэ: S муруй",
   "noise.whyHtml":
-    "Дижитал шатны <em>transfer curve</em> оролтын хүчдэлийг гаралтын хүчдэлд буулгана. Дунд хэсэгтээ эгц, төгсгөлдөө хавтгай тул бага зэрэг хазайсан 1 илүү цэвэр 1 болж гарна. <em>Noise margin</em> бол хүчинтэй гаралт хэр их шуугиан авч ч дараагийн шатанд зөв уншигдах хэмжээ.",
+    "Дунд нь эгц, төгсгөлдөө хавтгай: бага зэрэг хазайсан 1 цэвэр 1 болж гарна. <em>Noise margin</em> бол дохио хэр их хазайсан ч зөв уншигдах хэмжээ.",
   "noise.reads1": "1 гэж уншигдана",
   "noise.unreliable": "найдваргүй бүс",
   "noise.reads0": "0 гэж уншигдана",
@@ -173,7 +173,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   // ---- унтраалгын сүлжээ ----
   "net.caption": "Тооцоолдог унтраалгууд",
   "net.captionHtml":
-    "Хоёр унтраалгыг сэлгэ. <em>Цуваа</em> (нэг нь нөгөөгийнхөө араас) холбоход хоёулаа хаалттай үед л гүйдэл чийдэнд хүрнэ. <em>Зэрэгцээ</em> (хажуу хажуудаа) холбоход аль нэг нь хангалттай.",
+    "<em>Цуваа</em>: хоёр унтраалга хоёулаа хаагдах ёстой (БА). <em>Зэрэгцээ</em>: аль нэг нь хангалттай (ЭСВЭЛ).",
   "net.series": "Цуваа",
   "net.parallel": "Зэрэгцээ",
   "net.switch": "Унтраалга {name}: {state}",
@@ -195,7 +195,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   // ---- ripple carry ----
   "ripple.caption": "Дамжин урсах carry",
   "ripple.captionHtml":
-    'Багана бүр бүтэн нэмэгч. Хоёр бит нь тэнцүү багана гарах carry-гээ шууд мэднэ. Эс бөгөөс баруун талын баганаас ирэх carry-г хүлээх ёстой. <span class="muted">?</span> нь «хараахан тодорхойгүй» гэсэн үг.',
+    'Хоёр бит нь тэнцүү багана carry-гээ шууд мэднэ; бусад нь баруунаас ирэх carry-г хүлээнэ. <span class="muted">?</span> = хараахан тодорхойгүй.',
   "ripple.step": "Step",
   "ripple.play": "Тоглуулах",
   "ripple.reset": "Эхлүүлэх",
@@ -214,7 +214,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   // ---- latch ----
   "latch.caption": "Санаж үлддэг гогцоо",
   "latch.captionText":
-    "Тус бүрийн гаралт нөгөөдөө холбогдсон хоёр NOR gate. s эсвэл r-ийг 1 болгоод буцааж 0 болго: latch утгаа хадгална. Өөрчлөлт бүр гогцоог нэг gate-ийн саатлаар тойрно.",
+    "Бие биеэ тэжээдэг хоёр NOR gate: s эсвэл r-ийг 1, дараа нь 0 болгоход latch санаж үлдэнэ.",
   "latch.s": "s (тохируулах) = {v}",
   "latch.r": "r (арилгах) = {v}",
   "latch.release": "Хоёуланг зэрэг суллах",
@@ -238,7 +238,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   // ---- CPU ----
   "cpu.caption": "CPU, нэг удаад нэг заавар",
   "cpu.captionText":
-    "Бидний зохиосон CPU жижиг програм ажиллуулж байна. Step бүр PC дээрх зааврыг уншиж, decode хийж, нэг clock циклд гүйцэтгэнэ.",
+    "Бидний CPU програм ажиллуулж байна: Step бүр нэг clock циклд нэг заавар.",
   "cpu.program": "Програм",
   "cpu.sum": "10 + 9 + … + 1-ийн нийлбэр",
   "cpu.call": "Дуудах ба буцах",
@@ -294,7 +294,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
 
   "brow.caption": "Талбай бол тоо",
   "brow.captionText":
-    "Bitfall-ын талбайн мөр бүр 10 битийн тоо. Нүднүүд дээр дарж мөрүүдийг өөрчил: бүгд 1 (1023) мөр арилах ба target-тэй тэнцүү мөр ч урамшуулалтай арилна. Доор тоглоомын хэсгийн мөр сүүлийн мөрийн дагуу гулсана: хоёулаа 1-тэй газарт AND 0 биш тул хэсэг хаагдана.",
+    "Мөр бүр 10 битийн тоо. Нүдэн дээр дар: бүтэн мөр (1023) эсвэл target-тэй тэнцүү мөр арилна. Доор AND хэсгийг сүүлийн мөртэй шалгана.",
   "brow.target": "Target: {bits}",
   "brow.rowLabel": "{n}-р мөр",
   "brow.cellOn": "{row}-р мөр, {col}-р нүд: дүүрсэн",
@@ -310,7 +310,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
 
   "font.caption": "Фонт бол тоо",
   "font.captionText":
-    "OS-ын фонтын тэмдэгт бүр 3 × 5 пиксел бөгөөд нэг үгэнд хадгалагдана: 15 бит, дээд мөр нь эхэндээ. Пиксел дээр дарж (эсвэл Enter дарж) битийг нь сольж, үг хэрхэн өөрчлөгдөхийг хар.",
+    "Тэмдэгт бүр нэг үгэнд 3 × 5 пиксел. Пиксел дээр дарж битийг нь соль.",
   "font.try": "Турших",
   "font.char": "Тэмдэгт",
   "font.gridLabel": "Пикселүүд: {char}",
@@ -322,7 +322,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
 
   "cmp.caption": "Хөрвүүлэгч, үе шат бүрээр",
   "cmp.captionText":
-    "Програмыг засаад үе шат бүрийг хар: token-ууд, syntax tree (үйлдэл бүр ажиллах зүйлсийнхээ дээр) ба VM код. Алдаа гарвал түүнийг олсон үе шат мөрийн дугаартай нь харагдана.",
+    "Програмыг засаад үе шат бүрийг хар: token, syntax tree, VM код.",
   "cmp.try": "Турших",
   "cmp.ex.expr": "Үйлдлийн дараалал",
   "cmp.ex.if": "if ба дуудлага",
@@ -340,7 +340,7 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
 
   "stk.caption": "Stack machine, нэг удаад нэг команд",
   "stk.captionText":
-    "Програм сонгоод алхам алхмаар ажиллуул. Stack-ийг оройгоос нь харуулна; үг бүр юунд зориулагдсанаа хэлнэ: ажлын утга, хувьсагч эсвэл функцийн frame-ийн хэсэг.",
+    "Програмыг алхам алхмаар ажиллуулж, stack-ийг оройгоос нь хар.",
   "stk.program": "Програм",
   "stk.expr": "x = (3 + 4) × 2",
   "stk.call": "Дуудлага: area(5, 3)",
@@ -351,9 +351,6 @@ export const demosMn: Record<keyof typeof demosEn, Message> = {
   "stk.reset": "Эхлүүлэх",
   "stk.code": "VM код",
   "stk.stack": "Stack, оройгоос нь",
-  "stk.addr": "Хаяг",
-  "stk.value": "Утга",
-  "stk.what": "Юу вэ",
   "stk.operand": "ажлын утга ({func})",
   "stk.local": "local {index} ({func})",
   "stk.arg": "arg {index} ({func})",

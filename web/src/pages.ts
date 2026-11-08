@@ -79,6 +79,20 @@ function home(): string {
     </section>`;
 }
 
+/**
+ * The left column of a chapter or program page. On a wide screen it's a
+ * sidebar; below 1280px it folds into a "Course" bar above the article that
+ * names the current page and opens to the full list.
+ */
+function sideNav(
+  label: string,
+  title: string,
+  here: string,
+  items: string,
+): string {
+  return `<nav class="course-nav" aria-label="${esc(label)}"><details open data-collapse="1280"><summary class="side-title">${title}<span class="here"> · ${esc(here)}</span></summary><ol>${items}</ol></details></nav>`;
+}
+
 /** Every chapter, for the left column of a chapter page. */
 function courseNav(current: number): string {
   const ready = available();
@@ -89,7 +103,12 @@ function courseNav(current: number): string {
     const here = ch.number === current ? ' aria-current="page"' : "";
     return `<li><a href="${chapterHref(ch.number)}"${here}>${label}</a></li>`;
   }).join("");
-  return `<nav class="course-nav" aria-label="${esc(t("chapter.chaptersLabel"))}"><p class="side-title">${esc(t("chapter.course"))}</p><ol>${items}</ol></nav>`;
+  return sideNav(
+    t("chapter.chaptersLabel"),
+    esc(t("chapter.course")),
+    `${current} ${outline(current, "title")}`,
+    items,
+  );
 }
 
 function chapter(number: number): string {
@@ -119,7 +138,7 @@ function chapter(number: number): string {
   return `<div class="doc-layout">
     ${courseNav(number)}
     <nav class="toc" aria-label="${esc(t("chapter.inThisChapter"))}">
-      <details open>
+      <details open data-collapse="900">
         <summary class="side-title">${esc(t("chapter.onThisPage"))}</summary>
         <ol>${toc}${sources}</ol>
         <p class="toc-top"><a href="${chapterHref(number)}">${esc(t("chapter.backToTop"))}</a></p>
@@ -182,7 +201,13 @@ function programsNav(current: string): string {
       return `<li><a href="${programHref(p.id)}"${here}><span class="num" aria-hidden="true">${p.number}</span><span>${esc(p.title)}</span></a></li>`;
     })
     .join("");
-  return `<nav class="course-nav" aria-label="${esc(t("programs.listLabel"))}"><p class="side-title"><a href="${programHref()}">${esc(t("title.programs"))}</a></p><ol>${items}</ol></nav>`;
+  const title = site().programs.find((p) => p.id === current)?.title ?? "";
+  return sideNav(
+    t("programs.listLabel"),
+    `<a href="${programHref()}">${esc(t("title.programs"))}</a>`,
+    title,
+    items,
+  );
 }
 
 function programPage(id: string): string {
@@ -213,7 +238,7 @@ function programPage(id: string): string {
   return `<div class="doc-layout">
     ${programsNav(id)}
     <nav class="toc" aria-label="${esc(t("chapter.inThisChapter"))}">
-      <details open>
+      <details open data-collapse="900">
         <summary class="side-title">${esc(t("chapter.onThisPage"))}</summary>
         <ol>${toc}${sources}</ol>
         <p class="toc-top"><a href="${programHref(id)}">${esc(t("chapter.backToTop"))}</a></p>
@@ -243,9 +268,19 @@ function programPage(id: string): string {
  * observer is dropped on the next navigation.
  */
 export function trackSections(root: HTMLElement): void {
-  // On narrow screens the contents sit above the article: start collapsed.
-  const box = root.querySelector<HTMLDetailsElement>(".toc details");
-  if (box && window.matchMedia("(max-width: 900px)").matches) box.open = false;
+  // Side panels (the course list, the contents) fold into bars above the
+  // article below their width: start collapsed there, and stay open (a
+  // title, not a toggle) on wider screens.
+  for (const box of root.querySelectorAll<HTMLDetailsElement>(
+    "details[data-collapse]",
+  )) {
+    const narrow = window.matchMedia(`(max-width: ${box.dataset.collapse}px)`);
+    box.open = !narrow.matches;
+    box.querySelector("summary")?.addEventListener("click", (e) => {
+      if (!narrow.matches && !(e.target as HTMLElement).closest("a"))
+        e.preventDefault();
+    });
+  }
   const links = new Map(
     [...root.querySelectorAll<HTMLAnchorElement>(".toc [data-section]")].map(
       (a) => [a.dataset.section ?? "", a],

@@ -75,7 +75,7 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   // ---- pn 接合 ----
   "pn.caption": "pn 接合の内部",
   "pn.captionHtml":
-    "p 型シリコン(左)には余分な<em>正孔</em>(+)が、n 型(右)には余分な<em>電子</em>(−)があります。両者が出会うところでは打ち消し合い、自由なキャリアのない薄い<em>空乏層</em>が残ります。接合にかかる電圧を変えてみましょう。",
+    "p 型(<em>正孔</em>、+)と n 型(<em>電子</em>、−)が出会うところに<em>空乏層</em>ができます。電圧を変えてみましょう。",
   "pn.slider": "接合にかかる電圧",
   "pn.voltage": "電圧",
   "pn.width": "空乏層の幅",
@@ -101,7 +101,7 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   // ---- MOSFET ----
   "mos.caption": "MOSFET: 動く部品のないスイッチ",
   "mos.captionHtml":
-    "ガラスのような薄い酸化膜が、ゲートとシリコンを隔てています。ゲートの電圧がキャリアを表面に引き寄せ、ソースとドレインをつなぐ<em>チャネル</em>を作ります。ゲート電圧をドラッグしてみましょう。",
+    "ゲートの電圧が、ソースからドレインへの<em>チャネル</em>を開きます。ドラッグしてみましょう。",
   "mos.type": "トランジスタの種類",
   "mos.nmos": "NMOS(n チャネル)",
   "mos.pmos": "PMOS(p チャネル)",
@@ -138,7 +138,7 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   // ---- ノイズの連鎖 ----
   "noise.caption": "アナログのずれとデジタルの復元",
   "noise.captionHtml":
-    "1 ビットが段の連なりを通っていきます。各段は少しずつランダムなノイズを加えます。<em>アナログ</em>の段は受け取った電圧をそのまま渡します。<em>デジタル</em>の段は、まず電圧を 0 か 1 の方へ戻してから渡します。",
+    "各段がノイズを加えます。<em>アナログ</em>の段はそのまま渡し、<em>デジタル</em>の段は 0 か 1 に戻します。",
   "noise.bit": "送るビット",
   "noise.stages": "段数",
   "noise.noise": "段ごとのノイズ",
@@ -148,7 +148,7 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   "noise.errors": "1,000 回送ったときの誤り",
   "noise.whyTitle": "デジタルが勝つ理由: S 字曲線",
   "noise.whyHtml":
-    "デジタルの段の<em>伝達曲線</em>は、入力電圧を出力電圧に対応させます。真ん中は急で両端は平らなので、少しずれた 1 はよりきれいな 1 になって出てきます。<em>ノイズマージン</em>とは、正しい出力がどれだけノイズを拾っても、次の段で正しく読めるかの余裕です。",
+    "真ん中は急で両端は平ら。少しずれた 1 もきれいな 1 になって出てきます。<em>ノイズマージン</em>は、信号がどれだけずれても正しく読めるかの余裕です。",
   "noise.reads1": "1 と読む",
   "noise.unreliable": "不確かな領域",
   "noise.reads0": "0 と読む",
@@ -168,7 +168,7 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   // ---- スイッチの回路 ----
   "net.caption": "計算するスイッチ",
   "net.captionHtml":
-    "2 つのスイッチを切り替えてみましょう。<em>直列</em>(次々につなぐ)では、両方が閉じているときだけ電流がランプに届きます。<em>並列</em>(横に並べる)では、どちらか一方で十分です。",
+    "<em>直列</em>:両方のスイッチが閉じる必要がある(AND)。<em>並列</em>:どちらか一方でよい(OR)。",
   "net.series": "直列",
   "net.parallel": "並列",
   "net.switch": "スイッチ {name}: {state}",
@@ -190,7 +190,7 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   // ---- リップルキャリー加算器 ----
   "ripple.caption": "波のように伝わるキャリー",
   "ripple.captionHtml":
-    '各列が全加算器です。2 つのビットが等しい列は、自分の桁上げ出力をすぐに知ることができます。そうでなければ、右隣の列からのキャリーを待たなければなりません。<span class="muted">?</span> は「まだ分からない」という意味です。',
+    '2 つのビットが等しい列はすぐにキャリーが分かり、ほかの列は右からのキャリーを待ちます。<span class="muted">?</span> = まだ分からない。',
   "ripple.step": "1 ステップ",
   "ripple.play": "再生",
   "ripple.reset": "リセット",
@@ -210,7 +210,7 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   // ---- ラッチ ----
   "latch.caption": "値を覚えるループ",
   "latch.captionText":
-    "2 つの NOR ゲートが、互いの出力をもう一方の入力につないでいます。s か r を 1 にしてから 0 に戻すと、ラッチは値を保ちます。変化はゲート遅延 1 段ずつループを回ります。",
+    "互いにつながった 2 つの NOR ゲート。s か r を 1 にしてから 0 に戻すと、ラッチが覚えています。",
   "latch.s": "s(セット)= {v}",
   "latch.r": "r(リセット)= {v}",
   "latch.release": "両方を同時に離す",
@@ -234,7 +234,7 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   // ---- CPU ----
   "cpu.caption": "1 命令ずつ動く CPU",
   "cpu.captionText":
-    "これは私たちが設計した CPU が小さなプログラムを実行しているところです。各ステップで PC の位置の命令を取り出し、解読し、1 クロックサイクルで実行します。",
+    "私たちの CPU がプログラムを実行します。1 ステップ = 1 クロックサイクルで 1 命令。",
   "cpu.program": "プログラム",
   "cpu.sum": "10 + 9 + … + 1 の合計",
   "cpu.call": "呼び出しと復帰",
@@ -290,7 +290,7 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   // ---- Bitfall の行 ----
   "brow.caption": "盤面は数でできている",
   "brow.captionText":
-    "Bitfall の盤面の各行は 10 ビットの数です。セルをクリックして行を変えてみましょう: すべて 1 の行(1023)は消え、目標と等しい行もボーナス付きで消えます。下では、ピースの行が最後の行の上を滑ります: 両方に 1 がある場所では AND が 0 にならず、ピースは止まります。",
+    "各行は 10 ビットの数です。セルをクリック:すべて 1 の行(1023)と目標と等しい行が消えます。下では AND でピースと最後の行を調べます。",
   "brow.target": "目標: {bits}",
   "brow.rowLabel": "行 {n}",
   "brow.cellOn": "行 {row}、セル {col}: 埋まっている",
@@ -307,7 +307,7 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   // ---- フォント ----
   "font.caption": "フォントは数でできている",
   "font.captionText":
-    "OS のフォントの各文字は 3 × 5 ピクセルで、1 ワード(15 ビット、上の行から)に保存されています。ピクセルをクリック(または Enter)してビットを反転し、ワードが変わるのを見てみましょう。",
+    "1 文字は 1 ワードに収まる 3 × 5 ピクセル。ピクセルをクリックしてビットを反転しましょう。",
   "font.try": "試す",
   "font.char": "文字",
   "font.gridLabel": "{char} のピクセル",
@@ -320,7 +320,7 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   // ---- コンパイラ ----
   "cmp.caption": "段階ごとのコンパイラ",
   "cmp.captionText":
-    "プログラムを編集して各段階を見てみましょう: トークン、構文木(各演算子がその対象の上にある)、VM コード。間違いがあると、それを見つけた段階と行が表示されます。",
+    "プログラムを編集して各段階を見ましょう:トークン、構文木、VM コード。",
   "cmp.try": "試す",
   "cmp.ex.expr": "優先順位",
   "cmp.ex.if": "if と呼び出し",
@@ -339,7 +339,7 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   // ---- スタックマシン ----
   "stk.caption": "1 コマンドずつ動くスタックマシン",
   "stk.captionText":
-    "プログラムを選んで 1 ステップずつ進めましょう。スタックは上から順に表示され、各ワードには役割が書かれています: 作業用の値、変数、または関数のフレームの一部。",
+    "プログラムを 1 ステップずつ進め、スタックを上から見ましょう。",
   "stk.program": "プログラム",
   "stk.expr": "x = (3 + 4) × 2",
   "stk.call": "呼び出し: area(5, 3)",
@@ -350,9 +350,6 @@ export const demosJa: Record<keyof typeof demosEn, Message> = {
   "stk.reset": "リセット",
   "stk.code": "VM コード",
   "stk.stack": "スタック(上から)",
-  "stk.addr": "アドレス",
-  "stk.value": "値",
-  "stk.what": "内容",
   "stk.operand": "作業用の値({func})",
   "stk.local": "{func} のローカル {index}",
   "stk.arg": "{func} の引数 {index}",

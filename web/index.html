@@ -47,7 +47,7 @@
         </svg>
         <span data-text="site.name">Sand to Tetris</span>
       </a>
-      <nav aria-label="Site" class="site-nav">
+      <nav aria-label="Site" class="site-nav" id="site-nav">
         <a href="#/" data-nav="learn" data-text="nav.learn">Learn</a>
         <a href="#/levels" data-nav="build" data-text="nav.build">Build</a>
         <a href="#/programs" data-nav="programs" data-text="nav.programs"
@@ -87,6 +87,18 @@
             class="moon"
             d="M19.5 14.5A7.5 7.5 0 1 1 9.5 4.5a6 6 0 0 0 10 10z"
           />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="menu-toggle"
+        aria-controls="site-nav"
+        aria-expanded="false"
+        data-menu-toggle
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path class="bars" d="M4 7h16M4 12h16M4 17h16" />
+          <path class="cross" d="M6 6l12 12M18 6L6 18" />
         </svg>
       </button>
       <s2t-core-status class="core-status"></s2t-core-status>

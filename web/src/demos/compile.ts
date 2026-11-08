@@ -164,3 +164,95 @@ export function tokenLabel(t: LangToken): { text: string; kind: string } {
     kind: t.kind,
   };
 }
+
+export interface TreeNode {
+  text: string;
+  depth: number;
+  /** Centre of the node's box. */
+  x: number;
+  y: number;
+  /** Box width (from the text's length, in a monospace font). */
+  w: number;
+}
+
+export interface TreeLayout {
+  nodes: TreeNode[];
+  /** [parent, child] node indexes. */
+  edges: [number, number][];
+  width: number;
+  height: number;
+}
+
+const CHAR_W = 7.3;
+const PAD = 14;
+const GAP = 12;
+const ROW = 46;
+const BOX_H = 24;
+
+/**
+ * Lays an outline out as a tree drawing: leaves side by side in reading
+ * order, each parent centred over its children, one row per depth.
+ */
+export function treeLayout(lines: TreeLine[]): TreeLayout {
+  const nodes: TreeNode[] = lines.map((l) => ({
+    text: l.text,
+    depth: l.depth,
+    x: 0,
+    y: l.depth * ROW + BOX_H / 2 + 2,
+    w: l.text.length * CHAR_W + PAD,
+  }));
+  // A line's parent is the nearest line above it one level up.
+  const parent: number[] = nodes.map(() => -1);
+  const children: number[][] = nodes.map(() => []);
+  const last: number[] = [];
+  nodes.forEach((n, i) => {
+    last[n.depth] = i;
+    last.length = n.depth + 1;
+    const p = n.depth > 0 ? (last[n.depth - 1] ?? -1) : -1;
+    parent[i] = p;
+    if (p >= 0) children[p]?.push(i);
+  });
+  let next = 2;
+  const shift = (i: number, dx: number): void => {
+    const n = nodes[i];
+    if (n) n.x += dx;
+    for (const k of children[i] ?? []) shift(k, dx);
+  };
+  const place = (i: number): void => {
+    const n = nodes[i];
+    if (!n) return;
+    const start = next;
+    const kids = children[i] ?? [];
+    if (!kids.length) {
+      n.x = next + n.w / 2;
+      next += n.w + GAP;
+      return;
+    }
+    for (const k of kids) place(k);
+    const first = nodes[kids[0] ?? i];
+    const lastKid = nodes[kids[kids.length - 1] ?? i];
+    n.x = ((first?.x ?? 0) + (lastKid?.x ?? 0)) / 2;
+    // A parent wider than its children must not reach into the subtree on
+    // its left: move the whole subtree right instead.
+    const over = start - (n.x - n.w / 2);
+    if (over > 0) {
+      shift(i, over);
+      next += over;
+    }
+    next = Math.max(next, n.x + n.w / 2 + GAP);
+  };
+  nodes.forEach((_, i) => {
+    if (parent[i] === -1) place(i);
+  });
+  const edges: [number, number][] = [];
+  parent.forEach((p, i) => {
+    if (p >= 0) edges.push([p, i]);
+  });
+  const depth = Math.max(0, ...nodes.map((n) => n.depth));
+  return {
+    nodes,
+    edges,
+    width: Math.ceil(next - GAP + 2),
+    height: depth * ROW + BOX_H + 4,
+  };
+}

@@ -153,9 +153,51 @@ export function generate(program: Program, info: Info): string[] {
 }
 `;
 
-// Japanese: the English starter until it is translated (a later stage).
+const JA = `// あなたの C Shard コンパイラ。四つの段階からなります。どの段階にも専用の
+// テストがあり、前の段階の正しい出力を入力としてテストされるので、順番に
+// 作っていけます。言語は docs/LANGUAGE.md、VM は docs/VM.md にあります。
+// ソースに誤りがあれば、仕様の code と行をもつ CompileError を throw します。
+// テストが確かめるのは code と行で、メッセージではありません。
+
+${TYPES}
+
+// 段階 1:ソース全体をトークンにし、それぞれに行番号を付ける。空白と
+// // コメントは飛ばす。code: bad-char, bad-number(65535 を超えるものも),
+// bad-char-literal, bad-string。
+export function tokenize(source: string): Token[] {
+  throw new CompileError("todo", "TODO: tokenize を書く");
+}
+
+// 段階 2:トークンを再帰下降で木にする。優先順位の段ごとに関数を一つ用意し、
+// 結びつきの弱いものから:or, and, not, 比較(== != < <= > >=、連鎖は不可),
+// |, ^, &, << >>, + -, * / %, 前置の - ~, それから呼び出し、a[i]、mem[i]、
+// 数、(...)。code: expected(args: what, found)。what は "name"、"type"、
+// "expression"、"declaration"、"statement" のどれか、またはバッククォートで
+// 囲んだ記号やキーワード("\`;\`" など)。chained-comparison。
+export function parse(tokens: Token[]): Program {
+  throw new CompileError("todo", "TODO: parse を書く");
+}
+
+// 段階 3:名前と型。定数を求め、各グローバル変数に VM の global を
+// (0 から、宣言の順に。配列は N 個)、各関数のローカル変数に番号を
+// (現れる順に。for の変数 i は二つ取る:i と、隠れた終わりの値)与える。
+// 最初の誤り(いちばん小さい行)を throw する。
+// code: docs/LANGUAGE.md の「Errors」を参照。
+export function check(program: Program): Info {
+  throw new CompileError("todo", "TODO: check を書く");
+}
+
+// 段階 4:VM コード、1 行に 1 コマンド。初期値をもつグローバル変数があれば、
+// main を "call _init 0" と "pop" で始め、それらを設定する "func _init 0 0" を
+// 加える。true は -1。and/or は右側を飛び越える。文として使う呼び出しの
+// あとには pop を置く。どの関数も return で終える。
+export function generate(program: Program, info: Info): string[] {
+  throw new CompileError("todo", "TODO: generate を書く");
+}
+`;
+
 export const COMPILER_STARTERS: Record<Lang, string> = {
   en: EN,
   mn: MN,
-  ja: EN,
+  ja: JA,
 };

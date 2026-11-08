@@ -26,6 +26,20 @@ const CSS = sheet(`
   .pixels span { aspect-ratio: 1; background: var(--bg); border: 1px solid var(--border); }
   .pixels span.on { background: var(--text); }
   .what ul { margin: 0.25rem 0 0; }
+  /* Registers as tiles: name small, value large; a fresh change in ink. */
+  .regs h4 { margin: 0 0 0.25rem; font-size: 1rem; }
+  .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.375rem; }
+  .tile { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+  .tile.pc { grid-column: 1 / -1; flex-direction: row; align-items: baseline; gap: 0.75rem; }
+  .tile.changed { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); }
+  .tile .n { font: 500 0.6875rem var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .tile b { font: 600 1.0625rem var(--mono); font-variant-numeric: tabular-nums; }
+  .tile .mark { font: 0.6875rem var(--font); }
+  .flags { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; font-size: 0.8125rem; }
+  .flags .lamp { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.5rem; border: 1px solid var(--border-strong); border-radius: 999px; font-family: var(--mono); }
+  .flags .lamp::before { content: ""; width: 0.6rem; height: 0.6rem; border-radius: 50%; border: 1px solid var(--text); }
+  .flags .lamp.on::before { background: var(--text); }
+  .flags.changed .lamp { border-color: var(--text); }
 `);
 
 /**
@@ -149,30 +163,46 @@ export class CpuDemo extends Demo {
       code.textContent = `${i === state.pc ? "▶ " : ""}${disassemble(w)}`;
     });
 
-    const regs = document.createElement("table");
-    regs.innerHTML = `<caption>${t("cpu.state")}</caption>`;
-    const line = (name: string, value: string, isNew: boolean) => {
-      const row = regs.insertRow();
-      if (isNew) row.className = "changed";
-      row.insertCell().textContent = name;
-      const v = row.insertCell();
-      v.textContent = value;
+    const regs = document.createElement("div");
+    regs.className = "regs";
+    const title = document.createElement("h4");
+    title.textContent = t("cpu.state");
+    const tiles = document.createElement("div");
+    tiles.className = "tiles";
+    const tile = (name: string, value: string, isNew: boolean, extra = "") => {
+      const el = document.createElement("div");
+      el.className = `tile${extra}${isNew ? " changed" : ""}`;
+      const n = document.createElement("span");
+      n.className = "n";
+      n.textContent = name;
+      const b = document.createElement("b");
+      b.textContent = value;
+      el.append(n, b);
       if (isNew)
-        v.append(
-          " ",
+        el.append(
           Object.assign(document.createElement("span"), {
             className: "mark",
             textContent: t("cpu.new"),
           }),
         );
+      tiles.append(el);
     };
-    line("PC", String(state.pc), this.step > 0);
-    state.regs.forEach((v, r) => line(`r${r}`, showWord(v), regChanged.has(r)));
-    line(
-      t("cpu.flags"),
-      `Z=${+state.z} N=${+state.n} C=${+state.c}`,
-      changed.some((c) => c.kind === "flags"),
-    );
+    tile("PC", String(state.pc), this.step > 0, " pc");
+    state.regs.forEach((v, r) => tile(`r${r}`, showWord(v), regChanged.has(r)));
+    const flags = document.createElement("div");
+    flags.className = `flags${changed.some((c) => c.kind === "flags") ? " changed" : ""}`;
+    flags.append(t("cpu.flags"));
+    for (const [name, on] of [
+      ["Z", state.z],
+      ["N", state.n],
+      ["C", state.c],
+    ] as const) {
+      const lamp = document.createElement("span");
+      lamp.className = `lamp${on ? " on" : ""}`;
+      lamp.textContent = `${name}=${+on}`;
+      flags.append(lamp);
+    }
+    regs.append(title, tiles, flags);
     this.cols.replaceChildren(listing, regs);
 
     if (this.program === "screen") {

@@ -21,6 +21,7 @@ export const en = {
   "nav.glossary": "Glossary",
   "nav.programs": "Programs",
   "nav.language": "Language",
+  "nav.menu": "Menu",
   "theme.toDark": "Dark theme",
   "theme.toLight": "Light theme",
   "hud.levels": "Levels",
@@ -258,6 +259,8 @@ export const en = {
     "Levels as a tech tree: each level sits below the levels it needs",
   "levels.treeHelp":
     "Each level sits below the parts it needs. Select one to see what it needs and unlocks; arrow keys move between levels.",
+  "levels.details": "Details",
+  "levels.lessDetails": "Less",
   "levels.needs": "Needs",
   "levels.unlocks": "Unlocks",
   "levels.needsNothing": "Nothing: start here.",

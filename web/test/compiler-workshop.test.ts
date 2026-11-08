@@ -72,8 +72,8 @@ describe("C Shard compiler workshop", () => {
     expect([...failedStages].sort()).toEqual(["generate", "program"]);
   });
 
-  it("the starter loads in both languages and fails clearly", () => {
-    for (const lang of ["en", "mn"] as const) {
+  it("the starter loads in every language and fails clearly", () => {
+    for (const lang of ["en", "mn", "ja"] as const) {
       const stages = load(COMPILER_STARTERS[lang]);
       const results = buildCompilerTests(reference).map((t) =>
         gradeCompilerTest(t, compileTest(stages, t), reference.run),

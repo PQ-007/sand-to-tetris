@@ -87,8 +87,8 @@ describe("VM translator workshop", () => {
     expect([...failedStages]).toEqual(["arith"]);
   });
 
-  it("the starter loads in both languages and fails clearly", () => {
-    for (const lang of ["en", "mn"] as const) {
+  it("the starter loads in every language and fails clearly", () => {
+    for (const lang of ["en", "mn", "ja"] as const) {
       const stages = load(TRANSLATOR_STARTERS[lang]);
       const tests = buildTranslatorTests(reference);
       const results = tests.map((t) =>

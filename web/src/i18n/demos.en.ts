@@ -77,7 +77,7 @@ export const demosEn = {
   // ---- p-n junction ----
   "pn.caption": "Inside a p-n junction",
   "pn.captionHtml":
-    "p-type silicon (left) has spare <em>holes</em> (+); n-type (right) has spare <em>electrons</em> (−). Where they meet, they cancel out and leave a thin <em>depletion region</em> with no free carriers. Change the voltage across the junction.",
+    "Where p-type (<em>holes</em>, +) meets n-type (<em>electrons</em>, −), a <em>depletion region</em> forms. Change the voltage.",
   "pn.slider": "Voltage across junction",
   "pn.voltage": "Voltage",
   "pn.width": "Depletion width",
@@ -104,7 +104,7 @@ export const demosEn = {
   // ---- MOSFET ----
   "mos.caption": "A MOSFET: a switch with no moving parts",
   "mos.captionHtml":
-    "A thin layer of glass-like oxide separates the gate from the silicon. Voltage on the gate pulls carriers up to the surface, forming a <em>channel</em> that connects source to drain. Drag the gate voltage.",
+    "Voltage on the gate opens a <em>channel</em> from source to drain. Drag it.",
   "mos.type": "Transistor type",
   "mos.nmos": "NMOS (n-channel)",
   "mos.pmos": "PMOS (p-channel)",
@@ -141,7 +141,7 @@ export const demosEn = {
   // ---- noise chain ----
   "noise.caption": "Analog drift vs digital restoration",
   "noise.captionHtml":
-    "A bit travels through a chain of stages. Each stage adds a little random noise. An <em>analog</em> stage passes on whatever voltage it gets. A <em>digital</em> stage first snaps the voltage back toward 0 or 1, then passes it on.",
+    "Each stage adds noise. An <em>analog</em> stage passes it on; a <em>digital</em> one snaps back to 0 or 1.",
   "noise.bit": "Bit to send",
   "noise.stages": "Stages",
   "noise.noise": "Noise per stage",
@@ -151,7 +151,7 @@ export const demosEn = {
   "noise.errors": "Errors in 1,000 sends",
   "noise.whyTitle": "Why digital wins: the S-curve",
   "noise.whyHtml":
-    "The digital stage's <em>transfer curve</em> maps input voltage to output voltage. It is steep in the middle and flat at the ends, so a slightly-off 1 comes out as a cleaner 1. The <em>noise margin</em> is how much noise a valid output can pick up and still be read correctly by the next stage.",
+    "Steep in the middle, flat at the ends: a slightly-off 1 comes out a clean 1. The <em>noise margin</em> is how far a signal can drift and still read right.",
   "noise.reads1": "reads as 1",
   "noise.unreliable": "unreliable zone",
   "noise.reads0": "reads as 0",
@@ -171,7 +171,7 @@ export const demosEn = {
   // ---- switch network ----
   "net.caption": "Switches that compute",
   "net.captionHtml":
-    "Flip the two switches. In <em>series</em> (one after the other) current reaches the lamp only if both are closed. In <em>parallel</em> (side by side) either one is enough.",
+    "<em>Series</em>: both switches must close (AND). <em>Parallel</em>: either one will do (OR).",
   "net.series": "Series",
   "net.parallel": "Parallel",
   "net.switch": "Switch {name}: {state}",
@@ -193,7 +193,7 @@ export const demosEn = {
   // ---- ripple adder ----
   "ripple.caption": "A carry that ripples",
   "ripple.captionHtml":
-    'Each column is a full adder. A column whose two bits are equal knows its carry out straight away. Otherwise it must wait for the carry from the column to its right. <span class="muted">?</span> means "not known yet".',
+    'A column with two equal bits knows its carry at once; the rest wait for the carry from the right. <span class="muted">?</span> = not known yet.',
   "ripple.step": "Step",
   "ripple.play": "Play",
   "ripple.reset": "Reset",
@@ -213,7 +213,7 @@ export const demosEn = {
   // ---- latch ----
   "latch.caption": "A loop that remembers",
   "latch.captionText":
-    "Two NOR gates, each one's output wired into the other. Set s or r to 1, then back to 0: the latch keeps its value. Each change goes round the loop one gate delay at a time.",
+    "Two NOR gates feeding each other: set s or r to 1, then back to 0, and the latch remembers.",
   "latch.s": "s (set) = {v}",
   "latch.r": "r (reset) = {v}",
   "latch.release": "Release both at once",
@@ -238,7 +238,7 @@ export const demosEn = {
   // ---- CPU ----
   "cpu.caption": "A CPU, one instruction at a time",
   "cpu.captionText":
-    "This is the CPU we designed, running a small program. Each Step fetches the instruction at PC, decodes it and carries it out in one clock cycle.",
+    "Our CPU running a program: each Step is one instruction in one clock cycle.",
   "cpu.program": "Program",
   "cpu.sum": "Sum 10 + 9 + … + 1",
   "cpu.call": "Call and return",
@@ -293,7 +293,7 @@ export const demosEn = {
   // ---- Bitfall rows ----
   "brow.caption": "The board is numbers",
   "brow.captionText":
-    "Each row of the Bitfall board is a 10-bit number. Click cells to change the rows: a row of all 1s (1023) clears, and so does a row equal to the target, for a bonus. Below, a piece row slides along the last row: where both have a 1, the AND isn't 0 and the piece is blocked.",
+    "Each row is a 10-bit number. Click cells: a full row (1023) or one equal to the target clears. Below, AND tests a piece against the last row.",
   "brow.target": "Target: {bits}",
   "brow.rowLabel": "Row {n}",
   "brow.cellOn": "Row {row}, cell {col}: filled",
@@ -310,7 +310,7 @@ export const demosEn = {
   // ---- font ----
   "font.caption": "A font is numbers",
   "font.captionText":
-    "Each character of the OS font is 3 × 5 pixels, stored as one word: 15 bits, the top row first. Click a pixel (or press Enter on it) to flip its bit and watch the word change.",
+    "A character is 3 × 5 pixels in one word. Click a pixel to flip its bit.",
   "font.try": "Try",
   "font.char": "Character",
   "font.gridLabel": "The pixels of {char}",
@@ -323,7 +323,7 @@ export const demosEn = {
   // ---- compiler ----
   "cmp.caption": "A compiler, stage by stage",
   "cmp.captionText":
-    "Edit the program and watch each stage: the tokens, the syntax tree (each operator above what it works on), and the VM code. A mistake shows the stage that found it, with its line.",
+    "Edit the program and watch each stage: tokens, the syntax tree, VM code.",
   "cmp.try": "Try",
   "cmp.ex.expr": "Precedence",
   "cmp.ex.if": "if and a call",
@@ -341,8 +341,7 @@ export const demosEn = {
 
   // ---- stack machine ----
   "stk.caption": "A stack machine, one command at a time",
-  "stk.captionText":
-    "Pick a program and step through it. The stack is shown top first, and each word says what it's for: a working value, a variable, or part of a function's frame.",
+  "stk.captionText": "Step through a program and watch the stack, top first.",
   "stk.program": "Program",
   "stk.expr": "x = (3 + 4) × 2",
   "stk.call": "A call: area(5, 3)",
@@ -353,9 +352,6 @@ export const demosEn = {
   "stk.reset": "Reset",
   "stk.code": "VM code",
   "stk.stack": "Stack, top first",
-  "stk.addr": "Address",
-  "stk.value": "Value",
-  "stk.what": "What it is",
   "stk.operand": "working value ({func})",
   "stk.local": "local {index} of {func}",
   "stk.arg": "arg {index} of {func}",

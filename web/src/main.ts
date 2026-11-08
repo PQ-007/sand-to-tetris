@@ -74,8 +74,18 @@ function show(): void {
             ? "programs"
             : "learn";
   document.querySelectorAll<HTMLElement>("[data-nav]").forEach((a) => {
-    if (a.dataset.nav === section) a.setAttribute("aria-current", "page");
-    else a.removeAttribute("aria-current");
+    if (a.dataset.nav === section) {
+      a.setAttribute("aria-current", "page");
+      // When a narrow header makes the menu scroll, keep this page's link
+      // in view.
+      const nav = a.parentElement;
+      if (nav && nav.scrollWidth > nav.clientWidth) {
+        const left = a.offsetLeft - nav.offsetLeft;
+        if (left + a.offsetWidth > nav.scrollLeft + nav.clientWidth)
+          nav.scrollLeft = left + a.offsetWidth - nav.clientWidth;
+        else if (left < nav.scrollLeft) nav.scrollLeft = left;
+      }
+    } else a.removeAttribute("aria-current");
   });
   if (route.page === "chapter" || (route.page === "programs" && route.program))
     trackSections(app);
@@ -165,6 +175,9 @@ function chrome(): void {
   document
     .querySelector(".lang-switch")
     ?.setAttribute("aria-label", t("nav.language"));
+  const menu = document.querySelector<HTMLButtonElement>("[data-menu-toggle]");
+  menu?.setAttribute("aria-label", t("nav.menu"));
+  if (menu) menu.title = t("nav.menu");
   document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) => {
     b.setAttribute("aria-pressed", String(b.dataset.lang === lang));
   });
@@ -179,6 +192,33 @@ function themeButton(): void {
   b.setAttribute("aria-label", label);
   b.title = label;
 }
+
+// Phones: the site menu folds behind a button. It closes on a choice,
+// Escape, a tap elsewhere, or any page change.
+const header = document.querySelector<HTMLElement>(".site-header");
+const menuButton =
+  document.querySelector<HTMLButtonElement>("[data-menu-toggle]");
+function setMenu(open: boolean): void {
+  if (!header || !menuButton) return;
+  header.toggleAttribute("data-menu-open", open);
+  menuButton.setAttribute("aria-expanded", String(open));
+}
+menuButton?.addEventListener("click", () =>
+  setMenu(menuButton.getAttribute("aria-expanded") !== "true"),
+);
+document.querySelector(".site-nav")?.addEventListener("click", (e) => {
+  if ((e.target as HTMLElement).closest("a")) setMenu(false);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && header?.hasAttribute("data-menu-open")) {
+    setMenu(false);
+    menuButton?.focus();
+  }
+});
+document.addEventListener("click", (e) => {
+  if (header && !header.contains(e.target as Node)) setMenu(false);
+});
+window.addEventListener("hashchange", () => setMenu(false));
 
 document
   .querySelector<HTMLButtonElement>("[data-theme-toggle]")

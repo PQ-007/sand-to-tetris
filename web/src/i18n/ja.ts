@@ -16,6 +16,7 @@ export const ja: Record<keyof typeof en, Message> = {
   "nav.glossary": "用語集",
   "nav.programs": "プログラム",
   "nav.language": "言語",
+  "nav.menu": "メニュー",
   "theme.toDark": "ダークテーマ",
   "theme.toLight": "ライトテーマ",
   "hud.levels": "レベル",
@@ -252,6 +253,8 @@ export const ja: Record<keyof typeof en, Message> = {
     "テックツリーとしてのレベル: 各レベルは、必要なレベルの下に置かれる",
   "levels.treeHelp":
     "各レベルは、必要な部品の下に置かれています。一つ選ぶと、必要なものと解放されるものが見られます。矢印キーでレベル間を移動できます。",
+  "levels.details": "詳細",
+  "levels.lessDetails": "閉じる",
   "levels.needs": "必要",
   "levels.unlocks": "解放",
   "levels.needsNothing": "なし: ここから始めましょう。",

@@ -266,18 +266,33 @@ function renderDetail(root: HTMLElement, a: App, id: string): void {
           })
           .join("")}</ul>`
       : `<p class="muted">${esc(empty)}</p>`;
+  // On a phone the panel is a sheet at the bottom of the screen: the
+  // essentials (name, status, Play) always, the rest behind "Details".
+  panel.toggleAttribute("data-open", detailOpen);
   panel.innerHTML = `
-    <p class="panel-kicker">${esc(t("levels.layer", { n: lv.layer, name: layerName(lv.layer) }))}</p>
-    <h2>${esc(levelName(lv))}</h2>
-    <p><span class="pill level-status pill-${st}">${esc(statusText(st))}</span></p>
-    <p>${esc(detailText(a, id))}</p>
-    ${st === "locked" ? "" : `<p><a class="button primary block" href="${playHref(id)}">${esc(t("levels.play"))}</a></p>`}
-    ${swapHtml(a, id)}
-    <h3>${esc(t("levels.needs"))}</h3>${chips(needs, t("levels.needsNothing"))}
-    <h3>${esc(t("levels.unlocks"))}</h3>${chips(unlocks, t("levels.unlocksNothing"))}`;
+    <div class="detail-head">
+      <p class="panel-kicker">${esc(t("levels.layer", { n: lv.layer, name: layerName(lv.layer) }))}</p>
+      <h2>${esc(levelName(lv))}</h2>
+      <p class="detail-status"><span class="pill level-status pill-${st}">${esc(statusText(st))}</span>
+        <button type="button" class="detail-toggle" aria-expanded="${detailOpen}" aria-controls="detail-more">${esc(t(detailOpen ? "levels.lessDetails" : "levels.details"))}</button></p>
+      ${st === "locked" ? "" : `<p class="detail-play"><a class="button primary block" href="${playHref(id)}">${esc(t("levels.play"))}</a></p>`}
+    </div>
+    <div class="detail-more" id="detail-more">
+      <p>${esc(detailText(a, id))}</p>
+      ${swapHtml(a, id)}
+      <h3>${esc(t("levels.needs"))}</h3>${chips(needs, t("levels.needsNothing"))}
+      <h3>${esc(t("levels.unlocks"))}</h3>${chips(unlocks, t("levels.unlocksNothing"))}
+    </div>`;
+  panel
+    .querySelector<HTMLButtonElement>(".detail-toggle")
+    ?.addEventListener("click", () => {
+      detailOpen = !detailOpen;
+      renderDetail(root, a, id);
+      panel.querySelector<HTMLElement>(".detail-toggle")?.focus();
+    });
   panel.querySelectorAll<HTMLButtonElement>("[data-select]").forEach((b) =>
     b.addEventListener("click", () => {
-      select(root, a, b.dataset.select ?? "");
+      select(root, a, b.dataset.select ?? "", true);
       root
         .querySelector<HTMLElement>(`[data-node="${b.dataset.select}"]`)
         ?.focus();
@@ -314,13 +329,29 @@ function highlight(root: HTMLElement, id: string | null, dim = true): void {
   root.querySelector(".tree")?.classList.toggle("focusing", dim && id !== null);
 }
 
-function select(root: HTMLElement, a: App, id: string): void {
+/** Whether the detail sheet shows everything (phones; kept across levels). */
+let detailOpen = false;
+
+function select(root: HTMLElement, a: App, id: string, centre = false): void {
   selected = id;
   root.querySelectorAll<HTMLElement>(".tree-node").forEach((n) => {
     n.setAttribute("aria-pressed", String(n.dataset.node === id));
   });
   highlight(root, id, false);
   renderDetail(root, a, id);
+  if (centre) centreOn(root, id);
+}
+
+/**
+ * Scrolls the tree's window (when it's smaller than the tree, as on a
+ * phone) so a level sits in the middle, instead of the top-left corner.
+ */
+function centreOn(root: HTMLElement, id: string): void {
+  const box = root.querySelector<HTMLElement>(".tree-scroll");
+  const node = root.querySelector<HTMLElement>(`[data-node="${id}"]`);
+  if (!box || !node) return;
+  box.scrollLeft = node.offsetLeft + node.offsetWidth / 2 - box.clientWidth / 2;
+  box.scrollTop = node.offsetTop + node.offsetHeight / 2 - box.clientHeight / 2;
 }
 
 /** Arrow keys move between levels: along a row, or to the nearest level
@@ -374,7 +405,7 @@ function wireTree(root: HTMLElement, a: App): void {
       order.find((id) => a.status[id] === "broken") ??
       order[order.length - 1] ??
       null;
-  if (selected) select(root, a, selected);
+  if (selected) select(root, a, selected, true);
 }
 
 /** "Continue: Step 14 · MUX16 →", a link straight to the next step. */

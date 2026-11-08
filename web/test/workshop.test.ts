@@ -64,8 +64,8 @@ describe("assembler workshop", () => {
     );
   });
 
-  it("the starter loads in both languages and fails clearly", () => {
-    for (const lang of ["en", "mn"] as const) {
+  it("the starter loads in every language and fails clearly", () => {
+    for (const lang of ["en", "mn", "ja"] as const) {
       const stages = load(STARTERS[lang]);
       const tests = buildTests(reference);
       const results = tests.map((t) => runTest(stages, t));
