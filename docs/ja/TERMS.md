@@ -6,9 +6,9 @@ names (NOT, NAND, MUX16, RAM8, …), pin names (a, sel, clk, …), mnemonics and
 code always stay in Latin letters. Course names stay as they are: Sand to
 Tetris, Bitfall, C Shard.
 
-Japanese is being translated in stages: the interface, demos, tools, levels
-and checker messages are done; the glossary, sources and chapters follow. Until
-a chapter or glossary entry exists in `docs/ja/`, the site shows the English
+Japanese is being translated in stages: the interface, demos, tools, levels,
+checker messages and the glossary (`docs/ja/glossary.yaml`) are done; sources
+and chapters follow. Until a chapter exists in `docs/ja/`, the site shows the English
 original with a note (the content build checks every Japanese file that does
 exist as strictly as Mongolian).
 
@@ -73,3 +73,8 @@ half-width space between Japanese and Latin words or numbers (「NAND ゲート�
 | Toolbox, canvas, workbench | ツールボックス、キャンバス、作業台 |
 | Side quest | サイドクエスト |
 | Tech tree, roadmap | テックツリー、ロードマップ |
+
+Glossary: definitions in the plain form (である調) or ending on a noun. A
+term that starts with a kanji needs a `reading:` in hiragana (a test checks):
+the glossary page sorts by it and files the term under its kana row (あ, か,
+さ, …); katakana and Latin terms need none.

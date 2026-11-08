@@ -156,7 +156,6 @@ export const ja: Record<keyof typeof en, Message> = {
   "glossary.filter": "{n} 個の用語を絞り込む(どの言語でも)…",
   "glossary.matches": "{total} 個中 {shown} 個の用語が「{q}」に一致します。",
   "glossary.seeAlso": "関連項目:",
-  "glossary.letters": "頭文字へ移動",
   "glossary.clear": "絞り込みを解除",
   "glossary.none": "「{q}」に一致する用語はありません。",
   "notFound.text": "このアドレスにはページがありません。",

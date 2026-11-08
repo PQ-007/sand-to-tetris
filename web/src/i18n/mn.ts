@@ -155,7 +155,6 @@ export const mn: Record<keyof typeof en, Message> = {
   "glossary.filter": "{n} нэр томьёоноос аль ч хэлээр шүүх…",
   "glossary.matches": "{total}-аас {shown} нь “{q}”-д тохирч байна.",
   "glossary.seeAlso": "Мөн үзэх:",
-  "glossary.letters": "Үсгээр очих",
   "glossary.clear": "Шүүлтүүрийг арилгах",
   "glossary.none": "“{q}”-д тохирох нэр томьёо алга.",
   "notFound.text": "Энэ хаягт хуудас алга.",

@@ -305,7 +305,11 @@ function glossaryPage(current?: string): string {
           `<span class="gloss-tr"><span class="gloss-lang" aria-hidden="true">${o.lang.toUpperCase()}</span><span class="visually-hidden">${esc(LANG_NAMES[o.lang])}: </span><span lang="${o.lang}">${esc(o.term)}</span></span>`,
       )
       .join("");
-    const key = searchKey(g.id, [g.term, ...others.map((o) => o.term)]);
+    const key = searchKey(g.id, [
+      g.term,
+      ...(g.reading ? [g.reading] : []),
+      ...others.map((o) => o.term),
+    ]);
     return `<div class="gloss-entry" id="term-${g.id}" data-search="${esc(key)}"${g.id === current ? " data-current" : ""}>
         <dt><span class="gloss-term"${g.untranslated ? ' lang="en"' : ""}>${esc(g.term)}</span>${tr ? `<span class="gloss-trs">${tr}</span>` : ""}</dt>
         <dd><p>${g.shortHtml}</p>${g.longHtml ? `<p class="gloss-long">${g.longHtml}</p>` : ""}
@@ -313,20 +317,11 @@ function glossaryPage(current?: string): string {
       </div>`;
   };
   const groups = groupByLetter(glossary);
-  const lettered = groups.some((g) => g.letter !== null);
-  const letters = lettered
-    ? `<nav class="gloss-letters" aria-label="${esc(t("glossary.letters"))}">${groups
-        .map(
-          (g, i) =>
-            `<button type="button" data-gloss-letter="${i}">${esc(g.letter ?? "")}</button>`,
-        )
-        .join("")}</nav>`
-    : "";
   const sections = groups
     .map(
       (g, i) =>
         `<section class="gloss-group" data-gloss-group="${i}"${g.letter ? ` aria-labelledby="gloss-letter-${i}"` : ""}>
-        ${g.letter ? `<h2 class="gloss-letter" id="gloss-letter-${i}" tabindex="-1">${esc(g.letter)}</h2>` : ""}
+        ${g.letter ? `<h2 class="gloss-letter" id="gloss-letter-${i}">${esc(g.letter)}</h2>` : ""}
         <dl class="glossary">${g.items.map(entry).join("")}</dl>
       </section>`,
     )
@@ -345,25 +340,16 @@ function glossaryPage(current?: string): string {
         <kbd aria-hidden="true">/</kbd>
         <button type="button" class="search-clear" aria-label="${esc(t("glossary.clear"))}" data-gloss-clear>×</button>
       </label>
-      ${letters}
     </div>
     <p class="muted gloss-count" data-gloss-count aria-live="polite"></p>
     <div class="gloss-groups">${sections}</div>`;
 }
 
-/**
- * The glossary's filter (any language, `/` to focus, Escape to clear) and
- * its letter bar.
- */
+/** The glossary's filter: any language, `/` to focus, Escape to clear. */
 export function installGlossaryFilter(root: HTMLElement): void {
   const input = root.querySelector<HTMLInputElement>("[data-gloss-filter]");
   const count = root.querySelector<HTMLElement>("[data-gloss-count]");
   const groups = [...root.querySelectorAll<HTMLElement>("[data-gloss-group]")];
-  const buttons = new Map(
-    [...root.querySelectorAll<HTMLButtonElement>("[data-gloss-letter]")].map(
-      (b) => [b.dataset.glossLetter ?? "", b],
-    ),
-  );
   const entries = groups.map((g) => [
     g,
     [...g.querySelectorAll<HTMLElement>(".gloss-entry")],
@@ -381,8 +367,6 @@ export function installGlossaryFilter(root: HTMLElement): void {
         if (match) here++;
       }
       group.hidden = here === 0;
-      const button = buttons.get(group.dataset.glossGroup ?? "");
-      if (button) button.disabled = here === 0;
       shown += here;
     }
     if (count)
@@ -405,18 +389,6 @@ export function installGlossaryFilter(root: HTMLElement): void {
       input.value = "";
       apply();
     }
-  });
-  root.querySelector(".gloss-letters")?.addEventListener("click", (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLElement>(
-      "[data-gloss-letter]",
-    );
-    const heading = b
-      ? document.getElementById(`gloss-letter-${b.dataset.glossLetter}`)
-      : null;
-    if (!heading) return;
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    heading.scrollIntoView({ behavior: still ? "auto" : "smooth" });
-    heading.focus({ preventScroll: true });
   });
   // "/" jumps to the filter, as on many reference sites.
   const onKey = (e: KeyboardEvent) => {

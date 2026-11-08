@@ -84,16 +84,39 @@ export function matches(key: string, query: string): boolean {
   return q === "" || key.includes(q);
 }
 
+/** The kana rows of a Japanese index (あ行, か行, …), small kana included. */
+const KANA_ROWS = [
+  "あいうえおぁぃぅぇぉ",
+  "かきくけこゕゖ",
+  "さしすせそ",
+  "たちつてとっ",
+  "なにぬねの",
+  "はひふへほ",
+  "まみむめも",
+  "やゆよゃゅょ",
+  "らりるれろ",
+  "わゐゑをんゎ",
+];
+
 /**
- * The letter a term is filed under: its first letter in capitals, for
- * alphabets (Latin, Cyrillic); `#` for a digit or symbol; `null` for a
- * script without an alphabet order (Japanese kana and kanji).
+ * The letter a term is filed under: its first letter in capitals for an
+ * alphabet (Latin, Cyrillic), the head of its row for kana (ガ → か, as a
+ * Japanese index does), `#` for a digit or symbol, and `null` for a kanji,
+ * which can't be filed without its reading.
  */
 export function initialOf(term: string): string | null {
   const first = [...fold(term)][0];
   if (first === undefined) return "#";
   if (/[\p{Script=Latin}\p{Script=Cyrillic}\p{Script=Greek}]/u.test(first))
     return first.toUpperCase();
+  const code = first.codePointAt(0) ?? 0;
+  // Katakana → hiragana: the two blocks line up 0x60 apart.
+  const kana =
+    code >= 0x30a1 && code <= 0x30f6
+      ? String.fromCodePoint(code - 0x60)
+      : first;
+  const row = KANA_ROWS.find((r) => r.includes(kana));
+  if (row) return row[0] ?? null;
   if (/\p{L}/u.test(first)) return null;
   return "#";
 }
@@ -105,14 +128,14 @@ export interface LetterGroup<T> {
 }
 
 /**
- * Groups items (already sorted) by their term's letter, in order of first
- * appearance. If any term has no letter, the page is one plain list: half a
+ * Groups items (already sorted) by their term's letter (a Japanese term by
+ * its reading), in order of first appearance. If any term has no letter, the page is one plain list: half a
  * letter index would hide the rest.
  */
-export function groupByLetter<T extends { term: string }>(
+export function groupByLetter<T extends { term: string; reading?: string }>(
   items: readonly T[],
 ): LetterGroup<T>[] {
-  const letters = items.map((i) => initialOf(i.term));
+  const letters = items.map((i) => initialOf(i.reading ?? i.term));
   if (letters.some((l) => l === null))
     return items.length ? [{ letter: null, items: [...items] }] : [];
   const groups = new Map<string, T[]>();

@@ -10,6 +10,8 @@ export interface GlossaryEntry {
   /** Optional longer explanation (Markdown, may link other terms). */
   long?: string;
   see?: string[];
+  /** How a Japanese term is read, in kana: sorts and groups it. */
+  reading?: string;
   /** Shown in English because this language has no translation yet (only
    * in a staged translation). */
   untranslated?: boolean;
@@ -89,12 +91,19 @@ export function parseGlossary(
       return { id: "", term: "", short: "" };
     }
     const see = Array.isArray(raw.see) ? raw.see.map(String) : undefined;
+    const reading = optStr(raw, "reading");
+    if (
+      reading !== undefined &&
+      !/^[\p{Script=Hiragana}\p{Script=Katakana}ー]+$/u.test(reading)
+    )
+      errors.push(`${where}: \`reading\` must be kana only, got "${reading}"`);
     return {
       id: str(raw, "id", where, errors),
       term: str(raw, "term", where, errors),
       short: str(raw, "short", where, errors),
       long: optStr(raw, "long"),
       see,
+      ...(reading !== undefined ? { reading } : {}),
     };
   });
   checkIds(

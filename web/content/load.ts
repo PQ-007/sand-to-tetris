@@ -21,6 +21,8 @@ export interface GlossaryItem {
   shortHtml: string;
   longHtml?: string;
   see: string[];
+  /** How a Japanese term is read, in kana (sorts and groups it). */
+  reading?: string;
   /** Still the English term (a staged translation without this entry). */
   untranslated?: boolean;
 }
@@ -246,7 +248,13 @@ export function loadContent(docsDir: string): LoadResult {
     const glossaryTr = glossary.map((g) => {
       const tr = terms.get(g.id);
       return tr
-        ? { ...g, term: tr.term, short: tr.short, long: tr.long }
+        ? {
+            ...g,
+            term: tr.term,
+            short: tr.short,
+            long: tr.long,
+            reading: tr.reading,
+          }
         : { ...g, untranslated: true };
     });
     const trSources = optional("sources.yaml")
@@ -430,10 +438,14 @@ function renderLanguage(
       shortHtml: short.html,
       longHtml: long?.html,
       see: g.see ?? [],
+      ...(g.reading ? { reading: g.reading } : {}),
       ...(g.untranslated ? { untranslated: true } : {}),
     };
   });
-  // Sorted by the term as shown in this language.
-  items.sort((a, b) => a.term.localeCompare(b.term, lang));
+  // Sorted by the term as shown in this language (Japanese by its reading,
+  // so kanji terms fall in あいうえお order).
+  items.sort((a, b) =>
+    (a.reading ?? a.term).localeCompare(b.reading ?? b.term, lang),
+  );
   return { chapters, programs, glossary: items };
 }

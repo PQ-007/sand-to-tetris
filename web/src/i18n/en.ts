@@ -162,7 +162,6 @@ export const en = {
   "glossary.filter": "Filter {n} terms, in any language…",
   "glossary.matches": "{shown} of {total} terms match “{q}”.",
   "glossary.seeAlso": "See also:",
-  "glossary.letters": "Jump to letter",
   "glossary.clear": "Clear the filter",
   "glossary.none": "No term matches “{q}”.",
   "notFound.text": "There's no page at this address.",
