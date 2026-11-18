@@ -4,6 +4,10 @@ layer = 2
 goal = """
 Add three bits: a, b, and a carry c coming in from the column to the right. This is one column of written addition.
 """
+role = "adds one column, carry included"
+why = """
+On paper you add column by column: two digits plus the carry from the right, write one digit, carry one to the left. That is this part. Chain sixteen of them and you can add any two 16-bit numbers.
+"""
 inputs = ["a", "b", "c"]
 outputs = ["sum", "carry"]
 requires = ["halfadder", "or"]

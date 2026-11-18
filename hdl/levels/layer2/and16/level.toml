@@ -5,6 +5,10 @@ goal = """
 Build a 16-bit AND: AND each bit of a with the same bit of b.
 A bus is a bundle of wires carrying a whole number. Use your AND with Repeat ×16: one gate, copied once per bit.
 """
+role = "keeps only the bits you choose"
+why = """
+This is the ALU's AND instruction. Programs use it to test or clear chosen bits of a word. Bitfall checks whether a falling piece hits something with board[row] AND piece: any 1 left means two blocks would overlap. The OS turns a pixel off with AND NOT.
+"""
 inputs = ["a", "b"]
 outputs = ["out"]
 requires = ["and"]

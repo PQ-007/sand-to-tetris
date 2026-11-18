@@ -5,6 +5,10 @@ goal = """
 Choose one of eight 16-bit inputs, a to h, with a 3-bit sel. RAM8 will use this to read the register at an address.
 Two 4-way MUX16s each pick one from their half using sel's bottom two bits; a MUX16 then picks between them with sel's top bit.
 """
+role = "reads one of eight numbers, by its number"
+why = """
+Choosing by a 3-bit number is reading by address. RAM8 uses it to read the register at addr, and the register file uses two so that ADD r3, r1, r2 can read r1 and r2 in the same tick.
+"""
 inputs = ["a", "b", "c", "d", "e", "f", "g", "h", "sel"]
 outputs = ["out"]
 requires = ["mux4way16", "mux16"]

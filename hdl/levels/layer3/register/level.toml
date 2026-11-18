@@ -5,6 +5,10 @@ goal = """
 A 16-bit register: sixteen Bits side by side that load together. On a rising clk edge with load=1 it stores the 16-bit number d; otherwise it keeps its number.
 Use Repeat ×16 on your Bit, and share load and clk so every copy gets the same ones.
 """
+role = "holds one 16-bit number"
+why = """
+A register holds a whole number: a score, a coordinate, an address. The CPU's eight working registers, the program counter and every word of RAM are this part, copied.
+"""
 sequential = true
 inputs = ["d", "load", "clk"]
 outputs = ["q"]

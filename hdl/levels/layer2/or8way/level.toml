@@ -5,6 +5,10 @@ goal = """
 Build an 8-way OR: the output is 1 if any of the 8 input bits is 1.
 Split the bus into single bits, then combine them with ORs.
 """
+role = "says whether any of 8 bits is 1"
+why = """
+The ALU uses two of these for its zero flag: if no bit of the result is 1, the result is 0. That flag is how a program asks "are these equal?": subtract them and see whether the answer is zero.
+"""
 inputs = ["in"]
 outputs = ["out"]
 requires = ["or"]

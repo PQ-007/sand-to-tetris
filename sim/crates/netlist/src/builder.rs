@@ -52,6 +52,8 @@ pub fn level(id: &str, layer: u8, inputs: &[&str], outputs: &[&str]) -> Level {
         name: id.to_uppercase(),
         layer,
         goal: String::new(),
+        role: String::new(),
+        why: String::new(),
         inputs: inputs.iter().map(|s| s.to_string()).collect(),
         outputs: outputs.iter().map(|s| s.to_string()).collect(),
         requires: vec![],

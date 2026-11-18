@@ -5,6 +5,10 @@ goal = """
 The program counter holds the address of the next instruction. On each rising clk edge: if reset is 1 it becomes 0; else if load is 1 it becomes d (a jump); else if inc is 1 it goes up by one; otherwise it keeps its value.
 Use a Register that loads on every edge, and choose what it loads with a chain of three MUX16s: keep or q+1 (inc), then d (load), then 0 (reset). The last one wins, so reset goes last.
 """
+role = "keeps the program's place"
+why = """
+The program counter holds the address of the next instruction. Usually it adds 1, so the program runs line after line. A jump loads a new address, which is how every loop and if works, and reset sends it back to 0 to start over.
+"""
 sequential = true
 inputs = ["d", "load", "inc", "reset", "clk"]
 outputs = ["q"]

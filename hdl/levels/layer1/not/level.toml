@@ -5,6 +5,10 @@ goal = """
 Build an inverter: the output is 1 when the input is 0, and 0 when the input is 1.
 Use one PMOS to connect the output to VDD and one NMOS to connect it to GND.
 """
+role = "flips a bit"
+why = """
+Everything a computer does comes down to bits that are 1 or 0, and NOT is the simplest thing you can do to one: turn it over. It's also the smallest complete CMOS circuit, one PMOS pulling up and one NMOS pulling down. Every gate after this is the same idea, grown. Programs use NOT too: the OS clears a pixel with AND NOT.
+"""
 inputs = ["a"]
 outputs = ["out"]
 truth_table = """

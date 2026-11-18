@@ -9,6 +9,10 @@ All the data addresses the CPU can reach, by the map in docs/ISA.md:
 - Every other address reads as 0 and ignores writes.
 A DMUX8WAY with in = 1 and sel = address bits 15–13 tells you the region; then narrow it down for the screen (bits 12, 11, 10 = 0 and not both 9 and 8) and the keyboard and timer (bits 12–1 all 0; bit 0 picks which).
 """
+role = "joins RAM, screen, keyboard and timer"
+why = """
+To the CPU everything is an address. The memory map decides that 0x0000 to 0x3FFF is RAM, 0x4000 on is the screen, 0x6000 the keyboard and 0x6001 the timer. So drawing a pixel is just a STORE, and reading a key is just a LOAD.
+"""
 sequential = true
 inputs = ["d", "addr", "load", "key", "timer", "clk"]
 outputs = ["q"]

@@ -5,6 +5,10 @@ goal = """
 Memory with addresses: eight 16-bit registers. q always shows the register at addr. On a rising clk edge with load=1, d is stored in the register at addr, and only there.
 Send load to one register with a DMUX8WAY (sel = addr), and read the chosen register with a MUX8WAY16 (sel = addr). Every register gets the same d and clk.
 """
+role = "eight words, chosen by address"
+why = """
+Memory with addresses lets a program keep far more than eight registers' worth: a number says which word. RAM8 is the pattern every bigger memory repeats: a DMUX sends the write to one register, a MUX reads one back.
+"""
 sequential = true
 inputs = ["d", "addr", "load", "clk"]
 outputs = ["q"]

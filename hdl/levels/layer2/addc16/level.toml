@@ -5,6 +5,10 @@ goal = """
 Add two 16-bit numbers plus a carry in (cin), and also output the carry out of the top column (cout).
 It's ADD16 with both ends of the carry chain brought out as pins. The ALU needs them: cin = 1 turns a + NOT b into subtraction, and cout tells you about the result.
 """
+role = "adds with a carry in and out, so the ALU can subtract"
+why = """
+The carry in lets the ALU compute a − b as a + NOT b + 1. The carry out says whether the result overflowed 16 bits; it becomes the C flag, which comparisons of unsigned numbers read. This is the adder inside your ALU.
+"""
 inputs = ["a", "b", "cin"]
 outputs = ["out", "cout"]
 requires = ["fulladder"]

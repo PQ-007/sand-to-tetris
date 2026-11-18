@@ -5,6 +5,10 @@ goal = """
 Add two 16-bit numbers. Chain 16 full adders: each column's carry goes into the next column, like adding by hand.
 The first column has no carry coming in: use your Constant 0. A carry out of the last column is dropped, so 0xffff + 1 = 0.
 """
+role = "adds two 16-bit numbers"
+why = """
+Adding is the computer's most used operation, and not only for sums. The CPU adds to find a jump's target (pc + offset); programs add to step through arrays and to find screen words (0x4000 + row × 8 + column / 16). In Bitfall, moving a piece one column is col + 1, and the score is score + points.
+"""
 inputs = ["a", "b"]
 outputs = ["out"]
 requires = ["fulladder", "zero"]

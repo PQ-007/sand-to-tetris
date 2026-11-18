@@ -13,6 +13,10 @@ Turn an instruction into the signals that steer the CPU (see docs/ISA.md, or Cha
 - off: bits 9–0 sign-extended for op 6, else bits 11–0 sign-extended.
 Tip: a DMUX8WAY with in = 1 and sel = op gives one wire per instruction group.
 """
+role = "turns an instruction into control signals"
+why = """
+An instruction is just a 16-bit number. The control unit reads its bits and sets every switch in the CPU: which registers to read, what the ALU should do, where the result goes, whether to jump. It's what lets the same hardware run ADD on one tick and STORE on the next.
+"""
 inputs = ["instr", "z", "n", "c"]
 outputs = ["wa", "we", "ra", "rb", "f", "invb", "cin", "useimm", "imm", "rsel", "setflags", "writeM", "jump", "jr", "off"]
 requires = ["dmux8way", "mux", "and", "or", "not", "one", "zero"]

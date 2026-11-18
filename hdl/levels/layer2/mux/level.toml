@@ -5,6 +5,10 @@ goal = """
 Build a multiplexer (MUX): a switch for data. When sel is 0 the output copies a; when sel is 1 it copies b.
 Multiplexers let a computer choose between values, for example which register to read.
 """
+role = "chooses between two signals"
+why = """
+A multiplexer is how hardware makes a choice: sel decides which input goes through. A CPU is full of them: a register or a constant? The next instruction or a jump? Keep the old value or load a new one? In Layer 3 a MUX turns a flip-flop into memory you control.
+"""
 inputs = ["a", "b", "sel"]
 outputs = ["out"]
 requires = ["and", "or", "not"]

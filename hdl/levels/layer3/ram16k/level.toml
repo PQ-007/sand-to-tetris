@@ -5,6 +5,10 @@ goal = """
 16,384 words: the computer's main memory, from four RAM4Ks. The address is 14 bits: the top 2 choose the RAM4K, the low 12 are the address inside it.
 It's the same pattern as RAM4K, with a DMUX4WAY for load and a MUX4WAY16 for q.
 """
+role = "the computer's main memory"
+why = """
+16,384 words: room for a program's variables, arrays and its stack (the program itself sits in a separate ROM). Every LOAD and STORE instruction reads or writes here.
+"""
 sequential = true
 inputs = ["d", "addr", "load", "clk"]
 outputs = ["q"]

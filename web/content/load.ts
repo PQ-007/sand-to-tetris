@@ -83,6 +83,8 @@ export interface LoadResult {
 export interface LevelText {
   name: string;
   goal: string;
+  role: string;
+  why: string;
   hints: Record<string, string>;
 }
 
@@ -100,6 +102,8 @@ export function loadLevelText(file: string): Record<string, LevelText> {
     out[id] = {
       name: String(r.name ?? "").trim(),
       goal: String(r.goal ?? "").trim(),
+      role: String(r.role ?? "").trim(),
+      why: String(r.why ?? "").trim(),
       hints: Object.fromEntries(
         Object.entries((r.hints ?? {}) as Record<string, unknown>).map(
           ([k, v]) => [k, String(v).trim()],

@@ -4,6 +4,10 @@ layer = 2
 goal = """
 Add 1 to a 16-bit number. Use your ADD16 with the number 1 as its second input: build the 16-bit 1 from constants with a joiner.
 """
+role = "adds 1"
+why = """
+Counting is everywhere in a computer. The program counter adds 1 after every instruction to move on to the next one, and every loop counts with i + 1. INC16 is what makes the PC step forward on its own.
+"""
 inputs = ["a"]
 outputs = ["out"]
 requires = ["add16", "one", "zero"]

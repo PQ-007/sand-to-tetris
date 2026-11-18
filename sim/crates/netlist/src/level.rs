@@ -16,6 +16,14 @@ pub struct Level {
     pub layer: u8,
     /// Plain-language goal shown to the learner.
     pub goal: String,
+    /// What the part does in the finished computer, in a few words: one
+    /// link in the "where it goes" chain on the level page.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub role: String,
+    /// Why the part matters: what the computer and its programs need it
+    /// for. Shown with the goal, so a puzzle never comes without a reason.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub why: String,
     pub inputs: Vec<String>,
     pub outputs: Vec<String>,
     /// Levels that must be passed before this one opens.

@@ -5,6 +5,10 @@ goal = """
 Slide the bits of in by n places (0 to 15) in one go. right = 0 shifts left (toward bit 15), filling with zeros. right = 1 shifts right, filling with zeros, or with copies of bit 15 when arith = 1 (so a negative number stays negative). arith doesn't matter for left shifts.
 Build it in stages: a MUX16 that shifts by 1 or not (n bit 0), then one that shifts by 2 or not (bit 1), then by 4, then by 8. Shifting by 5 is stages 1 and 3 together. The shifts themselves are only wiring: split the bus and join the bits back one place over. Build a left chain and a right chain, and let a last MUX16 pick with right.
 """
+role = "slides bits left or right"
+why = """
+Shifting left by one doubles a number and shifting right halves it: the quick way to multiply and divide by 2, 4, 8… Programs also shift to move bits into place. The OS finds a pixel's screen word with y << 3 and x >> 4, and Bitfall slides a piece into its column with piece >> x.
+"""
 inputs = ["in", "n", "right", "arith"]
 outputs = ["out"]
 requires = ["mux16", "and", "zero"]

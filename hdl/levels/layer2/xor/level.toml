@@ -5,6 +5,10 @@ goal = """
 Build XOR ("exclusive or"): the output is 1 when the inputs are different.
 It's the gate that adds two bits (ignoring the carry).
 """
+role = "1 when the two inputs differ"
+why = """
+XOR is adding without the carry: 0 + 1 = 1, but 1 + 1 = 0 (and carry 1). That makes it the heart of every adder. It's also an inverter you can switch on and off, x XOR 1 = NOT x, which is how the ALU subtracts.
+"""
 inputs = ["a", "b"]
 outputs = ["out"]
 requires = ["and", "or", "nand"]

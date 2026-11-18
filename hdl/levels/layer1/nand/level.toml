@@ -5,6 +5,10 @@ goal = """
 Build NAND ("not and"): the output is 0 only when both inputs are 1.
 NAND is special: every other logic gate can be built from NANDs alone.
 """
+role = "the gate every other gate can be made of"
+why = """
+NAND is universal: AND, OR, XOR, multiplexers, adders, memory, and in the end the whole CPU can be built from NANDs alone. In CMOS it's small and fast, so real chips use it everywhere. From the next layer on you build with gates instead of transistors, and NAND is the first brick.
+"""
 inputs = ["a", "b"]
 outputs = ["out"]
 requires = ["not"]

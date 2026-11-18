@@ -8,6 +8,11 @@ Build the arithmetic logic unit: the part of the CPU that calculates. We designe
 - Flags: z = 1 if out is 0; n = 1 if out is negative (its top bit); c = the adder's carry out, or 0 for AND/OR/XOR.
 With these, a − b is ADD with invb = 1 and cin = 1.
 """
+role = "does every calculation an instruction asks for"
+why = """
+The ALU (arithmetic logic unit) is the CPU's calculator. A program is a long list of small steps, and almost every step is a calculation: score + points, col − 1 to move left, i + 1 to go round a loop, board AND piece to test a collision. The rest of the CPU only fetches numbers and puts results away; the ALU is where the work happens.
+It also lets programs decide. Its flags say whether a result was zero (z), negative (n) or carried out (c), and every if and every loop is a jump that reads them: "is y equal to the floor?" is y − floor, then "was it zero?".
+"""
 inputs = ["a", "b", "f", "invb", "cin"]
 outputs = ["out", "z", "n", "c"]
 requires = ["addc16", "xor16", "and16", "or16", "mux4way16", "or8way", "and", "or", "not", "nor", "xor"]

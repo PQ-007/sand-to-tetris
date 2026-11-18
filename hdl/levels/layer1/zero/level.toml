@@ -5,6 +5,10 @@ goal = """
 A component whose output is always 0.
 Later layers can't use bare supply rails, so you'll build the constants once here, and use them as parts from then on.
 """
+role = "a steady 0 for later parts"
+why = """
+The same idea for 0. The adder's first carry in is 0, the unused high bits of a small number are 0, and the program counter goes back to 0 on reset. Each of those 0s comes from this part.
+"""
 inputs = []
 outputs = ["out"]
 requires = ["not"]

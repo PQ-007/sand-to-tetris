@@ -5,6 +5,10 @@ goal = """
 Build NOR ("not or"): the output is 1 only when both inputs are 0.
 Hint: it's the mirror image of NAND.
 """
+role = "the gate your first memory is made of"
+why = """
+NOR is NAND's mirror twin, and it's universal too. You'll meet it again in Layer 3: two NORs wired into each other's inputs make the SR latch, the first circuit that remembers. Without memory a computer couldn't keep a single number from one step to the next.
+"""
 inputs = ["a", "b"]
 outputs = ["out"]
 requires = ["not"]

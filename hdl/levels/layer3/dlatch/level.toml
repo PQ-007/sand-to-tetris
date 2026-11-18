@@ -5,6 +5,10 @@ goal = """
 Make the latch easier to use: one data input d instead of separate set and reset. While en (enable) is 1, q follows d. When en goes back to 0, q keeps the value d had at that moment.
 Use your SR latch: set it when d is 1 and en is 1, reset it when d is 0 and en is 1.
 """
+role = "remembers a bit when told to"
+why = """
+The SR latch has two inputs and one forbidden case. The D latch has a data bit and an "enable": here is the value, keep it now. That's the shape every memory needs.
+"""
 sequential = true
 inputs = ["d", "en"]
 outputs = ["q"]

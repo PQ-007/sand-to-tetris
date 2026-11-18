@@ -5,6 +5,10 @@ goal = """
 Build a 16-bit XOR: XOR each bit of a with the same bit of b.
 XOR is also a controllable inverter: x XOR 0 = x, but x XOR 1 = NOT x. Your ALU will use that to flip B on demand.
 """
+role = "flips chosen bits; lets the ALU subtract"
+why = """
+The ALU's XOR instruction, and the trick behind subtraction: XOR with all 1s flips b, and a + NOT b + 1 = a − b. Every comparison a program makes ("is x below 10?", "has the piece reached the floor?") is a subtraction underneath. The OS's random numbers are XORs and shifts too.
+"""
 inputs = ["a", "b"]
 outputs = ["out"]
 requires = ["xor"]

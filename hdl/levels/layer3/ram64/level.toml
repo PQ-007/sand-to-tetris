@@ -5,6 +5,10 @@ goal = """
 64 words of memory from eight RAM8s. The address is 6 bits: the top 3 bits choose which RAM8, the bottom 3 bits are the address inside it.
 Split addr, join the low bits back into one 3-bit address for every RAM8, and use the top 3 bits with a DMUX8WAY (for load) and a MUX8WAY16 (for q), just as in RAM8.
 """
+role = "64 words"
+why = """
+Eight RAM8s, chosen by the top bits of the address. Each step of this stage is the same trick one level up, which is how real memory chips are organised: banks inside banks.
+"""
 sequential = true
 inputs = ["d", "addr", "load", "clk"]
 outputs = ["q"]

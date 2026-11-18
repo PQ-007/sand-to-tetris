@@ -5,6 +5,10 @@ goal = """
 512 words of memory from eight RAM64s. The address is 9 bits: the top 3 bits choose which RAM64, the bottom 6 bits are the address inside it.
 Split addr, join the low bits back into one 6-bit address for every RAM64, and use the top 3 bits with a DMUX8WAY (for load) and a MUX8WAY16 (for q), just as in RAM8.
 """
+role = "512 words"
+why = """
+Eight RAM64s. Each step adds 3 address bits and one more layer of choosing. Bitfall's board, a C program's arrays and the stack all live in memory built exactly like this.
+"""
 sequential = true
 inputs = ["d", "addr", "load", "clk"]
 outputs = ["q"]
