@@ -432,9 +432,10 @@ class PlayPage {
     const wrap = el("div", { class: "canvas-wrap" });
     wrap.append(this.canvas.el);
     this.canvas.fillContainer(wrap);
-    // Suggested fixes sit above the status pill, bottom left.
+    // Bottom left, stacked: suggested fixes, the status pill, and "Why it
+    // matters" (folds to a small button) at the very bottom.
     const dock = el("div", { class: "canvas-dock" });
-    dock.append(this.blockedBox, this.fixBox, this.statusLine);
+    dock.append(this.blockedBox, this.fixBox, this.statusLine, this.whyBox());
     frame.append(wrap, this.emptyHint, dock, this.zoomControls());
     const footer = el("div", { class: "bench-footer" });
     footer.append(this.stats, this.slowNote);
@@ -454,7 +455,6 @@ class PlayPage {
     const goal = el("section", { class: "side-section goal-box" });
     goal.append(
       ...this.pathInfo(),
-      this.whyBox(),
       el("h2", {}, t("play.goal")),
       el("p", { class: "goal" }, levelGoal(l)),
       this.hintBox(),
@@ -1065,9 +1065,10 @@ class PlayPage {
   }
 
   /**
-   * "Why it matters": what the part is for, then the chain it climbs to
-   * the finished computer, each step with its role and whether it's
-   * cleared. A puzzle with a reason. Folding it is remembered.
+   * "Why it matters", in the canvas's bottom-left corner: what the part
+   * is for, then the chain it climbs to the finished computer, each step
+   * with its role and whether it's cleared. A puzzle with a reason. It
+   * folds to a small button (the summary); folding is remembered.
    */
   private whyBox(): HTMLElement {
     const box = el("details", { class: "why-box" });
