@@ -141,6 +141,11 @@ export function menuFor(
             hint: "Ctrl+Shift+Z",
             disabled: !ctx.canRedo,
           },
+          {
+            id: "tidy",
+            label: t("menu.tidy"),
+            disabled: !ctx.design.parts.length,
+          },
           "separator",
           {
             id: "clear",

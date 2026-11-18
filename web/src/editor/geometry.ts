@@ -253,6 +253,35 @@ export function portPoint(
   return place(inputs, 100) ?? place(outputs, size.width - 120);
 }
 
+/**
+ * Keeps ports still while the circuit changes size. A port's default spot
+ * follows the circuit's extent (outputs sit right of the rightmost part),
+ * so dragging or dropping a part near an edge used to shove every port and
+ * all their wires along with it. Any port whose default spot differs
+ * between the `before` and `after` sizes is pinned where it was.
+ */
+export function steadyPorts(
+  design: { port_pos?: Record<string, Point> },
+  inputs: string[],
+  outputs: string[],
+  before: Size,
+  after: Size,
+): Record<string, Point> | undefined {
+  const moved = design.port_pos;
+  const pinned: Record<string, Point> = { ...moved };
+  let changed = false;
+  for (const name of [...inputs, ...outputs]) {
+    if (moved?.[name]) continue;
+    const was = portPoint(name, inputs, outputs, before);
+    const now = portPoint(name, inputs, outputs, after);
+    if (was && now && (was[0] !== now[0] || was[1] !== now[1])) {
+      pinned[name] = was;
+      changed = true;
+    }
+  }
+  return changed ? pinned : moved;
+}
+
 /** Keeps a dragged port, and its label box, on the largest canvas. */
 export function clampPort(p: Point, isInput: boolean): Point {
   return [

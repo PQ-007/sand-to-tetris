@@ -145,21 +145,22 @@ describe("what the context menu offers", () => {
     expect(menuFor({ kind: "port", name: "a" }, ctx()).title).toBe("Input a");
   });
 
-  it("empty canvas: add each toolbox part here, undo, redo, clear", () => {
+  it("empty canvas: add each toolbox part here, undo, redo, tidy up, clear", () => {
     expect(ids({ kind: "canvas", at: [100, 100] })).toEqual([
       "add:nand",
       "add:not",
       "—",
       "undo",
       "redo(off)",
+      "tidy",
       "—",
       "clear",
     ]);
-    // Nothing to clear on an empty design.
+    // Nothing to tidy or clear on an empty design.
     const empty = ctx({ design: emptyDesign("and") });
-    expect(ids({ kind: "canvas", at: [100, 100] }, empty).at(-1)).toBe(
-      "clear(off)",
-    );
+    const off = ids({ kind: "canvas", at: [100, 100] }, empty);
+    expect(off.at(-1)).toBe("clear(off)");
+    expect(off).toContain("tidy(off)");
   });
 });
 
