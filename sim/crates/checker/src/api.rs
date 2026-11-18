@@ -92,6 +92,47 @@ pub fn check(library: &str, level: &str, design: &str) -> Result<crate::Report, 
     crate::check_with(&level, &design, &lib, &fast).map_err(|e| e.to_string())
 }
 
+// ---- expected outputs ------------------------------------------------------------
+
+/// What the level wants for these inputs (`{"a": 1, "b": 0}`), as output
+/// name and value (`0`/`1`, or a decimal number for a bus): from its native
+/// model if it has one, else from its truth table's row. `None` if an input
+/// is missing, the table has no such row, or the level has memory (then
+/// the answer depends on what it stored).
+pub fn expected(toml: &str, inputs: &str) -> Result<Option<Vec<(String, String)>>, String> {
+    let level = Level::from_toml(toml).map_err(|e| e.to_string())?;
+    let given = read_inputs(&level, inputs)?;
+    if level.sequential {
+        return Ok(None);
+    }
+    let mut values = Vec::new();
+    for p in &level.inputs {
+        match given.get(p) {
+            Some(v) => values.push((p.clone(), *v)),
+            None => return Ok(None),
+        }
+    }
+    let words: Option<Vec<u64>> = match level.model.as_deref().and_then(s2t_models::model) {
+        Some(m) => Some(m.eval_words(&values.iter().map(|(_, v)| *v).collect::<Vec<_>>())),
+        None => {
+            let table = Table::parse(&level.truth_table, &level).map_err(|e| e.to_string())?;
+            table
+                .rows
+                .into_iter()
+                .find(|r| r.inputs == values)
+                .map(|r| r.outputs.into_iter().map(|(_, v)| v).collect())
+        }
+    };
+    Ok(words.map(|w| {
+        level
+            .outputs
+            .iter()
+            .cloned()
+            .zip(w.into_iter().map(|v| v.to_string()))
+            .collect()
+    }))
+}
+
 // ---- live simulation -----------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize)]
