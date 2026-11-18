@@ -206,19 +206,26 @@ export function removeWire(design: Design, index: number): Design {
 export class History {
   private past: Design[] = [];
   private future: Design[] = [];
+  /** Where an unfinished change (a drag) started: committing it makes one
+   * undo step back to here. */
+  private draftBase: Design | undefined;
 
   constructor(public current: Design) {}
 
   apply(next: Design): void {
-    if (next === this.current) return;
-    this.past.push(this.current);
+    const base = this.draftBase ?? this.current;
+    this.draftBase = undefined;
+    this.current = next;
+    if (next === base) return;
+    this.past.push(base);
     if (this.past.length > 200) this.past.shift();
     this.future = [];
-    this.current = next;
   }
 
-  /** Replaces the current design without a new undo step (e.g. mid-drag). */
+  /** Replaces the current design without a new undo step (e.g. mid-drag).
+   * The next `apply` makes one step from before the first replace. */
   replace(next: Design): void {
+    this.draftBase ??= this.current;
     this.current = next;
   }
 
@@ -233,6 +240,7 @@ export class History {
   undo(): void {
     const prev = this.past.pop();
     if (!prev) return;
+    this.draftBase = undefined;
     this.future.push(this.current);
     this.current = prev;
   }
@@ -240,6 +248,7 @@ export class History {
   redo(): void {
     const next = this.future.pop();
     if (!next) return;
+    this.draftBase = undefined;
     this.past.push(this.current);
     this.current = next;
   }

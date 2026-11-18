@@ -308,3 +308,31 @@ fn a_sequence_of_steps_runs_in_one_call() {
     assert_eq!(q(&more.view), "0");
     assert!(simulate_steps(&lib, "srlatch", &latch, "[]", "{}").is_err());
 }
+
+#[test]
+fn expected_answers_from_the_model_or_the_table() {
+    use s2t_checker::api::expected;
+    let pair = |n: &str, v: &str| (n.to_string(), v.to_string());
+    // A model: any inputs, even ones the table doesn't list.
+    let add16 = read("layer2/add16/level.toml");
+    assert_eq!(
+        expected(&add16, r#"{"a": 40000, "b": 30000}"#).unwrap(),
+        Some(vec![pair("out", &((40000 + 30000) % 65536).to_string())])
+    );
+    // No model: the truth table's row.
+    let and = read("layer2/and/level.toml");
+    assert_eq!(
+        expected(&and, r#"{"a": 1, "b": 1}"#).unwrap(),
+        Some(vec![pair("out", "1")])
+    );
+    // A missing input: no answer.
+    assert_eq!(expected(&and, r#"{"a": 1}"#).unwrap(), None);
+    // A circuit with memory: its answer depends on what it stored.
+    let register = read("layer3/register/level.toml");
+    assert_eq!(
+        expected(&register, r#"{"d": 5, "load": 1, "clk": 1}"#).unwrap(),
+        None
+    );
+    // Out-of-range inputs are an error, as in simulate.
+    assert!(expected(&and, r#"{"a": 2, "b": 0}"#).is_err());
+}

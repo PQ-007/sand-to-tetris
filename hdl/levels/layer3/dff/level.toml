@@ -5,6 +5,10 @@ goal = """
 A flip-flop changes at one instant only: when clk rises from 0 to 1, q takes the value of d. The rest of the time q holds, whatever d does. A clock ticking every flip-flop at once is what makes a computer move in steps.
 Chain two D latches. The first (the master) is open while clk is 0; the second (the slave) is open while clk is 1. At no moment are both open.
 """
+role = "stores a bit exactly on the clock tick"
+why = """
+A computer moves in steps, one clock tick per instruction. A flip-flop changes only at the tick, so while an instruction works every part reads the old values, and the new ones appear together at the next tick. Without that, results would chase each other around loops and never settle.
+"""
 sequential = true
 inputs = ["d", "clk"]
 outputs = ["q"]

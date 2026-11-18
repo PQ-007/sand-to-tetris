@@ -5,6 +5,10 @@ goal = """
 Build your first memory. Set s to 1 and q becomes 1; set r (reset) to 1 and q becomes 0. With both back at 0, q keeps its last value: the circuit remembers.
 Use two NOR gates, each one's output wired to an input of the other. That loop is the memory. Don't set s and r to 1 at the same time.
 """
+role = "remembers one bit, your first memory"
+why = """
+Everything so far forgets: take the inputs away and the answer is gone. Programs need to keep things: the score, where the piece is, which instruction comes next. Two NORs feeding each other hold a bit in their loop, and that loop is the root of every memory in the computer.
+"""
 sequential = true
 inputs = ["s", "r"]
 outputs = ["q"]

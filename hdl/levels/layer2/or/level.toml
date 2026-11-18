@@ -5,6 +5,10 @@ goal = """
 Build OR: the output is 1 when either input is 1 (or both).
 Hint: OR is 0 only when both inputs are 0. Think about what NAND does with inverted inputs.
 """
+role = "1 when either input is 1"
+why = """
+OR combines reasons: "is any bit of the result 1?", "is either of these true?". It finishes the full adder's carry, and the ALU's zero flag comes from ORs: if no bit is 1, the result is 0.
+"""
 inputs = ["a", "b"]
 outputs = ["out"]
 requires = ["nand", "not"]

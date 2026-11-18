@@ -34,6 +34,7 @@ import {
   canvasSize,
   zoomStep,
   shapeOfPart,
+  steadyPorts,
   type ComponentPorts,
   type Size,
   snap,
@@ -174,14 +175,11 @@ export class CircuitCanvas {
     this.el.classList.toggle("read-only", Boolean(props.readOnly));
     // Grow with the circuit: real pixels, scrolled by the wrapper, so text
     // never shrinks on big designs.
-    const items = [
-      ...props.design.parts.map((p) => ({ pos: p.pos, shape: this.shape(p) })),
-      ...Object.values(props.design.port_pos ?? {}).map((pos) => ({
-        pos,
-        shape: PORT_SHAPE,
-      })),
-    ];
-    this.layout = canvasSize(items);
+    const items = this.extent(props.design);
+    // Mid-drag the ports' default spots stay put: otherwise every move
+    // near an edge would shove the ports, and their wires, along.
+    if (this.mode.kind !== "drag" && this.mode.kind !== "port")
+      this.layout = canvasSize(items);
     // Zoomed out, the same pane shows more canvas.
     this.size = canvasSize(
       items,
@@ -218,6 +216,34 @@ export class CircuitCanvas {
         ?.focus();
     this.focusPart = null;
     this.focusPort = null;
+  }
+
+  /** What the canvas has to make room for: parts and moved ports. */
+  private extent(design: Design): { pos?: Point; shape: Shape }[] {
+    return [
+      ...design.parts.map((p) => ({ pos: p.pos, shape: this.shape(p) })),
+      ...Object.values(design.port_pos ?? {}).map((pos) => ({
+        pos,
+        shape: PORT_SHAPE,
+      })),
+    ];
+  }
+
+  /**
+   * `next` with every port pinned where it's drawn now, if the change
+   * would otherwise move its default spot (see `steadyPorts`). The page
+   * runs each committed edit through this.
+   */
+  keepPorts(next: Design): Design {
+    if (!this.props) return next;
+    const pinned = steadyPorts(
+      next,
+      this.props.inputs,
+      this.props.outputs,
+      this.layout,
+      canvasSize(this.extent(next)),
+    );
+    return pinned === next.port_pos ? next : { ...next, port_pos: pinned };
   }
 
   /**

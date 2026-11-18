@@ -5,6 +5,10 @@ goal = """
 4,096 words of memory from eight RAM512s. The address is 12 bits: the top 3 bits choose which RAM512, the bottom 9 bits are the address inside it.
 Split addr, join the low bits back into one 9-bit address for every RAM512, and use the top 3 bits with a DMUX8WAY (for load) and a MUX8WAY16 (for q), just as in RAM8.
 """
+role = "4,096 words, also the screen's memory"
+why = """
+Eight RAM512s. The memory map uses a RAM4K for the screen too: its first 768 words hold 16 pixels each, 128 × 96 in all, and whatever a program stores there appears on the display.
+"""
 sequential = true
 inputs = ["d", "addr", "load", "clk"]
 outputs = ["q"]

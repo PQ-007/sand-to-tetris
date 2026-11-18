@@ -4,6 +4,10 @@ layer = 2
 goal = """
 Build a demultiplexer (DMUX): the opposite of a MUX. It sends its input to output a when sel is 0, or to output b when sel is 1. The other output is 0.
 """
+role = "sends a signal to one of two places"
+why = """
+The mirror of a MUX: one input, two outputs, and sel says which one gets it. That's how a write reaches exactly one place. Grown to eight ways, it sends "store" to one register out of eight.
+"""
 inputs = ["in", "sel"]
 outputs = ["a", "b"]
 requires = ["and", "not"]

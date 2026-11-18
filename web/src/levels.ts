@@ -31,7 +31,7 @@ import { parseProgressFile, progressFile, workshopFromFile } from "./progress";
 import { workshopStore } from "./workshop-store";
 import { roadmapSteps, type Step } from "./roadmap";
 import { playHref } from "./router";
-import { levelGoal, levelName } from "./text";
+import { levelGoal, levelName, levelRole, levelWhy } from "./text";
 
 const esc = (s: string) =>
   s
@@ -181,6 +181,7 @@ function roadmapHtml(a: App): string {
                     <span class="step-tags">${isNext ? `<span class="pill pill-next">${esc(t("levels.nextUp"))}</span>` : ""}<span class="pill level-status pill-${st}">${esc(statusText(st))}</span></span>
                   </div>
                   <p>${esc(detailText(a, lv.id))}</p>
+                  <p class="level-role">${esc(t("levels.roleFor", { role: levelRole(lv) }))}</p>
                   ${builtFromHtml(a, step)}
                   ${usedInHtml(a, lv.id)}
                   ${swapHtml(a, lv.id)}
@@ -279,6 +280,12 @@ function renderDetail(root: HTMLElement, a: App, id: string): void {
     </div>
     <div class="detail-more" id="detail-more">
       <p>${esc(detailText(a, id))}</p>
+      <h3>${esc(t("play.why"))}</h3>
+      ${levelWhy(lv)
+        .split("\n")
+        .filter(Boolean)
+        .map((p) => `<p class="why-text">${esc(p)}</p>`)
+        .join("")}
       ${swapHtml(a, id)}
       <h3>${esc(t("levels.needs"))}</h3>${chips(needs, t("levels.needsNothing"))}
       <h3>${esc(t("levels.unlocks"))}</h3>${chips(unlocks, t("levels.unlocksNothing"))}

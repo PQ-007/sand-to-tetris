@@ -4,6 +4,10 @@ layer = 1
 goal = """
 A component whose output is always 1.
 """
+role = "a steady 1 for later parts"
+why = """
+From Layer 2 on you build with parts, not supply rails, so a fixed 1 has to come from a part. Computers need fixed values all the time: the 1 in "add 1 to the program counter", a signal that's always on, the bits of a small constant.
+"""
 inputs = []
 outputs = ["out"]
 requires = ["not"]

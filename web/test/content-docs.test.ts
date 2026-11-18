@@ -128,7 +128,7 @@ describe("spoiler guard", () => {
   });
 
   it.each(["mn", "ja"])(
-    "every level has a %s name, goal and the same hints",
+    "every level has a %s name, goal, role, why and the same hints",
     (lang) => {
       const dir = new URL("../../hdl/levels", import.meta.url).pathname;
       const text = loadLevelText(`${dir}/${lang}.yaml`);
@@ -136,6 +136,8 @@ describe("spoiler guard", () => {
         const tr = text[l.id];
         expect(tr?.name, `${l.id} name`).toBeTruthy();
         expect(tr?.goal, `${l.id} goal`).toBeTruthy();
+        expect(tr?.role, `${l.id} role`).toBeTruthy();
+        expect(tr?.why, `${l.id} why`).toBeTruthy();
         const hints = l.toml.split("[hints]")[1] ?? "";
         const keys = [...hints.matchAll(/^(\w+)\s*=/gm)].map((m) => m[1]);
         expect(Object.keys(tr?.hints ?? {}).sort(), `${l.id} hints`).toEqual(

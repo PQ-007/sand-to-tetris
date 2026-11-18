@@ -167,6 +167,19 @@ export function levelInfo(toml: string): LevelInfo {
   return JSON.parse(wasm.levelInfo(toml)) as LevelInfo;
 }
 
+/**
+ * What a level (its level.toml) wants for these inputs: each output's
+ * value as `simulate` writes it, or null when it can't say (an input
+ * missing, a row the table doesn't list, a circuit with memory).
+ */
+export function expected(
+  toml: string,
+  inputs: Record<string, number>,
+): [string, string][] | null {
+  return JSON.parse(wasm.expected(toml, JSON.stringify(inputs))) as
+    [string, string][] | null;
+}
+
 export function check(
   library: LibraryInput,
   level: string,

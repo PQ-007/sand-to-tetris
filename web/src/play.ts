@@ -15,10 +15,12 @@ import { CircuitCanvas, partIcon, type CanvasProps } from "./editor/canvas";
 import {
   clampToCanvas,
   freeSpot,
+  shapeOfPart,
   snap,
   zoomStep,
   type Point,
 } from "./editor/geometry";
+import { tidy } from "./editor/layout";
 import { openMenu } from "./editor/menu";
 import {
   bitWireFixes,
@@ -26,7 +28,14 @@ import {
   type Fix,
   type WireFix,
 } from "./editor/fixes";
-import { bitsOf, formatValue, parseNumber, showValue } from "./editor/values";
+import {
+  bitsOf,
+  compareAnswer,
+  formatValue,
+  parseNumber,
+  randomValue,
+  showValue,
+} from "./editor/values";
 import { drawWaveform } from "./editor/waveform-view";
 import type { Signal } from "./editor/waveform";
 import {
@@ -48,6 +57,7 @@ import {
   builtFrom,
   memoryParts,
   nextLevel,
+  pathToTop,
   orderLevels,
   playLibrary,
   toolbox,
@@ -58,8 +68,14 @@ import { t, type Key } from "./i18n";
 import { diagnosticText, knownText, problemText } from "./messages";
 import { roadmapSteps } from "./roadmap";
 import { playHref } from "./router";
-import { levelGoal, levelHint, levelName } from "./text";
-import { check, disassemble, simulate, simulateSteps } from "./sim/core";
+import { levelGoal, levelHint, levelName, levelRole, levelWhy } from "./text";
+import {
+  check,
+  disassemble,
+  expected,
+  simulate,
+  simulateSteps,
+} from "./sim/core";
 import type {
   Design,
   Diagnostic,
@@ -69,6 +85,7 @@ import type {
   StepsView,
   Level,
   LibraryInput,
+  Part,
   Report,
   SimView,
 } from "./sim/types";
@@ -199,7 +216,11 @@ class PlayPage {
   private undoBtn = el("button", { type: "button" }, t("play.undo"));
   private redoBtn = el("button", { type: "button" }, t("play.redo"));
   private clearBtn = el("button", { type: "button" }, t("play.clear"));
+  private tidyBtn = el("button", { type: "button" }, t("play.tidy"));
   private inputBox = el("div", { class: "input-toggles" });
+  /** For the current inputs: what the goal wants next to what the circuit
+   * gives (combinational levels). */
+  private answerBox = el("p", { class: "answer", "aria-live": "polite" });
   private outputBox = el("div", { class: "output-bits" });
   /** One-click fixes for wires of different widths, over the canvas. */
   private fixBox = el("ul", {
@@ -234,6 +255,11 @@ class PlayPage {
   private propsBox = el("div", { class: "props" });
   private runsAs = el("ul", { class: "runs-as" });
   private selected: string | null = null;
+  private checkBtn = el("button", { type: "button" });
+  /** "Next level: …", in place of Check as the main button once cleared. */
+  private nextBtn = el("a", { class: "button primary next-level" });
+  private headNext = el("a", { class: "play-next" });
+  private clearedBadge = el("span", { class: "badge cleared" });
 
   constructor(
     private root: HTMLElement,
@@ -280,19 +306,53 @@ class PlayPage {
 
   // ---- layout ---------------------------------------------------------------
 
+  /** The level to go to next: the next one not yet cleared. */
+  private nextId(): string | undefined {
+    return nextLevel(
+      orderLevels(this.app.levels).map((e) => e.info.level),
+      this.level.id,
+      this.app.status,
+    );
+  }
+
+  /**
+   * A cleared level says so in its title (a ✓ and the word, not colour
+   * alone), and the sticky button at the bottom of the panel becomes
+   * "Next level"; Check stays beside it for re-checking after edits.
+   */
+  private renderCleared(): void {
+    const cleared = this.app.status[this.level.id] === "passed";
+    const next = this.nextId();
+    this.root.dataset.next = next ?? "";
+    this.clearedBadge.hidden = !cleared;
+    this.headNext.hidden = !next || cleared;
+    if (next) this.headNext.href = playHref(next);
+    this.checkBtn.className = cleared ? "secondary" : "primary";
+    this.checkBtn.textContent = t(cleared ? "play.checkAgain" : "play.check");
+    this.nextBtn.hidden = !cleared;
+    const lv = next ? levelEntry(this.app, next)?.info.level : undefined;
+    this.nextBtn.href = next ? playHref(next) : "#/levels";
+    this.nextBtn.textContent = lv
+      ? t("play.nextLevelNamed", { name: levelName(lv) })
+      : t("play.allCleared");
+    this.root
+      .querySelector(".side-actions")
+      ?.classList.toggle("cleared", cleared);
+  }
+
   private build(): void {
     const l = this.level;
-    const next = nextLevel(
-      orderLevels(this.app.levels).map((e) => e.info.level),
-      l.id,
-    );
     this.root.innerHTML = `
       <div class="play-head">
         <nav class="crumbs" aria-label="${esc(t("play.crumbs"))}"><a href="#/levels">${esc(t("title.levels"))}</a> <span aria-hidden="true">/</span> ${esc(t("play.layerN", { n: l.layer }))} <span aria-hidden="true">/</span></nav>
         <h1 tabindex="-1">${esc(levelName(l))}${l.optional ? ` <span class="badge">${esc(t("levels.sideQuest"))}</span>` : ""}</h1>
-        ${next && this.app.status[next] !== "locked" ? `<a class="play-next" href="${playHref(next)}">${esc(t("play.nextLevel"))}</a>` : ""}
       </div>`;
-    this.root.dataset.next = next ?? "";
+    const top = this.root.querySelector(".play-head");
+    this.clearedBadge.textContent = `✓ ${t("play.levelCleared")}`;
+    this.clearedBadge.title = t("play.levelClearedTitle");
+    this.headNext.textContent = t("play.nextLevel");
+    top?.querySelector("h1")?.append(" ", this.clearedBadge);
+    top?.append(this.headNext);
 
     const grid = el("div", { class: "play-grid" });
     const bench = el("section", {
@@ -355,10 +415,13 @@ class PlayPage {
     this.undoBtn.title = t("play.undoTitle");
     this.redoBtn.title = t("play.redoTitle");
     this.clearBtn.addEventListener("click", () => this.clear());
+    this.tidyBtn.addEventListener("click", () => this.tidyUp());
+    this.tidyBtn.title = t("play.tidyTitle");
     this.clearBtn.title = t("play.clearTitle");
     toolbar.append(
       this.undoBtn,
       this.redoBtn,
+      this.tidyBtn,
       this.clearBtn,
       this.shortcutsButton(),
     );
@@ -369,9 +432,10 @@ class PlayPage {
     const wrap = el("div", { class: "canvas-wrap" });
     wrap.append(this.canvas.el);
     this.canvas.fillContainer(wrap);
-    // Suggested fixes sit above the status pill, bottom left.
+    // Bottom left, stacked: suggested fixes, the status pill, and "Why it
+    // matters" (folds to a small button) at the very bottom.
     const dock = el("div", { class: "canvas-dock" });
-    dock.append(this.blockedBox, this.fixBox, this.statusLine);
+    dock.append(this.blockedBox, this.fixBox, this.statusLine, this.whyBox());
     frame.append(wrap, this.emptyHint, dock, this.zoomControls());
     const footer = el("div", { class: "bench-footer" });
     footer.append(this.stats, this.slowNote);
@@ -401,6 +465,8 @@ class PlayPage {
     }
     const inputs = el("section", { class: "side-section" });
     inputs.append(el("h2", {}, t("play.inputs")), this.inputBox);
+    if (l.inputs.some((p) => p !== "clk")) inputs.append(this.randomButton());
+    if (!l.sequential) inputs.append(this.answerBox);
     if (l.sequential) inputs.append(this.memoryControls());
     side.append(inputs);
     if (l.inputs.some((p) => this.width(p) > 1)) {
@@ -419,11 +485,7 @@ class PlayPage {
     const head = el("thead");
     head.innerHTML = `<tr>${l.sequential ? `<th scope="col">${esc(t("play.step"))}</th>` : ""}${l.inputs.map((i) => `<th scope="col">${esc(i)}</th>`).join("")}${l.outputs.map((o) => `<th scope="col">${esc(t("play.want", { name: o }))}</th><th scope="col">${esc(t("play.yours", { name: o }))}</th>`).join("")}<th scope="col"><span class="visually-hidden">${esc(t("play.result"))}</span></th></tr>`;
     table.append(head, this.tableBody);
-    const checkBtn = el(
-      "button",
-      { type: "button", class: "primary" },
-      t("play.check"),
-    );
+    const checkBtn = this.checkBtn;
     checkBtn.addEventListener("click", () => {
       // Big circuits take a moment: say so, and let the message paint first.
       checkBtn.disabled = true;
@@ -461,11 +523,12 @@ class PlayPage {
     }
     // Check stays in view at the bottom of the panel while it scrolls.
     const actions = el("div", { class: "side-actions" });
-    actions.append(checkBtn);
+    actions.append(checkBtn, this.nextBtn);
     side.append(actions);
 
     grid.append(bench, side);
     this.root.append(grid, this.inside);
+    this.renderCleared();
 
     document.addEventListener("keydown", this.onKeys);
     // Leaving the page (or re-rendering it in another language) drops the
@@ -473,6 +536,75 @@ class PlayPage {
     const leave = () => document.removeEventListener("keydown", this.onKeys);
     window.addEventListener("hashchange", leave, { once: true });
     document.addEventListener("s2t-lang", leave, { once: true });
+  }
+
+  /**
+   * "Random inputs": a fresh case to try, beyond the rows of the table
+   * (a 16-bit adder has four billion). The clock is left alone: Tick is
+   * what moves it.
+   */
+  private randomButton(): HTMLElement {
+    const b = el(
+      "button",
+      { type: "button", class: "random-inputs", title: t("play.randomTitle") },
+      t("play.random"),
+    );
+    b.addEventListener("click", () => {
+      for (const name of this.level.inputs)
+        if (name !== "clk") this.inputs[name] = randomValue(this.width(name));
+      this.currentStep = null;
+      this.refresh(false);
+      this.say(
+        t("play.randomSet", {
+          list: this.level.inputs
+            .filter((n) => n !== "clk")
+            .map(
+              (n) =>
+                `${n} = ${formatValue(this.inputs[n] ?? 0, this.width(n))}`,
+            )
+            .join(", "),
+        }),
+      );
+    });
+    return b;
+  }
+
+  /** "Goal: out = 0x1170 · yours: 0x1170 ✓", for the inputs set now. */
+  private renderAnswer(): void {
+    if (this.level.sequential) return;
+    const entry = levelEntry(this.app, this.level.id);
+    let want: [string, string][] | null = null;
+    try {
+      want = entry ? expected(entry.toml, this.inputs) : null;
+    } catch {
+      want = null;
+    }
+    this.answerBox.replaceChildren();
+    if (!want) return;
+    const answers = compareAnswer(want, this.view?.outputs);
+    const allOk = answers.every((a) => a.ok);
+    this.answerBox.classList.toggle("ok", allOk);
+    this.answerBox.append(
+      el("strong", {}, t("play.answerHead")),
+      " ",
+      answers
+        .map((a) => {
+          const w = this.width(a.name);
+          return t("play.answerItem", {
+            name: a.name,
+            want: showValue(a.want, w),
+            got: a.got === undefined ? "–" : showValue(a.got, w),
+            mark: a.ok ? "✓" : "✗",
+          });
+        })
+        .join(" · "),
+      " ",
+      el(
+        "span",
+        { class: allOk ? "answer-ok" : "answer-bad" },
+        t(allOk ? "play.answerMatch" : "play.answerDiffers"),
+      ),
+    );
   }
 
   /** Tick (pulse clk) and power-cycle buttons for circuits with memory. */
@@ -635,7 +767,10 @@ class PlayPage {
     else this.undo();
   };
 
-  private onChange(design: Design, commit: boolean): void {
+  private onChange(next: Design, commit: boolean): void {
+    // A part dragged or dropped near an edge grows the circuit; the ports
+    // stay where the learner sees them instead of jumping outward.
+    const design = commit ? this.canvas.keepPorts(next) : next;
     if (commit) this.history.apply(design);
     else this.history.replace(design);
     this.highlightParts.clear();
@@ -667,6 +802,20 @@ class PlayPage {
    * Removes every part and wire. It's one undo step, but the cleared design
    * is saved and undo history doesn't survive a reload, so ask first.
    */
+  /** Lays the parts out again, inputs to outputs (one undo step). */
+  private tidyUp(): void {
+    if (!this.design.parts.length) return;
+    const shapes = (p: Part) => shapeOfPart(p, this.ports);
+    // Straight to history: the layout places every port itself, so
+    // keepPorts has nothing to hold still.
+    this.history.apply(
+      tidy(this.design, this.level.inputs, this.level.outputs, shapes),
+    );
+    this.refresh(true);
+    this.scheduleSave();
+    this.say(t("play.tidied"));
+  }
+
   private clear(): void {
     const { parts, wires } = this.design;
     if (!parts.length && !wires.length) return;
@@ -837,6 +986,7 @@ class PlayPage {
         this.say(t("play.added", { id }));
       } else if (action === "undo") this.undo();
       else if (action === "redo") this.redo();
+      else if (action === "tidy") this.tidyUp();
       else if (action === "clear") this.clear();
       back();
     }
@@ -912,6 +1062,75 @@ class PlayPage {
       used.append(ul);
     }
     return [kicker, from, used];
+  }
+
+  /**
+   * "Why it matters", in the canvas's bottom-left corner: what the part
+   * is for, then the chain it climbs to the finished computer, each step
+   * with its role and whether it's cleared. A puzzle with a reason. It
+   * folds to a small button (the summary); folding is remembered.
+   */
+  private whyBox(): HTMLElement {
+    const box = el("details", { class: "why-box" });
+    let open = true;
+    try {
+      open = localStorage.getItem("s2t-why-open") !== "0";
+    } catch {
+      // Storage blocked: just start open.
+    }
+    box.open = open;
+    box.addEventListener("toggle", () => {
+      try {
+        localStorage.setItem("s2t-why-open", box.open ? "1" : "0");
+      } catch {
+        // Not remembered, that's all.
+      }
+    });
+    const summary = el("summary");
+    summary.append(el("h2", {}, t("play.why")));
+    box.append(summary);
+    for (const para of levelWhy(this.level).split("\n").filter(Boolean))
+      box.append(el("p", { class: "why-text" }, para));
+    const levels = orderLevels(this.app.levels).map((e) => e.info.level);
+    const path = pathToTop(levels, this.level.id);
+    const chain = el("ol", {
+      class: "role-chain",
+      "aria-label": t("play.chainLabel"),
+    });
+    path.forEach((id, i) => {
+      const lv = levelEntry(this.app, id)?.info.level;
+      if (!lv) return;
+      const here = id === this.level.id;
+      const cleared = this.app.status[id] === "passed";
+      const li = el("li", { class: here ? "here" : "" });
+      const name = here
+        ? el("strong", {}, levelName(lv))
+        : this.app.status[id] === "locked"
+          ? el("span", { class: "name" }, levelName(lv))
+          : el("a", { href: playHref(id) }, levelName(lv));
+      li.append(name);
+      if (cleared)
+        li.append(
+          " ",
+          el(
+            "span",
+            { class: "chain-done", title: t("play.levelClearedTitle") },
+            `✓ ${t("play.levelCleared")}`,
+          ),
+        );
+      li.append(el("span", { class: "chain-role" }, levelRole(lv)));
+      if (i < path.length - 1)
+        li.append(
+          el("span", { class: "visually-hidden" }, t("play.chainNext")),
+        );
+      chain.append(li);
+    });
+    if (path.length > 1) {
+      box.append(el("h3", { class: "chain-head" }, t("play.chainHead")), chain);
+    } else if (this.level.optional) {
+      box.append(el("p", { class: "help" }, t("play.chainSide")));
+    }
+    return box;
   }
 
   /**
@@ -1216,6 +1435,7 @@ class PlayPage {
     this.redoBtn.disabled = !this.history.canRedo();
     this.clearBtn.disabled =
       !this.design.parts.length && !this.design.wires.length;
+    this.tidyBtn.disabled = !this.design.parts.length;
     // A problem that stops the circuit running (every wire shows X then):
     // say so on the canvas and mark what it names.
     const stopper = this.view?.blocked
@@ -1242,6 +1462,7 @@ class PlayPage {
     this.emptyHint.textContent = t("play.emptyHint");
     this.renderInputs();
     this.renderOutputs();
+    this.renderAnswer();
     this.renderStats();
     if (full) {
       this.renderProps();
@@ -1768,8 +1989,10 @@ class PlayPage {
     }
     this.result.replaceChildren();
     if (report.passed) {
+      // Saving re-checks the statuses at once (before it awaits storage),
+      // so the next level is picked from the fresh ones.
       void saveDesign(this.app, this.level.id, this.design, true);
-      const next = this.root.dataset.next;
+      this.renderCleared();
       const box = el("div", { class: "passed" });
       const seq = this.level.sequential ? 1 : 0;
       const tested = t("play.passedRows", {
@@ -1783,11 +2006,13 @@ class PlayPage {
           : t("play.usingGates", { cells: report.cells, depth: report.depth });
       box.innerHTML = `<p><strong>${esc(t("play.passed"))}</strong> ${esc(tested)}, ${esc(stats)}.
         ${esc(t("play.nowInToolbox", { name: levelName(this.level) }))}</p>
-        <p>${next ? `<a href="${playHref(next)}">${esc(t("play.nextLevel"))}</a> · ` : ""}<a href="#/levels">${esc(t("play.levelMap"))}</a></p>`;
+        <p><a href="#/levels">${esc(t("play.levelMap"))}</a></p>`;
       this.result.append(box);
       this.highlightParts.clear();
       this.highlightPorts.clear();
       this.refresh(false);
+      // The way on is the main button now: put the keyboard there too.
+      this.nextBtn.focus();
       return;
     }
     const failed = report.rows.filter((r) => !r.passed).length;

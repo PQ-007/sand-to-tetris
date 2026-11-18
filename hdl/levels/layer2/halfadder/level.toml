@@ -4,6 +4,10 @@ layer = 2
 goal = """
 Add two bits. The result can be 0, 1 or 2, so it needs two output bits: sum (the ones digit) and carry (the twos digit).
 """
+role = "adds two bits"
+why = """
+Programs run on arithmetic, and arithmetic is built from adding single bits: the sum digit is XOR, the carry digit is AND. Two half adders and an OR make a full adder; sixteen full adders make the adders inside the CPU.
+"""
 inputs = ["a", "b"]
 outputs = ["sum", "carry"]
 requires = ["xor", "and"]

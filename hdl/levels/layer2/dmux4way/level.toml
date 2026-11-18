@@ -5,6 +5,10 @@ goal = """
 Send the input to one of four outputs: sel = 0 → a, 1 → b, 2 → c, 3 → d. The other outputs are 0.
 Split sel into its two bits. The high bit (bit 1) picks the pair (a/b or c/d), the low bit (bit 0) picks within the pair. Three demultiplexers are enough.
 """
+role = "sends a signal to one of four places"
+why = """
+Two levels of DMUX make four ways. RAM16K sends its load through one, so a STORE changes one word and leaves the other 16,383 alone.
+"""
 inputs = ["in", "sel"]
 outputs = ["a", "b", "c", "d"]
 requires = ["dmux"]

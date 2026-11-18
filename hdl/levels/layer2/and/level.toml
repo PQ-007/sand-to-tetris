@@ -5,6 +5,10 @@ goal = """
 Build AND: the output is 1 only when both inputs are 1.
 From here on you build with the gates you made, not transistors. AND is NAND followed by NOT.
 """
+role = "1 only when both inputs are 1"
+why = """
+AND is how hardware says "only if": write to memory only if this instruction is a STORE; take the jump only if the condition holds. Inside the adder, AND finds the carry (1 + 1 carries one). Grown to 16 bits, it's one of the ALU's four operations.
+"""
 inputs = ["a", "b"]
 outputs = ["out"]
 requires = ["nand", "not"]

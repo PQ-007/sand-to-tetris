@@ -5,6 +5,10 @@ goal = """
 Build a 16-bit NOT: invert all 16 bits of a bus at once.
 A bus is a bundle of wires carrying a whole number. Use your NOT with Repeat ×16.
 """
+role = "flips all 16 bits at once"
+why = """
+Numbers in this computer are 16 bits wide, and a bus carries all of them on one wire. NOT16 is a first look at bus parts: one gate, copied sixteen times. It's a side quest because the ALU flips bits with XOR16 instead, which can choose whether to flip.
+"""
 inputs = ["a"]
 outputs = ["out"]
 requires = ["not"]

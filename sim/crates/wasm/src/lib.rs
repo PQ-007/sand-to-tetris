@@ -38,6 +38,13 @@ pub fn check(library: &str, level: &str, design: &str) -> Result<String, JsError
     js(to_json(api::check(library, level, design)))
 }
 
+/// What a level wants for these inputs → `[[name, value], ...]` JSON, or
+/// `null` when it can't say (see `api::expected`).
+#[wasm_bindgen]
+pub fn expected(toml: &str, inputs: &str) -> Result<String, JsError> {
+    js(to_json(api::expected(toml, inputs)))
+}
+
 /// Live simulation of a (possibly unfinished) design → `SimView` JSON,
 /// continuing from `state` (the previous view's `state`, or `{}`).
 #[wasm_bindgen]

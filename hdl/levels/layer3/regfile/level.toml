@@ -5,6 +5,10 @@ goal = """
 The CPU's eight registers, r0 to r7, with one write port and two read ports. qa shows the register numbered ra and qb the one numbered rb, at the same time. On a rising clk edge, if we (write enable) is 1, register wa stores d.
 Eight Registers share d and clk; a DMUX8WAY sends we to the one chosen by wa, and two MUX8WAY16s read with ra and rb.
 """
+role = "the CPU's eight working registers"
+why = """
+Instructions work on registers: ADD r3, r1, r2 reads r1 and r2 and writes r3, all in one tick. The register file has two read ports and one write port so that can happen at once. It's the CPU's desk: the few numbers it's working with right now.
+"""
 sequential = true
 inputs = ["d", "we", "wa", "ra", "rb", "clk"]
 outputs = ["qa", "qb"]

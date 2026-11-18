@@ -129,3 +129,33 @@ describe("fixes for wires of different widths", () => {
     ]);
   });
 });
+
+describe("random inputs and the goal's answer", () => {
+  it("draws values that fit the port", async () => {
+    const { randomValue } = await import("../src/editor/values");
+    expect(randomValue(1, () => 0)).toBe(0);
+    expect(randomValue(1, () => 0.99)).toBe(1);
+    expect(randomValue(16, () => 0.999999999)).toBe(65535);
+    expect(randomValue(3, () => 0.5)).toBe(4);
+  });
+
+  it("puts the circuit's output next to the goal's", async () => {
+    const { compareAnswer } = await import("../src/editor/values");
+    expect(
+      compareAnswer(
+        [
+          ["sum", "1"],
+          ["carry", "0"],
+        ],
+        [
+          ["sum", "1"],
+          ["carry", "Z"],
+        ],
+      ),
+    ).toEqual([
+      { name: "sum", want: "1", got: "1", ok: true },
+      { name: "carry", want: "0", got: "Z", ok: false },
+    ]);
+    expect(compareAnswer([["out", "3"]], undefined)[0]?.ok).toBe(false);
+  });
+});

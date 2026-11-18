@@ -52,6 +52,20 @@ describe("simulator core (WASM)", () => {
     expect(wasm.coreVersion()).toMatch(/^\d+\.\d+\.\d+ \(format 1\)$/);
   });
 
+  it("knows every combinational level's answer to its own table rows", () => {
+    for (const l of levels) {
+      const info = JSON.parse(wasm.levelInfo(l.toml)) as LevelInfo;
+      const answers = (inputs: Record<string, number>) =>
+        JSON.parse(wasm.expected(l.toml, JSON.stringify(inputs))) as
+          [string, string][] | null;
+      for (const row of info.table) {
+        const got = answers(Object.fromEntries(row.inputs));
+        if (info.level.sequential) expect(got).toBeNull();
+        else expect(got).toEqual(row.outputs.map(([n, v]) => [n, String(v)]));
+      }
+    }
+  });
+
   it("parses every level, with its truth table", () => {
     for (const l of levels) {
       const info = JSON.parse(wasm.levelInfo(l.toml)) as LevelInfo;

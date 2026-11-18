@@ -5,6 +5,10 @@ goal = """
 Put it together: your CPU with the memory map as its data memory. The CPU's addrM, outM and writeM drive memory's addr, d and load; memory's q comes back as the CPU's inM; key and timer go to the memory. Show the CPU's four pins as the computer's outputs.
 The program ROM is plugged in from outside: the tests feed instr with the instruction at pc, like a real ROM chip would.
 """
+role = "runs your programs, Bitfall included"
+why = """
+CPU plus memory: a whole computer, built from your own parts all the way down to transistors. Put a program in its ROM and it runs. The assembler, VM, compiler and OS of the next chapters all make instructions for this machine, and Bitfall runs on it.
+"""
 sequential = true
 inputs = ["instr", "key", "timer", "reset", "clk"]
 outputs = ["pc", "addrM", "outM", "writeM"]

@@ -23,6 +23,16 @@ export function levelGoal(level: Pick<Level, "id" | "goal">): string {
   return tr()?.[level.id]?.goal || level.goal.trim();
 }
 
+/** What the part does in the finished computer, in a few words. */
+export function levelRole(level: Pick<Level, "id" | "role">): string {
+  return tr()?.[level.id]?.role || (level.role ?? "").trim();
+}
+
+/** Why the part matters. */
+export function levelWhy(level: Pick<Level, "id" | "why">): string {
+  return tr()?.[level.id]?.why || (level.why ?? "").trim();
+}
+
 /** The level's hint for a kind of failure, in the current language. */
 export function levelHint(
   level: Pick<Level, "id">,

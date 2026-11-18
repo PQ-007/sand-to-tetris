@@ -45,3 +45,26 @@ export function parseNumber(text: string): number | undefined {
     ? n
     : undefined;
 }
+
+/** A random value that fits `width` bits (`rand` returns [0, 1)). */
+export function randomValue(width: number, rand = Math.random): number {
+  return Math.min(2 ** width - 1, Math.floor(rand() * 2 ** width));
+}
+
+export interface Answer {
+  name: string;
+  want: string;
+  got: string | undefined;
+  ok: boolean;
+}
+
+/** The goal's outputs next to the circuit's, output by output. */
+export function compareAnswer(
+  want: [string, string][],
+  got: [string, string][] | undefined,
+): Answer[] {
+  return want.map(([name, w]) => {
+    const g = got?.find(([n]) => n === name)?.[1];
+    return { name, want: w, got: g, ok: g === w };
+  });
+}

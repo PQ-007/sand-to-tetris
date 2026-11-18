@@ -177,13 +177,84 @@ export function usedIn(
   return levels.filter((l) => builtFrom(l).includes(id)).map((l) => l.id);
 }
 
-/** The next level to play after `id` in `order`, skipping side quests. */
+/**
+ * Where a part goes, from `id` up to the finished computer: each step is
+ * a level built from the one before. Of the levels a part is used in, the
+ * chain takes the smallest step up in layer (the story the course tells:
+ * NOT → ALU → CPU, not NOT → memory map), then the shortest way to the
+ * top, then the later roadmap step (the bigger part). Side quests aren't on the way to anything, so
+ * their chain is just themselves.
+ */
+export function pathToTop(
+  levels: {
+    id: string;
+    layer: number;
+    requires: string[];
+    optional: boolean;
+  }[],
+  id: string,
+  top = "computer",
+): string[] {
+  const byId = new Map(levels.map((l) => [l.id, l]));
+  // Hops from each level to the top, walking down `builtFrom`.
+  const dist = new Map<string, number>([[top, 0]]);
+  const queue = [top];
+  while (queue.length) {
+    const at = queue.shift() as string;
+    const l = byId.get(at);
+    if (!l) continue;
+    for (const r of builtFrom(l))
+      if (!dist.has(r)) {
+        dist.set(r, (dist.get(at) ?? 0) + 1);
+        queue.push(r);
+      }
+  }
+  const index = new Map(
+    levels.map((l, i) => [l.id, ROADMAP_INDEX.get(l.id) ?? i]),
+  );
+  const path = [id];
+  let cur = byId.get(id);
+  while (cur && cur.id !== top && dist.has(cur.id)) {
+    const from = cur;
+    const next = usedIn(levels, from.id)
+      .map((u) => byId.get(u))
+      .filter((u): u is NonNullable<typeof u> =>
+        Boolean(u && !u.optional && dist.has(u.id)),
+      )
+      .sort(
+        (a, b) =>
+          a.layer - from.layer - (b.layer - from.layer) ||
+          (dist.get(a.id) ?? 0) - (dist.get(b.id) ?? 0) ||
+          (index.get(b.id) ?? 0) - (index.get(a.id) ?? 0),
+      )[0];
+    if (!next) break;
+    path.push(next.id);
+    cur = next;
+  }
+  return path;
+}
+
+/**
+ * The next level to play after `id` in `order`, skipping side quests. With
+ * `status`, it's the next level that still needs doing: levels already
+ * cleared are skipped, and so are locked ones; if nothing after `id` is
+ * left, the earliest unfinished level before it.
+ */
 export function nextLevel(
   order: { id: string; optional: boolean }[],
   id: string,
+  status?: Record<string, Status>,
 ): string | undefined {
   const at = order.findIndex((l) => l.id === id);
-  return order.slice(at + 1).find((l) => !l.optional)?.id;
+  const main = (list: { id: string; optional: boolean }[]) =>
+    list.filter((l) => !l.optional && l.id !== id);
+  if (!status) return main(order.slice(at + 1))[0]?.id;
+  const todo = (l: { id: string }) =>
+    status[l.id] === "open" || status[l.id] === "broken";
+  return (
+    main(order.slice(at + 1)).find(todo)?.id ??
+    main(order.slice(0, Math.max(at, 0))).find(todo)?.id
+  );
 }
 
 export interface ToolboxItem {

@@ -4,6 +4,10 @@ layer = 2
 goal = """
 Build a 16-bit OR: OR each bit of a with the same bit of b.
 """
+role = "turns chosen bits on"
+why = """
+The ALU's OR instruction. Drawing is OR: a screen word holds 16 pixels, and word OR mask lights the new ones while keeping those already lit. When a piece lands, Bitfall ORs it into the board row by row.
+"""
 inputs = ["a", "b"]
 outputs = ["out"]
 requires = ["or"]

@@ -5,6 +5,10 @@ goal = """
 Build a 16-bit multiplexer: choose between two 16-bit numbers with a single sel bit.
 Repeat your MUX 16 times, but all copies must share the same sel.
 """
+role = "chooses between two numbers"
+why = """
+MUX for whole 16-bit numbers. The CPU uses one wherever a number has two possible sources: the ALU's b is a register or the constant inside the instruction; the program counter takes pc + 1 or a jump address.
+"""
 inputs = ["a", "b", "sel"]
 outputs = ["out"]
 requires = ["mux"]

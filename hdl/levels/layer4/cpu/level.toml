@@ -11,6 +11,10 @@ Wire the datapath exactly like this (the tests check these pins):
 - The PC loads when jump = 1: qa when jr = 1, else pc + off. Otherwise it counts up; reset sets it to 0 (the instruction on instr still runs during that cycle).
 - Pins: pc = the PC; addrM = the ALU's out (LOAD and STORE use it as the address); outM = qb; writeM from the control unit.
 """
+role = "runs one instruction per clock tick"
+why = """
+Here every part meets. The PC says where the program is, the control unit reads the instruction, the register file hands over numbers, the ALU computes, and the result goes back to a register, out to memory, or into the PC as a jump. Do that millions of times and a program runs.
+"""
 sequential = true
 inputs = ["instr", "inM", "reset", "clk"]
 outputs = ["pc", "addrM", "outM", "writeM"]

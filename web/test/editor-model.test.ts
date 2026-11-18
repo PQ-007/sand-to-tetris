@@ -69,6 +69,22 @@ describe("editing a design", () => {
     expect(h.canRedo()).toBe(false);
   });
 
+  it("a finished drag is one undo step back to where it started", () => {
+    const h = new History(emptyDesign("not"));
+    h.apply(addPart(h.current, "nmos", [100, 100]).design);
+    h.replace(movePart(h.current, "n1", [120, 100]));
+    h.replace(movePart(h.current, "n1", [140, 100]));
+    // The drop commits the design the drag left (the same object).
+    h.apply(h.current);
+    h.undo();
+    expect(h.current.parts[0]?.pos).toEqual([100, 100]);
+    h.undo();
+    expect(h.current.parts).toEqual([]);
+    h.redo();
+    h.redo();
+    expect(h.current.parts[0]?.pos).toEqual([140, 100]);
+  });
+
   it("moves a port without touching the rest of the design", () => {
     const d = addPart(emptyDesign("not"), "nmos", [100, 100]).design;
     const moved = movePort(d, "out", [400, 200]);
@@ -302,5 +318,38 @@ describe("canvas size", () => {
     // The box starts 8px right of the pin and is at least 100px wide for
     // labels like "out = 0x00ff".
     expect(x + 8 + 100).toBeLessThanOrEqual(CANVAS.width);
+  });
+});
+
+describe("ports stay still while parts move", () => {
+  it("pins ports whose default spot would move when the circuit grows", async () => {
+    const { steadyPorts, portPoint, CANVAS } =
+      await import("../src/editor/geometry");
+    const bigger = { width: CANVAS.width + 400, height: CANVAS.height + 200 };
+    const pinned = steadyPorts({}, ["a"], ["out"], CANVAS, bigger);
+    expect(pinned?.out).toEqual(portPoint("out", ["a"], ["out"], CANVAS));
+    expect(pinned?.a).toEqual(portPoint("a", ["a"], ["out"], CANVAS));
+  });
+
+  it("leaves the design alone when nothing would move", async () => {
+    const { steadyPorts, CANVAS } = await import("../src/editor/geometry");
+    const design = {};
+    expect(steadyPorts(design, ["a"], ["out"], CANVAS, CANVAS)).toBeUndefined();
+  });
+
+  it("never moves a port the learner placed", async () => {
+    const { steadyPorts, CANVAS } = await import("../src/editor/geometry");
+    const moved = { out: [300, 120] as [number, number] };
+    const bigger = { width: CANVAS.width + 400, height: CANVAS.height };
+    const pinned = steadyPorts(
+      { port_pos: moved },
+      ["a"],
+      ["out"],
+      CANVAS,
+      bigger,
+    );
+    expect(pinned?.out).toEqual([300, 120]);
+    // Only the width changed: the input's spot (x 100, y by height) holds.
+    expect(pinned?.a).toBeUndefined();
   });
 });

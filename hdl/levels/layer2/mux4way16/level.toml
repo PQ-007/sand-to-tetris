@@ -5,6 +5,10 @@ goal = """
 Choose one of four 16-bit inputs with a 2-bit sel: 0 picks a, 1 picks b, 2 picks c, 3 picks d.
 Split sel into its two bits. One bit chooses within pairs, the other between pairs.
 """
+role = "chooses one of four numbers"
+why = """
+The ALU computes ADD, AND, OR and XOR all at once, every time; this part picks the one the instruction asked for. RAM16K uses one too, to read from the right quarter of memory.
+"""
 inputs = ["a", "b", "c", "d", "sel"]
 outputs = ["out"]
 requires = ["mux16"]

@@ -4,6 +4,7 @@ import {
   needsRecheck,
   nextLevel,
   orderLevels,
+  pathToTop,
   playLibrary,
   statuses,
   toolbox,
@@ -236,6 +237,38 @@ describe("what a level may use", () => {
     expect(nextLevel(order, "and16")).toBeUndefined();
   });
 
+  it("skips levels already cleared, and locked ones", () => {
+    const order = [
+      { id: "and", optional: false },
+      { id: "or", optional: false },
+      { id: "xor", optional: false },
+      { id: "nand3", optional: true },
+      { id: "not16", optional: false },
+      { id: "and16", optional: false },
+    ];
+    const status = {
+      and: "passed",
+      or: "passed",
+      xor: "open",
+      nand3: "open",
+      not16: "locked",
+      and16: "open",
+    } as const;
+    expect(nextLevel(order, "and", status)).toBe("xor");
+    expect(nextLevel(order, "xor", status)).toBe("and16");
+    // Nothing left after it: back to the earliest unfinished level.
+    expect(nextLevel(order, "and16", status)).toBe("xor");
+    // A broken level needs doing again.
+    expect(
+      nextLevel(order, "xor", { ...status, and16: "passed", or: "broken" }),
+    ).toBe("or");
+    // All done: no next level.
+    const done = Object.fromEntries(
+      order.map((l) => [l.id, "passed" as const]),
+    );
+    expect(nextLevel(order, "and", done)).toBeUndefined();
+  });
+
   it("follows the course roadmap, not the alphabet", () => {
     const levels = [
       entry("mux16", 2, ["mux"]),
@@ -255,5 +288,44 @@ describe("what a level may use", () => {
     const lib = playLibrary(LEVELS, progress, s, "nand");
     expect(lib.unlocked.map((d) => d.component)).toEqual(["not"]);
     expect(lib.levels).toHaveLength(4);
+  });
+});
+
+describe("where a part goes", () => {
+  const lv = (
+    id: string,
+    layer: number,
+    requires: string[] = [],
+    optional = false,
+  ) => ({
+    id,
+    layer,
+    requires,
+    optional,
+  });
+  const levels = [
+    lv("not", 1),
+    lv("nand", 1, ["not"]),
+    lv("and", 2, ["nand", "not"]),
+    lv("not16", 2, ["not"], true),
+    lv("alu", 2, ["and", "not"]),
+    lv("memory", 4, ["and", "not"]),
+    lv("cpu", 4, ["alu"]),
+    lv("computer", 4, ["cpu", "memory"]),
+  ];
+
+  it("climbs the smallest step up first: NOT goes to the ALU, not the memory map", () => {
+    expect(pathToTop(levels, "not")).toEqual(["not", "alu", "cpu", "computer"]);
+    expect(pathToTop(levels, "and")).toEqual(["and", "alu", "cpu", "computer"]);
+  });
+
+  it("is just the computer at the top, and just itself for a side quest", () => {
+    expect(pathToTop(levels, "computer")).toEqual(["computer"]);
+    expect(pathToTop(levels, "not16")).toEqual(["not16"]);
+  });
+
+  it("only follows what a level is built from (Layer 1 is built from transistors)", () => {
+    // nand requires not only to set the order, so not's path skips nand.
+    expect(pathToTop(levels, "not")).not.toContain("nand");
   });
 });

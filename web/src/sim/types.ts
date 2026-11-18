@@ -33,6 +33,10 @@ export interface Level {
   name: string;
   layer: number;
   goal: string;
+  /** What the part does in the finished computer, in a few words. */
+  role?: string;
+  /** Why the part matters. */
+  why?: string;
   inputs: string[];
   outputs: string[];
   requires: string[];

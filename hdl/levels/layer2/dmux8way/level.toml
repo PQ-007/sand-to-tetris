@@ -5,6 +5,10 @@ goal = """
 Send the input to one of eight outputs, a to h, chosen by the 3-bit sel. RAM8 will use this to send "load" to exactly one of its eight registers.
 Let sel's top bit (bit 2) choose between two 4-way demultiplexers, and give both of them sel's bottom two bits.
 """
+role = "sends a write to one of eight places"
+why = """
+This is how a write reaches exactly one place. RAM8 sends load through it to one register; every bigger RAM does the same for its blocks; the register file uses it to write an instruction's result into r0 to r7; and the memory map uses it to tell RAM, screen and keyboard apart.
+"""
 inputs = ["in", "sel"]
 outputs = ["a", "b", "c", "d", "e", "f", "g", "h"]
 requires = ["dmux", "dmux4way"]

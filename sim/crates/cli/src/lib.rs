@@ -286,6 +286,7 @@ fn check_all(root: &Path) -> Result<String, String> {
         };
         let mut listed = parts_match(&e.level, reference);
         listed.extend(missing_hints(&e.level));
+        listed.extend(missing_why(&e.level));
         if !listed.is_empty() {
             ok = false;
             for problem in listed {
@@ -371,6 +372,16 @@ fn missing_hints(level: &Level) -> Vec<String> {
         .iter()
         .filter(|k| level.hints.get(**k).is_none_or(|h| h.trim().is_empty()))
         .map(|k| format!("no `{k}` hint (the Hint button shows `nudge`, then `wrong`)"))
+        .collect()
+}
+
+/// Every level says what its part is for: a one-line `role` and a `why`.
+/// Building a part without knowing what it's for is only a puzzle.
+fn missing_why(level: &Level) -> Vec<String> {
+    [("role", &level.role), ("why", &level.why)]
+        .iter()
+        .filter(|(_, text)| text.trim().is_empty())
+        .map(|(k, _)| format!("no `{k}` (the level page says what the part is for)"))
         .collect()
 }
 
@@ -581,6 +592,21 @@ mod tests {
         let lonely = lv("nor", 1, &["not"], false);
         let found = course_problems(&[&not, &nand, &and, &only_order, &lonely]);
         assert!(found[0].contains("top, nor"), "{found:?}");
+    }
+
+    #[test]
+    fn every_level_says_what_its_part_is_for() {
+        use s2t_netlist::builder::level;
+        let mut l = level("x", 2, &["a"], &["out"]);
+        assert_eq!(missing_why(&l).len(), 2);
+        l.role = "adds two numbers".into();
+        l.why = "  ".into();
+        assert_eq!(
+            missing_why(&l),
+            vec!["no `why` (the level page says what the part is for)"]
+        );
+        l.why = "Programs add all the time.".into();
+        assert!(missing_why(&l).is_empty());
     }
 
     #[test]
